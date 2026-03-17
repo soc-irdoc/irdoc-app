@@ -5,7 +5,6 @@ System templates (org_id=null) are read-only — orgs must clone.
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import flag_modified
 
 from app.models.template import IncidentTemplate, ReportTemplate
 from app.schemas.template import (
@@ -130,10 +129,8 @@ async def update_report_template(
             detail="System templates are read-only. Clone to customize.",
         )
     for key, value in data.model_dump(exclude_none=True).items():
-        setattr(template, key, value)
-    # JSONB columns require explicit dirty-marking when reassigned
-    if data.schema_json is not None:
-        flag_modified(template, "schema_json")
+        # Assign a new list object for JSONB columns to ensure SQLAlchemy detects the change
+        setattr(template, key, list(value) if isinstance(value, list) else value)
     await db.flush()
     return template
 
