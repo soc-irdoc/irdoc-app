@@ -432,7 +432,7 @@ export function SSOPage() {
       </h2>
 
       <div style={{ position: 'relative' }}>
-        <PremiumGate featureKey="sso">
+        <PremiumGate featureKey="sso_saml">
           <SSOForm />
         </PremiumGate>
       </div>

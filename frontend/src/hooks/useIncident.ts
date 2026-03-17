@@ -71,7 +71,7 @@ export function useIncidentTemplates() {
   return useQuery({
     queryKey: ['incident-templates'],
     queryFn: async () => {
-      const res = await apiClient.get<ApiResponse<Array<{ id: string; name: string; slug: string }>>>('/templates/incidents')
+      const res = await apiClient.get<ApiResponse<Array<{ id: string; name: string; slug: string }>>>('/templates/incident')
       return res.data.data
     },
   })

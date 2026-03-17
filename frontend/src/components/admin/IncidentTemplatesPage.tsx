@@ -51,7 +51,7 @@ function useIncidentTemplatesList() {
   return useQuery({
     queryKey: ['incident-templates-admin'],
     queryFn: async () => {
-      const res = await apiClient.get<ApiResponse<IncidentTemplate[]>>('/templates/incidents')
+      const res = await apiClient.get<ApiResponse<IncidentTemplate[]>>('/templates/incident')
       return res.data.data
     },
   })
@@ -62,7 +62,7 @@ function useCreateIncidentTemplate() {
   return useMutation({
     mutationFn: async (payload: Partial<IncidentTemplate>) => {
       const res = await apiClient.post<ApiResponse<IncidentTemplate>>(
-        '/templates/incidents',
+        '/templates/incident',
         payload
       )
       return res.data.data
@@ -76,7 +76,7 @@ function useUpdateIncidentTemplate() {
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: Partial<IncidentTemplate> }) => {
       const res = await apiClient.put<ApiResponse<IncidentTemplate>>(
-        `/templates/incidents/${id}`,
+        `/templates/incident/${id}`,
         payload
       )
       return res.data.data
@@ -89,7 +89,7 @@ function useDeleteIncidentTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      await apiClient.delete(`/templates/incidents/${id}`)
+      await apiClient.delete(`/templates/incident/${id}`)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['incident-templates-admin'] }),
   })
@@ -100,7 +100,7 @@ function useCloneIncidentTemplate() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient.post<ApiResponse<IncidentTemplate>>(
-        `/templates/incidents/${id}/clone`,
+        `/templates/incident/${id}/clone`,
         {}
       )
       return res.data.data
