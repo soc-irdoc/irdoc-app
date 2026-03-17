@@ -52,6 +52,7 @@ async def create_incident_template(
     )
     db.add(template)
     await db.flush()
+    await db.refresh(template)
     return template
 
 
@@ -66,6 +67,7 @@ async def update_incident_template(
     for key, value in data.model_dump(exclude_none=True).items():
         setattr(template, key, value)
     await db.flush()
+    await db.refresh(template)
     return template
 
 
@@ -117,6 +119,7 @@ async def create_report_template(
     )
     db.add(template)
     await db.flush()
+    await db.refresh(template)
     return template
 
 
@@ -132,6 +135,7 @@ async def update_report_template(
         # Assign a new list object for JSONB columns to ensure SQLAlchemy detects the change
         setattr(template, key, list(value) if isinstance(value, list) else value)
     await db.flush()
+    await db.refresh(template)
     return template
 
 
