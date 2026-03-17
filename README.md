@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/soc-irdoc/irdoc-app/actions/workflows/ci.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](LICENSE)
-[![Docker Pulls](https://img.shields.io/docker/pulls/soc-irdoc/irdoc-backend)](https://hub.docker.com/u/soc-irdoc)
+[![Docker](https://img.shields.io/badge/docker-hub-blue)](https://hub.docker.com/u/soc-irdoc)
 
 ---
 
