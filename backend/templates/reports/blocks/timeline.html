@@ -3,11 +3,16 @@
 {% set show_attachments = block.get('show_attachments', true) %}
 {% set max_entries = block.get('max_entries', 0) %}
 
-{% if filter_val == 'all' or not filter_val %}
+{% if not filter_val or filter_val == 'all' %}
   {% set entries = p.entries %}
+{% elif filter_val is mapping %}
+  {% if filter_val.get('entry_type') %}
+    {% set entries = p.entries_by_type.get(filter_val.entry_type, []) %}
+  {% else %}
+    {% set entries = p.entries %}
+  {% endif %}
 {% elif filter_val.startswith('type=') %}
-  {% set type_key = filter_val[5:] %}
-  {% set entries = p.entries_by_type.get(type_key, []) %}
+  {% set entries = p.entries_by_type.get(filter_val[5:], []) %}
 {% else %}
   {% set entries = p.entries %}
 {% endif %}
