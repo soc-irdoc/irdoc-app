@@ -12,12 +12,11 @@ interface TopBarProps {
 }
 
 const SECTIONS = [
-  { key: 'timeline',     label: 'Timeline',     icon: '⏱' },
-  { key: 'iocs',         label: 'IOCs',         icon: '🔍' },
-  { key: 'summary',      label: 'Summary',      icon: '📊' },
-  { key: 'reports',      label: 'Reports',      icon: '📄' },
-  { key: 'integrations', label: 'Integrations', icon: '🔗' },
-  { key: 'graph',        label: 'Graph',        icon: '🕸' },
+  { key: 'timeline', label: 'Timeline', icon: '⏱' },
+  { key: 'iocs',     label: 'IOCs',     icon: '🔍' },
+  { key: 'summary',  label: 'Summary',  icon: '📊' },
+  { key: 'reports',  label: 'Reports',  icon: '📄' },
+  { key: 'graph',    label: 'Graph',    icon: '🕸' },
 ]
 
 export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps) {

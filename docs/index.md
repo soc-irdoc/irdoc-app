@@ -7,8 +7,8 @@
 ## Quick Start (5 minutes)
 
 ```bash
-git clone https://github.com/irpdoc/irpdoc
-cd irpdoc && cp .env.example .env
+git clone https://github.com/soc-irdoc/irdoc-app
+cd irdoc-app && cp .env.example .env
 # Edit .env: set DB_PASSWORD, REDIS_PASSWORD, SECRET_KEY
 cd docker && docker compose up
 ```

@@ -8,6 +8,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { IncidentListPage } from '@/pages/IncidentListPage'
 import { IncidentWorkspacePage } from '@/pages/IncidentWorkspacePage'
 import { SettingsPageWrapper } from '@/pages/SettingsPageWrapper'
+import { IntegrationsPageWrapper } from '@/pages/IntegrationsPageWrapper'
 import { PageLoader } from '@/components/common/LoadingSpinner'
 import ReportTemplateListPage from '@/pages/ReportTemplateListPage'
 import ReportTemplateEditorPage from '@/pages/ReportTemplateEditorPage'
@@ -72,6 +73,14 @@ export function App() {
           element={
             <ProtectedRoute>
               <IncidentWorkspacePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/integrations"
+          element={
+            <ProtectedRoute>
+              <IntegrationsPageWrapper />
             </ProtectedRoute>
           }
         />

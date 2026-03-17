@@ -16,7 +16,7 @@ export function PremiumGate({ feature, featureKey, children }: PremiumGateProps)
   if (hasFeature(key)) return <>{children}</>
 
   return (
-    <div style={{ position: 'relative', display: 'contents' }}>
+    <div style={{ position: 'relative' }}>
       <div style={{ pointerEvents: 'none', opacity: 0.4, userSelect: 'none' }}>
         {children}
       </div>

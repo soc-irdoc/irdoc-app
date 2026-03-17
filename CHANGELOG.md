@@ -109,5 +109,5 @@ Initial public release.
 
 ---
 
-[Unreleased]: https://github.com/irpdoc/irpdoc/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/irpdoc/irpdoc/releases/tag/v1.0.0
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/soc-irdoc/irdoc-app/releases/tag/v1.0.0

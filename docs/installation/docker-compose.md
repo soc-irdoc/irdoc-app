@@ -15,8 +15,8 @@ This is the recommended way to deploy IRDoc.
 ## Development (build from source)
 
 ```bash
-git clone https://github.com/irpdoc/irpdoc
-cd irpdoc
+git clone https://github.com/soc-irdoc/irdoc-app
+cd irdoc-app
 cp .env.example .env
 ```
 
@@ -37,8 +37,8 @@ Open http://localhost:3000 and complete the first-run setup.
 ## Production (pre-built images from Docker Hub)
 
 ```bash
-git clone https://github.com/irpdoc/irpdoc
-cd irpdoc
+git clone https://github.com/soc-irdoc/irdoc-app
+cd irdoc-app
 cp .env.example .env
 ```
 

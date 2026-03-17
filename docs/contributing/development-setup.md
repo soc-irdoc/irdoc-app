@@ -14,8 +14,8 @@
 ## Clone and configure
 
 ```bash
-git clone https://github.com/irpdoc/irpdoc
-cd irpdoc
+git clone https://github.com/soc-irdoc/irdoc-app
+cd irdoc-app
 cp .env.example .env
 ```
 

@@ -7,10 +7,6 @@ import { Modal } from '@/components/common/Modal'
 import { CATEGORY_LABELS } from '@/types/integration'
 import type { Integration } from '@/types/integration'
 
-interface IntegrationsPageProps {
-  incidentId: string
-}
-
 // ── Integration Config Modal ──────────────────────────────────────────────────
 
 function IntegrationConfigModal({
@@ -230,7 +226,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export function IntegrationsPage({ incidentId: _incidentId }: IntegrationsPageProps) {
+export function IntegrationsPage() {
   const { data: integrations, isLoading } = useIntegrations()
   const [activeCategory, setActiveCategory] = useState<string>('all')
 
@@ -310,7 +306,7 @@ export function IntegrationsPage({ incidentId: _incidentId }: IntegrationsPagePr
             {items.map((integration) => {
               const card = <IntegrationCard key={integration.name} integration={integration} />
               return integration.is_premium ? (
-                <PremiumGate key={integration.name} featureKey={`integration_${integration.category}`}>
+                <PremiumGate key={integration.name} featureKey="advanced_integrations">
                   {card}
                 </PremiumGate>
               ) : (

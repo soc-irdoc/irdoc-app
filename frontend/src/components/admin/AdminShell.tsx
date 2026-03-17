@@ -23,7 +23,7 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'storage', icon: '🗄️', label: 'Storage' },
   { id: 'templates', icon: '📋', label: 'Incident Templates' },
   { id: 'audit', icon: '📜', label: 'Audit Log', premium: 'audit_log' },
-  { id: 'sso', icon: '🔐', label: 'SSO', premium: 'sso' },
+  { id: 'sso', icon: '🔐', label: 'SSO', premium: 'sso_saml' },
 ]
 
 export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps) {

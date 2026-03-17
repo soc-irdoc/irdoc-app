@@ -153,8 +153,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            irpdoc/irpdoc-backend:latest
-            irpdoc/irpdoc-backend:${{ github.sha }}
+            soc-irdoc/irdoc-backend:latest
+            soc-irdoc/irdoc-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -165,8 +165,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            irpdoc/irpdoc-frontend:latest
-            irpdoc/irpdoc-frontend:${{ github.sha }}
+            soc-irdoc/irdoc-frontend:latest
+            soc-irdoc/irdoc-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -196,14 +196,14 @@ jobs:
       - name: Tag backend with version
         run: |
           docker buildx imagetools create \
-            --tag irpdoc/irpdoc-backend:${{ steps.version.outputs.VERSION }} \
-            irpdoc/irpdoc-backend:${{ github.sha }}
+            --tag soc-irdoc/irdoc-backend:${{ steps.version.outputs.VERSION }} \
+            soc-irdoc/irdoc-backend:${{ github.sha }}
 
       - name: Tag frontend with version
         run: |
           docker buildx imagetools create \
-            --tag irpdoc/irpdoc-frontend:${{ steps.version.outputs.VERSION }} \
-            irpdoc/irpdoc-frontend:${{ github.sha }}
+            --tag soc-irdoc/irdoc-frontend:${{ steps.version.outputs.VERSION }} \
+            soc-irdoc/irdoc-frontend:${{ github.sha }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

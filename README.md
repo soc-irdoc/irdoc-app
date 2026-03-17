@@ -2,9 +2,9 @@
 
 > Timeline-first IR documentation with visual report builder, SharePoint auto-sync, and AI-assisted summaries.
 
-[![CI](https://github.com/irpdoc/irpdoc/actions/workflows/ci.yml/badge.svg)](https://github.com/irpdoc/irpdoc/actions/workflows/ci.yml)
+[![CI](https://github.com/soc-irdoc/irdoc-app/actions/workflows/ci.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](LICENSE)
-[![Docker Pulls](https://img.shields.io/docker/pulls/irpdoc/irpdoc-backend)](https://hub.docker.com/u/irpdoc)
+[![Docker Pulls](https://img.shields.io/docker/pulls/soc-irdoc/irdoc-backend)](https://hub.docker.com/u/soc-irdoc)
 
 ---
 
@@ -53,8 +53,8 @@ It gives your team a single structured workspace to document an incident from fi
 **Prerequisites:** Docker and Docker Compose (Docker Desktop on Mac/Windows).
 
 ```bash
-git clone https://github.com/irpdoc/irpdoc
-cd irpdoc
+git clone https://github.com/soc-irdoc/irdoc-app
+cd irdoc-app
 cp .env.example .env
 # Edit .env — set DB_PASSWORD, REDIS_PASSWORD, SECRET_KEY (see instructions inside)
 cd docker
@@ -75,8 +75,8 @@ On first visit, complete the setup wizard to create your admin account.
 For a production deployment with pre-built Docker Hub images:
 
 ```bash
-git clone https://github.com/irpdoc/irpdoc
-cd irpdoc
+git clone https://github.com/soc-irdoc/irdoc-app
+cd irdoc-app
 cp .env.example .env
 # Edit .env — set all required values, set ALLOW_REGISTRATION=false
 cd docker
@@ -195,7 +195,7 @@ See [docs/admin-guide/integrations/servicedesk-plus.md](docs/admin-guide/integra
 
 ```bash
 # Clone
-git clone https://github.com/irpdoc/irpdoc && cd irpdoc
+git clone https://github.com/soc-irdoc/irdoc-app && cd irdoc-app
 
 # Backend (Python 3.12)
 cd backend
@@ -272,5 +272,5 @@ We aim to release security patches within 24 hours of discovery for critical CVE
 
 Contributions are welcome. Please read [docs/contributing/development-setup.md](docs/contributing/development-setup.md) before opening a PR.
 
-- Bug reports and feature requests: [GitHub Issues](https://github.com/irpdoc/irpdoc/issues)
+- Bug reports and feature requests: [GitHub Issues](https://github.com/soc-irdoc/irdoc-app/issues)
 - Security vulnerabilities: security@irpdoc.io (do not open public issues)

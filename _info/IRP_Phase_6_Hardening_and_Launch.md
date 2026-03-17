@@ -179,10 +179,10 @@ Test environment: 4 vCPU, 8GB RAM (typical self-hosted VM)
 ### 4.1 Images
 
 ```
-irpdoc/irpdoc-backend:latest
-irpdoc/irpdoc-backend:1.0.0
-irpdoc/irpdoc-frontend:latest
-irpdoc/irpdoc-frontend:1.0.0
+soc-irdoc/irdoc-backend:latest
+soc-irdoc/irdoc-backend:1.0.0
+soc-irdoc/irdoc-frontend:latest
+soc-irdoc/irdoc-frontend:1.0.0
 ```
 
 Multi-arch builds: `linux/amd64` (servers) + `linux/arm64` (Apple Silicon development, ARM cloud instances).
@@ -227,7 +227,7 @@ services:
       - redis_data:/data
 
   backend:
-    image: irpdoc/irpdoc-backend:${VERSION:-latest}
+    image: soc-irdoc/irdoc-backend:${VERSION:-latest}
     restart: unless-stopped
     environment: *backend-env
     volumes:
@@ -239,7 +239,7 @@ services:
       - "8000"
 
   worker:
-    image: irpdoc/irpdoc-backend:${VERSION:-latest}
+    image: soc-irdoc/irdoc-backend:${VERSION:-latest}
     restart: unless-stopped
     command: celery -A app.workers.celery_app worker -c 4 --loglevel=warning
     environment: *backend-env
@@ -248,14 +248,14 @@ services:
     depends_on: [db, redis]
 
   beat:
-    image: irpdoc/irpdoc-backend:${VERSION:-latest}
+    image: soc-irdoc/irdoc-backend:${VERSION:-latest}
     restart: unless-stopped
     command: celery -A app.workers.celery_app beat --loglevel=warning
     environment: *backend-env
     depends_on: [db, redis]
 
   frontend:
-    image: irpdoc/irpdoc-frontend:${VERSION:-latest}
+    image: soc-irdoc/irdoc-frontend:${VERSION:-latest}
     restart: unless-stopped
     ports:
       - "80:80"
@@ -359,16 +359,16 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            irpdoc/irpdoc-backend:latest
-            irpdoc/irpdoc-backend:${{ github.sha }}
+            soc-irdoc/irdoc-backend:latest
+            soc-irdoc/irdoc-backend:${{ github.sha }}
       - uses: docker/build-push-action@v5
         with:
           context: ./frontend
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            irpdoc/irpdoc-frontend:latest
-            irpdoc/irpdoc-frontend:${{ github.sha }}
+            soc-irdoc/irdoc-frontend:latest
+            soc-irdoc/irdoc-frontend:${{ github.sha }}
 
   release:
     needs: [build-and-push]
@@ -380,8 +380,8 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           docker buildx imagetools create \
-            --tag irpdoc/irpdoc-backend:${VERSION} \
-            irpdoc/irpdoc-backend:${{ github.sha }}
+            --tag soc-irdoc/irdoc-backend:${VERSION} \
+            soc-irdoc/irdoc-backend:${{ github.sha }}
       - uses: softprops/action-gh-release@v1
         with:
           body_path: CHANGELOG.md
@@ -447,7 +447,7 @@ docs/
 ## Quick Start
 
 ```bash
-git clone https://github.com/irpdoc/irpdoc
+git clone https://github.com/soc-irdoc/irdoc-app
 cd irpdoc && cp .env.example .env
 docker compose up
 ```
