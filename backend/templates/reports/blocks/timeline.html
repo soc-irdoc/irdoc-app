@@ -1,0 +1,43 @@
+{% set label = block.get('label', 'Incident Timeline') %}
+{% set filter_val = block.get('filter', 'all') %}
+{% set show_attachments = block.get('show_attachments', true) %}
+{% set max_entries = block.get('max_entries', 0) %}
+
+{% if filter_val == 'all' or not filter_val %}
+  {% set entries = p.entries %}
+{% elif filter_val.startswith('type=') %}
+  {% set type_key = filter_val[5:] %}
+  {% set entries = p.entries_by_type.get(type_key, []) %}
+{% else %}
+  {% set entries = p.entries %}
+{% endif %}
+
+{% if max_entries and max_entries > 0 %}
+  {% set entries = entries[:max_entries] %}
+{% endif %}
+
+<div class="block">
+  <h2>{{ label }}</h2>
+  {% if not entries %}
+    <p><em>No timeline entries for this filter.</em></p>
+  {% else %}
+    {% for e in entries %}
+    <div class="timeline-entry type-{{ e.entry_type }}">
+      <div class="entry-header">
+        <span class="entry-badge badge-{{ e.entry_type }}">{{ e.entry_type }}</span>
+        <span class="entry-time">{{ e.occurred_at | format_dt }}</span>
+        {% if e.is_pinned %}<span style="color:#f97316; font-size:9pt;">📌 Pinned</span>{% endif %}
+      </div>
+      <div class="entry-desc">{{ e.description }}</div>
+      {% if e.source %}
+        <div style="font-size:9pt; color:#64748b; margin-top:4px;">Source: {{ e.source }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% if max_entries and max_entries > 0 and p.entry_count > max_entries %}
+      <p style="font-size:9pt; color:#64748b; margin-top:8px; font-style:italic;">
+        Showing {{ max_entries }} of {{ p.entry_count }} entries.
+      </p>
+    {% endif %}
+  {% endif %}
+</div>

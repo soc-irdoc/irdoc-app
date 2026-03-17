@@ -1,0 +1,24 @@
+{% set label = block.get('label', '') %}
+{% set field_path = block.get('field', '') %}
+{% set value = namespace(v=none) %}
+
+{% if field_path == 'ai.executive_summary' %}
+  {% set value.v = p.ai_executive_summary %}
+{% elif field_path == 'ai.recommendations' %}
+  {% set value.v = p.ai_recommendations %}
+{% elif field_path == 'incident.executive_summary' %}
+  {% set value.v = p.incident.executive_summary %}
+{% elif field_path == 'incident.metadata.notes' %}
+  {% set value.v = p.incident.metadata_.get('notes', '') if p.incident.metadata_ else '' %}
+{% endif %}
+
+<div class="block">
+  {% if label %}<h2>{{ label }}</h2>{% endif %}
+  <div class="text-block-content">
+    {% if value.v %}
+      {{ value.v | replace('\n', '<br>') | safe }}
+    {% else %}
+      <em style="color:#94a3b8;">No content available.</em>
+    {% endif %}
+  </div>
+</div>

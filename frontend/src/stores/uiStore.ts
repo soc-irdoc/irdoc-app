@@ -1,0 +1,34 @@
+import { create } from 'zustand'
+
+export type ToastType = 'success' | 'error' | 'info'
+
+export interface Toast {
+  id: string
+  message: string
+  type: ToastType
+}
+
+interface UIStore {
+  toasts: Toast[]
+  addToast: (message: string, type?: ToastType) => void
+  removeToast: (id: string) => void
+  activeModal: string | null
+  openModal: (name: string) => void
+  closeModal: () => void
+}
+
+export const useUIStore = create<UIStore>((set) => ({
+  toasts: [],
+  addToast: (message, type = 'info') => {
+    const id = Math.random().toString(36).slice(2)
+    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }))
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
+    }, 4000)
+  },
+  removeToast: (id) =>
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+  activeModal: null,
+  openModal: (name) => set({ activeModal: name }),
+  closeModal: () => set({ activeModal: null }),
+}))

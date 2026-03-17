@@ -1,0 +1,38 @@
+{% set label = block.get('label', 'Evidence Register') %}
+{% set show_sha256 = block.get('show_sha256', true) %}
+{% set show_uploader = block.get('show_uploader', false) %}
+
+<div class="block">
+  <h2>{{ label }}</h2>
+  {% if not p.attachments %}
+    <p><em>No evidence files uploaded for this incident.</em></p>
+  {% else %}
+    <table>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Type</th>
+          <th>Size</th>
+          {% if show_sha256 %}<th>SHA-256</th>{% endif %}
+          <th>Uploaded</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for att in p.attachments %}
+        <tr>
+          <td>{{ att.original_name }}</td>
+          <td>{{ att.mime_type or '—' }}</td>
+          <td>{{ att.file_size | filesize }}</td>
+          {% if show_sha256 %}
+          <td><span class="sha-mono">{{ att.sha256[:32] }}…</span></td>
+          {% endif %}
+          <td>{{ att.created_at | format_dt }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size:9pt; color:#64748b; margin-top:6px;">
+      {{ p.attachments | length }} file(s) — SHA-256 hashes verified at upload time.
+    </p>
+  {% endif %}
+</div>

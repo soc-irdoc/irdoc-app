@@ -1,0 +1,46 @@
+<div class="block cover-block">
+  <div class="incident-ref">{{ p.incident.incident_ref }}</div>
+  <h1>{{ p.incident.title }}</h1>
+  <div class="cover-meta">
+    {% set show_fields = block.get('fields', ['incident.severity', 'incident.status', 'generated_at']) %}
+    {% if 'incident.severity' in show_fields %}
+    <div class="meta-item">
+      <div class="meta-label">Severity</div>
+      <div class="meta-value">{{ p.severity_label }}</div>
+    </div>
+    {% endif %}
+    {% if 'incident.status' in show_fields %}
+    <div class="meta-item">
+      <div class="meta-label">Status</div>
+      <div class="meta-value">{{ p.status_label }}</div>
+    </div>
+    {% endif %}
+    {% if 'incident.affected_users' in show_fields %}
+    <div class="meta-item">
+      <div class="meta-label">Affected Users</div>
+      <div class="meta-value">{{ p.incident.affected_users }}</div>
+    </div>
+    {% endif %}
+    {% if 'analyst.full_name' in show_fields %}
+    <div class="meta-item">
+      <div class="meta-label">Lead Analyst</div>
+      <div class="meta-value">{{ p.analyst.full_name }}</div>
+    </div>
+    {% endif %}
+    {% if 'generated_at' in show_fields %}
+    <div class="meta-item">
+      <div class="meta-label">Generated</div>
+      <div class="meta-value">{{ p.generated_at | format_dt }}</div>
+    </div>
+    {% endif %}
+    {% if 'incident.opened_at' in show_fields %}
+    <div class="meta-item">
+      <div class="meta-label">Opened</div>
+      <div class="meta-value">{{ p.incident.opened_at | format_dt }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% if block.get('watermark') %}
+  <div class="cover-watermark">{{ block.watermark }}</div>
+  {% endif %}
+</div>

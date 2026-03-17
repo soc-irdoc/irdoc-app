@@ -1,0 +1,54 @@
+{% set label = block.get('label', 'Indicators of Compromise') %}
+{% set filter_val = block.get('filter', 'all') %}
+{% set columns = block.get('columns', ['type', 'value', 'status']) %}
+
+{% if filter_val == 'all' or not filter_val %}
+  {% set iocs = p.iocs %}
+{% elif filter_val.startswith('status=') %}
+  {% set status_key = filter_val[7:] %}
+  {% set iocs = p.iocs_by_status.get(status_key, []) %}
+{% else %}
+  {% set iocs = p.iocs %}
+{% endif %}
+
+<div class="block">
+  <h2>{{ label }}</h2>
+  {% if not iocs %}
+    <p><em>No IOCs for this filter.</em></p>
+  {% else %}
+    <table>
+      <thead>
+        <tr>
+          {% for col in columns %}
+          <th>{{ col | replace('_', ' ') | title }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for ioc in iocs %}
+        <tr>
+          {% for col in columns %}
+          <td>
+            {% if col == 'status' %}
+              <span class="ioc-status ioc-{{ ioc.status }}">{{ ioc.status }}</span>
+            {% elif col == 'confidence' %}
+              {{ ioc.confidence }}%
+            {% elif col == 'first_seen' %}
+              {{ ioc.created_at | format_dt }}
+            {% elif col == 'value' %}
+              <span style="font-family:monospace; font-size:9.5pt;">{{ ioc.value }}</span>
+            {% elif col == 'type' %}
+              {{ ioc.ioc_type }}
+            {% elif col == 'description' %}
+              {{ ioc.enrichment.get('description', '') if ioc.enrichment else '' }}
+            {% else %}
+              {{ ioc[col] if col in ioc.__dict__ else '—' }}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>

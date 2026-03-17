@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRDoc — Incident Response Documentation Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════
+   TOKENS & RESET
+══════════════════════════════════════════════ */
+:root {
+  --bg:          #080b12;
+  --bg-2:        #0d1117;
+  --bg-3:        #10141c;
+  --bg-4:        #161b26;
+  --bg-5:        #1c2333;
+  --border:      #2a3344;
+  --border-hi:   #3d4f66;
+  --text:        #e6edf3;
+  --text-2:      #8b949e;
+  --text-3:      #484f58;
+  --accent:      #f97316;
+  --accent-2:    #fb923c;
+  --accent-dim:  rgba(249,115,22,.12);
+  --accent-glow: rgba(249,115,22,.3);
+  --green:       #3fb950;
+  --green-dim:   rgba(63,185,80,.12);
+  --red:         #f85149;
+  --red-dim:     rgba(248,81,73,.12);
+  --yellow:      #e3b341;
+  --yellow-dim:  rgba(227,179,65,.12);
+  --blue:        #58a6ff;
+  --blue-dim:    rgba(88,166,255,.12);
+  --purple:      #bc8cff;
+  --purple-dim:  rgba(188,140,255,.12);
+  --mono:        'JetBrains Mono', monospace;
+  --sans:        'Syne', sans-serif;
+  --radius:      12px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius:3px; }
+
+a { color: inherit; text-decoration: none; }
+img { max-width:100%; }
+
+/* ══════════════════════════════════════════════
+   NOISE OVERLAY
+══════════════════════════════════════════════ */
+body::before {
+  content:'';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: .5;
+}
+
+/* ══════════════════════════════════════════════
+   NAV
+══════════════════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 64px;
+  background: rgba(8,11,18,.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(42,51,68,.5);
+  transition: all .3s;
+}
+nav.scrolled {
+  border-bottom-color: var(--border);
+  box-shadow: 0 4px 40px rgba(0,0,0,.5);
+}
+.nav-logo {
+  display: flex; align-items: center; gap:10px;
+  font-size: 18px; font-weight: 800;
+}
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+}
+.nav-links { display:flex; gap:32px; }
+.nav-links a {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-2);
+  transition: color .15s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-actions { display:flex; gap:10px; align-items:center; }
+.btn {
+  display: inline-flex; align-items:center; gap:6px;
+  border-radius: 8px; border: none; cursor: pointer;
+  font-family: var(--sans); font-weight: 700; font-size: 13px;
+  padding: 8px 18px;
+  transition: all .15s;
+  text-decoration: none;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg-4); color: var(--text); border-color: var(--border-hi); }
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-accent:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+.btn-lg { padding: 14px 28px; font-size: 15px; border-radius: 10px; }
+
+/* ══════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════ */
+#hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 40px 80px;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* animated grid bg */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: .12;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 70%);
+}
+
+/* glow orbs */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.hero-orb-1 {
+  width: 600px; height: 400px;
+  background: radial-gradient(ellipse, rgba(249,115,22,.2) 0%, transparent 70%);
+  top: -100px; left: 50%;
+  transform: translateX(-50%);
+  animation: orb-float 8s ease-in-out infinite;
+}
+.hero-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(ellipse, rgba(88,166,255,.12) 0%, transparent 70%);
+  bottom: 100px; left: -100px;
+  animation: orb-float 10s ease-in-out infinite reverse;
+}
+.hero-orb-3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(ellipse, rgba(188,140,255,.1) 0%, transparent 70%);
+  bottom: 150px; right: -80px;
+  animation: orb-float 12s ease-in-out infinite;
+}
+@keyframes orb-float {
+  0%,100% { transform: translateY(0) translateX(-50%); }
+  50% { transform: translateY(-30px) translateX(-50%); }
+}
+.hero-orb-2, .hero-orb-3 { animation: orb-float2 10s ease-in-out infinite; }
+@keyframes orb-float2 {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.hero-badge {
+  display: inline-flex; align-items:center; gap:8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(249,115,22,.3);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px; font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 32px;
+  font-family: var(--mono);
+  letter-spacing: .3px;
+  animation: badge-in .6s ease both;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse-dot 2s ease infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:.5; transform:scale(.7); }
+}
+
+.hero-title {
+  font-size: clamp(42px, 6vw, 84px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  max-width: 900px;
+  animation: hero-title-in .8s .1s ease both;
+}
+.hero-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--yellow) 60%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  max-width: 580px;
+  font-size: 17px;
+  color: var(--text-2);
+  margin: 24px auto 40px;
+  line-height: 1.7;
+  font-weight: 500;
+  animation: hero-title-in .8s .2s ease both;
+}
+
+.hero-cta {
+  display: flex; gap:12px; justify-content:center; flex-wrap:wrap;
+  animation: hero-title-in .8s .3s ease both;
+}
+
+@keyframes badge-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes hero-title-in { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* Social proof bar */
+.hero-social-proof {
+  display: flex; align-items:center; gap:16px;
+  margin-top: 60px;
+  font-size: 12px; color: var(--text-3);
+  font-family: var(--mono);
+  animation: hero-title-in .8s .5s ease both;
+}
+.hero-social-proof .sep { width:1px; height:20px; background:var(--border); }
+.hero-social-proof strong { color: var(--text-2); }
+
+/* ── HERO APP MOCKUP ── */
+.hero-app {
+  position: relative;
+  margin: 60px auto 0;
+  max-width: 1100px;
+  width: 100%;
+  animation: app-rise 1s .4s ease both;
+}
+@keyframes app-rise {
+  from { opacity:0; transform: translateY(40px) scale(.97); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+.hero-app-frame {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 40px 120px rgba(0,0,0,.7),
+    0 0 80px rgba(249,115,22,.08);
+}
+.app-titlebar {
+  display: flex; align-items:center; gap:8px;
+  background: var(--bg-3);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.app-dot { width:11px; height:11px; border-radius:50%; }
+.app-dot:nth-child(1) { background:#f85149; }
+.app-dot:nth-child(2) { background:#e3b341; }
+.app-dot:nth-child(3) { background:#3fb950; }
+.app-url {
+  flex:1; text-align:center;
+  font-family: var(--mono); font-size:11px; color:var(--text-3);
+  background: var(--bg-4); border-radius:6px; padding:4px 12px;
+  max-width:340px; margin:0 auto;
+}
+.app-body {
+  display: flex; height: 420px;
+}
+
+/* mini left nav */
+.mini-nav {
+  width: 52px;
+  background: var(--bg-3);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction:column; align-items:center;
+  padding: 12px 0; gap:4px;
+}
+.mini-nav-logo {
+  width: 30px; height:30px;
+  background: var(--accent);
+  border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; color:#fff;
+  margin-bottom:12px;
+}
+.mini-nav-btn {
+  width:36px; height:36px;
+  border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; cursor:pointer;
+  transition: background .15s;
+  color: var(--text-3);
+}
+.mini-nav-btn:hover, .mini-nav-btn.active {
+  background: var(--accent-dim); color: var(--accent);
+}
+.mini-nav-spacer { flex:1; }
+
+/* main content area */
+.mini-content {
+  flex:1; display:flex; flex-direction:column; overflow:hidden;
+}
+.mini-topbar {
+  height:48px;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items:center; gap:10px;
+  padding: 0 14px;
+  flex-shrink:0;
+}
+.mini-badge {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  padding:2px 8px; border-radius:5px;
+}
+.badge-red { background:var(--red-dim); color:var(--red); border:1px solid var(--red); }
+.badge-green { background:var(--green-dim); color:var(--green); border:1px solid var(--green); }
+.badge-yellow { background:var(--yellow-dim); color:var(--yellow); border:1px solid var(--yellow); }
+.badge-blue { background:var(--blue-dim); color:var(--blue); border:1px solid var(--blue); }
+.badge-purple { background:var(--purple-dim); color:var(--purple); border:1px solid var(--purple); }
+.mini-title { font-size:12px; font-weight:700; flex:1; }
+.mini-meta { font-family:var(--mono); font-size:10px; color:var(--text-3); }
+
+.mini-scroll { flex:1; overflow-y:auto; padding:12px; }
+
+/* timeline entries in mockup */
+.tl-mock { display:flex; gap:10px; margin-bottom:10px; }
+.tl-mock-dot {
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; flex-shrink:0; margin-top:2px;
+}
+.tl-mock-card {
+  flex:1; background:var(--bg-4); border:1px solid var(--border);
+  border-radius:8px; padding:8px 10px;
+}
+.tl-mock-meta {
+  display:flex; align-items:center; gap:6px; margin-bottom:5px;
+}
+.tl-mock-time {
+  font-family:var(--mono); font-size:10px; color:var(--accent);
+}
+.tl-mock-desc { font-size:11px; color:var(--text-2); line-height:1.4; }
+
+/* mini tasks panel */
+.mini-tasks {
+  width: 220px;
+  background: var(--bg-3);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction:column;
+  overflow: hidden;
+}
+.mini-tasks-header {
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  font-size:11px; font-weight:700;
+  display:flex; align-items:center; gap:6px;
+}
+.mini-tasks-body { flex:1; overflow-y:auto; padding:8px 10px; }
+.mini-task {
+  display:flex; align-items:flex-start; gap:7px;
+  padding:6px 6px; border-radius:6px; margin-bottom:2px;
+}
+.mini-task:hover { background:var(--bg-4); }
+.mini-task-check {
+  width:13px; height:13px; border-radius:3px;
+  flex-shrink:0; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:8px;
+}
+.check-done { background:var(--green); color:#fff; }
+.check-empty { border:2px solid var(--border); }
+.mini-task-text { font-size:10px; line-height:1.4; color:var(--text-2); }
+.mini-task.done .mini-task-text { text-decoration:line-through; color:var(--text-3); }
+.mini-task-prio {
+  font-size:8px; font-weight:700; padding:1px 4px; border-radius:3px;
+  margin-left:auto; flex-shrink:0;
+}
+.mini-tasks-progress {
+  padding:8px 12px; border-top:1px solid var(--border);
+}
+.prog-label {
+  display:flex; justify-content:space-between;
+  font-size:9px; color:var(--text-3); margin-bottom:4px;
+  font-family:var(--mono);
+}
+.prog-bar { height:3px; background:var(--bg-5); border-radius:2px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg, var(--accent), var(--yellow)); border-radius:2px; width:45%; }
+
+/* gradient fade at bottom of hero */
+#hero::after {
+  content:'';
+  position:absolute;
+  bottom:0; left:0; right:0;
+  height:200px;
+  background: linear-gradient(transparent, var(--bg));
+  pointer-events:none;
+}
+
+/* ══════════════════════════════════════════════
+   SECTIONS GENERAL
+══════════════════════════════════════════════ */
+section { padding: 100px 40px; }
+.container { max-width: 1100px; margin: 0 auto; }
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase; letter-spacing: 2px;
+  margin-bottom: 14px;
+  display: flex; align-items:center; gap:8px;
+}
+.section-label::before {
+  content:'';
+  width:20px; height:1px; background:var(--accent);
+}
+h2 {
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+}
+h2 em { font-style:normal; color: var(--accent); }
+.section-sub {
+  font-size: 16px; color:var(--text-2);
+  max-width: 560px;
+  margin-top: 16px;
+  line-height: 1.7;
+}
+
+/* fade-in on scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ══════════════════════════════════════════════
+   FEATURE BENTO GRID
+══════════════════════════════════════════════ */
+#features { background: var(--bg); }
+.bento {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto;
+  gap: 16px;
+  margin-top: 56px;
+}
+.bento-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+  overflow: hidden;
+  position: relative;
+}
+.bento-card:hover {
+  border-color: var(--border-hi);
+  box-shadow: 0 8px 40px rgba(0,0,0,.4);
+  transform: translateY(-2px);
+}
+.bento-card::before {
+  content:'';
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, var(--accent-dim) 0%, transparent 70%);
+  opacity:0; transition: opacity .3s;
+}
+.bento-card:hover::before { opacity:1; }
+.bento-wide { grid-column: span 2; }
+.bento-tall { grid-row: span 2; }
+.bento-icon {
+  width:44px; height:44px;
+  border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px;
+  margin-bottom:18px;
+}
+.bento-title {
+  font-size:17px; font-weight:700;
+  margin-bottom:8px; line-height:1.3;
+}
+.bento-desc {
+  font-size:13px; color:var(--text-2); line-height:1.65;
+}
+.bento-tag {
+  display:inline-block; margin-top:14px;
+  font-family:var(--mono); font-size:10px; font-weight:600;
+  color:var(--accent); background:var(--accent-dim);
+  border:1px solid rgba(249,115,22,.2);
+  border-radius:4px; padding:2px 8px; letter-spacing:.3px;
+}
+.bento-tag.premium {
+  color:var(--purple); background:var(--purple-dim);
+  border-color:rgba(188,140,255,.2);
+}
+
+/* ── Bento visual inserts ── */
+.bento-visual {
+  margin-top:20px;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  background:var(--bg-4);
+}
+
+/* timeline mini-visual */
+.tl-visual { padding:12px; }
+.tl-v-entry {
+  display:flex; gap:9px; margin-bottom:8px;
+  animation: tl-in 0.5s ease both;
+}
+.tl-v-entry:nth-child(2) { animation-delay:.15s; }
+.tl-v-entry:nth-child(3) { animation-delay:.3s; }
+.tl-v-entry:nth-child(4) { animation-delay:.45s; }
+@keyframes tl-in {
+  from { opacity:0; transform:translateX(-8px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+.tl-v-dot {
+  width:24px; height:24px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; flex-shrink:0;
+}
+.tl-v-body { flex:1; }
+.tl-v-meta {
+  display:flex; gap:6px; align-items:center; margin-bottom:3px;
+}
+.tl-v-time { font-family:var(--mono); font-size:9px; color:var(--accent); }
+.tl-v-type {
+  font-size:8px; font-weight:700; padding:1px 5px; border-radius:3px;
+  text-transform:uppercase; letter-spacing:.3px;
+}
+.tl-v-desc { font-size:10px; color:var(--text-2); line-height:1.4; }
+
+/* IOC visual */
+.ioc-visual { padding:10px; }
+.ioc-row {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 8px; border-radius:6px;
+  font-family:var(--mono); font-size:10px; margin-bottom:5px;
+  background:var(--bg-5);
+}
+.ioc-row:hover { background:var(--bg-3); }
+.ioc-type-chip {
+  font-size:9px; padding:1px 6px; border-radius:3px;
+  background:var(--bg-3); color:var(--text-2);
+  flex-shrink:0; border:1px solid var(--border);
+}
+.ioc-val { color:var(--accent); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ioc-conf { flex-shrink:0; }
+.conf-bar { width:40px; height:3px; border-radius:2px; background:var(--bg-4); overflow:hidden; }
+.conf-fill-high { height:100%; background:var(--red); width:90%; border-radius:2px; }
+.conf-fill-med  { height:100%; background:var(--yellow); width:60%; border-radius:2px; }
+
+/* report builder visual */
+.rb-visual { padding:12px; }
+.rb-block {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-radius:6px;
+  background:var(--bg-5); border:1px solid var(--border);
+  margin-bottom:6px; cursor:grab;
+  transition: background .15s, border-color .15s;
+}
+.rb-block:hover { background:var(--bg-4); border-color:var(--border-hi); }
+.rb-handle { color:var(--text-3); font-size:12px; }
+.rb-block-icon { font-size:14px; }
+.rb-block-name { font-size:11px; font-weight:600; flex:1; }
+.rb-block-config { font-size:9px; color:var(--text-3); font-family:var(--mono); }
+
+/* SP sync visual */
+.sp-visual { padding:12px; }
+.sp-flow {
+  display:flex; flex-direction:column; gap:6px;
+}
+.sp-step {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:6px;
+  background:var(--bg-5); border:1px solid var(--border);
+}
+.sp-step-icon { font-size:16px; flex-shrink:0; }
+.sp-step-text { font-size:11px; }
+.sp-step-status { margin-left:auto; font-size:10px; font-family:var(--mono); }
+.sp-arrow { text-align:center; color:var(--text-3); font-size:12px; margin:-2px 0; }
+.sp-step.done { border-color:rgba(63,185,80,.3); background:var(--green-dim); }
+.sp-step.done .sp-step-status { color:var(--green); }
+.sp-step.active { border-color:rgba(249,115,22,.3); background:var(--accent-dim); }
+.sp-step.active .sp-step-status { color:var(--accent); }
+
+/* graph visual */
+.graph-visual {
+  padding:12px; position:relative; height:160px;
+  background:var(--bg-4);
+}
+.graph-node {
+  position:absolute;
+  display:flex; align-items:center; gap:5px;
+  background:var(--bg-5); border:1px solid var(--border);
+  border-radius:6px; padding:4px 8px;
+  font-size:10px; font-weight:600;
+  transition: border-color .3s;
+}
+.graph-node.malicious { border-color:var(--red); background:var(--red-dim); }
+.graph-node.suspicious { border-color:var(--yellow); background:var(--yellow-dim); }
+.graph-node.user { border-color:var(--blue); background:var(--blue-dim); }
+.graph-svg {
+  position:absolute; inset:0; width:100%; height:100%;
+  pointer-events:none;
+}
+
+/* integration visual */
+.int-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  padding:12px;
+}
+.int-card {
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg-5); border:1px solid var(--border);
+  border-radius:8px; padding:8px 10px;
+}
+.int-card.connected { border-color:rgba(63,185,80,.3); }
+.int-logo { font-size:16px; }
+.int-info { flex:1; }
+.int-name { font-size:11px; font-weight:700; }
+.int-status { font-size:9px; font-family:var(--mono); }
+.int-status.on { color:var(--green); }
+.int-status.off { color:var(--text-3); }
+.int-toggle { width:26px; height:14px; border-radius:7px; background:var(--bg-4); position:relative; }
+.int-toggle.on { background:rgba(63,185,80,.3); }
+.int-toggle::after {
+  content:'';
+  position:absolute; width:10px; height:10px;
+  background:var(--text-3); border-radius:50%;
+  top:2px; left:2px; transition:.15s;
+}
+.int-toggle.on::after { background:var(--green); transform:translateX(12px); }
+
+/* webhook visual */
+.wh-visual { padding:12px; }
+.wh-code {
+  background:var(--bg); border-radius:8px; padding:12px;
+  font-family:var(--mono); font-size:10px; line-height:1.7;
+  border:1px solid var(--border);
+  position:relative; overflow:hidden;
+}
+.wh-method { color:var(--green); }
+.wh-path { color:var(--blue); }
+.wh-key { color:var(--yellow); }
+.wh-val { color:var(--accent); }
+.wh-str { color:var(--green); }
+.wh-line { display:block; }
+
+/* storage visual */
+.stor-visual { padding:12px; }
+.stor-options {
+  display:flex; flex-direction:column; gap:6px;
+}
+.stor-opt {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 12px; border-radius:8px;
+  background:var(--bg-5); border:1px solid var(--border);
+}
+.stor-opt.active { border-color:rgba(249,115,22,.4); background:var(--accent-dim); }
+.stor-radio {
+  width:14px; height:14px; border-radius:50%;
+  border:2px solid var(--border); flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.stor-opt.active .stor-radio {
+  border-color:var(--accent);
+  background:var(--accent);
+}
+.stor-opt.active .stor-radio::after {
+  content:''; width:5px; height:5px; background:#fff; border-radius:50%;
+}
+.stor-name { font-size:11px; font-weight:600; flex:1; }
+.stor-tag { font-size:9px; font-family:var(--mono); color:var(--text-3); }
+.stor-tag.prem { color:var(--purple); }
+
+/* ══════════════════════════════════════════════
+   HOW IT WORKS
+══════════════════════════════════════════════ */
+#how {
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.steps {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:24px; margin-top:56px;
+  position:relative;
+}
+.steps::before {
+  content:'';
+  position:absolute;
+  top:28px; left:10%; right:10%;
+  height:1px;
+  background:linear-gradient(90deg, transparent, var(--border), var(--accent), var(--border), transparent);
+}
+.step { text-align:center; position:relative; }
+.step-num {
+  width:56px; height:56px;
+  border-radius:50%;
+  background:var(--bg-4); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; margin:0 auto 20px;
+  position:relative; z-index:1;
+  transition: border-color .2s, box-shadow .2s;
+}
+.step:hover .step-num {
+  border-color:var(--accent);
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.step-title { font-size:15px; font-weight:700; margin-bottom:8px; }
+.step-desc { font-size:13px; color:var(--text-2); line-height:1.6; }
+
+/* ══════════════════════════════════════════════
+   REPORT BUILDER SHOWCASE
+══════════════════════════════════════════════ */
+#builder-showcase {
+  background: var(--bg);
+  overflow: hidden;
+}
+.builder-showcase-inner {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:64px; align-items:center;
+}
+.builder-mockup {
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,.5);
+}
+.builder-topbar {
+  background:var(--bg-3); border-bottom:1px solid var(--border);
+  padding:10px 14px;
+  display:flex; align-items:center; gap:8px;
+}
+.builder-topbar span { font-size:12px; font-weight:700; flex:1; }
+.builder-body {
+  display:flex; height:340px;
+}
+.builder-canvas {
+  flex:1; padding:14px; border-right:1px solid var(--border);
+  overflow-y:auto; background:var(--bg-3);
+}
+.builder-block {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:8px;
+  background:var(--bg-4); border:1px solid var(--border);
+  margin-bottom:7px; cursor:grab;
+  transition:all .15s;
+}
+.builder-block:hover {
+  background:var(--bg-5); border-color:var(--accent);
+  transform:translateX(2px);
+}
+.b-handle { color:var(--text-3); font-size:10px; writing-mode:vertical-lr; letter-spacing:1px; }
+.b-icon { font-size:16px; }
+.b-name { font-size:12px; font-weight:600; flex:1; }
+.b-filter { font-size:9px; color:var(--text-3); font-family:var(--mono); }
+.b-premium { font-size:9px; color:var(--purple); background:var(--purple-dim); padding:1px 5px; border-radius:3px; }
+.builder-sidebar {
+  width:160px; padding:12px; background:var(--bg-4);
+}
+.builder-sidebar h4 { font-size:10px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:.8px; margin-bottom:10px; }
+.b-available {
+  padding:7px 9px; border-radius:6px;
+  background:var(--bg-5); border:1px solid var(--border);
+  font-size:11px; margin-bottom:5px; cursor:pointer;
+  display:flex; align-items:center; gap:7px;
+  transition:all .15s;
+}
+.b-available:hover { border-color:var(--accent); background:var(--accent-dim); }
+
+/* ══════════════════════════════════════════════
+   SHAREPOINT SECTION
+══════════════════════════════════════════════ */
+#sync-section {
+  background: var(--bg-2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.sync-inner {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:64px; align-items:center;
+}
+.sync-mockup {
+  background:var(--bg-3); border:1px solid var(--border); border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,.5);
+}
+.sync-header {
+  background:var(--bg-4); border-bottom:1px solid var(--border);
+  padding:12px 16px;
+  display:flex; align-items:center; gap:10px;
+}
+.sync-header h4 { font-size:12px; font-weight:700; }
+.sync-body { padding:16px; }
+.sync-incident-row {
+  display:flex; align-items:center; gap:10px; margin-bottom:12px;
+  padding:10px 12px; background:var(--bg-4); border-radius:8px;
+  border:1px solid var(--border);
+}
+.sync-policy-card {
+  background:var(--bg-4); border:1px solid rgba(63,185,80,.3); border-radius:10px; padding:14px;
+  margin-top:12px;
+}
+.sync-policy-header {
+  display:flex; align-items:center; gap:8px; margin-bottom:10px;
+}
+.sync-policy-header h5 { font-size:12px; font-weight:700; flex:1; }
+.sync-active-dot { width:7px; height:7px; background:var(--green); border-radius:50%; animation:pulse-dot 2s infinite; }
+.sync-detail { font-size:11px; color:var(--text-2); margin-bottom:6px; display:flex; gap:6px; }
+.sync-detail strong { color:var(--text); min-width:80px; }
+.sync-status {
+  display:flex; align-items:center; gap:6px; margin-top:10px;
+  font-size:11px; font-family:var(--mono); color:var(--green);
+  padding:6px 10px; background:var(--green-dim); border-radius:6px;
+}
+.sync-timeline {
+  margin-top:12px;
+}
+.sync-tl-item {
+  display:flex; gap:8px; align-items:flex-start; margin-bottom:6px;
+  font-size:10px;
+}
+.sync-tl-time { font-family:var(--mono); color:var(--accent); min-width:44px; }
+.sync-tl-event { color:var(--text-2); }
+
+/* ══════════════════════════════════════════════
+   OPEN CORE PRICING
+══════════════════════════════════════════════ */
+#pricing {
+  background:var(--bg);
+}
+.pricing-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:24px; margin-top:56px; max-width:800px;
+}
+.pricing-card {
+  background:var(--bg-2); border:1px solid var(--border);
+  border-radius:20px; padding:36px;
+  position:relative; overflow:hidden;
+  transition:transform .2s, border-color .2s;
+}
+.pricing-card:hover { transform:translateY(-4px); }
+.pricing-card.featured {
+  border-color:var(--accent);
+  background:linear-gradient(135deg, var(--bg-2) 0%, rgba(249,115,22,.05) 100%);
+}
+.pricing-card.featured::before {
+  content:'PREMIUM';
+  position:absolute; top:16px; right:16px;
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  color:var(--accent); background:var(--accent-dim);
+  border:1px solid rgba(249,115,22,.3);
+  padding:3px 10px; border-radius:100px; letter-spacing:.5px;
+}
+.pricing-plan { font-size:13px; font-weight:700; color:var(--text-2); margin-bottom:10px; text-transform:uppercase; letter-spacing:.5px; }
+.pricing-price { font-size:40px; font-weight:800; line-height:1; margin-bottom:6px; }
+.pricing-price span { font-size:16px; color:var(--text-2); font-weight:500; }
+.pricing-desc { font-size:13px; color:var(--text-2); margin-bottom:28px; line-height:1.6; }
+.pricing-features { list-style:none; }
+.pricing-features li {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:9px 0; border-top:1px solid var(--border-subtle, #1c2333);
+  font-size:13px; color:var(--text-2);
+}
+.pricing-features li::before { content:'✓'; color:var(--green); font-weight:700; flex-shrink:0; margin-top:1px; }
+.pricing-features li.locked { color:var(--text-3); }
+.pricing-features li.locked::before { content:'🔒'; font-size:11px; }
+.pricing-cta { margin-top:28px; width:100%; text-align:center; }
+
+/* ══════════════════════════════════════════════
+   FINAL CTA
+══════════════════════════════════════════════ */
+#cta-section {
+  background:var(--bg-2); border-top:1px solid var(--border);
+  text-align:center; padding:120px 40px;
+  position:relative; overflow:hidden;
+}
+#cta-section::before {
+  content:'';
+  position:absolute; inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 50%, rgba(249,115,22,.07) 0%, transparent 70%);
+}
+.cta-title {
+  font-size:clamp(36px,5vw,64px); font-weight:800;
+  letter-spacing:-2px; line-height:1.1;
+  max-width:700px; margin:0 auto 20px;
+  position:relative;
+}
+.cta-sub {
+  font-size:16px; color:var(--text-2);
+  max-width:480px; margin:0 auto 40px;
+  line-height:1.7; position:relative;
+}
+.cta-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; position:relative; }
+
+/* ══════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════ */
+footer {
+  background:var(--bg);
+  border-top:1px solid var(--border);
+  padding:40px;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:16px;
+}
+.footer-logo { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; }
+.footer-logo-icon {
+  width:26px; height:26px; background:var(--accent); border-radius:7px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:800; color:#fff;
+}
+.footer-links { display:flex; gap:28px; }
+.footer-links a { font-size:12px; color:var(--text-3); transition:color .15s; }
+.footer-links a:hover { color:var(--text-2); }
+.footer-legal { font-size:11px; color:var(--text-3); font-family:var(--mono); }
+
+/* ══════════════════════════════════════════════
+   SCROLLING TICKER (logos / trust)
+══════════════════════════════════════════════ */
+#trust {
+  background:var(--bg-2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:24px 0; overflow:hidden;
+}
+.ticker-wrap { position:relative; }
+.ticker-wrap::before, .ticker-wrap::after {
+  content:''; position:absolute; top:0; bottom:0; width:120px; z-index:2;
+}
+.ticker-wrap::before { left:0; background:linear-gradient(90deg, var(--bg-2), transparent); }
+.ticker-wrap::after  { right:0; background:linear-gradient(-90deg, var(--bg-2), transparent); }
+.ticker {
+  display:flex; gap:40px; width:max-content;
+  animation:ticker-scroll 30s linear infinite;
+}
+.ticker-item {
+  display:flex; align-items:center; gap:10px; white-space:nowrap;
+  font-size:13px; font-weight:600; color:var(--text-3);
+  padding:6px 16px;
+}
+.ticker-item-icon { font-size:18px; }
+@keyframes ticker-scroll {
+  from { transform:translateX(0); }
+  to   { transform:translateX(-50%); }
+}
+
+/* ══════════════════════════════════════════════
+   ANIMATED TYPING
+══════════════════════════════════════════════ */
+.typewriter {
+  border-right:2px solid var(--accent);
+  animation:blink-caret .75s step-end infinite;
+  white-space:nowrap; overflow:hidden;
+}
+@keyframes blink-caret { from,to{border-color:transparent} 50%{border-color:var(--accent)} }
+
+/* ══════════════════════════════════════════════
+   ANIMATED COUNTER
+══════════════════════════════════════════════ */
+.counter-row {
+  display:flex; gap:48px; margin-top:56px; flex-wrap:wrap;
+}
+.counter-item { }
+.counter-num {
+  font-size:44px; font-weight:800; line-height:1;
+  letter-spacing:-2px; color:var(--accent);
+}
+.counter-label { font-size:13px; color:var(--text-2); margin-top:4px; }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE BASICS
+══════════════════════════════════════════════ */
+@media(max-width:900px) {
+  .bento { grid-template-columns:1fr 1fr; }
+  .bento-wide { grid-column:span 1; }
+  .steps { grid-template-columns:1fr 1fr; }
+  .steps::before { display:none; }
+  .builder-showcase-inner, .sync-inner { grid-template-columns:1fr; }
+  .pricing-grid { grid-template-columns:1fr; }
+  .app-body { height:280px; }
+  .mini-tasks { display:none; }
+}
+@media(max-width:600px) {
+  nav { padding:0 16px; }
+  .nav-links { display:none; }
+  section { padding:60px 20px; }
+  .bento { grid-template-columns:1fr; }
+  .steps { grid-template-columns:1fr; }
+  #hero { padding:100px 20px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav id="navbar">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">IR</div>
+    IRDoc
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#builder-showcase">Report Builder</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#">Docs</a>
+  </div>
+  <div class="nav-actions">
+    <a href="#" class="btn btn-ghost">Sign in</a>
+    <a href="#" class="btn btn-accent">Get early access</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Now in development — join the early access list
+  </div>
+
+  <h1 class="hero-title">
+    Document incidents the way you<br>
+    <em>actually investigate them</em>
+  </h1>
+
+  <p class="hero-sub">
+    IRDoc is a self-hosted, open-core incident response workspace built for SOC teams. Timeline-first, AI-assisted, with one-click reports and live SharePoint sync — so management is always informed.
+  </p>
+
+  <div class="hero-cta">
+    <a href="#" class="btn btn-accent btn-lg">⚡ Get early access</a>
+    <a href="#features" class="btn btn-ghost btn-lg">See all features →</a>
+  </div>
+
+  <div class="hero-social-proof">
+    <span>🐳 Docker deploy in &lt;3 min</span>
+    <span class="sep"></span>
+    <span>🔒 Self-hosted, your data</span>
+    <span class="sep"></span>
+    <span><strong>AGPL-3.0</strong> open core</span>
+    <span class="sep"></span>
+    <span>🤖 AI-assisted (optional)</span>
+  </div>
+
+  <!-- APP MOCKUP -->
+  <div class="hero-app">
+    <div class="hero-app-frame">
+      <div class="app-titlebar">
+        <div class="app-dot"></div>
+        <div class="app-dot"></div>
+        <div class="app-dot"></div>
+        <div class="app-url">irpdoc.company.com/incidents/INC-2026-0315</div>
+      </div>
+      <div class="app-body">
+        <!-- Left nav -->
+        <div class="mini-nav">
+          <div class="mini-nav-logo">IR</div>
+          <div class="mini-nav-btn active" title="Timeline">📋</div>
+          <div class="mini-nav-btn" title="IOCs">🎯</div>
+          <div class="mini-nav-btn" title="Summary">📊</div>
+          <div class="mini-nav-btn" title="Reports">📄</div>
+          <div class="mini-nav-btn" title="Integrations">🔌</div>
+          <div class="mini-nav-spacer"></div>
+          <div class="mini-nav-btn" title="Settings">⚙️</div>
+        </div>
+        <!-- Main content -->
+        <div class="mini-content">
+          <div class="mini-topbar">
+            <span class="mini-badge badge-red">🔴 SEV-1</span>
+            <span class="mini-title">Phishing Campaign — Finance Team</span>
+            <span class="mini-badge badge-blue" style="font-size:9px">SDP-2026-4421 ↗</span>
+            <span class="mini-meta">INC-2026-0315</span>
+          </div>
+          <div class="mini-scroll">
+            <!-- Timeline entries -->
+            <div class="tl-mock" id="tl-entry-1">
+              <div class="tl-mock-dot" style="background:var(--red-dim);border:2px solid var(--red)">🔴</div>
+              <div class="tl-mock-card">
+                <div class="tl-mock-meta">
+                  <span class="tl-mock-time">09:12 UTC</span>
+                  <span class="mini-badge badge-red" style="font-size:8px">Detection</span>
+                  <span style="font-size:9px;color:var(--text-3)">J. Doe</span>
+                </div>
+                <div class="tl-mock-desc">Suspicious email reported by finance.user@company.com — sender: phishing@support-secure-verify.ru. Contains link to credential harvester.</div>
+              </div>
+            </div>
+            <div class="tl-mock" id="tl-entry-2">
+              <div class="tl-mock-dot" style="background:var(--blue-dim);border:2px solid var(--blue)">🔵</div>
+              <div class="tl-mock-card">
+                <div class="tl-mock-meta">
+                  <span class="tl-mock-time">09:38 UTC</span>
+                  <span class="mini-badge badge-blue" style="font-size:8px">Analysis</span>
+                  <span style="font-size:9px;color:var(--text-3)">J. Doe</span>
+                </div>
+                <div class="tl-mock-desc">7 users received the email. 3 confirmed click-through. IOCs extracted: domain, IP, phishing URL, sender email. VT: 47/64 malicious.</div>
+              </div>
+            </div>
+            <div class="tl-mock" id="tl-entry-3">
+              <div class="tl-mock-dot" style="background:var(--yellow-dim);border:2px solid var(--yellow)">🟡</div>
+              <div class="tl-mock-card">
+                <div class="tl-mock-meta">
+                  <span class="tl-mock-time">10:15 UTC</span>
+                  <span class="mini-badge badge-yellow" style="font-size:8px">Containment</span>
+                  <span style="font-size:9px;color:var(--text-3)">J. Smith</span>
+                </div>
+                <div class="tl-mock-desc">Blocked domain at DNS. Revoked Entra sessions for 3 compromised accounts. Password resets initiated via Azure AD integration.</div>
+              </div>
+            </div>
+            <div class="tl-mock" id="tl-entry-4" style="opacity:.6">
+              <div class="tl-mock-dot" style="background:var(--green-dim);border:2px solid var(--green)">🟢</div>
+              <div class="tl-mock-card">
+                <div class="tl-mock-meta">
+                  <span class="tl-mock-time">11:00 UTC</span>
+                  <span class="mini-badge badge-green" style="font-size:8px">Comms</span>
+                </div>
+                <div class="tl-mock-desc">Affected users notified. Company-wide phishing awareness alert sent. Notifying legal re: PII exposure.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right tasks panel -->
+        <div class="mini-tasks">
+          <div class="mini-tasks-header">
+            📋 Phishing Tasks
+            <span style="font-size:8px;padding:1px 5px;border-radius:3px;background:var(--blue-dim);color:var(--blue);font-family:var(--mono)">TPL</span>
+          </div>
+          <div class="mini-tasks-body">
+            <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:6px 4px 4px">1 — Triage</div>
+            <div class="mini-task done"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Validate phishing report</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+            <div class="mini-task done"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Assign severity, open ticket</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+            <div class="mini-task done"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Notify SOC lead</div><span class="mini-task-prio" style="background:var(--yellow-dim);color:var(--yellow)">HIGH</span></div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:8px 4px 4px">2 — Analysis</div>
+            <div class="mini-task done"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Extract email headers</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+            <div class="mini-task done"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Identify all IOCs</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+            <div class="mini-task"><div class="mini-task-check check-empty"></div><div class="mini-task-text">Check VT / AbuseIPDB</div><span class="mini-task-prio" style="background:var(--yellow-dim);color:var(--yellow)">HIGH</span></div>
+            <div class="mini-task"><div class="mini-task-check check-empty"></div><div class="mini-task-text">Find all affected users</div><span class="mini-task-prio" style="background:var(--yellow-dim);color:var(--yellow)">HIGH</span></div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin:8px 4px 4px">3 — Containment</div>
+            <div class="mini-task done"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Block domain at DNS</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+            <div class="mini-task"><div class="mini-task-check check-empty"></div><div class="mini-task-text">Reset passwords</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+          </div>
+          <div class="mini-tasks-progress">
+            <div class="prog-label"><span>Progress</span><span>5 / 14</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:35%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ TRUST TICKER ═══════════════ -->
+<div id="trust">
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker">
+      <div class="ticker-item"><span class="ticker-item-icon">🔷</span> Microsoft Sentinel</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🦅</span> CrowdStrike Falcon</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🔍</span> VirusTotal</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🔑</span> Azure AD / Entra</div>
+      <div class="ticker-item"><span class="ticker-item-icon">💬</span> Slack / Teams</div>
+      <div class="ticker-item"><span class="ticker-item-icon">📧</span> Proofpoint / Defender</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🎫</span> ServiceDesk Plus</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🔧</span> ManageEngine</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🟠</span> Jira / ServiceNow</div>
+      <div class="ticker-item"><span class="ticker-item-icon">📤</span> SharePoint</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🕵️</span> Shodan</div>
+      <div class="ticker-item"><span class="ticker-item-icon">☁️</span> AWS S3 / Azure Blob / GCS</div>
+      <!-- duplicate for seamless loop -->
+      <div class="ticker-item"><span class="ticker-item-icon">🔷</span> Microsoft Sentinel</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🦅</span> CrowdStrike Falcon</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🔍</span> VirusTotal</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🔑</span> Azure AD / Entra</div>
+      <div class="ticker-item"><span class="ticker-item-icon">💬</span> Slack / Teams</div>
+      <div class="ticker-item"><span class="ticker-item-icon">📧</span> Proofpoint / Defender</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🎫</span> ServiceDesk Plus</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🔧</span> ManageEngine</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🟠</span> Jira / ServiceNow</div>
+      <div class="ticker-item"><span class="ticker-item-icon">📤</span> SharePoint</div>
+      <div class="ticker-item"><span class="ticker-item-icon">🕵️</span> Shodan</div>
+      <div class="ticker-item"><span class="ticker-item-icon">☁️</span> AWS S3 / Azure Blob / GCS</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FEATURES BENTO ═══════════════ -->
+<section id="features">
+  <div class="container">
+    <p class="section-label reveal">Core Platform</p>
+    <h2 class="reveal">Everything your SOC team needs.<br><em>Nothing they don't.</em></h2>
+    <p class="section-sub reveal">From the first alert to the final report — all in one workspace. Timeline-first, built for speed under pressure.</p>
+
+    <div class="bento">
+
+      <!-- Timeline — wide card -->
+      <div class="bento-card bento-wide reveal" style="--delay:.1s">
+        <div class="bento-icon" style="background:var(--red-dim)">🕐</div>
+        <div class="bento-title">Timeline-First Investigation</div>
+        <div class="bento-desc">The timeline is the central element. Add entries by choosing type, date (auto-set to now), time, and description. Drag-and-drop to reorder. Attach evidence or paste screenshots directly. Filter by event type, export to CSV. Auto-detects IOCs in your entry text.</div>
+        <div class="bento-visual">
+          <div class="tl-visual">
+            <div class="tl-v-entry">
+              <div class="tl-v-dot" style="background:var(--red-dim);border:1.5px solid var(--red)">🔴</div>
+              <div class="tl-v-body">
+                <div class="tl-v-meta"><span class="tl-v-time">09:12</span><span class="tl-v-type badge-red">Detection</span></div>
+                <div class="tl-v-desc">Phishing email reported — finance.user@company.com</div>
+              </div>
+            </div>
+            <div class="tl-v-entry">
+              <div class="tl-v-dot" style="background:var(--blue-dim);border:1.5px solid var(--blue)">🔵</div>
+              <div class="tl-v-body">
+                <div class="tl-v-meta"><span class="tl-v-time">09:38</span><span class="tl-v-type badge-blue">Analysis</span></div>
+                <div class="tl-v-desc">7 affected users. VT score: 47/64 malicious. IOCs extracted.</div>
+              </div>
+            </div>
+            <div class="tl-v-entry">
+              <div class="tl-v-dot" style="background:var(--yellow-dim);border:1.5px solid var(--yellow)">🟡</div>
+              <div class="tl-v-body">
+                <div class="tl-v-meta"><span class="tl-v-time">10:15</span><span class="tl-v-type badge-yellow">Containment</span></div>
+                <div class="tl-v-desc">Domain blocked. Entra sessions revoked. Password resets initiated.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IOC Management -->
+      <div class="bento-card reveal" style="--delay:.2s">
+        <div class="bento-icon" style="background:var(--accent-dim)">🎯</div>
+        <div class="bento-title">IOC Management & Auto-Enrichment</div>
+        <div class="bento-desc">Paste a block of text and IOCs are auto-detected. VirusTotal + AbuseIPDB enrichment fires automatically on add.</div>
+        <div class="bento-visual">
+          <div class="ioc-visual">
+            <div class="ioc-row">
+              <span class="ioc-type-chip">📧 Email</span>
+              <span class="ioc-val">phishing@support-secure-verify.ru</span>
+              <span class="ioc-conf"><div class="conf-bar"><div class="conf-fill-high"></div></div></span>
+            </div>
+            <div class="ioc-row">
+              <span class="ioc-type-chip">🌐 Domain</span>
+              <span class="ioc-val">support-secure-verify.ru</span>
+              <span class="ioc-conf"><div class="conf-bar"><div class="conf-fill-high"></div></div></span>
+            </div>
+            <div class="ioc-row">
+              <span class="ioc-type-chip">🔢 IP</span>
+              <span class="ioc-val">185.220.101.47</span>
+              <span class="ioc-conf"><div class="conf-bar"><div class="conf-fill-med"></div></div></span>
+            </div>
+          </div>
+        </div>
+        <span class="bento-tag">VT + AbuseIPDB + Shodan</span>
+      </div>
+
+      <!-- Tasks panel -->
+      <div class="bento-card reveal" style="--delay:.3s">
+        <div class="bento-icon" style="background:var(--green-dim)">✅</div>
+        <div class="bento-title">Always-Visible Task Panel</div>
+        <div class="bento-desc">Response tasks are loaded from the incident template the moment a case is created — always visible on the right side. Never lose track of what needs to happen next.</div>
+        <div class="bento-visual" style="padding:10px">
+          <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding:0 4px">Phishing Tasks — 5/14</div>
+          <div class="mini-task done" style="margin-bottom:3px"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Validate phishing report</div></div>
+          <div class="mini-task done" style="margin-bottom:3px"><div class="mini-task-check check-done">✓</div><div class="mini-task-text">Block phishing domain at DNS</div></div>
+          <div class="mini-task" style="margin-bottom:3px"><div class="mini-task-check check-empty"></div><div class="mini-task-text">Reset passwords for 3 accounts</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+          <div class="mini-task"><div class="mini-task-check check-empty"></div><div class="mini-task-text">Revoke active Entra sessions</div><span class="mini-task-prio" style="background:var(--red-dim);color:var(--red)">CRIT</span></div>
+          <div class="prog-bar" style="margin-top:10px;height:4px"><div class="prog-fill" style="width:35%"></div></div>
+        </div>
+      </div>
+
+      <!-- Integrations -->
+      <div class="bento-card bento-wide reveal" style="--delay:.15s">
+        <div class="bento-icon" style="background:var(--blue-dim)">🔌</div>
+        <div class="bento-title">Security Tool Integrations</div>
+        <div class="bento-desc">Pull alerts from Sentinel and CrowdStrike directly into the timeline. Revoke Entra sessions, reset passwords, and contain hosts — without leaving the IR workspace. Each integration is a plugin — adding new ones never touches core code.</div>
+        <div class="bento-visual">
+          <div class="int-grid">
+            <div class="int-card connected"><span class="int-logo">🔷</span><div class="int-info"><div class="int-name">Sentinel</div><div class="int-status on">● Connected</div></div><div class="int-toggle on"></div></div>
+            <div class="int-card connected"><span class="int-logo">🦅</span><div class="int-info"><div class="int-name">CrowdStrike</div><div class="int-status on">● Connected</div></div><div class="int-toggle on"></div></div>
+            <div class="int-card connected"><span class="int-logo">🔑</span><div class="int-info"><div class="int-name">Azure AD</div><div class="int-status on">● Connected</div></div><div class="int-toggle on"></div></div>
+            <div class="int-card"><span class="int-logo">📧</span><div class="int-info"><div class="int-name">Proofpoint</div><div class="int-status off">○ Not connected</div></div><div class="int-toggle"></div></div>
+          </div>
+        </div>
+        <span class="bento-tag premium">Premium integrations</span>
+      </div>
+
+      <!-- Inbound webhook -->
+      <div class="bento-card reveal" style="--delay:.25s">
+        <div class="bento-icon" style="background:var(--yellow-dim)">🎫</div>
+        <div class="bento-title">Service Desk Integration</div>
+        <div class="bento-desc">Open a case in IRDoc directly from SDP, ManageEngine, Jira, or ServiceNow via a simple HTTP POST. One reference number flows everywhere.</div>
+        <div class="bento-visual">
+          <div class="wh-visual">
+            <div class="wh-code">
+              <span class="wh-line"><span class="wh-method">POST</span> <span class="wh-path">/api/v1/external/incidents</span></span>
+              <span class="wh-line">&nbsp;</span>
+              <span class="wh-line">{</span>
+              <span class="wh-line">&nbsp; <span class="wh-key">"external_ref"</span>: <span class="wh-str">"SDP-2026-4421"</span>,</span>
+              <span class="wh-line">&nbsp; <span class="wh-key">"external_source"</span>: <span class="wh-str">"servicedesk_plus"</span>,</span>
+              <span class="wh-line">&nbsp; <span class="wh-key">"template"</span>: <span class="wh-str">"phishing"</span>,</span>
+              <span class="wh-line">&nbsp; <span class="wh-key">"severity"</span>: <span class="wh-str">"sev1"</span></span>
+              <span class="wh-line">}</span>
+            </div>
+          </div>
+        </div>
+        <span class="bento-tag">Free core feature</span>
+      </div>
+
+      <!-- Investigation Graph -->
+      <div class="bento-card reveal" style="--delay:.35s">
+        <div class="bento-icon" style="background:var(--purple-dim)">🕸️</div>
+        <div class="bento-title">Investigation Graph</div>
+        <div class="bento-desc">Visual entity map linking users, hosts, IPs, domains, alerts, and evidence. Understand attack paths at a glance. Export as SVG.</div>
+        <div class="bento-visual">
+          <div class="graph-visual">
+            <svg class="graph-svg" xmlns="http://www.w3.org/2000/svg">
+              <line x1="78" y1="40" x2="160" y2="80" stroke="#2a3344" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <line x1="160" y1="80" x2="240" y2="45" stroke="#2a3344" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <line x1="160" y1="80" x2="180" y2="135" stroke="#2a3344" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <line x1="78" y1="40" x2="60" y2="110" stroke="#2a3344" stroke-width="1.5" stroke-dasharray="4,3"/>
+            </svg>
+            <div class="graph-node malicious" style="top:12px;left:26px">🌐 domain</div>
+            <div class="graph-node malicious" style="top:12px;left:180px">📧 email</div>
+            <div class="graph-node suspicious" style="top:58px;left:118px">🔢 IP</div>
+            <div class="graph-node user" style="top:115px;left:140px">👤 user</div>
+            <div class="graph-node" style="top:90px;left:14px">💻 host</div>
+          </div>
+        </div>
+        <span class="bento-tag">React Flow powered</span>
+      </div>
+
+      <!-- Storage backends -->
+      <div class="bento-card reveal" style="--delay:.3s">
+        <div class="bento-icon" style="background:var(--blue-dim)">💾</div>
+        <div class="bento-title">Pluggable Storage Backends</div>
+        <div class="bento-desc">Evidence files stored securely with SHA-256 hashes in the database — independent of storage location. Switch backends without losing forensic integrity.</div>
+        <div class="bento-visual">
+          <div class="stor-visual">
+            <div class="stor-options">
+              <div class="stor-opt active">
+                <div class="stor-radio"></div>
+                <span class="stor-name">🐳 Local / Docker Volume</span>
+                <span class="stor-tag">Free</span>
+              </div>
+              <div class="stor-opt">
+                <div class="stor-radio"></div>
+                <span class="stor-name">☁️ Amazon S3 / MinIO / R2</span>
+                <span class="stor-tag prem">Premium</span>
+              </div>
+              <div class="stor-opt">
+                <div class="stor-radio"></div>
+                <span class="stor-name">🔷 Azure Blob Storage</span>
+                <span class="stor-tag prem">Premium</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="bento-tag premium">Cloud storage = Premium</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ HOW IT WORKS ═══════════════ -->
+<section id="how">
+  <div class="container">
+    <p class="section-label reveal">Workflow</p>
+    <h2 class="reveal">From first alert to final report,<br><em>without the chaos.</em></h2>
+    <p class="section-sub reveal">IRDoc gives every analyst the same structured, repeatable workflow — whether it's a first-year analyst or a senior IR engineer.</p>
+
+    <div class="steps">
+      <div class="step reveal" style="--delay:.1s">
+        <div class="step-num">🎫</div>
+        <div class="step-title">Case opens automatically</div>
+        <div class="step-desc">SDP, ManageEngine, or Jira pushes the ticket to IRDoc via one API call. Task checklist loads instantly from the incident template.</div>
+      </div>
+      <div class="step reveal" style="--delay:.2s">
+        <div class="step-num">📋</div>
+        <div class="step-title">Document as you investigate</div>
+        <div class="step-desc">Add timeline entries, paste screenshots, auto-detect IOCs in your notes. Real-time sync means your whole team sees updates as they happen.</div>
+      </div>
+      <div class="step reveal" style="--delay:.3s">
+        <div class="step-num">🎯</div>
+        <div class="step-title">IOCs enrich automatically</div>
+        <div class="step-desc">Every indicator is checked against VirusTotal and AbuseIPDB the moment it's added. Confidence scores recalculate. AI writes the plain-English narrative.</div>
+      </div>
+      <div class="step reveal" style="--delay:.4s">
+        <div class="step-num">📤</div>
+        <div class="step-title">Management is always informed</div>
+        <div class="step-desc">SharePoint auto-sync regenerates the management brief 60 seconds after every change. They open a link — no reports to request, no stale documents.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ REPORT BUILDER SHOWCASE ═══════════════ -->
+<section id="builder-showcase">
+  <div class="container">
+    <div class="builder-showcase-inner">
+      <div class="reveal">
+        <p class="section-label">Report Builder</p>
+        <h2>Build reports<br><em>for every audience</em></h2>
+        <p class="section-sub">Reports are not fixed templates. You compose them from field blocks — drag and drop the sections you want, in the order you want. Save as a named destination template. Management gets executive language; analysts get full technical depth; legal gets the compliance structure.</p>
+        <div style="margin-top:28px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="color:var(--accent);font-size:18px;flex-shrink:0">📊</span>
+            <div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:3px">Management Brief</div>
+              <div style="font-size:13px;color:var(--text-2)">Executive summary, stat row, active IOCs, containment actions, AI recommendations.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="color:var(--blue);font-size:18px;flex-shrink:0">🔬</span>
+            <div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:3px">Technical Report</div>
+              <div style="font-size:13px;color:var(--text-2)">Full timeline, all IOCs with enrichment, evidence register, complete task checklist.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="color:var(--purple);font-size:18px;flex-shrink:0">⚖️</span>
+            <div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:3px">Legal / Compliance</div>
+              <div style="font-size:13px;color:var(--text-2)">Root cause, detection timeline, affected data, regulatory obligations, preventive actions.</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:28px;display:flex;gap:8px">
+          <span class="bento-tag">PDF / DOCX / Markdown</span>
+          <span class="bento-tag premium">AI-enhanced = Premium</span>
+        </div>
+      </div>
+
+      <div class="reveal builder-mockup">
+        <div class="builder-topbar">
+          <div class="app-dot"></div><div class="app-dot"></div><div class="app-dot"></div>
+          <span>Report Template Builder — Management Brief</span>
+          <a href="#" class="btn btn-accent btn-sm" style="font-size:10px;padding:3px 10px">Preview</a>
+        </div>
+        <div class="builder-body">
+          <div class="builder-canvas">
+            <div class="builder-block">
+              <span class="b-handle">⋮⋮</span>
+              <span class="b-icon">📄</span>
+              <span class="b-name">Cover Page</span>
+              <span class="b-filter">title, ref, severity</span>
+            </div>
+            <div class="builder-block">
+              <span class="b-handle">⋮⋮</span>
+              <span class="b-icon">📊</span>
+              <span class="b-name">Stat Row</span>
+              <span class="b-filter">severity · duration · users</span>
+            </div>
+            <div class="builder-block">
+              <span class="b-handle">⋮⋮</span>
+              <span class="b-icon">📝</span>
+              <span class="b-name">Executive Summary</span>
+              <span class="b-filter">incident.executive_summary</span>
+            </div>
+            <div class="builder-block" style="border-color:rgba(188,140,255,.4);background:var(--purple-dim)">
+              <span class="b-handle">⋮⋮</span>
+              <span class="b-icon">🤖</span>
+              <span class="b-name">AI Narrative</span>
+              <span class="b-premium">PREMIUM</span>
+            </div>
+            <div class="builder-block">
+              <span class="b-handle">⋮⋮</span>
+              <span class="b-icon">🎯</span>
+              <span class="b-name">IOC Table</span>
+              <span class="b-filter">filter: active</span>
+            </div>
+            <div class="builder-block">
+              <span class="b-handle">⋮⋮</span>
+              <span class="b-icon">🕐</span>
+              <span class="b-name">Timeline</span>
+              <span class="b-filter">filter: containment</span>
+            </div>
+            <div class="builder-block">
+              <span class="b-handle">⋮⋮</span>
+              <span class="b-icon">✅</span>
+              <span class="b-name">Task List</span>
+              <span class="b-filter">phase 3 only</span>
+            </div>
+          </div>
+          <div class="builder-sidebar">
+            <h4>Add Block</h4>
+            <div class="b-available">📋 <span>Text Block</span></div>
+            <div class="b-available">📎 <span>Evidence Reg.</span></div>
+            <div class="b-available">H <span>Header</span></div>
+            <div class="b-available">── <span>Divider</span></div>
+            <div class="b-available">↵ <span>Page Break</span></div>
+            <div class="b-available" style="border-color:rgba(188,140,255,.3);color:var(--purple)">🤖 <span>AI Block</span></div>
+            <div style="margin-top:14px">
+              <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Destinations</div>
+              <div style="font-size:10px;display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;align-items:center;gap:6px;color:var(--text-2)"><span>📊</span>Management</div>
+                <div style="display:flex;align-items:center;gap:6px;color:var(--text-2)"><span>🔬</span>Analyst</div>
+                <div style="display:flex;align-items:center;gap:6px;color:var(--text-2)"><span>⚖️</span>Legal</div>
+                <div style="display:flex;align-items:center;gap:6px;color:var(--accent)"><span>+</span>Custom</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SHAREPOINT SYNC ═══════════════ -->
+<section id="sync-section">
+  <div class="container">
+    <div class="sync-inner">
+      <div class="reveal sync-mockup">
+        <div class="sync-header">
+          <span style="font-size:16px">📤</span>
+          <h4>SharePoint Auto-Sync — INC-2026-0315</h4>
+        </div>
+        <div class="sync-body">
+          <div class="sync-incident-row">
+            <span class="mini-badge badge-red">SEV-1</span>
+            <span style="font-size:12px;font-weight:700">Phishing — Finance Team</span>
+            <span style="font-size:10px;font-family:var(--mono);color:var(--text-3);margin-left:auto">INC-2026-0315</span>
+          </div>
+          <div class="sync-policy-card">
+            <div class="sync-policy-header">
+              <span class="sync-active-dot"></span>
+              <h5>SharePoint Sync — Active</h5>
+            </div>
+            <div class="sync-detail"><strong>Template:</strong> Management Brief</div>
+            <div class="sync-detail"><strong>Trigger:</strong> On every change (60s debounce)</div>
+            <div class="sync-detail"><strong>Destination:</strong> /sites/SOC/IR Reports/</div>
+            <div class="sync-detail"><strong>Filename:</strong> INC-2026-0315 - Phishing.pdf</div>
+            <div class="sync-status">✓ Last synced 2 minutes ago — document updated</div>
+          </div>
+          <div class="sync-timeline">
+            <div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Recent Sync Events</div>
+            <div class="sync-tl-item"><span class="sync-tl-time">11:32</span><span class="sync-tl-event">✓ New timeline entry added → sync queued</span></div>
+            <div class="sync-tl-item"><span class="sync-tl-time">11:33</span><span class="sync-tl-event">📤 Report rendered → uploaded to SharePoint</span></div>
+            <div class="sync-tl-item"><span class="sync-tl-time">11:15</span><span class="sync-tl-event">✓ Task completed → sync queued</span></div>
+            <div class="sync-tl-item"><span class="sync-tl-time">11:16</span><span class="sync-tl-event">📤 Document updated → management notified</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <p class="section-label">SharePoint Auto-Sync</p>
+        <h2>Management is always<br><em>up to date</em></h2>
+        <p class="section-sub">Every time the incident is updated — new timeline entry, task ticked, IOC added — the management document on SharePoint regenerates automatically. No manual report generation. No stale documents. Management opens a link.</p>
+        <div style="margin-top:32px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--bg-3);border-radius:10px;border:1px solid var(--border)">
+            <span style="font-size:22px;flex-shrink:0">⏱</span>
+            <div>
+              <div style="font-weight:700;margin-bottom:4px">60-second debounce</div>
+              <div style="font-size:13px;color:var(--text-2)">Rapid changes don't fire multiple uploads. IRDoc waits 60 seconds of silence after the last change, then renders and uploads once.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--bg-3);border-radius:10px;border:1px solid var(--border)">
+            <span style="font-size:22px;flex-shrink:0">🎨</span>
+            <div>
+              <div style="font-weight:700;margin-bottom:4px">Uses your Management template</div>
+              <div style="font-size:13px;color:var(--text-2)">The sync uses whichever report template you assign — customised for non-technical readers. No technical jargon in the management brief.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:14px;background:var(--bg-3);border-radius:10px;border:1px solid var(--border)">
+            <span style="font-size:22px;flex-shrink:0">🔐</span>
+            <div>
+              <div style="font-weight:700;margin-bottom:4px">They never need IRDoc access</div>
+              <div style="font-size:13px;color:var(--text-2)">Management reads a SharePoint document — the same tool they already use. No new logins, no complex UI, no training required.</div>
+            </div>
+          </div>
+        </div>
+        <span class="bento-tag premium" style="display:inline-block;margin-top:16px">Premium feature</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ PRICING ═══════════════ -->
+<section id="pricing">
+  <div class="container">
+    <p class="section-label reveal">Open Core</p>
+    <h2 class="reveal">Free to self-host.<br><em>Premium when you need it.</em></h2>
+    <p class="section-sub reveal">The core incident workspace is fully open-source under AGPL-3.0. Premium features are unlocked with a license key — no SaaS lock-in, everything runs on your own infrastructure.</p>
+
+    <div class="pricing-grid">
+      <div class="pricing-card reveal">
+        <div class="pricing-plan">Core — Open Source</div>
+        <div class="pricing-price">Free <span>forever</span></div>
+        <p class="pricing-desc">Everything a SOC team needs to document, investigate, and track incidents. Self-host on Docker in minutes.</p>
+        <ul class="pricing-features">
+          <li>Timeline with attachments & paste screenshots</li>
+          <li>IOC management + VT enrichment</li>
+          <li>Response task templates (phishing, malware, etc.)</li>
+          <li>Basic report export (Markdown + HTML)</li>
+          <li>Inbound webhook API (SDP, Jira, ManageEngine)</li>
+          <li>Slack / Teams notifications</li>
+          <li>Local file storage</li>
+          <li>Real-time collaboration (WebSocket)</li>
+          <li>REST API + OpenAPI docs</li>
+          <li class="locked">AI summaries and recommendations</li>
+          <li class="locked">PDF / DOCX export</li>
+          <li class="locked">Visual report template builder</li>
+          <li class="locked">SharePoint auto-sync</li>
+          <li class="locked">Cloud storage (S3, Azure, GCS)</li>
+        </ul>
+        <div class="pricing-cta">
+          <a href="#" class="btn btn-ghost" style="width:100%;justify-content:center">View on GitHub</a>
+        </div>
+      </div>
+
+      <div class="pricing-card featured reveal" style="--delay:.1s">
+        <div class="pricing-plan">Premium</div>
+        <div class="pricing-price">Contact <span>us</span></div>
+        <p class="pricing-desc">All Core features plus the integrations, reporting, and AI capabilities that enterprise SOC teams need.</p>
+        <ul class="pricing-features">
+          <li>Everything in Core</li>
+          <li>🤖 AI executive summaries (Anthropic / OpenAI / Ollama)</li>
+          <li>📊 Visual report template builder</li>
+          <li>📄 PDF + DOCX export</li>
+          <li>📤 SharePoint / OneDrive auto-sync</li>
+          <li>💾 S3, Azure Blob, GCS storage</li>
+          <li>🔷 Microsoft Sentinel integration</li>
+          <li>🦅 CrowdStrike Falcon integration</li>
+          <li>🔑 Azure AD — revoke, reset, sign-in logs</li>
+          <li>📧 Proofpoint / Defender for Email</li>
+          <li>🔐 SSO / SAML 2.0 (Okta, Azure AD)</li>
+          <li>📋 Full audit log</li>
+          <li>🏢 Multi-tenancy + MSSP mode</li>
+          <li>🎨 Custom branding</li>
+        </ul>
+        <div class="pricing-cta">
+          <a href="#" class="btn btn-accent" style="width:100%;justify-content:center">Get early access →</a>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;padding:20px 28px;background:var(--bg-2);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:16px;max-width:800px" class="reveal">
+      <span style="font-size:24px">🐳</span>
+      <div>
+        <div style="font-weight:700;margin-bottom:3px">Deploy in under 3 minutes</div>
+        <code style="font-family:var(--mono);font-size:12px;color:var(--text-2)">git clone github.com/irpdoc/irpdoc && cp .env.example .env && docker compose up</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ FINAL CTA ═══════════════ -->
+<section id="cta-section">
+  <div class="hero-orb" style="width:500px;height:300px;background:radial-gradient(ellipse, rgba(249,115,22,.15) 0%, transparent 70%);top:0;left:50%;transform:translateX(-50%);animation:none;filter:blur(60px);position:absolute;pointer-events:none"></div>
+  <h2 class="cta-title">Stop writing incident reports by hand.</h2>
+  <p class="cta-sub">IRDoc is built by IR engineers, for IR engineers. Timeline-first, built for speed, open-source at its core.</p>
+  <div class="cta-btns">
+    <a href="#" class="btn btn-accent btn-lg">⚡ Join the early access list</a>
+    <a href="#" class="btn btn-ghost btn-lg">Read the docs</a>
+  </div>
+  <p style="margin-top:20px;font-size:12px;color:var(--text-3);position:relative">Self-hosted · AGPL-3.0 core · No vendor lock-in</p>
+</section>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <div class="footer-logo">
+    <div class="footer-logo-icon">IR</div>
+    IRDoc
+  </div>
+  <div class="footer-links">
+    <a href="#">Features</a>
+    <a href="#">Docs</a>
+    <a href="#">GitHub</a>
+    <a href="#">Changelog</a>
+    <a href="#">License</a>
+    <a href="#">Contact</a>
+  </div>
+  <div class="footer-legal">AGPL-3.0 · Built for SOC teams · © 2026 IRDoc</div>
+</footer>
+
+<script>
+/* ══ NAV SCROLL ══ */
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+/* ══ SCROLL REVEAL ══ */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      const delay = entry.target.style.getPropertyValue('--delay') || '0s';
+      entry.target.style.transitionDelay = delay;
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* ══ TIMELINE ANIMATION ══ */
+function animateTimeline() {
+  const entries = ['tl-entry-1','tl-entry-2','tl-entry-3','tl-entry-4'];
+  let i = 0;
+  entries.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.opacity = '0'; el.style.transform = 'translateX(-12px)'; }
+  });
+  const next = () => {
+    if (i >= entries.length) {
+      setTimeout(() => { i=0; animateTimeline(); }, 4000);
+      return;
+    }
+    const el = document.getElementById(entries[i]);
+    if (el) {
+      el.style.transition = 'opacity .4s ease, transform .4s ease';
+      el.style.opacity = i === 3 ? '0.6' : '1';
+      el.style.transform = 'translateX(0)';
+    }
+    i++;
+    setTimeout(next, 600);
+  };
+  next();
+}
+setTimeout(animateTimeline, 1200);
+
+/* ══ BUILDER BLOCK HOVER ANIMATION ══ */
+document.querySelectorAll('.builder-block').forEach(block => {
+  block.addEventListener('mouseenter', () => {
+    block.style.transform = 'translateX(4px)';
+  });
+  block.addEventListener('mouseleave', () => {
+    block.style.transform = 'translateX(0)';
+  });
+});
+
+/* ══ SYNC STATUS PULSE ══ */
+(function syncPulse() {
+  const statusEl = document.querySelector('.sync-status');
+  const times = ['2 minutes ago', 'just now', '45 seconds ago', '1 minute ago'];
+  let t = 0;
+  setInterval(() => {
+    t = (t + 1) % times.length;
+    if (statusEl) statusEl.textContent = `✓ Last synced ${times[t]} — document updated`;
+  }, 4000);
+})();
+
+/* ══ TASK PANEL INTERACTIVE ══ */
+document.querySelectorAll('.mini-task').forEach(task => {
+  task.addEventListener('click', () => {
+    const wasDone = task.classList.contains('done');
+    task.classList.toggle('done');
+    const check = task.querySelector('.mini-task-check');
+    if (check) {
+      if (!wasDone) {
+        check.className = 'mini-task-check check-done';
+        check.textContent = '✓';
+      } else {
+        check.className = 'mini-task-check check-empty';
+        check.textContent = '';
+      }
+    }
+    // update progress
+    const all = document.querySelectorAll('.mini-task').length;
+    const done = document.querySelectorAll('.mini-task.done').length;
+    const pct = Math.round(done/all*100);
+    const fill = document.querySelector('.prog-fill');
+    if (fill) fill.style.width = pct + '%';
+  });
+});
+
+/* ══ INT TOGGLE INTERACTIVE ══ */
+document.querySelectorAll('.int-toggle').forEach(toggle => {
+  toggle.addEventListener('click', () => {
+    toggle.classList.toggle('on');
+    const card = toggle.closest('.int-card');
+    if (card) {
+      const status = card.querySelector('.int-status');
+      if (toggle.classList.contains('on')) {
+        card.classList.add('connected');
+        if (status) { status.classList.add('on'); status.classList.remove('off'); status.textContent = '● Connected'; }
+      } else {
+        card.classList.remove('connected');
+        if (status) { status.classList.remove('on'); status.classList.add('off'); status.textContent = '○ Not connected'; }
+      }
+    }
+  });
+});
+
+/* ══ STOR OPT INTERACTIVE ══ */
+document.querySelectorAll('.stor-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.stor-opt').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+  });
+});
+
+/* ══ GRAPH NODE ANIMATION ══ */
+(function graphAnim() {
+  const nodes = document.querySelectorAll('.graph-node');
+  let t = 0;
+  setInterval(() => {
+    nodes.forEach(n => n.style.boxShadow = '');
+    const active = nodes[t % nodes.length];
+    if (active) active.style.boxShadow = '0 0 12px rgba(249,115,22,.5)';
+    t++;
+  }, 1200);
+})();
+
+/* ══ SMOOTH ANCHOR ══ */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({behavior:'smooth'}); }
+  });
+});
+</script>
+</body>
+</html>

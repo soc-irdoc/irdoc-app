@@ -1,0 +1,41 @@
+{% set label = block.get('label', 'Response Tasks') %}
+{% set filter_val = block.get('filter', 'all') %}
+{% set show_completed = block.get('show_completed', true) %}
+
+{% if filter_val and filter_val.startswith('phase=') %}
+  {% set phase_key = filter_val[6:] %}
+  {% set tasks = p.tasks_by_phase.get(phase_key, []) %}
+{% else %}
+  {% set tasks = p.tasks %}
+{% endif %}
+
+{% if not show_completed %}
+  {% set tasks = tasks | selectattr('status', '!=', 'done') | list %}
+{% endif %}
+
+<div class="block">
+  <h2>{{ label }}</h2>
+  {% if not tasks %}
+    <p><em>No tasks for this filter.</em></p>
+  {% else %}
+    {% set current_phase = namespace(v='') %}
+    {% for task in tasks %}
+      {% if task.phase and task.phase != current_phase.v %}
+        {% set current_phase.v = task.phase %}
+        <div class="task-phase-label">{{ task.phase }}</div>
+      {% endif %}
+      <div class="task-item">
+        <div class="task-check {{ 'done' if task.status == 'done' else '' }}">
+          {{ '✓' if task.status == 'done' else '' }}
+        </div>
+        <span class="task-title {{ 'done' if task.status == 'done' else '' }}">{{ task.title }}</span>
+        {% if task.priority and task.priority != 'medium' %}
+          <span style="font-size:8.5pt; color:#64748b; margin-left:auto;">[{{ task.priority }}]</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <div style="font-size:9.5pt; color:#64748b; margin-top:10px;">
+      {{ tasks | selectattr('status', '==', 'done') | list | length }} / {{ tasks | length }} completed ({{ p.task_completion_pct }}%)
+    </div>
+  {% endif %}
+</div>

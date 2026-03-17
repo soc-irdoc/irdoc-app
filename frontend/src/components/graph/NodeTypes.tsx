@@ -1,0 +1,149 @@
+/**
+ * Custom React Flow node types for the investigation graph.
+ * All node types share the same base layout — only icon and color differ.
+ */
+import { Handle, Position, type NodeProps } from '@xyflow/react'
+import type { GraphNodeData } from '@/types/graph'
+import { NODE_TYPE_ICONS, IOC_STATUS_COLORS } from '@/types/graph'
+
+const ENTRY_TYPE_COLORS: Record<string, string> = {
+  detection:   'var(--red)',
+  containment: 'var(--yellow)',
+  evidence:    '#8b5cf6',
+  analysis:    'var(--accent)',
+  comms:       '#06b6d4',
+  note:        'var(--text-muted)',
+}
+
+// ── Base Node Layout ──────────────────────────────────────────────────────────
+
+function BaseNode({
+  icon,
+  label,
+  color,
+  subtitle,
+  badge,
+  selected,
+}: {
+  icon: string
+  label: string
+  color: string
+  subtitle?: string
+  badge?: string
+  selected?: boolean
+}) {
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: `2px solid ${selected ? 'var(--accent)' : color}`,
+        borderRadius: 10,
+        padding: '10px 14px',
+        minWidth: 140,
+        maxWidth: 200,
+        boxShadow: selected ? `0 0 0 3px var(--accent-dim)` : '0 2px 8px rgba(0,0,0,0.4)',
+        cursor: 'pointer',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ background: color }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              fontFamily: 'JetBrains Mono, monospace',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {label}
+          </p>
+          {subtitle && (
+            <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{subtitle}</p>
+          )}
+        </div>
+        {badge && (
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              padding: '1px 4px',
+              borderRadius: 4,
+              background: color,
+              color: '#fff',
+              flexShrink: 0,
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+
+      <Handle type="source" position={Position.Bottom} style={{ background: color }} />
+    </div>
+  )
+}
+
+// ── IOC Node Types ────────────────────────────────────────────────────────────
+
+function IOCNodeBase({ data, selected, nodeType }: NodeProps & { nodeType: string }) {
+  const d = data as unknown as GraphNodeData
+  const icon = NODE_TYPE_ICONS[nodeType] ?? '?'
+  const color = IOC_STATUS_COLORS[d.status ?? 'active'] ?? '#ef4444'
+  const badge = d.confidence !== undefined ? `${d.confidence}%` : undefined
+
+  return <BaseNode icon={icon} label={d.label} color={color} subtitle={d.status} badge={badge} selected={selected} />
+}
+
+export function IOCIPNode(props: NodeProps) { return <IOCNodeBase {...props} nodeType="ioc_ip" /> }
+export function IOCDomainNode(props: NodeProps) { return <IOCNodeBase {...props} nodeType="ioc_domain" /> }
+export function IOCEmailNode(props: NodeProps) { return <IOCNodeBase {...props} nodeType="ioc_email" /> }
+export function IOCURLNode(props: NodeProps) { return <IOCNodeBase {...props} nodeType="ioc_url" /> }
+export function IOCHashNode(props: NodeProps) { return <IOCNodeBase {...props} nodeType="ioc_hash" /> }
+export function IOCFileNode(props: NodeProps) { return <IOCNodeBase {...props} nodeType="ioc_file" /> }
+export function IOCUsernameNode(props: NodeProps) { return <IOCNodeBase {...props} nodeType="ioc_username" /> }
+
+// ── Event Node ────────────────────────────────────────────────────────────────
+
+export function EventNode({ data, selected }: NodeProps) {
+  const d = data as unknown as GraphNodeData
+  const color = ENTRY_TYPE_COLORS[d.entry_type ?? ''] ?? 'var(--text-muted)'
+  const icon = d.is_pinned ? '📌' : NODE_TYPE_ICONS['event']
+  const subtitle = d.entry_type ? `[${d.entry_type}]` : undefined
+  return <BaseNode icon={icon} label={d.label} color={color} subtitle={subtitle} selected={selected} />
+}
+
+// ── Evidence Node ─────────────────────────────────────────────────────────────
+
+export function EvidenceNode({ data, selected }: NodeProps) {
+  const d = data as unknown as GraphNodeData
+  return (
+    <BaseNode
+      icon={NODE_TYPE_ICONS['evidence']}
+      label={d.label}
+      color="#8b5cf6"
+      subtitle={d.sha256 ? `SHA256: ${d.sha256}` : undefined}
+      selected={selected}
+    />
+  )
+}
+
+// ── Node type map for React Flow ──────────────────────────────────────────────
+
+export const NODE_TYPES = {
+  ioc_ip:       IOCIPNode,
+  ioc_domain:   IOCDomainNode,
+  ioc_email:    IOCEmailNode,
+  ioc_url:      IOCURLNode,
+  ioc_hash:     IOCHashNode,
+  ioc_file:     IOCFileNode,
+  ioc_username: IOCUsernameNode,
+  event:        EventNode,
+  evidence:     EvidenceNode,
+}

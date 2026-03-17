@@ -1,0 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── THEME TOKENS ─────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --bg-base:       #0a0c10;
+  --bg-surface:    #10141c;
+  --bg-elevated:   #161b26;
+  --bg-card:       #1c2333;
+  --border:        #2a3344;
+  --border-subtle: #1f2937;
+  --text-primary:  #e6edf3;
+  --text-secondary:#8b949e;
+  --text-muted:    #484f58;
+  --accent:        #f97316;
+  --accent-dim:    rgba(249,115,22,0.12);
+  --accent-glow:   rgba(249,115,22,0.25);
+  --green:         #3fb950;
+  --green-dim:     rgba(63,185,80,0.12);
+  --red:           #f85149;
+  --red-dim:       rgba(248,81,73,0.12);
+  --yellow:        #e3b341;
+  --yellow-dim:    rgba(227,179,65,0.12);
+  --blue:          #58a6ff;
+  --blue-dim:      rgba(88,166,255,0.12);
+  --purple:        #bc8cff;
+  --purple-dim:    rgba(188,140,255,0.12);
+  --scrollbar:     #2a3344;
+  --shadow:        0 4px 24px rgba(0,0,0,0.4);
+}
+
+:root[data-theme="light"] {
+  --bg-base:       #f4f6f9;
+  --bg-surface:    #ffffff;
+  --bg-elevated:   #f0f2f5;
+  --bg-card:       #ffffff;
+  --border:        #d0d7de;
+  --border-subtle: #e8ecf0;
+  --text-primary:  #1c2333;
+  --text-secondary:#57606a;
+  --text-muted:    #9ea7b3;
+  --accent:        #e8590c;
+  --accent-dim:    rgba(232,89,12,0.08);
+  --accent-glow:   rgba(232,89,12,0.2);
+  --green:         #1a7f37;
+  --green-dim:     rgba(26,127,55,0.1);
+  --red:           #cf222e;
+  --red-dim:       rgba(207,34,46,0.1);
+  --yellow:        #9a6700;
+  --yellow-dim:    rgba(154,103,0,0.1);
+  --blue:          #0969da;
+  --blue-dim:      rgba(9,105,218,0.1);
+  --purple:        #8250df;
+  --purple-dim:    rgba(130,80,223,0.1);
+  --scrollbar:     #d0d7de;
+  --shadow:        0 4px 24px rgba(0,0,0,0.08);
+}
+
+/* ── BASE RESET ────────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  height: 100%;
+  font-size: 14px;
+  transition: background 0.25s, color 0.25s;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── SCROLLBAR ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 3px;
+}
+
+/* ── FORM INPUTS ───────────────────────────────────────── */
+.form-input {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.6;
+}
+
+/* ── BUTTONS ───────────────────────────────────────────── */
+.btn {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 14px;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-accent:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--red);
+  color: #fff;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+/* ── ICON BUTTON ───────────────────────────────────────── */
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.icon-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* ── CHIP / BADGE ──────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.chip-blue {
+  background: var(--blue-dim);
+  color: var(--blue);
+  border-color: var(--blue);
+  text-decoration: none;
+}
+
+.chip-blue:hover {
+  filter: brightness(1.2);
+}
+
+.chip-red {
+  background: var(--red-dim);
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.chip-green {
+  background: var(--green-dim);
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.chip-yellow {
+  background: var(--yellow-dim);
+  color: var(--yellow);
+  border-color: var(--yellow);
+}
+
+.chip-purple {
+  background: var(--purple-dim);
+  color: var(--purple);
+  border-color: var(--purple);
+}
+
+.chip-muted {
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+/* ── SLIDE-IN ANIMATION ────────────────────────────────── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease;
+}
+
+/* ── FADE IN ───────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── SELECT ARROW ──────────────────────────────────────── */
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap::after {
+  content: '▾';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  font-size: 11px;
+}
+
+select.form-input {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 28px;
+}

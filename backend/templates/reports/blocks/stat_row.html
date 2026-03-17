@@ -1,0 +1,21 @@
+{% set stat_map = {
+  'severity': (p.severity_label, 'Severity'),
+  'status': (p.status_label, 'Status'),
+  'duration': (p.duration_str, 'Duration'),
+  'affected_users': (p.incident.affected_users | string, 'Affected Users'),
+  'ioc_count': (p.ioc_count | string, 'IOCs'),
+  'entry_count': (p.entry_count | string, 'Timeline Events'),
+  'opened_at': (p.incident.opened_at | format_dt, 'Opened'),
+  'contained_at': (p.contained_at_str or '—', 'Contained'),
+  'closed_at': (p.closed_at_str or '—', 'Closed'),
+} %}
+<div class="block stat-row">
+  {% for stat in block.get('stats', ['severity', 'status', 'duration', 'affected_users']) %}
+  {% if stat in stat_map %}
+  <div class="stat-card">
+    <div class="stat-label">{{ stat_map[stat][1] }}</div>
+    <div class="stat-value">{{ stat_map[stat][0] }}</div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>

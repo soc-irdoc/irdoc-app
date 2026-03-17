@@ -1,0 +1,22 @@
+{% set label = block.get('label', 'Tags') %}
+{% set field_path = block.get('field', '') %}
+{% set value = namespace(v=none) %}
+
+{% if field_path == 'incident.attack_vector' %}
+  {% set value.v = p.incident.attack_vector %}
+{% elif field_path == 'incident.external_refs' %}
+  {% set value.v = p.external_refs | map(attribute='external_ref') | list %}
+{% endif %}
+
+<div class="block">
+  <h2>{{ label }}</h2>
+  {% if value.v %}
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+      {% for tag in value.v %}
+      <span style="background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; padding:3px 10px; font-size:10pt; color:#334155;">{{ tag }}</span>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p><em>No tags.</em></p>
+  {% endif %}
+</div>

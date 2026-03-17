@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ incident.title }} — {{ incident.incident_ref }}</title>
+<style>
+  /* ── Reset + Base ──────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: #1a1a2e;
+    background: #ffffff;
+    padding: 0;
+  }
+
+  /* ── Page layout ───────────────────────────────────────── */
+  .page-wrapper { max-width: 860px; margin: 0 auto; padding: 40px 48px; }
+
+  /* ── Classification banner ─────────────────────────────── */
+  .classification-banner {
+    background: #1a1a2e;
+    color: #f97316;
+    text-align: center;
+    font-weight: 700;
+    font-size: 10pt;
+    letter-spacing: 0.15em;
+    padding: 6px 0;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+  }
+  .content-offset { margin-top: 32px; }
+
+  /* ── Typography ────────────────────────────────────────── */
+  h1 { font-size: 22pt; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  h2 { font-size: 14pt; font-weight: 700; color: #1e293b; margin: 28px 0 10px; border-bottom: 2px solid #f97316; padding-bottom: 4px; }
+  h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 16px 0 6px; }
+  p { margin-bottom: 10px; }
+
+  /* ── Report footer ──────────────────────────────────────── */
+  .report-footer {
+    margin-top: 40px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 9pt;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── Blocks ─────────────────────────────────────────────── */
+  .block { margin-bottom: 24px; }
+  .block-error { color: #dc2626; font-style: italic; font-size: 10pt; }
+
+  /* ── Cover ───────────────────────────────────────────────── */
+  .cover-block { text-align: center; padding: 60px 0 40px; }
+  .cover-block .incident-ref { font-size: 12pt; color: #64748b; margin-bottom: 6px; }
+  .cover-block h1 { font-size: 26pt; }
+  .cover-block .cover-meta { margin-top: 32px; display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+  .cover-block .meta-item { text-align: center; }
+  .cover-block .meta-label { font-size: 9pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; }
+  .cover-block .meta-value { font-size: 11pt; font-weight: 600; color: #1e293b; margin-top: 2px; }
+  .cover-watermark { font-size: 10pt; font-weight: 700; letter-spacing: 0.2em; color: #dc2626; margin-top: 40px; }
+
+  /* ── Stat Row ────────────────────────────────────────────── */
+  .stat-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .stat-card { flex: 1; min-width: 120px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; }
+  .stat-card .stat-label { font-size: 9pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-card .stat-value { font-size: 15pt; font-weight: 700; color: #0f172a; margin-top: 4px; }
+
+  /* ── Tables ──────────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 16px; }
+  th { background: #1e293b; color: #f8fafc; text-align: left; padding: 8px 12px; font-weight: 600; font-size: 9.5pt; }
+  td { padding: 7px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  /* ── Timeline ────────────────────────────────────────────── */
+  .timeline-entry { padding: 10px 0 10px 16px; border-left: 3px solid #e2e8f0; margin-bottom: 8px; position: relative; }
+  .timeline-entry::before { content: ''; position: absolute; left: -5px; top: 14px; width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; }
+  .timeline-entry.type-detection::before { background: #f97316; }
+  .timeline-entry.type-containment::before { background: #22c55e; }
+  .timeline-entry.type-analysis::before { background: #3b82f6; }
+  .timeline-entry.type-evidence::before { background: #8b5cf6; }
+  .timeline-entry.type-comms::before { background: #06b6d4; }
+  .timeline-entry.type-note::before { background: #94a3b8; }
+  .timeline-entry .entry-header { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
+  .entry-badge { font-size: 8.5pt; font-weight: 600; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
+  .badge-detection { background: #fff7ed; color: #ea580c; }
+  .badge-containment { background: #f0fdf4; color: #16a34a; }
+  .badge-analysis { background: #eff6ff; color: #2563eb; }
+  .badge-evidence { background: #f5f3ff; color: #7c3aed; }
+  .badge-comms { background: #ecfeff; color: #0891b2; }
+  .badge-note { background: #f8fafc; color: #64748b; }
+  .entry-time { font-size: 9pt; color: #64748b; }
+  .entry-desc { font-size: 10.5pt; color: #1e293b; }
+
+  /* ── IOC status chips ────────────────────────────────────── */
+  .ioc-status { font-size: 8.5pt; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .ioc-active { background: #fef2f2; color: #dc2626; }
+  .ioc-blocked { background: #fef3c7; color: #d97706; }
+  .ioc-remediated { background: #f0fdf4; color: #16a34a; }
+  .ioc-fp { background: #f8fafc; color: #64748b; }
+
+  /* ── Task list ───────────────────────────────────────────── */
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+  .task-check { width: 16px; height: 16px; border: 2px solid #94a3b8; border-radius: 3px; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; }
+  .task-check.done { background: #22c55e; border-color: #22c55e; color: white; font-size: 10px; }
+  .task-title { font-size: 10.5pt; }
+  .task-title.done { text-decoration: line-through; color: #94a3b8; }
+  .task-phase-label { font-size: 9pt; font-weight: 700; text-transform: uppercase; color: #475569; letter-spacing: 0.06em; margin: 14px 0 6px; }
+
+  /* ── Divider ──────────────────────────────────────────────── */
+  .report-divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+
+  /* ── Text block ───────────────────────────────────────────── */
+  .text-block-content { background: #f8fafc; border-left: 4px solid #f97316; padding: 14px 18px; border-radius: 0 6px 6px 0; font-size: 10.5pt; line-height: 1.65; }
+
+  /* ── Evidence register ────────────────────────────────────── */
+  .sha-mono { font-family: 'Courier New', monospace; font-size: 8.5pt; color: #475569; }
+
+  /* ── Print ────────────────────────────────────────────────── */
+  @media print {
+    .classification-banner { position: static; }
+    .content-offset { margin-top: 0; }
+    h2 { page-break-after: avoid; }
+    .timeline-entry, .task-item { page-break-inside: avoid; }
+    .page-break { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+<div class="classification-banner">{{ classification | upper }}</div>
+<div class="page-wrapper content-offset">
+  {% for block_html in blocks %}
+  {{ block_html | safe }}
+  {% endfor %}
+  <div class="report-footer">
+    <span>{{ classification | upper }} — {{ incident.incident_ref }}</span>
+    <span>Generated {{ generated_at | format_dt }} by {{ analyst.full_name }}</span>
+  </div>
+</div>
+</body>
+</html>

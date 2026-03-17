@@ -1,0 +1,40 @@
+{% set label = block.get('label', 'Section') %}
+{% set field_path = block.get('field', '') %}
+{% set value = namespace(v=none) %}
+{# Resolve the field path against the payload #}
+{% if field_path == 'incident.executive_summary' %}
+  {% set value.v = p.incident.executive_summary %}
+{% elif field_path == 'incident.attack_vector' %}
+  {% set value.v = p.incident.attack_vector %}
+{% elif field_path == 'incident.metadata.notes' %}
+  {% set value.v = p.incident.metadata_.get('notes', '') if p.incident.metadata_ else '' %}
+{% elif field_path == 'incident.metadata.root_cause' %}
+  {% set value.v = p.incident.metadata_.get('root_cause', '') if p.incident.metadata_ else '' %}
+{% elif field_path == 'incident.metadata.affected_data' %}
+  {% set value.v = p.incident.metadata_.get('affected_data', '') if p.incident.metadata_ else '' %}
+{% elif field_path == 'incident.metadata.regulatory_notes' %}
+  {% set value.v = p.incident.metadata_.get('regulatory_notes', '') if p.incident.metadata_ else '' %}
+{% elif field_path == 'incident.metadata.preventive_actions' %}
+  {% set value.v = p.incident.metadata_.get('preventive_actions', '') if p.incident.metadata_ else '' %}
+{% elif field_path == 'ai.executive_summary' %}
+  {% set value.v = p.ai_executive_summary %}
+{% elif field_path == 'ai.recommendations' %}
+  {% set value.v = p.ai_recommendations %}
+{% endif %}
+
+<div class="block">
+  <h2>{{ label }}</h2>
+  {% if value.v is iterable and value.v is not string %}
+    {% if value.v %}
+      <ul>{% for item in value.v %}<li>{{ item }}</li>{% endfor %}</ul>
+    {% else %}
+      <p><em>No data available.</em></p>
+    {% endif %}
+  {% else %}
+    {% if value.v %}
+      <p>{{ value.v }}</p>
+    {% else %}
+      <p><em>No data available.</em></p>
+    {% endif %}
+  {% endif %}
+</div>
