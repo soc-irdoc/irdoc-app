@@ -18,13 +18,13 @@ router = APIRouter(tags=["templates"])
 
 # ─── Incident Templates ─────────────────────────────────────────────────────────
 
-@router.get("/templates/incident", response_model=list[IncidentTemplateOut])
+@router.get("/templates/incident")
 async def list_incident_templates(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("templates.read")),
 ):
     templates = await template_service.list_incident_templates(db, str(current_user.org_id))
-    return [IncidentTemplateOut.model_validate(t) for t in templates]
+    return {"data": [IncidentTemplateOut.model_validate(t) for t in templates], "error": None}
 
 
 @router.post("/templates/incident", status_code=201)
@@ -61,13 +61,13 @@ async def delete_incident_template(
 
 # ─── Report Templates ───────────────────────────────────────────────────────────
 
-@router.get("/templates/report", response_model=list[ReportTemplateOut])
+@router.get("/templates/report")
 async def list_report_templates(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("templates.read")),
 ):
     templates = await template_service.list_report_templates(db, str(current_user.org_id))
-    return [ReportTemplateOut.model_validate(t) for t in templates]
+    return {"data": [ReportTemplateOut.model_validate(t) for t in templates], "error": None}
 
 
 @router.post("/templates/report", status_code=201)
