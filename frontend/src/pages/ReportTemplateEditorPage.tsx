@@ -10,6 +10,7 @@ import ReportTemplateBuilder from '@/components/reports/ReportTemplateBuilder'
 import { Modal } from '@/components/common/Modal'
 import {
   useReportTemplate,
+  useCreateReportTemplate,
   useUpdateReportTemplate,
 } from '@/hooks/useReportTemplates'
 import { ReportBlock, DESTINATION_OPTIONS } from '@/types/report'
@@ -31,6 +32,7 @@ export default function ReportTemplateEditorPage() {
 
   const isNew = templateId === 'new'
   const { data: remote, isLoading } = useReportTemplate(isNew ? null : templateId ?? null)
+  const createTemplate = useCreateReportTemplate()
   const updateTemplate = useUpdateReportTemplate(templateId ?? '')
 
   const [name, setName] = useState('')
@@ -56,15 +58,23 @@ export default function ReportTemplateEditorPage() {
   }
 
   const handleSave = async () => {
-    if (isNew) return  // new templates are created via the list page first
     setSaving(true)
     try {
-      await updateTemplate.mutateAsync({
-        name,
-        destination,
-        schema_json: stripIds(blocks),
-      })
-      setDirty(false)
+      if (isNew) {
+        const created = await createTemplate.mutateAsync({
+          name,
+          destination,
+          schema_json: stripIds(blocks),
+        })
+        navigate(`/report-templates/${created.id}`, { replace: true })
+      } else {
+        await updateTemplate.mutateAsync({
+          name,
+          destination,
+          schema_json: stripIds(blocks),
+        })
+        setDirty(false)
+      }
     } finally {
       setSaving(false)
     }
@@ -131,7 +141,7 @@ export default function ReportTemplateEditorPage() {
           <button
             className="btn btn-accent btn-sm"
             onClick={handleSave}
-            disabled={saving || isNew || !dirty}
+            disabled={saving || !name.trim() || (!isNew && !dirty)}
           >
             {saving ? 'Saving…' : 'Save Template'}
           </button>
