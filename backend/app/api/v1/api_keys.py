@@ -9,13 +9,13 @@ from app.services import api_key_service
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 
 
-@router.get("", response_model=list[APIKeyOut])
+@router.get("")
 async def list_api_keys(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("api_keys.manage")),
 ):
     keys = await api_key_service.list_keys(db, str(current_user.org_id))
-    return [APIKeyOut.model_validate(k) for k in keys]
+    return {"data": [APIKeyOut.model_validate(k) for k in keys], "error": None}
 
 
 @router.post("", response_model=APIKeyCreated, status_code=201)

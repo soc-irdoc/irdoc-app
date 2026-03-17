@@ -9,7 +9,7 @@ from app.services import incident_service, task_service
 router = APIRouter(tags=["tasks"])
 
 
-@router.get("/incidents/{incident_id}/tasks", response_model=list[TaskOut])
+@router.get("/incidents/{incident_id}/tasks")
 async def list_tasks(
     incident_id: str,
     db: AsyncSession = Depends(get_db),
@@ -17,7 +17,7 @@ async def list_tasks(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     tasks = await task_service.list_tasks(db, incident_id)
-    return [TaskOut.model_validate(t) for t in tasks]
+    return {"data": [TaskOut.model_validate(t) for t in tasks], "error": None}
 
 
 @router.post("/incidents/{incident_id}/tasks", status_code=201)

@@ -2,11 +2,16 @@
 {% set filter_val = block.get('filter', 'all') %}
 {% set columns = block.get('columns', ['type', 'value', 'status']) %}
 
-{% if filter_val == 'all' or not filter_val %}
+{% if not filter_val or filter_val == 'all' %}
   {% set iocs = p.iocs %}
+{% elif filter_val is mapping %}
+  {% if filter_val.get('status') %}
+    {% set iocs = p.iocs_by_status.get(filter_val.status, []) %}
+  {% else %}
+    {% set iocs = p.iocs %}
+  {% endif %}
 {% elif filter_val.startswith('status=') %}
-  {% set status_key = filter_val[7:] %}
-  {% set iocs = p.iocs_by_status.get(status_key, []) %}
+  {% set iocs = p.iocs_by_status.get(filter_val[7:], []) %}
 {% else %}
   {% set iocs = p.iocs %}
 {% endif %}

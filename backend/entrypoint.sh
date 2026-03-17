@@ -30,12 +30,16 @@ alembic upgrade head
 echo "Running seed script..."
 python seed.py
 
-# Start the application
-echo "Starting uvicorn..."
-exec uvicorn app.main:application \
-    --host 0.0.0.0 \
-    --port 8000 \
-    --workers 2 \
-    --loop uvloop \
-    --access-log \
-    --log-level info
+# Start the application — if a command was passed (worker/beat), run it; otherwise start uvicorn
+if [ $# -gt 0 ]; then
+    exec "$@"
+else
+    echo "Starting uvicorn..."
+    exec uvicorn app.main:application \
+        --host 0.0.0.0 \
+        --port 8000 \
+        --workers 2 \
+        --loop uvloop \
+        --access-log \
+        --log-level info
+fi

@@ -9,7 +9,7 @@ from app.services import incident_service, ioc_service
 router = APIRouter(tags=["iocs"])
 
 
-@router.get("/incidents/{incident_id}/iocs", response_model=list[IOCOut])
+@router.get("/incidents/{incident_id}/iocs")
 async def list_iocs(
     incident_id: str,
     db: AsyncSession = Depends(get_db),
@@ -17,7 +17,7 @@ async def list_iocs(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     iocs = await ioc_service.list_iocs(db, incident_id)
-    return [IOCOut.model_validate(i) for i in iocs]
+    return {"data": [IOCOut.model_validate(i) for i in iocs], "error": None}
 
 
 @router.post("/incidents/{incident_id}/iocs", status_code=201)
