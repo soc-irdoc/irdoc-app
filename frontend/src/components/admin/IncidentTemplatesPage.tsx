@@ -248,6 +248,12 @@ function TemplateEditorPanel({ template, onSave, onClose, saving }: EditorProps)
     setTasks((prev) => prev.filter((t) => t.id !== id))
   }
 
+  function renamePhase(oldName: string, newName: string) {
+    const trimmed = newName.trim()
+    if (!trimmed || trimmed === oldName) return
+    setTasks((prev) => prev.map((t) => t.phase === oldName ? { ...t, phase: trimmed } : t))
+  }
+
   function handleDragEnd(event: DragEndEvent, phase: string) {
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -379,7 +385,25 @@ function TemplateEditorPanel({ template, onSave, onClose, saving }: EditorProps)
                   justifyContent: 'space-between',
                 }}
               >
-                <span>{phase.replace(/-/g, ' ')}</span>
+                <input
+                  type="text"
+                  defaultValue={phase}
+                  onBlur={(e) => renamePhase(phase, e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'var(--text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    width: 'auto',
+                    minWidth: 80,
+                    cursor: 'text',
+                  }}
+                />
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
