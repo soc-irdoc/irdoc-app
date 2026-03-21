@@ -484,47 +484,68 @@ export function IOCPage({ incidentId }: IOCPageProps) {
             borderRadius: 12,
             padding: 16,
             marginBottom: 20,
-            display: 'flex',
-            gap: 10,
-            alignItems: 'flex-end',
-            flexWrap: 'wrap',
           }}
         >
-          <div className="select-wrap" style={{ minWidth: 110 }}>
-            <select
-              className="form-input"
-              value={newType}
-              onChange={(e) => setNewType(e.target.value as IOCType)}
-              style={{ fontFamily: 'Syne, sans-serif' }}
-            >
-              {IOC_TYPES.map((t) => (
-                <option key={t} value={t}>{IOC_TYPE_ICONS[t]} {t}</option>
-              ))}
-            </select>
-          </div>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="IOC value — paste multi-line text to auto-detect..."
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            onPaste={handleValuePaste}
-            style={{ flex: 1, minWidth: 200 }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <label style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Conf:</label>
+          {/* Row 1: type + value */}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 10 }}>
+            <div className="select-wrap" style={{ minWidth: 110 }}>
+              <select
+                className="form-input"
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as IOCType)}
+                style={{ fontFamily: 'Syne, sans-serif' }}
+              >
+                {IOC_TYPES.map((t) => (
+                  <option key={t} value={t}>{IOC_TYPE_ICONS[t]} {t}</option>
+                ))}
+              </select>
+            </div>
             <input
-              type="number"
+              type="text"
               className="form-input"
-              min={0} max={100}
-              value={newConfidence}
-              onChange={(e) => setNewConfidence(Number(e.target.value))}
-              style={{ width: 60 }}
+              placeholder="IOC value — paste multi-line text to auto-detect..."
+              value={newValue}
+              onChange={(e) => setNewValue(e.target.value)}
+              onPaste={handleValuePaste}
+              style={{ flex: 1, minWidth: 200 }}
             />
           </div>
-          <Button type="submit" variant="accent" size="sm" loading={createIOC.isPending}>
-            + Add IOC
-          </Button>
+          {/* Row 2: confidence + submit */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}>
+                Confidence (0–100)
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="range"
+                  min={0} max={100} step={5}
+                  value={newConfidence}
+                  onChange={(e) => setNewConfidence(Number(e.target.value))}
+                  style={{ width: 140, accentColor: 'var(--accent)' }}
+                />
+                <span style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: newConfidence >= 70 ? 'var(--green)' : newConfidence >= 40 ? 'var(--yellow)' : 'var(--red)',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  minWidth: 36,
+                }}>
+                  {newConfidence}%
+                </span>
+              </div>
+            </div>
+            <div style={{ flex: 1 }} />
+            <Button type="submit" variant="accent" size="sm" loading={createIOC.isPending}>
+              + Add IOC
+            </Button>
+          </div>
         </form>
 
         {/* IOC Table */}

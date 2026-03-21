@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useIncident, useUpdateIncident, useIncidentStats } from '@/hooks/useIncident'
+import { useIncident, useUpdateIncident } from '@/hooks/useIncident'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { Button } from '@/components/common/Button'
 import { useUIStore } from '@/stores/uiStore'
@@ -55,7 +55,6 @@ function StatCard({
 export function SummaryPage({ incidentId }: SummaryPageProps) {
   const addToast = useUIStore((s) => s.addToast)
   const { data: incident, isLoading } = useIncident(incidentId)
-  const { data: stats } = useIncidentStats(incidentId)
   const updateIncident = useUpdateIncident(incidentId)
 
   const [editing, setEditing] = useState(false)
@@ -85,11 +84,6 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
   }
   if (!incident) return null
 
-  const taskPct =
-    (stats?.task_total ?? 0) > 0
-      ? Math.round(((stats?.task_done ?? 0) / (stats?.task_total ?? 1)) * 100)
-      : 0
-
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
       <h2
@@ -106,7 +100,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
         📊 Incident Summary
       </h2>
 
-      {/* Stat cards */}
+      {/* Severity + Status */}
       <div
         style={{
           display: 'grid',
@@ -117,14 +111,6 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
       >
         <StatCard title="Severity" value={SEVERITY_LABELS[incident.severity]} color="var(--red)" />
         <StatCard title="Status" value={STATUS_LABELS[incident.status]} color="var(--accent)" />
-        <StatCard title="Timeline" value={stats?.timeline_count ?? '—'} color="var(--blue)" />
-        <StatCard title="IOCs" value={stats?.ioc_count ?? '—'} color="var(--red)" />
-        <StatCard
-          title="Tasks"
-          value={`${taskPct}%`}
-          color={taskPct === 100 ? 'var(--green)' : 'var(--yellow)'}
-        />
-        <StatCard title="Affected Users" value={incident.affected_users} color="var(--purple)" />
       </div>
 
       {/* Incident details */}

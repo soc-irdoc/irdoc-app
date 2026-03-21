@@ -12,9 +12,8 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: '⚡', label: 'Incidents',    path: '/incidents' },
-  { icon: '🔗', label: 'Integrations', path: '/integrations' },
-  { icon: '⚙',  label: 'Settings',    path: '/settings' },
+  { icon: '⚡', label: 'Incidents', path: '/incidents' },
+  { icon: '⚙',  label: 'Settings', path: '/settings' },
 ]
 
 function NavButton({

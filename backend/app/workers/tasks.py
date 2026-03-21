@@ -92,7 +92,7 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
-def generate_report(self, report_id: str, include_ai: bool = False):
+def generate_report(self, report_id: str, include_ai: bool = False, docx_template_id: str | None = None):
     """
     Full report generation pipeline.
     1. Load Report + template + incident payload
@@ -175,9 +175,36 @@ def generate_report(self, report_id: str, include_ai: bool = False):
                             sys_p, usr_p = build_recommendations_prompt(payload)
                             payload.ai_recommendations = await provider.complete(sys_p, usr_p, 600)
 
-                # Render
-                renderer = ReportRenderer()
-                file_bytes = renderer.render(template.schema_json, payload, report.format)
+                # Render — custom DOCX template path or block-based path
+                if report.format == "docx" and docx_template_id:
+                    from app.services.docx_template_service import (
+                        get_template_bytes,
+                        render_with_template,
+                    )
+                    from app.models.docx_template import DocxTemplate
+
+                    dt_result = await db.execute(
+                        select(DocxTemplate).where(DocxTemplate.id == docx_template_id)
+                    )
+                    docx_tmpl = dt_result.scalar_one_or_none()
+                    if docx_tmpl:
+                        tmpl_bytes = await get_template_bytes(docx_tmpl)
+                    else:
+                        from app.services.docx_template_service import generate_base_template
+                        tmpl_bytes = generate_base_template()
+                    file_bytes = render_with_template(tmpl_bytes, payload, report.classification)
+                elif report.format == "docx" and not report.report_template_id:
+                    # No block template either — use generated base template
+                    from app.services.docx_template_service import (
+                        generate_base_template,
+                        render_with_template,
+                    )
+                    file_bytes = render_with_template(
+                        generate_base_template(), payload, report.classification
+                    )
+                else:
+                    renderer = ReportRenderer()
+                    file_bytes = renderer.render(template.schema_json, payload, report.format)
 
                 # Store
                 backend = get_storage_backend()

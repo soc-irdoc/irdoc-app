@@ -1,26 +1,14 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useReportTemplates, useCloneReportTemplate } from '@/hooks/useReportTemplates'
-import { useReports, useDeleteReport, useDownloadReport } from '@/hooks/useReports'
-import PremiumGate from '@/components/common/PremiumGate'
-import GenerateReportModal from './GenerateReportModal'
-import SyncPolicySection from './SyncPolicySection'
-import { useFeatureFlags } from '@/hooks/useFeatureFlags'
-import { ReportTemplate, Report, FORMAT_LABELS } from '@/types/report'
+import { useDocxTemplates, useUploadDocxTemplate } from '@/hooks/useDocxTemplates'
+import { useReports, useDeleteReport, useDownloadReport, useGenerateReport } from '@/hooks/useReports'
+import { useUIStore } from '@/stores/uiStore'
+import { Report, FORMAT_LABELS } from '@/types/report'
 import { formatRelative } from '@/lib/utils'
 import { getSocket } from '@/lib/websocket'
-import { useEffect } from 'react'
 
 interface Props {
   incidentId: string
-}
-
-const TEMPLATE_ICONS: Record<string, string> = {
-  management: '📊',
-  analyst: '🔬',
-  legal: '⚖️',
-  custom: '✏️',
 }
 
 const STATUS_CHIP: Record<string, string> = {
@@ -31,16 +19,16 @@ const STATUS_CHIP: Record<string, string> = {
 }
 
 export default function ReportPage({ incidentId }: Props) {
-  const navigate = useNavigate()
   const qc = useQueryClient()
-  const { hasFeature } = useFeatureFlags()
-  const { data: templates = [], isLoading: loadingTemplates } = useReportTemplates()
+  const addToast = useUIStore((s) => s.addToast)
+
+  const { data: docxTemplates = [], isLoading: loadingTemplates } = useDocxTemplates()
   const { data: reports = [], isLoading: loadingReports } = useReports(incidentId)
-  const cloneTemplate = useCloneReportTemplate()
+  const generateReport = useGenerateReport(incidentId)
   const deleteReport = useDeleteReport(incidentId)
   const downloadReport = useDownloadReport()
 
-  const [generateFor, setGenerateFor] = useState<ReportTemplate | null>(null)
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null)
 
   // Listen for report:ready WebSocket event
   useEffect(() => {
@@ -51,6 +39,24 @@ export default function ReportPage({ incidentId }: Props) {
     return () => { socket.off('report:ready', handler) }
   }, [incidentId, qc])
 
+  const handleGenerate = async (templateId: string | null) => {
+    const key = templateId ?? '__base__'
+    setGeneratingFor(key)
+    try {
+      await generateReport.mutateAsync({
+        format: 'docx',
+        docx_template_id: templateId ?? undefined,
+        classification: 'confidential',
+        include_ai: false,
+      })
+      addToast('Report generation started', 'success')
+    } catch {
+      addToast('Failed to start report generation', 'error')
+    } finally {
+      setGeneratingFor(null)
+    }
+  }
+
   const handleDownload = (report: Report) => {
     const ext: Record<string, string> = { pdf: 'pdf', docx: 'docx', markdown: 'md', html: 'html' }
     const filename = `${report.report_type.replace(/\s/g, '_')}_${report.id.slice(0, 8)}.${ext[report.format] ?? 'bin'}`
@@ -60,34 +66,65 @@ export default function ReportPage({ incidentId }: Props) {
   return (
     <div style={{ padding: '24px 28px', maxWidth: '960px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>Reports</h2>
-        <PremiumGate featureKey="report_template_builder">
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => navigate('/report-templates')}
-          >
-            Manage Templates
-          </button>
-        </PremiumGate>
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+          Reports
+        </h2>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          Generate DOCX incident reports from your uploaded templates.
+          Manage templates in <strong>Admin → Report Templates</strong>.
+        </p>
       </div>
 
-      {/* Generate a Report */}
+      {/* DOCX Templates */}
       <section style={{ marginBottom: '36px' }}>
-        <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>
+        <h3 style={{
+          fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)',
+          textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px',
+        }}>
           Generate a Report
         </h3>
 
         {loadingTemplates ? (
           <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Loading templates…</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '12px' }}>
-            {templates.map((t) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+            {/* Base template card — always shown */}
+            <div style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '10px',
+              padding: '18px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}>
+              <div style={{ fontSize: '24px' }}>📄</div>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Base Template
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Built-in scaffold
+                </div>
+              </div>
+              <button
+                className="btn btn-accent btn-sm"
+                style={{ marginTop: '4px' }}
+                disabled={generatingFor === '__base__'}
+                onClick={() => handleGenerate(null)}
+              >
+                {generatingFor === '__base__' ? 'Starting…' : 'Generate DOCX'}
+              </button>
+            </div>
+
+            {/* Custom uploaded templates */}
+            {docxTemplates.map((t) => (
               <div
                 key={t.id}
                 style={{
                   background: 'var(--bg-surface)',
-                  border: '1px solid var(--border)',
+                  border: `1px solid ${t.is_default ? 'var(--accent)' : 'var(--border)'}`,
                   borderRadius: '10px',
                   padding: '18px 16px',
                   display: 'flex',
@@ -95,87 +132,54 @@ export default function ReportPage({ incidentId }: Props) {
                   gap: '8px',
                 }}
               >
-                <div style={{ fontSize: '24px' }}>{TEMPLATE_ICONS[t.destination] ?? '📋'}</div>
+                <div style={{ fontSize: '24px' }}>📋</div>
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{t.name}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', textTransform: 'capitalize' }}>
-                    {t.destination}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {t.name}
+                    </span>
+                    {t.is_default && (
+                      <span className="chip chip-green" style={{ fontSize: '10px' }}>DEFAULT</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Custom template
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
-                  <button
-                    className="btn btn-accent btn-sm"
-                    style={{ flex: 1 }}
-                    onClick={() => setGenerateFor(t)}
-                  >
-                    Generate
-                  </button>
-                  {t.is_system ? (
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => cloneTemplate.mutate(t.id)}
-                      disabled={cloneTemplate.isPending}
-                      title="Clone to create editable copy"
-                    >
-                      Clone
-                    </button>
-                  ) : (
-                    <PremiumGate featureKey="report_template_builder">
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => navigate(`/report-templates/${t.id}`)}
-                      >
-                        Edit
-                      </button>
-                    </PremiumGate>
-                  )}
-                </div>
+                <button
+                  className="btn btn-accent btn-sm"
+                  style={{ marginTop: '4px' }}
+                  disabled={generatingFor === t.id}
+                  onClick={() => handleGenerate(t.id)}
+                >
+                  {generatingFor === t.id ? 'Starting…' : 'Generate DOCX'}
+                </button>
               </div>
             ))}
-
-            {/* New Template card */}
-            <PremiumGate featureKey="report_template_builder">
-              <button
-                style={{
-                  background: 'transparent',
-                  border: '1px dashed var(--border)',
-                  borderRadius: '10px',
-                  padding: '18px 16px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  color: 'var(--text-muted)',
-                  fontSize: '13px',
-                  width: '100%',
-                }}
-                onClick={() => navigate('/report-templates/new')}
-              >
-                <span style={{ fontSize: '24px' }}>+</span>
-                <span>New Template</span>
-              </button>
-            </PremiumGate>
           </div>
         )}
       </section>
 
-      {/* Sync Policies */}
-      <section style={{ marginBottom: '36px' }}>
-        <SyncPolicySection incidentId={incidentId} />
-      </section>
-
       {/* Generated Reports */}
       <section>
-        <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>
+        <h3 style={{
+          fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)',
+          textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px',
+        }}>
           Generated Reports
         </h3>
 
         {loadingReports ? (
           <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Loading…</div>
         ) : reports.length === 0 ? (
-          <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
+          <div style={{
+            padding: '32px 20px',
+            textAlign: 'center',
+            border: '1px dashed var(--border)',
+            borderRadius: 10,
+            color: 'var(--text-muted)',
+            fontSize: 13,
+          }}>
             No reports generated yet for this incident.
           </div>
         ) : (
@@ -203,15 +207,9 @@ export default function ReportPage({ incidentId }: Props) {
               </thead>
               <tbody>
                 {reports.map((r) => (
-                  <tr
-                    key={r.id}
-                    style={{ borderBottom: '1px solid var(--border-subtle)' }}
-                  >
+                  <tr key={r.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>
                       {r.report_type}
-                      {r.is_ai_assisted && (
-                        <span className="chip chip-purple" style={{ marginLeft: '6px', fontSize: '10px' }}>AI</span>
-                      )}
                     </td>
                     <td style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                       {FORMAT_LABELS[r.format as keyof typeof FORMAT_LABELS] ?? r.format}
@@ -236,9 +234,9 @@ export default function ReportPage({ incidentId }: Props) {
                             ⬇ Download
                           </button>
                         )}
-                        {r.status === 'failed' && r.error_message && (
+                        {r.status === 'failed' && (r as any).error_message && (
                           <span
-                            title={r.error_message}
+                            title={(r as any).error_message}
                             style={{ fontSize: '11px', color: 'var(--status-red)', cursor: 'help', alignSelf: 'center' }}
                           >
                             ⚠ Error
@@ -247,9 +245,7 @@ export default function ReportPage({ incidentId }: Props) {
                         <button
                           className="btn btn-ghost btn-sm"
                           style={{ color: 'var(--status-red)' }}
-                          onClick={() => {
-                            if (confirm('Delete this report?')) deleteReport.mutate(r.id)
-                          }}
+                          onClick={() => { if (confirm('Delete this report?')) deleteReport.mutate(r.id) }}
                         >
                           Delete
                         </button>
@@ -262,15 +258,6 @@ export default function ReportPage({ incidentId }: Props) {
           </div>
         )}
       </section>
-
-      {/* Generate Modal */}
-      {generateFor && (
-        <GenerateReportModal
-          incidentId={incidentId}
-          template={generateFor}
-          onClose={() => setGenerateFor(null)}
-        />
-      )}
     </div>
   )
 }

@@ -16,13 +16,18 @@ const InvestigationGraph = lazy(() => import('@/components/graph/InvestigationGr
 
 type Section = 'timeline' | 'iocs' | 'assets' | 'summary' | 'reports' | 'graph'
 
+const VALID_SECTIONS: Section[] = ['timeline', 'iocs', 'assets', 'summary', 'reports', 'graph']
+
 export function IncidentWorkspacePage() {
-  const { id } = useParams<{ id: string }>()
+  const { id, section } = useParams<{ id: string; section?: string }>()
   const navigate = useNavigate()
   const { data: incident, isLoading } = useIncident(id!)
 
-  // Determine active section from URL hash or default to timeline
-  const [activeSection, setActiveSection] = useState<Section>('timeline')
+  // Initialize from URL section param, fall back to timeline
+  const [activeSection, setActiveSection] = useState<Section>(() => {
+    const s = section as Section
+    return VALID_SECTIONS.includes(s) ? s : 'timeline'
+  })
 
   function handleSectionChange(section: string) {
     setActiveSection(section as Section)

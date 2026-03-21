@@ -21,7 +21,8 @@ export interface Report {
 }
 
 export interface ReportGenerateRequest {
-  report_template_id: string
+  report_template_id?: string
+  docx_template_id?: string
   format: ReportFormat
   classification: string
   include_ai: boolean

@@ -78,11 +78,7 @@ export function App() {
         />
         <Route
           path="/integrations"
-          element={
-            <ProtectedRoute>
-              <IntegrationsPageWrapper />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/admin" replace />}
         />
         <Route
           path="/settings"

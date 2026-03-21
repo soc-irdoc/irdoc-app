@@ -8,8 +8,10 @@ import { StoragePage } from '@/components/admin/StoragePage'
 import { IncidentTemplatesPage } from '@/components/admin/IncidentTemplatesPage'
 import { AuditLogPage } from '@/components/admin/AuditLogPage'
 import { SSOPage } from '@/components/admin/SSOPage'
+import { IntegrationsPage } from '@/components/integrations/IntegrationsPage'
+import { ReportsAdminPage } from '@/components/admin/ReportsAdminPage'
 
-type AdminTab = 'team' | 'org' | 'storage' | 'templates' | 'audit' | 'sso'
+type AdminTab = 'team' | 'org' | 'storage' | 'templates' | 'reports' | 'integrations' | 'audit' | 'sso'
 
 export default function AdminPage() {
   const navigate = useNavigate()
@@ -31,6 +33,8 @@ export default function AdminPage() {
       {activeTab === 'org' && <OrgSettingsPage />}
       {activeTab === 'storage' && <StoragePage />}
       {activeTab === 'templates' && <IncidentTemplatesPage />}
+      {activeTab === 'reports' && <ReportsAdminPage />}
+      {activeTab === 'integrations' && <IntegrationsPage />}
       {activeTab === 'audit' && <AuditLogPage />}
       {activeTab === 'sso' && <SSOPage />}
     </AdminShell>

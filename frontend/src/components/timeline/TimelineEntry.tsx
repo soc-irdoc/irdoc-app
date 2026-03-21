@@ -14,7 +14,7 @@ const DOT_STYLES: Record<string, { bg: string; border: string }> = {
   detection:   { bg: 'var(--red-dim)',    border: 'var(--red)' },
   analysis:    { bg: 'var(--blue-dim)',   border: 'var(--blue)' },
   containment: { bg: 'var(--yellow-dim)', border: 'var(--yellow)' },
-  evidence:    { bg: 'var(--purple-dim)', border: 'var(--purple)' },
+  evidence:    { bg: 'rgba(188,140,255,0.45)', border: 'var(--purple)' },
   comms:       { bg: 'var(--green-dim)', border: 'var(--green)' },
   note:        { bg: 'var(--bg-elevated)', border: 'var(--border)' },
 }

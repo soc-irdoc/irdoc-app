@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFeatureFlags } from '@/hooks/useFeatureFlags'
 
-type AdminTab = 'team' | 'org' | 'storage' | 'templates' | 'audit' | 'sso'
+type AdminTab = 'team' | 'org' | 'storage' | 'templates' | 'reports' | 'integrations' | 'audit' | 'sso'
 
 interface AdminShellProps {
   children: ReactNode
@@ -22,6 +22,8 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'org', icon: '⚙️', label: 'Org Settings' },
   { id: 'storage', icon: '🗄️', label: 'Storage' },
   { id: 'templates', icon: '📋', label: 'Incident Templates' },
+  { id: 'reports', icon: '📄', label: 'Report Templates' },
+  { id: 'integrations', icon: '🔗', label: 'Integrations' },
   { id: 'audit', icon: '📜', label: 'Audit Log', premium: 'audit_log' },
   { id: 'sso', icon: '🔐', label: 'SSO', premium: 'sso_saml' },
 ]

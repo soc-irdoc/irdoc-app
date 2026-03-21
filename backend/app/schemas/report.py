@@ -7,8 +7,9 @@ from pydantic import BaseModel
 # ─── Report Schemas ──────────────────────────────────────────────────────────
 
 class ReportGenerateRequest(BaseModel):
-    report_template_id: str
-    format: str = "markdown"          # markdown | html | pdf | docx
+    report_template_id: str | None = None   # block-based template (v2.0); optional when using docx_template_id
+    docx_template_id: str | None = None     # custom DOCX template (v1.0 flow)
+    format: str = "docx"                    # markdown | html | pdf | docx
     classification: str = "confidential"
     include_ai: bool = False
 

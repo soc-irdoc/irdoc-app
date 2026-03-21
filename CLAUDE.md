@@ -1364,3 +1364,121 @@ Criticalities: `critical`, `high`, `medium` (default), `low`
 - [x] `IncidentWorkspacePage.tsx` — `assets` section renders `AssetsPage`
 - [x] `AddEntryForm.tsx` — collapsible asset picker, links on submit
 - [x] `LeftNav.tsx` — expanded by default, `‹/›` collapse toggle, localStorage persistence
+
+---
+
+## 32. Post-Launch UI Fixes (Batch 1)
+
+### 32.1 Integrations Moved to Admin Panel
+
+**Problem:** Integrations was a standalone left-nav item, disconnected from the Admin area.
+
+**Changes:**
+- `LeftNav.tsx` — removed `Integrations` from `NAV_ITEMS`
+- `AdminShell.tsx` — added `'integrations'` to `AdminTab` type + added `{ id: 'integrations', icon: '🔗', label: 'Integrations' }` to `SIDEBAR_ITEMS`
+- `AdminPage.tsx` — added `import { IntegrationsPage }` + renders `<IntegrationsPage />` for `activeTab === 'integrations'`
+- `App.tsx` — `/integrations` route now redirects to `/admin` (keeps old links working)
+
+### 32.2 Incident Section Persists on Refresh
+
+**Problem:** Refreshing an open incident page reset to the incident list, and the active section was always `timeline` regardless of URL.
+
+**Fix:** `IncidentWorkspacePage.tsx` — `activeSection` state initialized from `useParams<{ id; section? }>()`. `VALID_SECTIONS` array used to validate and fall back to `'timeline'`. The `/incidents/:id/:section` route already existed in `App.tsx`.
+
+### 32.3 Summary Tab Stat Cards Simplified
+
+**Problem:** Summary tab had 6 stat cards (Severity, Status, Timeline, IOCs, Tasks, Affected Users) — data that is already visible elsewhere, adding clutter.
+
+**Fix:** `SummaryPage.tsx` — removed `useIncidentStats` import and hook call; removed Timeline, IOCs, Tasks, and Affected Users stat cards. Kept Severity and Status cards only.
+
+### 32.4 IOC Confidence UI Redesigned
+
+**Problem:** Confidence was a tiny 60px number input labeled `Conf:` — not discoverable or readable.
+
+**Fix:** `IOCPage.tsx` — restructured add form into two rows:
+- Row 1: type selector + IOC value input
+- Row 2: labeled `Confidence (0–100)` with a range slider (0–100, step 5) + color-coded percentage display (green ≥70, yellow ≥40, red <40)
+
+### 32.5 Evidence Timeline Dot Opacity Fixed
+
+**Problem:** `evidence` entry type dot used `var(--purple-dim)` (~12% opacity) — the vertical timeline line was visible through it.
+
+**Fix:** `TimelineEntry.tsx` — changed `evidence` bg in `DOT_STYLES` from `var(--purple-dim)` to `rgba(188,140,255,0.45)` (~45% opacity), solid enough to cover the line.
+
+---
+
+## 33. Reports Simplification (v1.0 DOCX Template Flow)
+
+### 33.1 Overview
+
+The block-based report template system (Management Brief, Technical Report, Legal) is preserved intact for v2.0. For v1.0 we implement a simpler DOCX template workflow:
+
+1. User downloads a base `.docx` scaffold from Admin → Report Templates
+2. User edits it in Word (adds company logo, adjusts styles) — **must not remove `{{PLACEHOLDER}}` markers**
+3. User uploads their customised `.docx` back to IRDoc
+4. Any uploaded template can be set as the org default
+5. From Incident → Reports tab, user picks a template card and clicks "Generate DOCX"
+
+### 33.2 Backend (All New)
+
+**Model:** `backend/app/models/docx_template.py` — `DocxTemplate` table (`docx_templates`)
+- Fields: `id`, `org_id` (FK, indexed), `name`, `is_default`, `storage_path`, `file_size`, `created_by`, `created_at`, `updated_at`
+
+**Migration:** `backend/alembic/versions/005_docx_templates.py` (`down_revision = "004"`)
+
+**Schema:** `backend/app/schemas/docx_template.py` — `DocxTemplateOut`, `DocxTemplateRename`
+
+**Service:** `backend/app/services/docx_template_service.py`
+- `generate_base_template()` — generates a fully-structured DOCX with all `{{PLACEHOLDER}}` markers using python-docx
+- `render_with_template(template_bytes, payload, classification)` — replaces placeholders (using run-merging to handle Word's run-splitting), inserts Word tables at `{{SECTION}}` markers
+- Key placeholder set: `{{INCIDENT_TITLE}}`, `{{INCIDENT_REF}}`, `{{SEVERITY}}`, `{{STATUS}}`, `{{CREATED_AT}}`, `{{CONTAINED_AT}}`, `{{CLOSED_AT}}`, `{{DURATION}}`, `{{AFFECTED_USERS}}`, `{{ATTACK_VECTOR}}`, `{{EXECUTIVE_SUMMARY}}`, `{{TIMELINE_COUNT}}`, `{{IOC_COUNT}}`, `{{TASK_COMPLETION_PCT}}`, `{{TIMELINE_SECTION}}`, `{{IOC_TABLE}}`, `{{TASKS_TABLE}}`, `{{EVIDENCE_TABLE}}`, `{{GENERATED_AT}}`, `{{GENERATED_BY}}`, `{{CLASSIFICATION}}`
+- Table marker insertion uses `para._element.addnext(table._tbl)` XML manipulation
+
+**API:** `backend/app/api/v1/docx_templates.py`
+- `GET /docx-templates` — list org templates
+- `GET /docx-templates/base` — download base scaffold
+- `POST /docx-templates` — upload (multipart: `name` + `file`)
+- `PATCH /docx-templates/{id}` — rename
+- `POST /docx-templates/{id}/set-default` — set as org default
+- `DELETE /docx-templates/{id}` — delete
+
+**report_service.py changes:** DOCX template path added — when `docx_template_id` is set or `format='docx'` without `report_template_id`, uses the new path. DOCX export no longer premium-gated for custom templates.
+
+**tasks.py changes:** `generate_report` accepts optional `docx_template_id`. If present → `render_with_template`. If `format='docx'` with no template → use generated base template. Else → existing block-based `ReportRenderer`.
+
+### 33.3 Frontend (All New/Modified)
+
+**`frontend/src/types/report.ts`** — `ReportGenerateRequest.report_template_id` made optional; `docx_template_id?: string` added
+
+**`frontend/src/types/docxTemplate.ts`** (new) — `DocxTemplate` interface
+
+**`frontend/src/hooks/useDocxTemplates.ts`** (new) — `useDocxTemplates`, `useDownloadBaseTemplate`, `useUploadDocxTemplate`, `useSetDefaultDocxTemplate`, `useRenameDocxTemplate`, `useDeleteDocxTemplate`
+
+**`frontend/src/components/admin/ReportsAdminPage.tsx`** (new) — Admin → Report Templates page
+- Section 1: Download Base Template (info + button)
+- Section 2: Upload Custom Template (name input + file picker)
+- Section 3: Your Templates list (inline rename, set-default, delete; default gets accent border + DEFAULT chip)
+
+**`frontend/src/components/reports/ReportPage.tsx`** (rewritten)
+- Removed: block-template cards (Management Brief, Technical Report, Legal), GenerateReportModal, SyncPolicySection
+- Added: "Generate a Report" grid — Base Template card (always shown) + custom template cards from `useDocxTemplates()`
+- Each card has a "Generate DOCX" button that calls `generateReport.mutateAsync({ format: 'docx', docx_template_id, ... })`
+- Generated Reports table retained as-is
+
+**`frontend/src/components/admin/AdminShell.tsx`** — `AdminTab` type + `SIDEBAR_ITEMS` extended with `'reports'` (`📄 Report Templates`)
+
+**`frontend/src/pages/AdminPage.tsx`** — imports `ReportsAdminPage`, renders for `activeTab === 'reports'`
+
+### 33.4 DOCX Placeholder Run-Merging
+
+Word splits paragraph text across multiple XML runs (formatting boundaries). To replace `{{FIELD}}`:
+1. Concatenate all run texts in the paragraph
+2. Apply all replacements to the concatenated string
+3. Put result in `run[0].text`, clear `run[n].text` for n > 0
+
+For table markers (`{{TIMELINE_SECTION}}` etc.):
+1. Add table at end of doc body
+2. Detach from body: `table._tbl.getparent().remove(table._tbl)`
+3. Insert after marker: `para._element.addnext(table._tbl)`
+4. Remove marker paragraph
+
