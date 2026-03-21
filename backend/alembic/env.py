@@ -2,7 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
@@ -39,6 +39,10 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
+# Advisory lock key — any stable integer unique to this application
+_MIGRATION_LOCK_KEY = 123456789
+
+
 async def run_async_migrations() -> None:
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
@@ -46,7 +50,15 @@ async def run_async_migrations() -> None:
         poolclass=pool.NullPool,
     )
     async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+        # Acquire a PostgreSQL session-level advisory lock so that only one
+        # container (backend / worker / beat) runs migrations at a time.
+        # pg_advisory_lock blocks until the lock is free; it is automatically
+        # released when the connection is closed.
+        await connection.execute(text(f"SELECT pg_advisory_lock({_MIGRATION_LOCK_KEY})"))
+        try:
+            await connection.run_sync(do_run_migrations)
+        finally:
+            await connection.execute(text(f"SELECT pg_advisory_unlock({_MIGRATION_LOCK_KEY})"))
     await connectable.dispose()
 
 
