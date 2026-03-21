@@ -454,6 +454,9 @@ For deep detail on any phase:
 
 **Project status:** All 7 phases complete. Ready for public launch at v1.0.0.
 
+**Post-launch additions:**
+- **Assets feature** — DB migration 004, full backend + frontend implementation. See Section 31.
+
 **Next action:** Tag v1.0.0, publish Docker Hub images, make GitHub repository public. Refer to Section 30.
 
 ---
@@ -1246,3 +1249,118 @@ The full header suite now includes:
 - [x] `README.md` — complete with quickstart, features, architecture, webhook guide, contributing
 - [x] `CHANGELOG.md` — v1.0.0 in Keep a Changelog format
 - [x] `docs/` — 18 documentation files covering installation, user guide, admin guide, API, contributing
+
+---
+
+## 31. Assets Feature — Implementation Reference (Post-Launch Addition)
+
+> Read this section before touching any Assets-related code.
+
+### 31.1 New Files
+
+```
+backend/
+├── alembic/versions/004_assets.py       # assets, asset_timeline_links, asset_links tables
+├── app/
+│   ├── models/asset.py                  # Asset, AssetTimelineLink, AssetLink ORM models
+│   ├── schemas/asset.py                 # AssetCreate, AssetBulkCreate, AssetUpdate, AssetOut,
+│   │                                    # AssetLinkCreate, AssetLinkOut, AssetTimelineLinkCreate
+│   ├── services/asset_service.py        # CRUD, bulk create, timeline linking, asset-link CRUD
+│   └── api/v1/assets.py                 # 9 REST endpoints
+
+frontend/src/
+├── types/asset.ts                       # Asset, AssetLink types + ASSET_TYPE_ICONS/LABELS/COLORS,
+│                                        # ASSET_LINK_TYPE_LABELS, ASSET_TYPES_LIST, ASSET_LINK_TYPES_LIST
+├── hooks/useAssets.ts                   # useAssets, useBulkCreateAssets, useCreateAsset,
+│                                        # useUpdateAsset, useDeleteAsset, useAssetLinks,
+│                                        # useCreateAssetLink, useDeleteAssetLink,
+│                                        # useLinkAssetsToEntry, useEntryAssets
+└── components/assets/AssetsPage.tsx     # Main page: List sub-tab + Relationships sub-tab
+```
+
+### 31.2 Modified Files
+
+- `backend/app/models/__init__.py` — added Asset, AssetTimelineLink, AssetLink imports
+- `backend/app/models/timeline.py` — added `asset_links` relationship to `TimelineEntry`
+- `backend/app/core/permissions.py` — added `assets.read/create/update/delete` permissions
+- `backend/app/main.py` — registered assets router (Phase 4 block)
+- `backend/app/services/graph_service.py` — asset nodes + asset-link edges + asset-timeline-entry edges
+- `frontend/src/types/graph.ts` — NodeType union extended with 16 asset types; `ASSET_STATUS_COLORS` added
+- `frontend/src/components/graph/NodeTypes.tsx` — 16 AssetNode renderers; `NODE_TYPES` map extended
+- `frontend/src/components/layout/TopBar.tsx` — Assets tab added between IOCs and Summary
+- `frontend/src/pages/IncidentWorkspacePage.tsx` — `Section` type includes `'assets'`; `AssetsPage` rendered
+- `frontend/src/components/timeline/AddEntryForm.tsx` — collapsible asset picker (links assets on submit)
+- `frontend/src/components/layout/LeftNav.tsx` — default expanded (210px), collapsible to 60px with `‹/›` toggle, `nav-collapsed` localStorage key
+
+### 31.3 Database Tables
+
+**`assets`** — id, incident_id (FK → incidents, CASCADE), asset_type VARCHAR(30), name TEXT, description TEXT, status VARCHAR(20) default "suspected", criticality VARCHAR(20) default "medium", tags TEXT[], metadata JSONB, added_by (FK → users, SET NULL), created_at, updated_at
+
+**`asset_timeline_links`** — asset_id (FK → assets, CASCADE) + timeline_entry_id (FK → timeline_entries, CASCADE), composite PK
+
+**`asset_links`** — id, incident_id (FK → incidents, CASCADE), source_id (FK → assets, CASCADE), target_id (FK → assets, CASCADE), link_type VARCHAR(40), label TEXT, created_by (FK → users, SET NULL), created_at
+- CHECK: source_id != target_id
+- UNIQUE: (source_id, target_id, link_type)
+
+Indexes: `ix_assets_incident_id`, `ix_assets_incident_type`, `ix_assets_status`, `ix_asset_timeline_links_entry`, `ix_asset_links_incident`, `ix_asset_links_source`, `ix_asset_links_target`
+
+### 31.4 Asset Types (16)
+
+`host`, `server`, `workstation`, `laptop`, `mobile`, `network_device`, `account`, `service_account`, `file`, `directory`, `url`, `email_address`, `database`, `application`, `cloud_resource`, `other`
+
+### 31.5 Asset Link Types (10)
+
+`communicates_with`, `owns`, `runs`, `connects_to`, `authenticates_to`, `contains`, `accesses`, `lateral_movement`, `exfiltration_target`, `related`
+
+### 31.6 Asset Statuses and Criticalities
+
+Statuses: `suspected` (default) → `confirmed` → `remediated` → `cleared`
+Criticalities: `critical`, `high`, `medium` (default), `low`
+
+### 31.7 API Endpoints
+
+| Method | Path | Permission | Description |
+|---|---|---|---|
+| GET | `/incidents/{id}/assets` | assets.read | List all assets |
+| POST | `/incidents/{id}/assets` | assets.create | Create single asset |
+| POST | `/incidents/{id}/assets/bulk` | assets.create | Bulk create (one name per line) |
+| PUT | `/incidents/{id}/assets/{asset_id}` | assets.update | Update asset |
+| DELETE | `/incidents/{id}/assets/{asset_id}` | assets.delete | Delete asset |
+| POST | `/incidents/{id}/assets/timeline-links` | assets.create | Link assets to timeline entry |
+| DELETE | `/incidents/{id}/assets/{asset_id}/timeline-links/{entry_id}` | assets.create | Unlink |
+| GET | `/incidents/{id}/timeline/{entry_id}/assets` | assets.read | List assets for entry |
+| GET | `/incidents/{id}/asset-links` | assets.read | List asset-to-asset relationships |
+| POST | `/incidents/{id}/asset-links` | assets.create | Create relationship |
+| DELETE | `/incidents/{id}/asset-links/{link_id}` | assets.delete | Delete relationship |
+
+### 31.8 Key Patterns
+
+**`metadata_` alias:** Same as `Incident` and `TimelineEntry` — ORM attribute is `metadata_`, column is `"metadata"`. `AssetOut.model_validate()` copies `metadata_` → `metadata` before serialization.
+
+**Bulk create:** `POST /assets/bulk` accepts `{ asset_type, names: string[], ... }` — server loops and creates one `Asset` row per name (stripping whitespace, skipping blanks).
+
+**Graph integration:** `graph_service.build_graph()` now adds:
+1. One node per asset (`id: "asset-{uuid}"`, `type: "asset_{asset_type}"`)
+2. Edges from `asset_links` table (`source → target`, label = custom label or link_type)
+3. Edges from `asset_timeline_links` (asset → timeline entry node, only if entry node is in graph)
+
+**Asset picker in AddEntryForm:** Only shown when the incident has ≥1 asset. Collapsed by default. On submit, calls `POST /assets/timeline-links` with all selected asset IDs and the new entry ID.
+
+### 31.9 Assets Feature Checklist (All Complete)
+
+- [x] Alembic migration 004 — `assets`, `asset_timeline_links`, `asset_links`
+- [x] ORM models: `Asset`, `AssetTimelineLink`, `AssetLink`
+- [x] Pydantic schemas: `AssetCreate`, `AssetBulkCreate`, `AssetUpdate`, `AssetOut`, `AssetLinkCreate`, `AssetLinkOut`, `AssetTimelineLinkCreate`
+- [x] `asset_service.py` — full CRUD + bulk + timeline links + asset-link CRUD
+- [x] RBAC: `assets.read/create/update/delete` permissions (viewer/analyst/analyst/senior_analyst)
+- [x] REST router `api/v1/assets.py` — 11 endpoints registered
+- [x] `graph_service.py` — asset nodes + 2 edge types (asset→asset, asset→timeline entry)
+- [x] `frontend/src/types/asset.ts` — all types + display constants
+- [x] `frontend/src/types/graph.ts` — NodeType union + `ASSET_STATUS_COLORS`
+- [x] `frontend/src/hooks/useAssets.ts` — full hook suite
+- [x] `frontend/src/components/assets/AssetsPage.tsx` — List + Relationships sub-tabs
+- [x] `frontend/src/components/graph/NodeTypes.tsx` — 16 asset node renderers
+- [x] `TopBar.tsx` — Assets tab (between IOCs and Summary)
+- [x] `IncidentWorkspacePage.tsx` — `assets` section renders `AssetsPage`
+- [x] `AddEntryForm.tsx` — collapsible asset picker, links on submit
+- [x] `LeftNav.tsx` — expanded by default, `‹/›` collapse toggle, localStorage persistence
