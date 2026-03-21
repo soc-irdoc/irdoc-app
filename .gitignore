@@ -39,3 +39,6 @@ docker/secrets/
 # Logs
 *.log
 logs/
+
+# Claude folder
+.claude/

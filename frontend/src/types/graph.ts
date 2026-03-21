@@ -8,6 +8,22 @@ export type NodeType =
   | 'ioc_username'
   | 'event'
   | 'evidence'
+  | 'asset_host'
+  | 'asset_server'
+  | 'asset_workstation'
+  | 'asset_laptop'
+  | 'asset_mobile'
+  | 'asset_network_device'
+  | 'asset_account'
+  | 'asset_service_account'
+  | 'asset_file'
+  | 'asset_directory'
+  | 'asset_url'
+  | 'asset_email_address'
+  | 'asset_database'
+  | 'asset_application'
+  | 'asset_cloud_resource'
+  | 'asset_other'
 
 export interface GraphNodeData {
   [key: string]: unknown
@@ -27,6 +43,10 @@ export interface GraphNodeData {
   mime_type?: string
   sha256?: string
   timeline_entry_id?: string
+  // Asset nodes
+  asset_type?: string
+  criticality?: string
+  tags?: string[]
 }
 
 export interface GraphNode {
@@ -52,15 +72,38 @@ export interface GraphData {
 }
 
 export const NODE_TYPE_ICONS: Record<string, string> = {
-  ioc_ip:       '🔢',
-  ioc_domain:   '🌐',
-  ioc_email:    '📧',
-  ioc_url:      '🔗',
-  ioc_hash:     '#',
-  ioc_file:     '📄',
-  ioc_username: '👤',
-  event:        '📌',
-  evidence:     '📎',
+  ioc_ip:                '🔢',
+  ioc_domain:            '🌐',
+  ioc_email:             '📧',
+  ioc_url:               '🔗',
+  ioc_hash:              '#',
+  ioc_file:              '📄',
+  ioc_username:          '👤',
+  event:                 '📌',
+  evidence:              '📎',
+  asset_host:            '🖥️',
+  asset_server:          '🗄️',
+  asset_workstation:     '💻',
+  asset_laptop:          '💻',
+  asset_mobile:          '📱',
+  asset_network_device:  '🌐',
+  asset_account:         '👤',
+  asset_service_account: '🤖',
+  asset_file:            '📄',
+  asset_directory:       '📁',
+  asset_url:             '🔗',
+  asset_email_address:   '📧',
+  asset_database:        '🗃️',
+  asset_application:     '⚙️',
+  asset_cloud_resource:  '☁️',
+  asset_other:           '📦',
+}
+
+export const ASSET_STATUS_COLORS: Record<string, string> = {
+  suspected:  '#f97316',
+  confirmed:  '#ef4444',
+  remediated: '#22c55e',
+  cleared:    '#6b7280',
 }
 
 export const IOC_STATUS_COLORS: Record<string, string> = {

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useThemeStore } from '@/stores/themeStore'
 import { useLogout } from '@/hooks/useAuth'
@@ -8,7 +9,6 @@ interface NavItem {
   icon: string
   label: string
   path: string
-  external?: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -21,18 +21,22 @@ function NavButton({
   icon,
   label,
   active,
+  collapsed,
   onClick,
 }: {
   icon: string
   label: string
   active: boolean
+  collapsed: boolean
   onClick: () => void
 }) {
   return (
     <button
-      className="nav-btn"
+      onClick={onClick}
+      aria-label={label}
+      title={collapsed ? label : undefined}
       style={{
-        width: 42,
+        width: collapsed ? 42 : '100%',
         height: 42,
         borderRadius: 10,
         border: 'none',
@@ -41,36 +45,30 @@ function NavButton({
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        gap: 10,
         fontSize: 18,
-        transition: 'all 0.15s',
+        padding: collapsed ? 0 : '0 12px',
+        transition: 'background 0.15s, color 0.15s',
         position: 'relative',
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
       }}
-      onClick={onClick}
-      aria-label={label}
-      title={label}
     >
-      {icon}
-      <span
-        style={{
-          position: 'absolute',
-          left: 'calc(100% + 10px)',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-primary)',
-          fontSize: 12,
-          padding: '4px 10px',
-          borderRadius: 6,
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-          zIndex: 999,
+      <span style={{ flexShrink: 0, lineHeight: 1 }}>{icon}</span>
+      {!collapsed && (
+        <span style={{
+          fontSize: 13,
           fontFamily: 'Syne, sans-serif',
           fontWeight: 600,
-        }}
-        className="nav-tooltip opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        {label}
-      </span>
+          color: active ? 'var(--accent)' : 'var(--text-secondary)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {label}
+        </span>
+      )}
     </button>
   )
 }
@@ -82,44 +80,106 @@ export function LeftNav() {
   const logout = useLogout()
   const user = useAuthStore((s) => s.user)
 
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => localStorage.getItem('nav-collapsed') === 'true'
+  )
+
+  function toggleCollapsed() {
+    const next = !collapsed
+    setCollapsed(next)
+    localStorage.setItem('nav-collapsed', String(next))
+  }
+
+  const navWidth = collapsed ? 60 : 210
+
   return (
     <nav
       style={{
-        width: 60,
+        width: navWidth,
+        minWidth: navWidth,
         background: 'var(--bg-surface)',
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        padding: '16px 0',
+        alignItems: collapsed ? 'center' : 'stretch',
+        padding: collapsed ? '16px 0' : '16px 10px',
         gap: 4,
         flexShrink: 0,
         zIndex: 100,
+        transition: 'width 0.2s ease, min-width 0.2s ease, padding 0.2s ease',
+        overflow: 'hidden',
       }}
     >
-      {/* Logo */}
-      <div
+      {/* Logo row */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        gap: 10,
+        flexShrink: 0,
+        padding: collapsed ? 0 : '0 2px',
+      }}>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            background: 'var(--accent)',
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            fontSize: 12,
+            color: '#fff',
+            letterSpacing: '-0.5px',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+          onClick={() => navigate('/incidents')}
+          title="IRDoc"
+        >
+          IR
+        </div>
+
+        {!collapsed && (
+          <span style={{
+            fontFamily: 'Syne, sans-serif',
+            fontWeight: 800,
+            fontSize: 15,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.3px',
+          }}>
+            IRDoc
+          </span>
+        )}
+      </div>
+
+      {/* Collapse toggle — small icon button, same size in both states */}
+      <button
+        onClick={toggleCollapsed}
+        aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+        title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
         style={{
-          width: 36,
-          height: 36,
-          background: 'var(--accent)',
-          borderRadius: 10,
+          width: 28,
+          height: 28,
+          borderRadius: 8,
+          border: '1px solid var(--border)',
+          background: 'var(--bg-card)',
+          color: 'var(--text-muted)',
+          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontWeight: 800,
-          fontSize: 12,
-          color: '#fff',
-          marginBottom: 16,
-          letterSpacing: '-0.5px',
-          cursor: 'pointer',
+          fontSize: 13,
+          padding: 0,
+          marginBottom: 8,
           flexShrink: 0,
+          lineHeight: 1,
+          alignSelf: collapsed ? 'center' : 'flex-start',
         }}
-        onClick={() => navigate('/incidents')}
-        title="IRDoc"
       >
-        IR
-      </div>
+        {collapsed ? '›' : '‹'}
+      </button>
 
       {/* Nav Items */}
       {NAV_ITEMS.map((item) => (
@@ -128,6 +188,7 @@ export function LeftNav() {
           icon={item.icon}
           label={item.label}
           active={location.pathname.startsWith(item.path)}
+          collapsed={collapsed}
           onClick={() => navigate(item.path)}
         />
       ))}
@@ -138,6 +199,7 @@ export function LeftNav() {
           icon="🛡️"
           label="Admin"
           active={location.pathname.startsWith('/admin')}
+          collapsed={collapsed}
           onClick={() => navigate('/admin')}
         />
       )}
@@ -149,6 +211,7 @@ export function LeftNav() {
         icon="◑"
         label="Toggle theme"
         active={false}
+        collapsed={collapsed}
         onClick={toggle}
       />
 
@@ -158,23 +221,49 @@ export function LeftNav() {
         aria-label="Profile"
         title={user?.full_name ?? 'Profile'}
         style={{
-          width: 32,
-          height: 32,
+          height: 42,
+          width: collapsed ? 42 : '100%',
+          borderRadius: 10,
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          gap: 10,
+          padding: collapsed ? 0 : '0 12px',
+          flexShrink: 0,
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <div style={{
+          width: 28,
+          height: 28,
           borderRadius: '50%',
           background: 'linear-gradient(135deg, var(--accent), var(--purple))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: 800,
           color: '#fff',
-          border: 'none',
-          cursor: 'pointer',
-          marginTop: 4,
           flexShrink: 0,
-        }}
-      >
-        {user ? getInitials(user.full_name) : '?'}
+        }}>
+          {user ? getInitials(user.full_name) : '?'}
+        </div>
+        {!collapsed && (
+          <span style={{
+            fontSize: 13,
+            fontFamily: 'Syne, sans-serif',
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {user?.full_name ?? 'Profile'}
+          </span>
+        )}
       </button>
 
       {/* Logout */}
@@ -182,6 +271,7 @@ export function LeftNav() {
         icon="→"
         label="Sign out"
         active={false}
+        collapsed={collapsed}
         onClick={() => logout.mutate()}
       />
     </nav>

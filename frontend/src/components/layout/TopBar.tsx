@@ -14,6 +14,7 @@ interface TopBarProps {
 const SECTIONS = [
   { key: 'timeline', label: 'Timeline', icon: '⏱' },
   { key: 'iocs',     label: 'IOCs',     icon: '🔍' },
+  { key: 'assets',   label: 'Assets',   icon: '🖥️' },
   { key: 'summary',  label: 'Summary',  icon: '📊' },
   { key: 'reports',  label: 'Reports',  icon: '📄' },
   { key: 'graph',    label: 'Graph',    icon: '🕸' },

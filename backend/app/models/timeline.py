@@ -38,3 +38,6 @@ class TimelineEntry(Base):
     ioc_links: Mapped[list["IOCTimelineLink"]] = relationship(  # noqa: F821
         "IOCTimelineLink", back_populates="timeline_entry", cascade="all, delete-orphan", lazy="noload"
     )
+    asset_links: Mapped[list["AssetTimelineLink"]] = relationship(  # noqa: F821
+        "AssetTimelineLink", back_populates="timeline_entry", cascade="all, delete-orphan", lazy="noload"
+    )

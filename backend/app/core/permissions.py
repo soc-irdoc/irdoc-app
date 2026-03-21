@@ -59,6 +59,11 @@ PERMISSIONS: dict[str, str] = {
     "integrations.manage": "admin",
     "storage.manage": "admin",
     "audit_log.read": "admin",
+    # Assets
+    "assets.read": "viewer",
+    "assets.create": "analyst",
+    "assets.update": "analyst",
+    "assets.delete": "senior_analyst",
     # Containment (high-risk)
     "containment.execute": "senior_analyst",
 }

@@ -10,6 +10,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.asset import Asset, AssetLink, AssetTimelineLink
 from app.models.ioc import IOC, IOCTimelineLink
 from app.models.timeline import TimelineEntry
 from app.models.attachment import Attachment
@@ -33,6 +34,12 @@ _ENTRY_TYPE_COLORS = {
     "note": "#6b7280",
 }
 _EVIDENCE_COLOR = "#8b5cf6"
+_ASSET_STATUS_COLORS = {
+    "suspected": "#f97316",   # orange
+    "confirmed": "#ef4444",   # red
+    "remediated": "#22c55e",  # green
+    "cleared": "#6b7280",     # grey
+}
 
 
 async def build_graph(incident_id: str, db: AsyncSession) -> dict[str, Any]:
@@ -153,6 +160,69 @@ async def build_graph(incident_id: str, db: AsyncSession) -> dict[str, Any]:
                 "label": "mentioned in",
                 "animated": True,
             })
+
+    # ── Asset nodes ──────────────────────────────────────────────────────────
+    asset_result = await db.execute(
+        select(Asset).where(Asset.incident_id == incident_id)
+    )
+    assets = asset_result.scalars().all()
+    asset_node_map: dict[str, str] = {}  # asset.id → node_id
+
+    for asset in assets:
+        node_id = f"asset-{asset.id}"
+        asset_node_map[str(asset.id)] = node_id
+        node_ids.add(node_id)
+        nodes.append({
+            "id": node_id,
+            "type": f"asset_{asset.asset_type}",
+            "data": {
+                "label": asset.name[:60],
+                "asset_type": asset.asset_type,
+                "status": asset.status,
+                "criticality": asset.criticality,
+                "tags": asset.tags or [],
+            },
+            "position": {"x": 0, "y": 0},
+            "style": {"borderColor": _ASSET_STATUS_COLORS.get(asset.status, "#f97316")},
+        })
+
+    # ── Asset-to-asset link edges ─────────────────────────────────────────────
+    if assets:
+        asset_link_result = await db.execute(
+            select(AssetLink).where(AssetLink.incident_id == incident_id)
+        )
+        asset_links = asset_link_result.scalars().all()
+        for al in asset_links:
+            src_nid = asset_node_map.get(str(al.source_id))
+            tgt_nid = asset_node_map.get(str(al.target_id))
+            if src_nid and tgt_nid:
+                edges.append({
+                    "id": f"asset-link-{al.id}",
+                    "source": src_nid,
+                    "target": tgt_nid,
+                    "label": al.label or al.link_type.replace("_", " "),
+                    "animated": False,
+                })
+
+    # ── Asset-timeline entry edges ────────────────────────────────────────────
+    if assets:
+        atl_result = await db.execute(
+            select(AssetTimelineLink).where(
+                AssetTimelineLink.asset_id.in_([a.id for a in assets])
+            )
+        )
+        atl_links = atl_result.scalars().all()
+        for atl in atl_links:
+            asset_nid = asset_node_map.get(str(atl.asset_id))
+            entry_nid = entry_node_map.get(str(atl.timeline_entry_id))
+            if asset_nid and entry_nid:
+                edges.append({
+                    "id": f"asset-entry-{atl.asset_id}-{atl.timeline_entry_id}",
+                    "source": asset_nid,
+                    "target": entry_nid,
+                    "label": "involved in",
+                    "animated": False,
+                })
 
     # ── Manual edges (from graph_edges table) ────────────────────────────────
     manual_result = await db.execute(

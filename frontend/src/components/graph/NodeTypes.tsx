@@ -4,7 +4,7 @@
  */
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { GraphNodeData } from '@/types/graph'
-import { NODE_TYPE_ICONS, IOC_STATUS_COLORS } from '@/types/graph'
+import { NODE_TYPE_ICONS, IOC_STATUS_COLORS, ASSET_STATUS_COLORS } from '@/types/graph'
 
 const ENTRY_TYPE_COLORS: Record<string, string> = {
   detection:   'var(--red)',
@@ -134,16 +134,69 @@ export function EvidenceNode({ data, selected }: NodeProps) {
   )
 }
 
+// ── Asset Node ────────────────────────────────────────────────────────────────
+
+function AssetNodeBase({ data, selected, nodeType }: NodeProps & { nodeType: string }) {
+  const d = data as unknown as GraphNodeData
+  const icon = NODE_TYPE_ICONS[nodeType] ?? '📦'
+  const color = ASSET_STATUS_COLORS[d.status ?? 'suspected'] ?? '#f97316'
+  const badge = d.criticality as string | undefined
+
+  return (
+    <BaseNode
+      icon={icon}
+      label={d.label}
+      color={color}
+      subtitle={d.status}
+      badge={badge}
+      selected={selected}
+    />
+  )
+}
+
+export function AssetHostNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_host" /> }
+export function AssetServerNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_server" /> }
+export function AssetWorkstationNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_workstation" /> }
+export function AssetLaptopNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_laptop" /> }
+export function AssetMobileNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_mobile" /> }
+export function AssetNetworkDeviceNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_network_device" /> }
+export function AssetAccountNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_account" /> }
+export function AssetServiceAccountNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_service_account" /> }
+export function AssetFileNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_file" /> }
+export function AssetDirectoryNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_directory" /> }
+export function AssetUrlNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_url" /> }
+export function AssetEmailAddressNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_email_address" /> }
+export function AssetDatabaseNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_database" /> }
+export function AssetApplicationNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_application" /> }
+export function AssetCloudResourceNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_cloud_resource" /> }
+export function AssetOtherNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_other" /> }
+
 // ── Node type map for React Flow ──────────────────────────────────────────────
 
 export const NODE_TYPES = {
-  ioc_ip:       IOCIPNode,
-  ioc_domain:   IOCDomainNode,
-  ioc_email:    IOCEmailNode,
-  ioc_url:      IOCURLNode,
-  ioc_hash:     IOCHashNode,
-  ioc_file:     IOCFileNode,
-  ioc_username: IOCUsernameNode,
-  event:        EventNode,
-  evidence:     EvidenceNode,
+  ioc_ip:                IOCIPNode,
+  ioc_domain:            IOCDomainNode,
+  ioc_email:             IOCEmailNode,
+  ioc_url:               IOCURLNode,
+  ioc_hash:              IOCHashNode,
+  ioc_file:              IOCFileNode,
+  ioc_username:          IOCUsernameNode,
+  event:                 EventNode,
+  evidence:              EvidenceNode,
+  asset_host:            AssetHostNode,
+  asset_server:          AssetServerNode,
+  asset_workstation:     AssetWorkstationNode,
+  asset_laptop:          AssetLaptopNode,
+  asset_mobile:          AssetMobileNode,
+  asset_network_device:  AssetNetworkDeviceNode,
+  asset_account:         AssetAccountNode,
+  asset_service_account: AssetServiceAccountNode,
+  asset_file:            AssetFileNode,
+  asset_directory:       AssetDirectoryNode,
+  asset_url:             AssetUrlNode,
+  asset_email_address:   AssetEmailAddressNode,
+  asset_database:        AssetDatabaseNode,
+  asset_application:     AssetApplicationNode,
+  asset_cloud_resource:  AssetCloudResourceNode,
+  asset_other:           AssetOtherNode,
 }

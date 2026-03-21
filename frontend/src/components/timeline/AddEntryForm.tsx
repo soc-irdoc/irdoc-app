@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
-import { useCreateTimelineEntry, useUploadAttachment } from '@/hooks/useTimeline'
+import { useState, useEffect } from 'react'
+import { useCreateTimelineEntry } from '@/hooks/useTimeline'
+import { useAssets, useLinkAssetsToEntry } from '@/hooks/useAssets'
 import { AttachmentZone } from './AttachmentZone'
 import { Button } from '@/components/common/Button'
 import { useUIStore } from '@/stores/uiStore'
 import { formatNowDate, formatNowTime } from '@/lib/utils'
 import type { EntryType } from '@/types/timeline'
+import { ASSET_TYPE_ICONS, ASSET_TYPE_LABELS, type AssetType } from '@/types/asset'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
   { value: 'detection',   label: 'Detection' },
@@ -23,6 +25,8 @@ interface AddEntryFormProps {
 export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
   const addToast = useUIStore((s) => s.addToast)
   const createEntry = useCreateTimelineEntry(incidentId)
+  const { data: allAssets = [] } = useAssets(incidentId)
+  const linkAssets = useLinkAssetsToEntry(incidentId)
 
   const [entryType, setEntryType] = useState<EntryType>('note')
   const [date, setDate] = useState(formatNowDate())
@@ -31,6 +35,8 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
   const [source, setSource] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [focused, setFocused] = useState(false)
+  const [assetPickerOpen, setAssetPickerOpen] = useState(false)
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set())
 
   // Auto-update time when form is focused
   useEffect(() => {
@@ -77,12 +83,26 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         }
       }
 
+      // Link selected assets to the entry
+      if (selectedAssetIds.size > 0 && entry?.id) {
+        try {
+          await linkAssets.mutateAsync({
+            asset_ids: Array.from(selectedAssetIds),
+            timeline_entry_id: entry.id,
+          })
+        } catch {
+          addToast('Entry added but failed to link assets', 'error')
+        }
+      }
+
       // Reset form
       setDescription('')
       setSource('')
       setFiles([])
       setDate(formatNowDate())
       setTime(formatNowTime())
+      setSelectedAssetIds(new Set())
+      setAssetPickerOpen(false)
       addToast('Entry added', 'success')
     } catch {
       addToast('Failed to add entry', 'error')
@@ -222,6 +242,79 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       {/* Attachment zone */}
       <AttachmentZone files={files} onFilesChange={setFiles} />
 
+      {/* Asset picker */}
+      {allAssets.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <button
+            type="button"
+            onClick={() => setAssetPickerOpen(o => !o)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: 12,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 0',
+            }}
+          >
+            🖥️ Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
+            {' '}
+            <span style={{ fontSize: 10 }}>{assetPickerOpen ? '▲' : '▼'}</span>
+          </button>
+          {assetPickerOpen && (
+            <div style={{
+              marginTop: 6,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 6,
+              padding: '10px 12px',
+              background: 'var(--bg-base)',
+              borderRadius: 8,
+              border: '1px solid var(--border-subtle)',
+            }}>
+              {allAssets.map(asset => {
+                const selected = selectedAssetIds.has(asset.id)
+                return (
+                  <button
+                    key={asset.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedAssetIds(prev => {
+                        const next = new Set(prev)
+                        if (next.has(asset.id)) next.delete(asset.id)
+                        else next.add(asset.id)
+                        return next
+                      })
+                    }}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+                      background: selected ? 'var(--accent-dim)' : 'var(--bg-card)',
+                      color: selected ? 'var(--accent)' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                  >
+                    <span>{ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? '📦'}</span>
+                    <span>{asset.name}</span>
+                    <span style={{ fontSize: 10, opacity: 0.6 }}>
+                      {ASSET_TYPE_LABELS[asset.asset_type as AssetType]}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Actions */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14 }}>
         <Button
@@ -232,6 +325,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
             setDescription('')
             setSource('')
             setFiles([])
+            setSelectedAssetIds(new Set())
           }}
         >
           Clear

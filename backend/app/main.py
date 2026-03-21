@@ -132,6 +132,7 @@ from app.api.v1 import (  # noqa: E402
     ai,
     integrations,
     graph,
+    assets,
     users,
     audit,
     admin,
@@ -160,6 +161,7 @@ application.include_router(ai.router, prefix=API_PREFIX)
 # Phase 4
 application.include_router(integrations.router, prefix=API_PREFIX)
 application.include_router(graph.router, prefix=API_PREFIX)
+application.include_router(assets.router, prefix=API_PREFIX)
 # Phase 5
 application.include_router(users.router, prefix=API_PREFIX)
 application.include_router(audit.router, prefix=API_PREFIX)
