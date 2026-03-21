@@ -35,8 +35,7 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     context.configure(connection=connection, target_metadata=target_metadata)
-    with context.begin_transaction():
-        context.run_migrations()
+    context.run_migrations()
 
 
 # Advisory lock key — any stable integer unique to this application
@@ -49,16 +48,11 @@ async def run_async_migrations() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-    async with connectable.connect() as connection:
-        # Acquire a PostgreSQL session-level advisory lock so that only one
-        # container (backend / worker / beat) runs migrations at a time.
-        # pg_advisory_lock blocks until the lock is free; it is automatically
-        # released when the connection is closed.
+    # Use begin() so the transaction is committed on clean exit (not just closed).
+    # pg_advisory_lock serialises concurrent migration attempts across containers.
+    async with connectable.begin() as connection:
         await connection.execute(text(f"SELECT pg_advisory_lock({_MIGRATION_LOCK_KEY})"))
-        try:
-            await connection.run_sync(do_run_migrations)
-        finally:
-            await connection.execute(text(f"SELECT pg_advisory_unlock({_MIGRATION_LOCK_KEY})"))
+        await connection.run_sync(do_run_migrations)
     await connectable.dispose()
 
 
