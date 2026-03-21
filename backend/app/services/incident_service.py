@@ -145,6 +145,7 @@ async def update_incident(
         incident.closed_at = now
 
     await db.flush()
+    await db.refresh(incident)
     return incident
 
 

@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
@@ -16,8 +16,13 @@ import ReportTemplateEditorPage from '@/pages/ReportTemplateEditorPage'
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
 const InviteAcceptPage = lazy(() => import('@/pages/InviteAcceptPage'))
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children, isRestoring }: { children: React.ReactNode; isRestoring: boolean }) {
   const user = useAuthStore((s) => s.user)
+  // While the session-restore request is in flight, show a loader instead of
+  // immediately redirecting. Without this, ProtectedRoute fires <Navigate to="/login">
+  // before the refresh cookie is validated, replacing the history entry and losing
+  // the original deep-link URL (e.g. /incidents/:id/assets).
+  if (isRestoring) return <PageLoader />
   if (!user) return <Navigate to="/login" replace />
   return <>{children}</>
 }
@@ -25,6 +30,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export function App() {
   const { setAuth } = useAuthStore()
   const { theme } = useThemeStore()
+  const [isRestoring, setIsRestoring] = useState(true)
 
   // Restore session on load by hitting /auth/refresh with the refresh cookie
   useEffect(() => {
@@ -37,6 +43,8 @@ export function App() {
         setAuth(refreshRes.data.user, token)
       } catch {
         // No session — user will be redirected to login by ProtectedRoute
+      } finally {
+        setIsRestoring(false)
       }
     }
     tryRestore()
@@ -55,7 +63,7 @@ export function App() {
         <Route
           path="/incidents"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isRestoring={isRestoring}>
               <IncidentListPage />
             </ProtectedRoute>
           }
@@ -63,7 +71,7 @@ export function App() {
         <Route
           path="/incidents/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isRestoring={isRestoring}>
               <IncidentWorkspacePage />
             </ProtectedRoute>
           }
@@ -71,7 +79,7 @@ export function App() {
         <Route
           path="/incidents/:id/:section"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isRestoring={isRestoring}>
               <IncidentWorkspacePage />
             </ProtectedRoute>
           }
@@ -83,7 +91,7 @@ export function App() {
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isRestoring={isRestoring}>
               <SettingsPageWrapper />
             </ProtectedRoute>
           }
@@ -91,7 +99,7 @@ export function App() {
         <Route
           path="/report-templates"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isRestoring={isRestoring}>
               <ReportTemplateListPage />
             </ProtectedRoute>
           }
@@ -99,7 +107,7 @@ export function App() {
         <Route
           path="/report-templates/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isRestoring={isRestoring}>
               <ReportTemplateEditorPage />
             </ProtectedRoute>
           }
@@ -107,7 +115,7 @@ export function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute isRestoring={isRestoring}>
               <Suspense fallback={<PageLoader />}>
                 <AdminPage />
               </Suspense>

@@ -118,8 +118,8 @@ export default function ReportPage({ incidentId }: Props) {
               </button>
             </div>
 
-            {/* Custom uploaded templates */}
-            {docxTemplates.map((t) => (
+            {/* Custom uploaded templates — default first */}
+            {[...docxTemplates].sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0)).map((t) => (
               <div
                 key={t.id}
                 style={{

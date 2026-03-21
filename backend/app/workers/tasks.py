@@ -14,12 +14,22 @@ logger = logging.getLogger(__name__)
 
 
 def run_async(coro):
-    """Run an async coroutine from a sync Celery task."""
+    """Run an async coroutine from a sync Celery task.
+
+    Each Celery task runs in its own event loop.  asyncpg connections in the
+    shared pool are bound to the loop they were created on, so we must dispose
+    the pool *before* creating a new loop — otherwise the next task in the same
+    worker process gets a "Future attached to a different loop" error.
+    """
+    from app.core.database import engine
+    engine.dispose()  # close stale connections from the previous loop (sync call in SQLAlchemy 2)
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         return loop.run_until_complete(coro)
     finally:
         loop.close()
+        asyncio.set_event_loop(None)
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=30)
@@ -124,14 +134,6 @@ def generate_report(self, report_id: str, include_ai: bool = False, docx_templat
             await db.commit()
 
             try:
-                # Load template
-                result = await db.execute(
-                    select(ReportTemplate).where(ReportTemplate.id == report.report_template_id)
-                )
-                template = result.scalar_one_or_none()
-                if not template:
-                    raise ValueError(f"Report template {report.report_template_id} not found")
-
                 # Load analyst user
                 result = await db.execute(
                     select(User).where(User.id == report.generated_by)
@@ -150,30 +152,6 @@ def generate_report(self, report_id: str, include_ai: bool = False, docx_templat
                     analyst=analyst,
                     db=db,
                 )
-
-                # AI enrichment if requested and licensed
-                if include_ai:
-                    from app.core.feature_flags import check_feature
-                    if check_feature("ai_summaries"):
-                        from app.services.ai_service import (
-                            get_ai_provider,
-                            build_executive_summary_prompt,
-                            build_recommendations_prompt,
-                        )
-                        provider = get_ai_provider()
-
-                        # Check which AI blocks are in the schema
-                        schema_fields = [b.get("field", "") for b in template.schema_json]
-                        has_summary = "ai.executive_summary" in schema_fields
-                        has_recs = "ai.recommendations" in schema_fields
-
-                        if has_summary:
-                            sys_p, usr_p = build_executive_summary_prompt(payload)
-                            payload.ai_executive_summary = await provider.complete(sys_p, usr_p, 400)
-
-                        if has_recs:
-                            sys_p, usr_p = build_recommendations_prompt(payload)
-                            payload.ai_recommendations = await provider.complete(sys_p, usr_p, 600)
 
                 # Render — custom DOCX template path or block-based path
                 if report.format == "docx" and docx_template_id:
@@ -194,7 +172,7 @@ def generate_report(self, report_id: str, include_ai: bool = False, docx_templat
                         tmpl_bytes = generate_base_template()
                     file_bytes = render_with_template(tmpl_bytes, payload, report.classification)
                 elif report.format == "docx" and not report.report_template_id:
-                    # No block template either — use generated base template
+                    # No block template — use generated base template
                     from app.services.docx_template_service import (
                         generate_base_template,
                         render_with_template,
@@ -203,6 +181,37 @@ def generate_report(self, report_id: str, include_ai: bool = False, docx_templat
                         generate_base_template(), payload, report.classification
                     )
                 else:
+                    # Block-based report — load the ReportTemplate schema
+                    tmpl_result = await db.execute(
+                        select(ReportTemplate).where(ReportTemplate.id == report.report_template_id)
+                    )
+                    template = tmpl_result.scalar_one_or_none()
+                    if not template:
+                        raise ValueError(f"Report template {report.report_template_id} not found")
+
+                    # AI enrichment if requested and licensed
+                    if include_ai:
+                        from app.core.feature_flags import check_feature
+                        if check_feature("ai_summaries"):
+                            from app.services.ai_service import (
+                                get_ai_provider,
+                                build_executive_summary_prompt,
+                                build_recommendations_prompt,
+                            )
+                            provider = get_ai_provider()
+
+                            schema_fields = [b.get("field", "") for b in template.schema_json]
+                            has_summary = "ai.executive_summary" in schema_fields
+                            has_recs = "ai.recommendations" in schema_fields
+
+                            if has_summary:
+                                sys_p, usr_p = build_executive_summary_prompt(payload)
+                                payload.ai_executive_summary = await provider.complete(sys_p, usr_p, 400)
+
+                            if has_recs:
+                                sys_p, usr_p = build_recommendations_prompt(payload)
+                                payload.ai_recommendations = await provider.complete(sys_p, usr_p, 600)
+
                     renderer = ReportRenderer()
                     file_bytes = renderer.render(template.schema_json, payload, report.format)
 

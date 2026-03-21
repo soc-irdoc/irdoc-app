@@ -125,3 +125,10 @@ class AuditLogOut(BaseModel):
     api_key_id: UUID | None = None
     ip_address: str | None = None
     created_at: datetime
+
+    @field_validator("entity_id", mode="before")
+    @classmethod
+    def coerce_entity_id(cls, v: object) -> str | None:
+        if v is None:
+            return None
+        return str(v)
