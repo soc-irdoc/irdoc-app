@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useIntegrations, useSaveIntegrationConfig, useTestIntegration, useToggleIntegration } from '@/hooks/useIntegrations'
+import { useSSOConfig, useUpdateSSOConfig } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import PremiumGate from '@/components/common/PremiumGate'
@@ -224,11 +226,300 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   )
 }
 
+// ── Identity & Access Section (SSO / SAML 2.0) ───────────────────────────────
+
+const IDP_OPTIONS = [
+  { value: 'azure_ad', label: 'Entra ID / Azure AD' },
+  { value: 'okta', label: 'Okta' },
+  { value: 'google', label: 'Google Workspace' },
+  { value: 'generic_saml', label: 'Generic SAML 2.0' },
+]
+
+const ROLE_OPTIONS = ['viewer', 'analyst', 'senior_analyst', 'admin']
+
+interface RoleMapping { group: string; role: string }
+
+function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
+  const addToast = useUIStore((s) => s.addToast)
+  const { data: ssoConfig, isLoading } = useSSOConfig()
+  const updateSSO = useUpdateSSOConfig()
+
+  const [expanded, setExpanded] = useState(autoExpand)
+  const [isEnabled, setIsEnabled] = useState(false)
+  const [provider, setProvider] = useState('azure_ad')
+  const [metadataUrl, setMetadataUrl] = useState('')
+  const [entityId, setEntityId] = useState('')
+  const [ssoUrl, setSsoUrl] = useState('')
+  const [attrEmail, setAttrEmail] = useState('email')
+  const [attrName, setAttrName] = useState('displayName')
+  const [attrGroups, setAttrGroups] = useState('groups')
+  const [roleMappings, setRoleMappings] = useState<RoleMapping[]>([])
+  const [loadingMetadata, setLoadingMetadata] = useState(false)
+
+  useEffect(() => {
+    if (autoExpand) setExpanded(true)
+  }, [autoExpand])
+
+  useEffect(() => {
+    if (ssoConfig) {
+      setIsEnabled(ssoConfig.is_enabled)
+      setProvider(ssoConfig.provider || 'azure_ad')
+      setMetadataUrl(ssoConfig.idp_metadata_url ?? '')
+      setEntityId(ssoConfig.entity_id ?? '')
+      setSsoUrl(ssoConfig.sso_url ?? '')
+      setAttrEmail(ssoConfig.attr_email ?? 'email')
+      setAttrName(ssoConfig.attr_name ?? 'displayName')
+      setAttrGroups(ssoConfig.attr_groups ?? 'groups')
+      setRoleMappings(
+        Object.entries(ssoConfig.role_mappings ?? {}).map(([group, role]) => ({ group, role }))
+      )
+    }
+  }, [ssoConfig])
+
+  async function handleLoadMetadata() {
+    if (!metadataUrl) return
+    setLoadingMetadata(true)
+    try {
+      await updateSSO.mutateAsync({ idp_metadata_url: metadataUrl })
+      addToast('Metadata loaded', 'success')
+    } catch {
+      addToast('Failed to load metadata', 'error')
+    } finally {
+      setLoadingMetadata(false)
+    }
+  }
+
+  async function handleToggleEnable(enabled: boolean) {
+    setIsEnabled(enabled)
+    if (!expanded) setExpanded(true)
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    const mappingsObj: Record<string, string> = {}
+    roleMappings.forEach(({ group, role }) => { if (group) mappingsObj[group] = role })
+    try {
+      await updateSSO.mutateAsync({
+        is_enabled: isEnabled,
+        provider,
+        idp_metadata_url: metadataUrl || null,
+        entity_id: entityId || null,
+        sso_url: ssoUrl || null,
+        attr_email: attrEmail,
+        attr_name: attrName,
+        attr_groups: attrGroups,
+        role_mappings: mappingsObj,
+      })
+      addToast('SSO configuration saved', 'success')
+    } catch {
+      addToast('Failed to save SSO configuration', 'error')
+    }
+  }
+
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text)
+      addToast('Copied to clipboard', 'success')
+    } catch {
+      addToast('Failed to copy', 'error')
+    }
+  }
+
+  const baseUrl = window.location.origin
+  const spEntityId = `${baseUrl}/api/v1/auth/saml/metadata`
+  const acsUrl = `${baseUrl}/api/v1/auth/saml/acs`
+
+  const statusColor = isEnabled ? 'var(--green)' : 'var(--text-muted)'
+  const statusText = isLoading
+    ? 'Loading…'
+    : isEnabled
+    ? 'SSO Active'
+    : ssoConfig?.entity_id || ssoConfig?.idp_metadata_url
+    ? 'Configured — inactive'
+    : 'Not configured'
+
+  const subLabel = (text: string) => (
+    <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 6, display: 'block' }}>
+      {text}
+    </label>
+  )
+
+  const subCard = (title: string, children: React.ReactNode) => (
+    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', marginBottom: 12 }}>
+      <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>{title}</div>
+      <div style={{ padding: 16 }}>{children}</div>
+    </div>
+  )
+
+  return (
+    <div style={{ marginBottom: 32 }} id="identity-section">
+      {/* Section heading */}
+      <h3 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+        Identity &amp; Access
+      </h3>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, marginTop: -8 }}>
+        Connect your identity provider for SSO and user provisioning.
+      </p>
+
+      {/* SSO card */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: `1px solid ${isEnabled ? 'var(--accent)' : 'var(--border)'}`,
+        borderRadius: 12,
+        overflow: 'hidden',
+        transition: 'border-color 0.15s',
+      }}>
+        {/* Card header */}
+        <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, background: 'var(--bg-elevated)', flexShrink: 0 }}>
+            🔐
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>SSO / SAML 2.0</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              Single Sign-On for Entra ID, Okta, Google Workspace, or any SAML 2.0 provider
+            </p>
+          </div>
+          <ToggleSwitch
+            checked={isEnabled}
+            onChange={handleToggleEnable}
+            ariaLabel="Toggle SSO"
+          />
+        </div>
+
+        {/* Status + configure button */}
+        <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 11, color: statusColor }}>{statusText}</span>
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: 11, padding: '2px 10px' }}
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? 'Collapse ▲' : 'Configure ▼'}
+          </button>
+        </div>
+
+        {/* Expanded config form */}
+        {expanded && (
+          <form onSubmit={handleSave}>
+            <div style={{ borderTop: '1px solid var(--border)', padding: '20px 20px 0' }}>
+
+              {/* Identity Provider */}
+              {subCard('Identity Provider',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    {subLabel('Provider')}
+                    <div className="select-wrap">
+                      <select className="form-input" value={provider} onChange={(e) => setProvider(e.target.value)}>
+                        {IDP_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    {subLabel('IdP Metadata URL')}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="url" className="form-input" placeholder="https://login.microsoftonline.com/…/federationmetadata/…" value={metadataUrl} onChange={(e) => setMetadataUrl(e.target.value)} />
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={handleLoadMetadata} disabled={loadingMetadata || !metadataUrl}>
+                        {loadingMetadata ? 'Loading…' : 'Load Metadata'}
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ padding: '10px 14px', background: 'var(--bg-card)', borderRadius: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+                    Or configure manually:
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      {subLabel('Entity ID (Issuer)')}
+                      <input type="text" className="form-input" placeholder="https://sts.windows.net/…" value={entityId} onChange={(e) => setEntityId(e.target.value)} />
+                    </div>
+                    <div>
+                      {subLabel('SSO URL')}
+                      <input type="url" className="form-input" placeholder="https://login.microsoftonline.com/…/saml2" value={ssoUrl} onChange={(e) => setSsoUrl(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Attribute Mapping */}
+              {subCard('Attribute Mapping',
+                <div>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Map SAML assertion attributes to IRDoc user fields.</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    <div>{subLabel('Email attribute')}<input type="text" className="form-input" value={attrEmail} onChange={(e) => setAttrEmail(e.target.value)} /></div>
+                    <div>{subLabel('Name attribute')}<input type="text" className="form-input" value={attrName} onChange={(e) => setAttrName(e.target.value)} /></div>
+                    <div>{subLabel('Groups attribute')}<input type="text" className="form-input" value={attrGroups} onChange={(e) => setAttrGroups(e.target.value)} /></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Role Mappings */}
+              {subCard('Role Mappings',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Map IdP groups to IRDoc roles. Unmapped users receive the Analyst role by default.</p>
+                  {roleMappings.map((mapping, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input type="text" className="form-input" style={{ flex: 1 }} placeholder="IdP Group name" value={mapping.group} onChange={(e) => setRoleMappings((prev) => prev.map((m, idx) => idx === i ? { ...m, group: e.target.value } : m))} />
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>→</span>
+                      <div className="select-wrap" style={{ width: 150 }}>
+                        <select className="form-input" value={mapping.role} onChange={(e) => setRoleMappings((prev) => prev.map((m, idx) => idx === i ? { ...m, role: e.target.value } : m))}>
+                          {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+                        </select>
+                      </div>
+                      <button type="button" className="icon-btn" style={{ color: 'var(--red)', flexShrink: 0 }} onClick={() => setRoleMappings((prev) => prev.filter((_, idx) => idx !== i))} aria-label="Remove mapping">✕</button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => setRoleMappings((prev) => [...prev, { group: '', role: 'analyst' }])}>
+                    + Add Mapping
+                  </button>
+                </div>
+              )}
+
+              {/* SP Metadata */}
+              {subCard('Service Provider Metadata',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Configure these values in your Identity Provider.</p>
+                  <div>
+                    {subLabel('SP Entity ID / Audience')}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" className="form-input" value={spEntityId} readOnly style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, opacity: 0.8 }} />
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={() => copyToClipboard(spEntityId)}>Copy</button>
+                    </div>
+                  </div>
+                  <div>
+                    {subLabel('ACS URL (Assertion Consumer Service)')}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" className="form-input" value={acsUrl} readOnly style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, opacity: 0.8 }} />
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={() => copyToClipboard(acsUrl)}>Copy</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Save bar */}
+            <div style={{ padding: '14px 20px 20px', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpanded(false)}>Collapse</button>
+              <button type="submit" className="btn btn-accent btn-sm" disabled={updateSSO.isPending}>
+                {updateSSO.isPending ? 'Saving…' : 'Save SSO Configuration'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export function IntegrationsPage() {
   const { data: integrations, isLoading } = useIntegrations()
   const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [searchParams] = useSearchParams()
+  const autoExpandIdentity = searchParams.get('section') === 'identity'
 
   if (isLoading) {
     return (
@@ -317,10 +608,15 @@ export function IntegrationsPage() {
         </div>
       ))}
 
-      {filtered.length === 0 && (
+      {filtered.length === 0 && activeCategory !== 'all' && (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40, fontSize: 13 }}>
           No integrations in this category.
         </div>
+      )}
+
+      {/* Identity & Access — always shown (not filtered by category) */}
+      {(activeCategory === 'all' || activeCategory === 'identity') && (
+        <IdentitySection autoExpand={autoExpandIdentity} />
       )}
     </div>
   )

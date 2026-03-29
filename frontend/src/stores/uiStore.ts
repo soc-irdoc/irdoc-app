@@ -15,6 +15,8 @@ interface UIStore {
   activeModal: string | null
   openModal: (name: string) => void
   closeModal: () => void
+  wsConnected: boolean
+  setWsConnected: (connected: boolean) => void
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -31,4 +33,6 @@ export const useUIStore = create<UIStore>((set) => ({
   activeModal: null,
   openModal: (name) => set({ activeModal: name }),
   closeModal: () => set({ activeModal: null }),
+  wsConnected: true,
+  setWsConnected: (connected) => set({ wsConnected: connected }),
 }))

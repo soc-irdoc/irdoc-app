@@ -66,19 +66,22 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         source: source.trim() || undefined,
       })
 
-      // Upload attachments if any
+      // Upload attachments if any — track successes and failures for a consolidated toast
+      let uploadedCount = 0
+      let failedCount = 0
       if (files.length > 0 && entry?.id) {
+        const { default: apiClient } = await import('@/lib/apiClient')
         for (const file of files) {
           try {
             const fd = new FormData()
             fd.append('file', file)
             fd.append('timeline_entry_id', entry.id)
-            const { default: apiClient } = await import('@/lib/apiClient')
             await apiClient.post(`/incidents/${incidentId}/attachments`, fd, {
               headers: { 'Content-Type': 'multipart/form-data' },
             })
+            uploadedCount++
           } catch {
-            addToast(`Failed to upload ${file.name}`, 'error')
+            failedCount++
           }
         }
       }
@@ -103,7 +106,18 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       setTime(formatNowTime())
       setSelectedAssetIds(new Set())
       setAssetPickerOpen(false)
-      addToast('Entry added', 'success')
+
+      // Consolidated result toast — include attachment outcome when files were queued
+      if (files.length === 0) {
+        addToast('Entry added', 'success')
+      } else if (failedCount === 0) {
+        addToast(`Entry added. ${uploadedCount} attachment${uploadedCount !== 1 ? 's' : ''} uploaded.`, 'success')
+      } else {
+        addToast(
+          `Entry added. ${uploadedCount} of ${files.length} attachment${files.length !== 1 ? 's' : ''} uploaded — ${failedCount} failed.`,
+          'error',
+        )
+      }
     } catch {
       addToast('Failed to add entry', 'error')
     }

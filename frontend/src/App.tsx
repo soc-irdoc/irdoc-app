@@ -2,13 +2,13 @@ import { useEffect, useState, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
+import { scheduleTokenRefresh } from '@/lib/apiClient'
 import { useThemeStore } from '@/stores/themeStore'
 import { ToastContainer } from '@/components/common/Toast'
 import { LoginPage } from '@/pages/LoginPage'
 import { IncidentListPage } from '@/pages/IncidentListPage'
 import { IncidentWorkspacePage } from '@/pages/IncidentWorkspacePage'
 import { SettingsPageWrapper } from '@/pages/SettingsPageWrapper'
-import { IntegrationsPageWrapper } from '@/pages/IntegrationsPageWrapper'
 import { PageLoader } from '@/components/common/LoadingSpinner'
 import ReportTemplateListPage from '@/pages/ReportTemplateListPage'
 import ReportTemplateEditorPage from '@/pages/ReportTemplateEditorPage'
@@ -41,6 +41,7 @@ export function App() {
         const refreshRes = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
         const token = refreshRes.data.data.access_token
         setAuth(refreshRes.data.user, token)
+        scheduleTokenRefresh(token)
       } catch {
         // No session — user will be redirected to login by ProtectedRoute
       } finally {
@@ -86,7 +87,15 @@ export function App() {
         />
         <Route
           path="/integrations"
-          element={<Navigate to="/admin" replace />}
+          element={<Navigate to="/admin/integrations" replace />}
+        />
+        <Route
+          path="/admin/sso"
+          element={<Navigate to="/admin/integrations?section=identity" replace />}
+        />
+        <Route
+          path="/admin"
+          element={<Navigate to="/admin/org" replace />}
         />
         <Route
           path="/settings"
@@ -113,7 +122,7 @@ export function App() {
           }
         />
         <Route
-          path="/admin"
+          path="/admin/:section"
           element={
             <ProtectedRoute isRestoring={isRestoring}>
               <Suspense fallback={<PageLoader />}>

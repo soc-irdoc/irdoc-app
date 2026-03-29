@@ -1369,15 +1369,11 @@ Criticalities: `critical`, `high`, `medium` (default), `low`
 
 ## 32. Post-Launch UI Fixes (Batch 1)
 
-### 32.1 Integrations Moved to Admin Panel
+### 32.1 Integrations Moved to Admin Panel *(superseded by 32.6)*
 
 **Problem:** Integrations was a standalone left-nav item, disconnected from the Admin area.
 
-**Changes:**
-- `LeftNav.tsx` — removed `Integrations` from `NAV_ITEMS`
-- `AdminShell.tsx` — added `'integrations'` to `AdminTab` type + added `{ id: 'integrations', icon: '🔗', label: 'Integrations' }` to `SIDEBAR_ITEMS`
-- `AdminPage.tsx` — added `import { IntegrationsPage }` + renders `<IntegrationsPage />` for `activeTab === 'integrations'`
-- `App.tsx` — `/integrations` route now redirects to `/admin` (keeps old links working)
+**Changes (original):** Moved integrations into `AdminShell` sidebar. Superseded by 32.6 which removes `AdminShell` entirely.
 
 ### 32.2 Incident Section Persists on Refresh
 
@@ -1404,6 +1400,31 @@ Criticalities: `critical`, `high`, `medium` (default), `low`
 **Problem:** `evidence` entry type dot used `var(--purple-dim)` (~12% opacity) — the vertical timeline line was visible through it.
 
 **Fix:** `TimelineEntry.tsx` — changed `evidence` bg in `DOT_STYLES` from `var(--purple-dim)` to `rgba(188,140,255,0.45)` (~45% opacity), solid enough to cover the line.
+
+### 32.6 Admin Panel Flattened into Main Nav (Management Section)
+
+**Problem:** Admin features were buried two levels deep (LeftNav → Admin → AdminShell sidebar). Users had to navigate away from the main app shell to access any admin function.
+
+**Fix:** Removed the separate `AdminShell`-based admin panel. All admin items are now first-class entries in `LeftNav` under a "MANAGEMENT" section separator, visible only to admin-role users.
+
+**Changes:**
+- `LeftNav.tsx` — added `MANAGEMENT_ITEMS` array (8 items: Team, Org Settings, Storage, Incident Templates, Report Templates, Integrations, Audit Log, SSO). Renders a "MANAGEMENT" label separator (collapsed: horizontal rule only) above these items. Removed standalone "Admin" nav button.
+- `AdminPage.tsx` — rewritten: uses `useParams<{ section? }>()` instead of `useState` for active tab. Wraps in `AppShell` instead of `AdminShell`. Section defaults to `'team'` if missing/invalid. Retains admin role guard (redirects non-admins).
+- `App.tsx` — `/admin` now redirects to `/admin/team`. Old `/admin` route replaced with `/admin/:section`. `/integrations` redirect updated to `/admin/integrations`.
+- `AdminShell.tsx` — no longer used (kept in codebase, not rendered).
+
+**Routes:**
+```
+/admin              → redirect → /admin/team
+/admin/team         → AdminPage (section=team)
+/admin/org          → AdminPage (section=org)
+/admin/storage      → AdminPage (section=storage)
+/admin/templates    → AdminPage (section=templates)
+/admin/reports      → AdminPage (section=reports)
+/admin/integrations → AdminPage (section=integrations)
+/admin/audit        → AdminPage (section=audit)
+/admin/sso          → AdminPage (section=sso)
+```
 
 ---
 
@@ -1481,4 +1502,109 @@ For table markers (`{{TIMELINE_SECTION}}` etc.):
 2. Detach from body: `table._tbl.getparent().remove(table._tbl)`
 3. Insert after marker: `para._element.addnext(table._tbl)`
 4. Remove marker paragraph
+
+---
+
+## 34. Critical Bug Fixes (Post-Launch)
+
+> Fixes for the 3 critical issues identified in the UX Research Bug Report (March 2026).
+
+### 34.1 Bug Fix: Silent WebSocket Failures
+
+**Files changed:** `frontend/src/lib/websocket.ts`, `frontend/src/stores/uiStore.ts`, `frontend/src/components/layout/AppShell.tsx`
+
+**Problem:** Socket.io had no error or disconnect handlers. When the WebSocket connection dropped (404s seen in logs), real-time updates silently stopped with no user feedback.
+
+**Fix:**
+- Added `wsConnected: boolean` + `setWsConnected()` to `uiStore.ts`
+- `websocket.ts` — `getSocket()` now registers `connect`, `disconnect`, `connect_error`, `reconnect`, `reconnect_failed` handlers that call `useUIStore.getState().setWsConnected()`
+- `AppShell.tsx` — renders a yellow banner `"Real-time connection lost. Reconnecting… Live updates are paused."` whenever `wsConnected` is `false`
+- `wsConnected` defaults to `true` (no false-negative flash on first load before the socket connects)
+
+### 34.2 Bug Fix: Mid-Work Session Expiry with No Warning
+
+**Files changed:** `frontend/src/lib/apiClient.ts`, `frontend/src/App.tsx`, `frontend/src/pages/LoginPage.tsx`
+
+**Problem:** When the refresh token expired, the user was silently redirected to `/login` mid-work with no explanation and no opportunity to save.
+
+**Fix:**
+- `apiClient.ts` — added `scheduleTokenRefresh(token)` export:
+  - Decodes `exp` from the JWT payload (`atob(token.split('.')[1])`) without a library
+  - Sets a timer to fire a warning toast 2 min before expiry: _"Your session expires soon. Save your work…"_
+  - Sets a timer to silently proactively refresh the token 1 min before expiry
+- `apiClient.ts` 401 interceptor — calls `scheduleTokenRefresh(newToken)` after each successful refresh; redirects to `/login?reason=session_expired` on hard logout
+- `App.tsx` — calls `scheduleTokenRefresh(token)` after session restore on page load
+- `LoginPage.tsx` — reads `?reason=session_expired` via `useSearchParams` and pre-fills the error state with `"Your session expired. Please log in again."`
+
+### 34.3 Bug Fix: Attachment Upload Failures Hidden by Premature Success Toast
+
+**Files changed:** `frontend/src/components/timeline/AddEntryForm.tsx`
+
+**Problem:** The "Entry added" success toast fired immediately after the timeline entry was created, before the file upload loop ran. If uploads failed, only per-file error toasts followed — users who glanced away missed them entirely.
+
+**Fix:**
+- Moved the result toast to after all uploads complete
+- Track `uploadedCount` and `failedCount` across the upload loop (removed per-file individual error toasts)
+- Toast logic:
+  - No files queued → `"Entry added"` (unchanged)
+  - All uploads succeeded → `"Entry added. N attachment(s) uploaded."` (success)
+  - Some failed → `"Entry added. N of M attachment(s) uploaded — X failed."` (error — persists until dismissed)
+
+---
+
+## 35. Post-Launch UI Fixes (Batch 2)
+
+### 35.1 Admin Panel Flattened into Main Nav
+
+See Section 32.6 — all admin items now appear as first-class entries in `LeftNav` under a "MANAGEMENT" separator. `AdminShell` is no longer rendered.
+
+### 35.2 Team Merged into Org Settings Page
+
+**Problem:** "Team" was a separate nav item and separate page, but it belongs logically under Organisation settings alongside Registration Policy, Custom Branding, and User Authentication.
+
+**Changes:**
+- `OrgSettingsPage.tsx` — fully rewritten: absorbs all of `TeamPage`'s functionality (active members table, inline role edit, deactivate, pending invitations, resend/revoke) as a "Team Members" card block. Adds a new "User Authentication" block (see 35.3). All hooks imported inline; shared style constants extracted at file top.
+- `LeftNav.tsx` — `MANAGEMENT_ITEMS` no longer includes `{ label: 'Team', path: '/admin/team' }`.
+- `AdminPage.tsx` — `team` removed from `AdminSection` type and `VALID_SECTIONS`. `TeamPage` import removed. Legacy `/admin/team` URL redirected to `/admin/org` via a `useEffect`.
+- `App.tsx` — `/admin` redirect changed from `/admin/team` → `/admin/org`. Unused `IntegrationsPageWrapper` import removed.
+
+### 35.3 User Authentication Block (new)
+
+Added to `OrgSettingsPage.tsx` as a card between "Team Members" and "Registration Policy".
+
+Three radio-card options:
+- **🔑 Local Users** (free, default) — shows a "Break-Glass Admin" sub-card (`local.admin` account, rotate-password button).
+- **☁️ Entra ID / Azure AD** — when selected, shows a compact status chip + "Configure SSO →" button that navigates to `/admin/integrations?section=identity`.
+- **🏢 On-Premises AD** — when selected, shows a compact status chip + "Configure SSO →" button that navigates to `/admin/integrations?section=identity`.
+
+Inspired by the prototype at `incident-response-platform_new/js/view-org.js`.
+
+### 35.5 SSO Moved into Integrations — Identity & Access Section
+
+**Decision:** SSO is an external identity provider integration and belongs alongside VirusTotal, Slack, and SharePoint — not as a separate admin section. `IntegrationsPage` is now the single hub for all external service configuration.
+
+**Changes:**
+- `frontend/src/components/integrations/IntegrationsPage.tsx` — Added `IdentitySection` component with a full-width SSO / SAML 2.0 card. Card shows status + enable toggle; clicking "Configure ▼" expands an inline form with 4 sub-sections (Identity Provider, Attribute Mapping, Role Mappings, SP Metadata). Uses `useSSOConfig` / `useUpdateSSOConfig` hooks directly. Reads `?section=identity` query param on mount to auto-expand the card (used for deep-linking from Org Settings).
+- `frontend/src/components/admin/OrgSettingsPage.tsx` — Entra ID and On-Premises AD sub-panels simplified to a compact status row + "Configure SSO →" button that navigates to `/admin/integrations?section=identity`. Removed unused `ldapServer` / `ldapBaseDn` state.
+- `frontend/src/components/layout/LeftNav.tsx` — Removed `{ icon: '🔐', label: 'SSO', path: '/admin/sso' }` from `MANAGEMENT_ITEMS`.
+- `frontend/src/pages/AdminPage.tsx` — Removed `'sso'` from `AdminSection` type and `VALID_SECTIONS`. Removed `SSOPage` import. Added legacy redirect: `section === 'sso'` → `/admin/integrations?section=identity`.
+- `frontend/src/App.tsx` — Added `/admin/sso` route redirecting to `/admin/integrations?section=identity` for any bookmarked links.
+
+**Navigation flow:**
+```
+Org Settings → User Auth → pick Entra ID → "Configure SSO →"
+  → /admin/integrations?section=identity
+  → IntegrationsPage mounts, reads ?section=identity, auto-expands SSO card
+```
+
+**Backend untouched** — `SSOPage.tsx` is no longer rendered but kept in codebase. All SAML backend logic (`/auth/saml/*` routes, `sso_service.py`, `SSOConfig` model) unchanged.
+
+### 35.4 All Features Moved to CORE Plan
+
+**Decision:** All premium-gated features are now available on the CORE plan. The backend premium infrastructure (`check_feature()`, `LICENSE_KEY`, feature flags endpoint, `organizations.plan` column) is preserved intact and ready to be reactivated if a licensing tier is introduced in the future.
+
+**Changes:**
+- `frontend/src/components/common/PremiumGate.tsx` — Rewritten as a transparent passthrough: `return <>{children}</>`. The `useFeatureFlags` hook import removed. Props interface (`feature`, `featureKey`, `children`) kept intact. The original lock overlay (blurred backdrop, 🔒 icon, "Premium Feature" label, "Upgrade to unlock →" link) is preserved in a comment block for future restoration.
+- `frontend/src/components/admin/OrgSettingsPage.tsx` — Removed `isPremium` variable and all associated client-side gating from the User Authentication radio cards: removed `opacity: 0.6` dimming, removed `disabled` on radio inputs, removed cursor override to `'default'`, removed 🔒 lock icon. All three auth options (Local Users, Entra ID / Azure AD, On-Premises AD) are now fully selectable.
+- **Backend untouched** — `app/core/feature_flags.py`, `check_feature()` calls in services and routes, and the `organizations.plan` column all remain as-is.
 

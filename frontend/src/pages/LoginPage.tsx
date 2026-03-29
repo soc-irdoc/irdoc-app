@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLogin } from '@/hooks/useAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/common/Button'
@@ -7,12 +7,14 @@ import apiClient from '@/lib/apiClient'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const login = useLogin()
   const user = useAuthStore((s) => s.user)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const sessionExpired = searchParams.get('reason') === 'session_expired'
+  const [error, setError] = useState(sessionExpired ? 'Your session expired. Please log in again.' : '')
 
   // Check if first-run setup is needed
   const [needsSetup, setNeedsSetup] = useState(false)

@@ -16,6 +16,15 @@ const NAV_ITEMS: NavItem[] = [
   { icon: '⚙',  label: 'Settings', path: '/settings' },
 ]
 
+const MANAGEMENT_ITEMS: NavItem[] = [
+  { icon: '⚙️', label: 'Org Settings', path: '/admin/org' },
+  { icon: '🗄️', label: 'Storage', path: '/admin/storage' },
+  { icon: '📋', label: 'Incident Templates', path: '/admin/templates' },
+  { icon: '📄', label: 'Report Templates', path: '/admin/reports' },
+  { icon: '🔗', label: 'Integrations', path: '/admin/integrations' },
+  { icon: '📜', label: 'Audit Log', path: '/admin/audit' },
+]
+
 function NavButton({
   icon,
   label,
@@ -192,15 +201,41 @@ export function LeftNav() {
         />
       ))}
 
-      {/* Admin nav item — only visible to admins */}
+      {/* Management section — admin only */}
       {user?.role === 'admin' && (
-        <NavButton
-          icon="🛡️"
-          label="Admin"
-          active={location.pathname.startsWith('/admin')}
-          collapsed={collapsed}
-          onClick={() => navigate('/admin')}
-        />
+        <>
+          <div style={{
+            margin: collapsed ? '8px 0 4px' : '10px 4px 4px',
+            borderTop: '1px solid var(--border)',
+            paddingTop: collapsed ? 0 : 8,
+          }}>
+            {!collapsed && (
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                color: 'var(--text-muted)',
+                fontFamily: 'Syne, sans-serif',
+                textTransform: 'uppercase',
+                padding: '0 4px',
+                display: 'block',
+                marginBottom: 4,
+              }}>
+                Management
+              </span>
+            )}
+          </div>
+          {MANAGEMENT_ITEMS.map((item) => (
+            <NavButton
+              key={item.path}
+              icon={item.icon}
+              label={item.label}
+              active={location.pathname === item.path}
+              collapsed={collapsed}
+              onClick={() => navigate(item.path)}
+            />
+          ))}
+        </>
       )}
 
       <div style={{ flex: 1 }} />
