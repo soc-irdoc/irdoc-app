@@ -237,6 +237,50 @@ const IDP_OPTIONS = [
 
 const ROLE_OPTIONS = ['viewer', 'analyst', 'senior_analyst', 'admin']
 
+interface IdpConfig {
+  metadataUrlPlaceholder: string
+  entityIdPlaceholder: string
+  ssoUrlPlaceholder: string
+  defaultAttrEmail: string
+  defaultAttrName: string
+  defaultAttrGroups: string
+}
+
+const IDP_CONFIGS: Record<string, IdpConfig> = {
+  azure_ad: {
+    metadataUrlPlaceholder: 'https://login.microsoftonline.com/{tenant-id}/federationmetadata/2007-06/federationmetadata.xml',
+    entityIdPlaceholder: 'https://sts.windows.net/{tenant-id}/',
+    ssoUrlPlaceholder: 'https://login.microsoftonline.com/{tenant-id}/saml2',
+    defaultAttrEmail: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+    defaultAttrName: 'displayName',
+    defaultAttrGroups: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups',
+  },
+  okta: {
+    metadataUrlPlaceholder: 'https://{subdomain}.okta.com/app/{app-id}/sso/saml/metadata',
+    entityIdPlaceholder: 'http://www.okta.com/{app-id}',
+    ssoUrlPlaceholder: 'https://{subdomain}.okta.com/app/{app-id}/sso/saml',
+    defaultAttrEmail: 'email',
+    defaultAttrName: 'displayName',
+    defaultAttrGroups: 'groups',
+  },
+  google: {
+    metadataUrlPlaceholder: 'https://accounts.google.com/o/saml2?idpid={idp-entity-id}',
+    entityIdPlaceholder: 'https://accounts.google.com/o/saml2?idpid={idp-entity-id}',
+    ssoUrlPlaceholder: 'https://accounts.google.com/o/saml2/idp?idpid={idp-entity-id}',
+    defaultAttrEmail: 'email',
+    defaultAttrName: 'displayName',
+    defaultAttrGroups: 'groups',
+  },
+  generic_saml: {
+    metadataUrlPlaceholder: 'https://your-idp.example.com/saml/metadata',
+    entityIdPlaceholder: 'https://your-idp.example.com/',
+    ssoUrlPlaceholder: 'https://your-idp.example.com/sso/saml',
+    defaultAttrEmail: 'email',
+    defaultAttrName: 'displayName',
+    defaultAttrGroups: 'groups',
+  },
+}
+
 interface RoleMapping { group: string; role: string }
 
 function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
@@ -275,6 +319,17 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
       )
     }
   }, [ssoConfig])
+
+  function handleProviderChange(newProvider: string) {
+    const oldConfig = IDP_CONFIGS[provider]
+    const newConfig = IDP_CONFIGS[newProvider] ?? IDP_CONFIGS.generic_saml
+    // Only update attribute names if they still match the previous provider's defaults
+    // (i.e., the user hasn't customised them yet)
+    if (attrEmail === oldConfig?.defaultAttrEmail) setAttrEmail(newConfig.defaultAttrEmail)
+    if (attrName === oldConfig?.defaultAttrName) setAttrName(newConfig.defaultAttrName)
+    if (attrGroups === oldConfig?.defaultAttrGroups) setAttrGroups(newConfig.defaultAttrGroups)
+    setProvider(newProvider)
+  }
 
   async function handleLoadMetadata() {
     if (!metadataUrl) return
@@ -328,6 +383,8 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
   const baseUrl = window.location.origin
   const spEntityId = `${baseUrl}/api/v1/auth/saml/metadata`
   const acsUrl = `${baseUrl}/api/v1/auth/saml/acs`
+
+  const idpConfig = IDP_CONFIGS[provider] ?? IDP_CONFIGS.generic_saml
 
   const statusColor = isEnabled ? 'var(--green)' : 'var(--text-muted)'
   const statusText = isLoading
@@ -410,7 +467,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                   <div>
                     {subLabel('Provider')}
                     <div className="select-wrap">
-                      <select className="form-input" value={provider} onChange={(e) => setProvider(e.target.value)}>
+                      <select className="form-input" value={provider} onChange={(e) => handleProviderChange(e.target.value)}>
                         {IDP_OPTIONS.map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
@@ -420,7 +477,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                   <div>
                     {subLabel('IdP Metadata URL')}
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <input type="url" className="form-input" placeholder="https://login.microsoftonline.com/…/federationmetadata/…" value={metadataUrl} onChange={(e) => setMetadataUrl(e.target.value)} />
+                      <input type="url" className="form-input" placeholder={idpConfig.metadataUrlPlaceholder} value={metadataUrl} onChange={(e) => setMetadataUrl(e.target.value)} />
                       <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={handleLoadMetadata} disabled={loadingMetadata || !metadataUrl}>
                         {loadingMetadata ? 'Loading…' : 'Load Metadata'}
                       </button>
@@ -432,11 +489,11 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
                       {subLabel('Entity ID (Issuer)')}
-                      <input type="text" className="form-input" placeholder="https://sts.windows.net/…" value={entityId} onChange={(e) => setEntityId(e.target.value)} />
+                      <input type="text" className="form-input" placeholder={idpConfig.entityIdPlaceholder} value={entityId} onChange={(e) => setEntityId(e.target.value)} />
                     </div>
                     <div>
                       {subLabel('SSO URL')}
-                      <input type="url" className="form-input" placeholder="https://login.microsoftonline.com/…/saml2" value={ssoUrl} onChange={(e) => setSsoUrl(e.target.value)} />
+                      <input type="url" className="form-input" placeholder={idpConfig.ssoUrlPlaceholder} value={ssoUrl} onChange={(e) => setSsoUrl(e.target.value)} />
                     </div>
                   </div>
                 </div>

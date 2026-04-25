@@ -91,11 +91,14 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
             style={{
               background: 'var(--bg-surface)',
               border: `1px solid ${entry.is_pinned ? 'var(--accent)' : 'var(--border)'}`,
-              borderLeft: entry.is_pinned ? '3px solid var(--accent)' : undefined,
               borderRadius: 12,
               padding: 16,
-              transition: 'border-color 0.15s',
-              boxShadow: hovered ? 'var(--shadow)' : 'none',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+              boxShadow: entry.is_pinned
+                ? 'inset 3px 0 0 var(--accent), 0 0 20px rgba(249,115,22,0.06)'
+                : hovered
+                ? 'var(--shadow)'
+                : 'none',
             }}
           >
             {/* Header */}

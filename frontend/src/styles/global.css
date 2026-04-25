@@ -16,20 +16,21 @@
   --text-secondary:#8b949e;
   --text-muted:    #484f58;
   --accent:        #f97316;
-  --accent-dim:    rgba(249,115,22,0.12);
+  --accent-dim:    rgba(249,115,22,0.14);
   --accent-glow:   rgba(249,115,22,0.25);
   --green:         #3fb950;
-  --green-dim:     rgba(63,185,80,0.12);
+  --green-dim:     rgba(63,185,80,0.16);
   --red:           #f85149;
-  --red-dim:       rgba(248,81,73,0.12);
+  --red-dim:       rgba(248,81,73,0.16);
   --yellow:        #e3b341;
-  --yellow-dim:    rgba(227,179,65,0.12);
+  --yellow-dim:    rgba(227,179,65,0.16);
   --blue:          #58a6ff;
-  --blue-dim:      rgba(88,166,255,0.12);
+  --blue-dim:      rgba(88,166,255,0.16);
   --purple:        #bc8cff;
-  --purple-dim:    rgba(188,140,255,0.12);
+  --purple-dim:    rgba(188,140,255,0.16);
   --scrollbar:     #2a3344;
   --shadow:        0 4px 24px rgba(0,0,0,0.4);
+  --shadow-accent: 0 0 0 1px var(--accent), 0 4px 20px rgba(249,115,22,0.15);
 }
 
 :root[data-theme="light"] {
@@ -57,6 +58,7 @@
   --purple-dim:    rgba(130,80,223,0.1);
   --scrollbar:     #d0d7de;
   --shadow:        0 4px 24px rgba(0,0,0,0.08);
+  --shadow-accent: 0 0 0 1px var(--accent), 0 4px 20px rgba(232,89,12,0.12);
 }
 
 /* ── BASE RESET ────────────────────────────────────────── */
@@ -72,7 +74,7 @@ html {
 
 body {
   font-family: 'Syne', sans-serif;
-  background: var(--bg-base);
+  background: radial-gradient(ellipse at 60% 0%, rgba(249,115,22,0.04) 0%, transparent 60%), var(--bg-base);
   color: var(--text-primary);
   height: 100%;
   font-size: 14px;
@@ -150,6 +152,7 @@ textarea.form-input {
 
 .btn-accent:hover:not(:disabled) {
   filter: brightness(1.1);
+  box-shadow: 0 0 14px var(--accent-glow);
 }
 
 .btn-ghost {
@@ -257,12 +260,12 @@ textarea.form-input {
 
 /* ── SLIDE-IN ANIMATION ────────────────────────────────── */
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(-12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .animate-slide-in {
-  animation: slideIn 0.3s ease;
+  animation: slideIn 0.25s ease;
 }
 
 /* ── FADE IN ───────────────────────────────────────────── */
@@ -273,6 +276,26 @@ textarea.form-input {
 
 .animate-fade-in {
   animation: fadeIn 0.2s ease;
+}
+
+/* ── ENTER UP (login form, modals) ─────────────────────── */
+@keyframes enterUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-enter-up {
+  animation: enterUp 0.4s ease-out;
+}
+
+/* ── PULSE ACCENT (active nav) ─────────────────────────── */
+@keyframes pulseAccent {
+  0%, 100% { background-color: rgba(249,115,22,0.14); }
+  50%       { background-color: rgba(249,115,22,0.22); }
+}
+
+.animate-pulse-accent {
+  animation: pulseAccent 3s ease-in-out infinite;
 }
 
 /* ── SELECT ARROW ──────────────────────────────────────── */
@@ -296,3 +319,44 @@ select.form-input {
   cursor: pointer;
   padding-right: 28px;
 }
+
+/* ── UTILITY CLASSES ───────────────────────────────────── */
+.surface-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.page-header {
+  height: 56px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: 'Syne', sans-serif;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ── STAGGERED LIST ────────────────────────────────────── */
+.stagger-list > *:nth-child(1)  { animation-delay: 0ms; }
+.stagger-list > *:nth-child(2)  { animation-delay: 40ms; }
+.stagger-list > *:nth-child(3)  { animation-delay: 80ms; }
+.stagger-list > *:nth-child(4)  { animation-delay: 120ms; }
+.stagger-list > *:nth-child(5)  { animation-delay: 160ms; }
+.stagger-list > *:nth-child(6)  { animation-delay: 200ms; }
+.stagger-list > *:nth-child(7)  { animation-delay: 240ms; }
+.stagger-list > *:nth-child(8)  { animation-delay: 280ms; }
+.stagger-list > *:nth-child(n+9){ animation-delay: 320ms; }

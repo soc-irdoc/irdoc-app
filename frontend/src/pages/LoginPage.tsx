@@ -71,45 +71,53 @@ export function LoginPage() {
       style={{
         minHeight: '100vh',
         background: 'var(--bg-base)',
+        backgroundImage: `
+          radial-gradient(ellipse at 60% 0%, rgba(249,115,22,0.06) 0%, transparent 55%),
+          linear-gradient(var(--border-subtle) 1px, transparent 1px),
+          linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px)
+        `,
+        backgroundSize: 'auto, 40px 40px, 40px 40px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
       }}
     >
-      <div style={{ width: '100%', maxWidth: 400 }}>
+      <div className="animate-enter-up" style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div
             style={{
-              width: 52,
-              height: 52,
-              background: 'var(--accent)',
-              borderRadius: 14,
+              width: 56,
+              height: 56,
+              background: 'linear-gradient(135deg, var(--accent), rgba(249,115,22,0.7))',
+              borderRadius: 16,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: 18,
-              color: '#fff',
+              fontSize: 26,
               margin: '0 auto 16px',
-              letterSpacing: '-0.5px',
+              boxShadow: '0 0 24px rgba(249,115,22,0.25)',
             }}
           >
-            IR
+            🛡
           </div>
           <h1
             style={{
               fontFamily: 'Syne, sans-serif',
-              fontSize: 28,
+              fontSize: 32,
               fontWeight: 800,
               color: 'var(--text-primary)',
-              marginBottom: 8,
+              letterSpacing: '-0.03em',
+              marginBottom: 6,
             }}
           >
             IRDoc
           </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: 6 }}>
+            Incident Response, Documented.
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
             {needsSetup ? 'Create your admin account to get started' : 'Sign in to your workspace'}
           </p>
         </div>

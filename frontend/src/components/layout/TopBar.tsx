@@ -75,13 +75,14 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
         {/* Title */}
         <h1
           style={{
-            fontSize: 15,
-            fontWeight: 700,
+            fontSize: 17,
+            fontWeight: 800,
             flex: 1,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             color: 'var(--text-primary)',
+            letterSpacing: '-0.01em',
           }}
         >
           {incident.title}

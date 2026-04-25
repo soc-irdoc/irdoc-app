@@ -24,7 +24,8 @@ function StatCard({
       style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
+        borderTop: `2px solid ${color ?? 'var(--border)'}`,
+        borderRadius: 16,
         padding: 18,
       }}
     >
@@ -44,6 +45,8 @@ function StatCard({
           fontSize: 28,
           fontWeight: 800,
           color: color ?? 'var(--text-primary)',
+          fontVariantNumeric: 'tabular-nums',
+          letterSpacing: '-0.02em',
         }}
       >
         {value}

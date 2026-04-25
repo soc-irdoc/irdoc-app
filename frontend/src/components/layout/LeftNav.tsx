@@ -57,11 +57,12 @@ function NavButton({
         gap: 10,
         fontSize: 18,
         padding: collapsed ? 0 : '0 12px',
-        transition: 'background 0.15s, color 0.15s',
+        transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
         position: 'relative',
         flexShrink: 0,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
+        boxShadow: active && !collapsed ? 'inset 2px 0 0 var(--accent)' : 'none',
       }}
     >
       <span style={{ flexShrink: 0, lineHeight: 1 }}>{icon}</span>
@@ -73,6 +74,8 @@ function NavButton({
           color: active ? 'var(--accent)' : 'var(--text-secondary)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
+          opacity: 1,
+          transition: 'opacity 0.1s 0.05s',
         }}>
           {label}
         </span>
@@ -107,6 +110,7 @@ export function LeftNav() {
         minWidth: navWidth,
         background: 'var(--bg-surface)',
         borderRight: '1px solid var(--border)',
+        boxShadow: '2px 0 12px rgba(0,0,0,0.3)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: collapsed ? 'center' : 'stretch',

@@ -1579,7 +1579,21 @@ Three radio-card options:
 
 Inspired by the prototype at `incident-response-platform_new/js/view-org.js`.
 
-### 35.5 SSO Moved into Integrations — Identity & Access Section
+### 35.6 SSO Provider-Specific Field Configuration Fix
+
+**Problem:** The SSO / SAML 2.0 configuration form in `IntegrationsPage.tsx` always showed placeholder URLs for Entra ID / Azure AD regardless of which provider was selected from the dropdown. Attribute mapping defaults (email, name, groups) also never updated when switching providers.
+
+**Fix:**
+- Added `IDP_CONFIGS` map in `IntegrationsPage.tsx` with per-provider placeholder URLs and default SAML attribute names for all four providers (`azure_ad`, `okta`, `google`, `generic_saml`)
+- Added `handleProviderChange()` function that detects when the user switches providers and auto-updates attribute name fields **only if they still match the previous provider's defaults** (preserving user customisations)
+- Wired the select `onChange` to `handleProviderChange` instead of `setProvider` directly
+- `idpConfig` (derived from current `provider`) used for all three placeholder strings
+
+**tsconfig.json fix:**
+- Removed deprecated `"baseUrl": "."` from `frontend/tsconfig.json`
+- Updated `paths` entry from `"src/*"` to `"./src/*"` (relative path, required when `baseUrl` is absent)
+
+### 35.7 SSO Moved into Integrations — Identity & Access Section
 
 **Decision:** SSO is an external identity provider integration and belongs alongside VirusTotal, Slack, and SharePoint — not as a separate admin section. `IntegrationsPage` is now the single hub for all external service configuration.
 
@@ -1607,4 +1621,71 @@ Org Settings → User Auth → pick Entra ID → "Configure SSO →"
 - `frontend/src/components/common/PremiumGate.tsx` — Rewritten as a transparent passthrough: `return <>{children}</>`. The `useFeatureFlags` hook import removed. Props interface (`feature`, `featureKey`, `children`) kept intact. The original lock overlay (blurred backdrop, 🔒 icon, "Premium Feature" label, "Upgrade to unlock →" link) is preserved in a comment block for future restoration.
 - `frontend/src/components/admin/OrgSettingsPage.tsx` — Removed `isPremium` variable and all associated client-side gating from the User Authentication radio cards: removed `opacity: 0.6` dimming, removed `disabled` on radio inputs, removed cursor override to `'default'`, removed 🔒 lock icon. All three auth options (Local Users, Entra ID / Azure AD, On-Premises AD) are now fully selectable.
 - **Backend untouched** — `app/core/feature_flags.py`, `check_feature()` calls in services and routes, and the `organizations.plan` column all remain as-is.
+
+---
+
+## 36. Frontend Design Polish (Post-Launch Batch 3)
+
+Visual, motion, and typographic improvements applied across the frontend. Emoji icons (LeftNav/TopBar) deferred to a later phase.
+
+### 36.1 Global CSS (`src/styles/global.css`)
+
+- **`--shadow-accent`** token added to both dark and light themes: `0 0 0 1px var(--accent), 0 4px 20px rgba(249,115,22,0.15)` — use for focused/active card glow states
+- **Atmospheric background**: `body` background changed from flat `var(--bg-base)` to `radial-gradient(ellipse at 60% 0%, rgba(249,115,22,0.04) 0%, transparent 60%), var(--bg-base)` — subtle warm glow at top-right
+- **Chip dim opacity** bumped from 0.12 → 0.16 for all semantic colours (red, green, yellow, blue, purple) and accent-dim from 0.12 → 0.14 for improved chip readability
+- **`btn-accent:hover`** now includes `box-shadow: 0 0 14px var(--accent-glow)` glow alongside the existing brightness filter
+- **`slideIn` animation** direction corrected from `translateY(-12px)` to `translateX(-8px)` — spatially coherent with the vertical timeline layout; duration tightened to 0.25s
+- **New `@keyframes enterUp`** + `.animate-enter-up` class: `translateY(16px)` → `translateY(0)` over 0.4s ease-out, used for login form entrance
+- **New `@keyframes pulseAccent`** + `.animate-pulse-accent` class: slow 3s opacity pulse on `--accent-dim` background for active nav states
+- **New `.stagger-list` utility**: applies `animation-delay` in 40ms increments to first 9+ children via `nth-child` selectors
+- **New utility classes**: `.surface-card` (bg-surface + border + 12px radius + 20px padding), `.page-header` (56px flex bar), `.section-label` (11px uppercase 700 weight heading)
+
+### 36.2 LeftNav (`src/components/layout/LeftNav.tsx`)
+
+- Added `boxShadow: '2px 0 12px rgba(0,0,0,0.3)'` to nav element for depth separation from content
+- Active nav items now show `boxShadow: 'inset 2px 0 0 var(--accent)'` left-edge indicator (expanded state only)
+- Nav label `<span>` gains `transition: opacity 0.1s 0.05s` so text fades in after the width animation settles on expand
+
+### 36.3 AppShell (`src/components/layout/AppShell.tsx`)
+
+- WebSocket disconnect banner redesigned: left accent border (`borderLeft: '3px solid var(--yellow)'`), reduced background opacity, `fontWeight: 600`, `letterSpacing: 0.01em` — reads as a structured warning rather than a dim bar
+
+### 36.4 LoginPage (`src/pages/LoginPage.tsx`)
+
+- Background upgraded from flat `--bg-base` to layered radial gradient + 40px grid pattern (`linear-gradient` lines at `--border-subtle`)
+- Logo mark changed from plain "IR" text badge to 🛡 emoji in a gradient accent square with glow shadow (`0 0 24px rgba(249,115,22,0.25)`)
+- Brand heading `IRDoc` enlarged to 32px, `letterSpacing: '-0.03em'`
+- Added italic tagline: *"Incident Response, Documented."* at 12px muted
+- Entire content column wrapped in `.animate-enter-up` for smooth entrance
+
+### 36.5 IncidentListPage (`src/pages/IncidentListPage.tsx`)
+
+- Page title enlarged to 22px, `letterSpacing: '-0.02em'`
+- ⚡ emoji wrapped in `filter: drop-shadow(0 0 8px rgba(249,115,22,0.4))` for accent glow
+- Incident list container gets `.stagger-list` class; each card gets `.animate-slide-in` for staggered entrance
+
+### 36.6 TopBar (`src/components/layout/TopBar.tsx`)
+
+- Incident title (`h1`) size increased from 15px/weight-700 to 17px/weight-800 with `letterSpacing: '-0.01em'`
+
+### 36.7 TimelineEntry (`src/components/timeline/TimelineEntry.tsx`)
+
+- Pinned entry styling replaced: removed `borderLeft: '3px solid var(--accent)'` override; replaced with `boxShadow: 'inset 3px 0 0 var(--accent), 0 0 20px rgba(249,115,22,0.06)'` — achieves the same left indicator with an additional ambient glow
+- `transition` extended to include `box-shadow`
+
+### 36.8 SummaryPage (`src/components/summary/SummaryPage.tsx`)
+
+- `StatCard` border-radius increased from 12px → 16px
+- `StatCard` gains `borderTop: \`2px solid ${color ?? 'var(--border)'}\`` — semantic colour stripe at top (red for severity, accent for status)
+- Stat card value (`p`) gains `fontVariantNumeric: 'tabular-nums'` and `letterSpacing: '-0.02em'`
+
+### 36.9 IOCPage (`src/components/ioc/IOCPage.tsx`)
+
+- `thead` element gains `position: 'sticky', top: 0, zIndex: 1` — header stays visible when scrolling long IOC lists
+
+### 36.10 EmptyState (`src/components/common/EmptyState.tsx`)
+
+- Icon now rendered inside a 72×72px circular container (`--bg-elevated` background, `--border` border) instead of bare 48px text
+- Component root gains `.animate-fade-in` for smooth appearance
+- Title font size increased from 14px (`text-base`) to 15px explicit, description gets `maxWidth: 320` for readable line length
 

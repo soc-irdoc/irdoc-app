@@ -31,19 +31,22 @@ export function AppShell({ children }: AppShellProps) {
           <div
             role="alert"
             style={{
-              background: 'var(--yellow-dim, rgba(250,204,21,0.15))',
-              borderBottom: '1px solid var(--yellow, #facc15)',
-              color: 'var(--yellow, #facc15)',
-              fontSize: 13,
-              padding: '6px 16px',
+              background: 'rgba(227,179,65,0.10)',
+              borderBottom: '1px solid var(--border)',
+              borderLeft: '3px solid var(--yellow)',
+              color: 'var(--yellow)',
+              fontSize: 12,
+              fontWeight: 600,
+              padding: '7px 16px',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
               flexShrink: 0,
+              letterSpacing: '0.01em',
             }}
           >
-            <span>⚠</span>
-            <span>Real-time connection lost. Reconnecting… Live updates are paused.</span>
+            <span style={{ fontSize: 14 }}>⚠</span>
+            <span>Real-time connection lost — reconnecting. Live updates are paused.</span>
           </div>
         )}
         {children}

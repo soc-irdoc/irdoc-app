@@ -97,14 +97,15 @@ export function IncidentListPage() {
             style={{
               fontFamily: 'Syne, sans-serif',
               fontWeight: 800,
-              fontSize: 18,
+              fontSize: 22,
               color: 'var(--text-primary)',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
+              letterSpacing: '-0.02em',
             }}
           >
-            <span style={{ color: 'var(--accent)' }}>⚡</span> Incidents
+            <span style={{ filter: 'drop-shadow(0 0 8px rgba(249,115,22,0.4))' }}>⚡</span> Incidents
           </div>
           <div style={{ flex: 1 }} />
           <Button variant="accent" size="sm" onClick={() => setShowCreate(true)}>
@@ -164,10 +165,11 @@ export function IncidentListPage() {
               }
             />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div className="stagger-list" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {incidents.map((incident) => (
                 <div
                   key={incident.id}
+                  className="animate-slide-in"
                   onClick={() => navigate(`/incidents/${incident.id}/timeline`)}
                   style={{
                     background: 'var(--bg-surface)',
