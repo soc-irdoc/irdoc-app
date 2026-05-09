@@ -5,6 +5,15 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
+class UserBrief(BaseModel):
+    id: UUID
+    full_name: str
+    email: str
+    avatar_initials: str | None
+
+    model_config = {"from_attributes": True}
+
+
 class ExternalRefOut(BaseModel):
     id: UUID
     external_source: str
@@ -48,6 +57,7 @@ class IncidentOut(BaseModel):
     status: str
     template_id: UUID | None
     assigned_to: UUID | None
+    assigned_user: UserBrief | None = None
     created_by: UUID | None
     opened_at: datetime
     contained_at: datetime | None

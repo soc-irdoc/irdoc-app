@@ -53,7 +53,7 @@ PERMISSIONS: dict[str, str] = {
     "templates.update": "senior_analyst",
     "templates.delete": "senior_analyst",
     # Admin
-    "users.read": "admin",
+    "users.read": "viewer",
     "users.manage": "admin",
     "api_keys.manage": "admin",
     "integrations.manage": "admin",

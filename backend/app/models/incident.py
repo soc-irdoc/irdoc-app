@@ -42,6 +42,9 @@ class Incident(Base):
 
     # Relationships
     organization: Mapped["Organization"] = relationship("Organization", back_populates="incidents", lazy="noload")  # noqa: F821
+    assigned_user: Mapped["User | None"] = relationship(  # noqa: F821
+        "User", foreign_keys=[assigned_to], lazy="noload"
+    )
     external_refs: Mapped[list["IncidentExternalRef"]] = relationship(
         "IncidentExternalRef", back_populates="incident", cascade="all, delete-orphan", lazy="noload"
     )

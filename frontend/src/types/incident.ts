@@ -1,6 +1,13 @@
 export type Severity = 'sev1' | 'sev2' | 'sev3' | 'sev4'
 export type IncidentStatus = 'open' | 'contained' | 'closed' | 'monitoring'
 
+export interface UserBrief {
+  id: string
+  full_name: string
+  email: string
+  avatar_initials: string | null
+}
+
 export interface IncidentExternalRef {
   id: string
   incident_id: string
@@ -16,6 +23,8 @@ export interface Incident {
   title: string
   severity: Severity
   status: IncidentStatus
+  assigned_to: string | null
+  assigned_user: UserBrief | null
   executive_summary: string | null
   attack_vector: string[]
   affected_users: number
@@ -49,6 +58,7 @@ export interface UpdateIncidentPayload {
   executive_summary?: string
   attack_vector?: string[]
   affected_users?: number
+  assigned_to?: string | null
 }
 
 export const SEVERITY_LABELS: Record<Severity, string> = {

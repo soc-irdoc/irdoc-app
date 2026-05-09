@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import type { Incident } from '@/types/incident'
-import { SEVERITY_LABELS, SEVERITY_COLORS, STATUS_LABELS, STATUS_COLORS } from '@/types/incident'
+import type { Incident, Severity, IncidentStatus } from '@/types/incident'
+import { SEVERITY_COLORS, STATUS_COLORS } from '@/types/incident'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
 import { copyToClipboard } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
+import { useUpdateIncident } from '@/hooks/useIncident'
+import { useOrgUsers } from '@/hooks/useOrgUsers'
 
 interface TopBarProps {
   incident: Incident
@@ -23,6 +25,35 @@ const SECTIONS = [
 export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps) {
   const navigate = useNavigate()
   const addToast = useUIStore((s) => s.addToast)
+  const updateIncident = useUpdateIncident(incident.id)
+  const { data: orgUsers = [] } = useOrgUsers()
+
+  async function handleSeverityChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const severity = e.target.value as Severity
+    try {
+      await updateIncident.mutateAsync({ severity })
+    } catch {
+      addToast('Failed to update severity', 'error')
+    }
+  }
+
+  async function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const status = e.target.value as IncidentStatus
+    try {
+      await updateIncident.mutateAsync({ status })
+    } catch {
+      addToast('Failed to update status', 'error')
+    }
+  }
+
+  async function handleAssigneeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const assigned_to = e.target.value || null
+    try {
+      await updateIncident.mutateAsync({ assigned_to })
+    } catch {
+      addToast('Failed to update assignee', 'error')
+    }
+  }
 
   return (
     <div
@@ -54,12 +85,25 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
         </button>
 
         {/* Severity badge */}
-        <span
+        <select
           className={`chip ${SEVERITY_COLORS[incident.severity]}`}
-          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}
+          value={incident.severity}
+          onChange={handleSeverityChange}
+          disabled={updateIncident.isPending}
+          aria-label="Change severity"
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 11,
+            cursor: 'pointer',
+            appearance: 'none',
+            paddingRight: 6,
+          }}
         >
-          {SEVERITY_LABELS[incident.severity]}
-        </span>
+          <option value="sev1">SEV-1</option>
+          <option value="sev2">SEV-2</option>
+          <option value="sev3">SEV-3</option>
+          <option value="sev4">SEV-4</option>
+        </select>
 
         {/* Incident ref */}
         <span
@@ -94,9 +138,48 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
         ))}
 
         {/* Status */}
-        <span className={`chip ${STATUS_COLORS[incident.status]}`}>
-          {STATUS_LABELS[incident.status]}
-        </span>
+        <select
+          className={`chip ${STATUS_COLORS[incident.status]}`}
+          value={incident.status}
+          onChange={handleStatusChange}
+          disabled={updateIncident.isPending}
+          aria-label="Change status"
+          style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6 }}
+        >
+          <option value="open">OPEN</option>
+          <option value="contained">CONTAINED</option>
+          <option value="monitoring">MONITORING</option>
+          <option value="closed">CLOSED</option>
+        </select>
+
+        {/* Assignee */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {incident.assigned_user && (
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%',
+              background: 'var(--accent)', color: '#fff',
+              fontSize: 9, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              {incident.assigned_user.avatar_initials
+                || incident.assigned_user.full_name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          <select
+            className="chip chip-muted"
+            value={incident.assigned_to ?? ''}
+            onChange={handleAssigneeChange}
+            disabled={updateIncident.isPending}
+            aria-label="Change assignee"
+            style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6, maxWidth: 130 }}
+          >
+            <option value="">— Unassigned</option>
+            {orgUsers.map((u) => (
+              <option key={u.id} value={u.id}>{u.full_name}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

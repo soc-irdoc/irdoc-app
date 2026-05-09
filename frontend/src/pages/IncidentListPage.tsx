@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useIncidents, useCreateIncident, useIncidentTemplates } from '@/hooks/useIncident'
+import { useIncidents, useCreateIncident, useIncidentTemplates, useUpdateIncident } from '@/hooks/useIncident'
 import { AppShell } from '@/components/layout/AppShell'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
-import { ProgressBar } from '@/components/common/ProgressBar'
 import { useUIStore } from '@/stores/uiStore'
+import { useAuthStore } from '@/stores/authStore'
 import {
   SEVERITY_LABELS,
   SEVERITY_COLORS,
@@ -16,8 +16,143 @@ import {
   STATUS_COLORS,
   type Severity,
   type IncidentStatus,
+  type Incident,
 } from '@/types/incident'
 import { formatRelative } from '@/lib/utils'
+
+function AssigneeDisplay({ incident, onPickUp }: { incident: Incident; onPickUp: (e: React.MouseEvent) => void }) {
+  const { assigned_user } = incident
+  if (assigned_user) {
+    const initials = assigned_user.avatar_initials
+      || assigned_user.full_name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <div style={{
+          width: 24, height: 24, borderRadius: '50%',
+          background: 'var(--accent)', color: '#fff',
+          fontSize: 10, fontWeight: 700,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          {initials}
+        </div>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {assigned_user.full_name}
+        </span>
+      </div>
+    )
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— Unassigned</span>
+      <button
+        className="btn btn-ghost btn-sm"
+        onClick={onPickUp}
+        style={{ fontSize: 11, padding: '2px 8px' }}
+      >
+        Pick up
+      </button>
+    </div>
+  )
+}
+
+function IncidentCard({ incident, onClick }: { incident: Incident; onClick: () => void }) {
+  const addToast = useUIStore((s) => s.addToast)
+  const currentUser = useAuthStore((s) => s.user)
+  const updateIncident = useUpdateIncident(incident.id)
+
+  async function handlePickUp(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!currentUser) return
+    try {
+      await updateIncident.mutateAsync({ assigned_to: currentUser.id })
+    } catch {
+      addToast('Failed to pick up incident', 'error')
+    }
+  }
+
+  return (
+    <div
+      className="animate-slide-in"
+      onClick={onClick}
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
+        padding: '16px 20px',
+        cursor: 'pointer',
+        transition: 'all 0.15s',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        marginBottom: 8,
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement
+        el.style.borderColor = 'var(--accent)'
+        el.style.background = 'var(--bg-elevated)'
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement
+        el.style.borderColor = 'var(--border)'
+        el.style.background = 'var(--bg-surface)'
+      }}
+    >
+      {/* Severity */}
+      <span
+        className={`chip ${SEVERITY_COLORS[incident.severity]}`}
+        style={{ fontFamily: 'JetBrains Mono, monospace', flexShrink: 0 }}
+      >
+        {SEVERITY_LABELS[incident.severity]}
+      </span>
+
+      {/* Ref */}
+      <span
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 11,
+          color: 'var(--text-muted)',
+          flexShrink: 0,
+        }}
+      >
+        {incident.incident_ref}
+      </span>
+
+      {/* Title + meta */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            marginBottom: 4,
+          }}
+        >
+          {incident.title}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          {incident.external_refs?.map((ref) => (
+            <ExternalRefBadge key={ref.id} ref={ref} />
+          ))}
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            {formatRelative(incident.created_at)}
+          </span>
+        </div>
+      </div>
+
+      {/* Assignee */}
+      <AssigneeDisplay incident={incident} onPickUp={handlePickUp} />
+
+      {/* Status */}
+      <span className={`chip ${STATUS_COLORS[incident.status]}`} style={{ flexShrink: 0 }}>
+        {STATUS_LABELS[incident.status]}
+      </span>
+    </div>
+  )
+}
 
 const STATUS_TABS: Array<{ value: IncidentStatus | 'all'; label: string }> = [
   { value: 'all',        label: 'All' },
@@ -167,90 +302,11 @@ export function IncidentListPage() {
           ) : (
             <div className="stagger-list" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {incidents.map((incident) => (
-                <div
+                <IncidentCard
                   key={incident.id}
-                  className="animate-slide-in"
+                  incident={incident}
                   onClick={() => navigate(`/incidents/${incident.id}/timeline`)}
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    padding: '16px 20px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 16,
-                    marginBottom: 8,
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLElement
-                    el.style.borderColor = 'var(--accent)'
-                    el.style.background = 'var(--bg-elevated)'
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLElement
-                    el.style.borderColor = 'var(--border)'
-                    el.style.background = 'var(--bg-surface)'
-                  }}
-                >
-                  {/* Severity */}
-                  <span
-                    className={`chip ${SEVERITY_COLORS[incident.severity]}`}
-                    style={{ fontFamily: 'JetBrains Mono, monospace', flexShrink: 0 }}
-                  >
-                    {SEVERITY_LABELS[incident.severity]}
-                  </span>
-
-                  {/* Ref */}
-                  <span
-                    style={{
-                      fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: 11,
-                      color: 'var(--text-muted)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {incident.incident_ref}
-                  </span>
-
-                  {/* Title + meta */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: 'var(--text-primary)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        marginBottom: 4,
-                      }}
-                    >
-                      {incident.title}
-                    </p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                      {/* External refs */}
-                      {incident.external_refs?.map((ref) => (
-                        <ExternalRefBadge
-                          key={ref.id}
-                          ref={ref}
-                        />
-                      ))}
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                        {formatRelative(incident.created_at)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <span
-                    className={`chip ${STATUS_COLORS[incident.status]}`}
-                    style={{ flexShrink: 0 }}
-                  >
-                    {STATUS_LABELS[incident.status]}
-                  </span>
-                </div>
+                />
               ))}
             </div>
           )}

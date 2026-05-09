@@ -89,7 +89,7 @@ async def _instantiate_template_tasks(
 async def get_incident(db: AsyncSession, incident_id: str, org_id: str) -> Incident:
     result = await db.execute(
         select(Incident)
-        .options(selectinload(Incident.external_refs))
+        .options(selectinload(Incident.external_refs), selectinload(Incident.assigned_user))
         .where(Incident.id == incident_id, Incident.org_id == org_id)
     )
     incident = result.scalar_one_or_none()
@@ -109,7 +109,7 @@ async def list_incidents(
 ) -> tuple[list[Incident], int]:
     query = (
         select(Incident)
-        .options(selectinload(Incident.external_refs))
+        .options(selectinload(Incident.external_refs), selectinload(Incident.assigned_user))
         .where(Incident.org_id == org_id)
     )
     if status_filter:

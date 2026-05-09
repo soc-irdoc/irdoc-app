@@ -40,8 +40,8 @@ async def list_users(
     import uuid
     result = await db.execute(
         select(User)
-        .where(User.org_id == uuid.UUID(str(current_user.org_id)))
-        .order_by(User.created_at)
+        .where(User.org_id == uuid.UUID(str(current_user.org_id)), User.is_active == True)  # noqa: E712
+        .order_by(User.full_name)
     )
     users = result.scalars().all()
     return {
