@@ -1,6 +1,7 @@
 """
 IRDoc FastAPI application entry point.
 """
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -21,8 +22,19 @@ async def lifespan(app: FastAPI):
     from app.core.database import engine
     async with engine.begin() as conn:
         await conn.run_sync(lambda c: None)  # ping
+
+    # Start Redis → Socket.io bridge
+    from app.sio import start_redis_subscriber
+    _ws_task = asyncio.create_task(start_redis_subscriber())
+
     yield
+
     # Shutdown
+    _ws_task.cancel()
+    try:
+        await _ws_task
+    except asyncio.CancelledError:
+        pass
     await engine.dispose()
 
 
@@ -170,3 +182,9 @@ application.include_router(admin.router, prefix=API_PREFIX)
 application.include_router(saml.router, prefix=API_PREFIX)
 # Post-launch additions
 application.include_router(docx_templates.router, prefix=API_PREFIX)
+
+# ── Combined ASGI app (Socket.io + FastAPI) ─────────────────────────────────
+import socketio as _sio_lib  # noqa: E402
+from app.sio import sio  # noqa: E402
+
+app = _sio_lib.ASGIApp(sio, other_asgi_app=application)

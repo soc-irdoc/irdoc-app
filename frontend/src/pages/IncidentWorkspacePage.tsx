@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useIncident } from '@/hooks/useIncident'
+import { joinIncident, leaveIncident } from '@/lib/websocket'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { TasksPanel } from '@/components/layout/TasksPanel'
@@ -22,6 +23,12 @@ export function IncidentWorkspacePage() {
   const { id, section } = useParams<{ id: string; section?: string }>()
   const navigate = useNavigate()
   const { data: incident, isLoading } = useIncident(id!)
+
+  useEffect(() => {
+    if (!id) return
+    joinIncident(id)
+    return () => leaveIncident(id)
+  }, [id])
 
   // Initialize from URL section param, fall back to timeline
   const [activeSection, setActiveSection] = useState<Section>(() => {

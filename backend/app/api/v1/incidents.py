@@ -14,6 +14,7 @@ from app.schemas.incident import (
     IncidentUpdate,
 )
 from app.services import incident_service
+from app.sio import publish_ws
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 
@@ -75,7 +76,9 @@ async def update_incident(
 ):
     incident = await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     updated = await incident_service.update_incident(db, incident, data)
-    return {"data": IncidentOut.model_validate(updated), "error": None}
+    out = IncidentOut.model_validate(updated)
+    await publish_ws(incident_id, "incident:updated", out.model_dump(mode="json"))
+    return {"data": out, "error": None}
 
 
 @router.delete("/{incident_id}", status_code=204)

@@ -7,6 +7,7 @@ from app.core.permissions import require_permission
 from app.schemas.common import Meta
 from app.schemas.timeline import TimelineEntryCreate, TimelineEntryOut, TimelineEntryUpdate
 from app.services import incident_service, timeline_service
+from app.sio import publish_ws
 from app.workers import tasks as worker_tasks
 import io
 
@@ -50,7 +51,9 @@ async def create_timeline_entry(
     # Async: scan for IOC suggestions
     worker_tasks.auto_detect_iocs_from_entry.delay(str(entry.id))
 
-    return {"data": TimelineEntryOut.model_validate(entry), "error": None}
+    out = TimelineEntryOut.model_validate(entry)
+    await publish_ws(incident_id, "timeline:entry:added", out.model_dump(mode="json"))
+    return {"data": out, "error": None}
 
 
 @router.put("/incidents/{incident_id}/timeline/{entry_id}")
@@ -64,7 +67,9 @@ async def update_timeline_entry(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     entry = await timeline_service.get_entry(db, entry_id, incident_id)
     updated = await timeline_service.update_entry(db, entry, data)
-    return {"data": TimelineEntryOut.model_validate(updated), "error": None}
+    out = TimelineEntryOut.model_validate(updated)
+    await publish_ws(incident_id, "timeline:entry:updated", out.model_dump(mode="json"))
+    return {"data": out, "error": None}
 
 
 @router.delete("/incidents/{incident_id}/timeline/{entry_id}", status_code=204)
@@ -77,6 +82,7 @@ async def delete_timeline_entry(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     entry = await timeline_service.get_entry(db, entry_id, incident_id)
     await timeline_service.delete_entry(db, entry)
+    await publish_ws(incident_id, "timeline:entry:deleted", {"id": entry_id})
 
 
 @router.post("/incidents/{incident_id}/timeline/{entry_id}/pin")

@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, field_validator
+import re
 
 
 # ── User management ───────────────────────────────────────────────────────────
@@ -29,8 +30,16 @@ class UserRoleUpdate(BaseModel):
 # ── Invites ───────────────────────────────────────────────────────────────────
 
 class InviteCreate(BaseModel):
-    email: EmailStr
+    email: str
     role: Literal["admin", "senior_analyst", "analyst", "viewer"] = "analyst"
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not re.match(r"^[^@\s]+@[^@\s]+$", v):
+            raise ValueError("Invalid email address")
+        return v
 
 
 class InviteOut(BaseModel):

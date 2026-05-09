@@ -35,10 +35,10 @@ if [ $# -gt 0 ]; then
     exec "$@"
 else
     echo "Starting uvicorn..."
-    exec uvicorn app.main:application \
+    exec uvicorn app.main:app \
         --host 0.0.0.0 \
         --port 8000 \
-        --workers 2 \
+        --workers 1 \
         --loop uvloop \
         --access-log \
         --log-level info

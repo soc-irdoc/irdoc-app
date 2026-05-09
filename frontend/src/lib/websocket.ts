@@ -3,6 +3,14 @@ import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 
 let socket: Socket | null = null
+let disconnectTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearDisconnectTimer() {
+  if (disconnectTimer !== null) {
+    clearTimeout(disconnectTimer)
+    disconnectTimer = null
+  }
+}
 
 export function getSocket(): Socket {
   if (!socket) {
@@ -14,34 +22,58 @@ export function getSocket(): Socket {
     })
 
     socket.on('connect', () => {
+      clearDisconnectTimer()
       useUIStore.getState().setWsConnected(true)
     })
 
-    socket.on('disconnect', (reason: string) => {
-      useUIStore.getState().setWsConnected(false)
-      // Transport closed by server — reconnection will be attempted automatically
-      if (reason === 'io server disconnect') {
-        socket?.connect()
-      }
+    socket.on('disconnect', () => {
+      // Only show the banner after 4 s — transient reconnects stay invisible
+      disconnectTimer = setTimeout(() => {
+        useUIStore.getState().setWsConnected(false)
+      }, 4000)
     })
 
     socket.on('connect_error', () => {
-      useUIStore.getState().setWsConnected(false)
+      if (disconnectTimer === null) {
+        disconnectTimer = setTimeout(() => {
+          useUIStore.getState().setWsConnected(false)
+        }, 4000)
+      }
     })
 
     socket.on('reconnect', () => {
+      clearDisconnectTimer()
       useUIStore.getState().setWsConnected(true)
     })
 
     socket.on('reconnect_failed', () => {
+      clearDisconnectTimer()
       useUIStore.getState().setWsConnected(false)
+    })
+
+    socket.on('presence:update', ({ incident_id, users }: { incident_id: string; users: import('@/stores/uiStore').PresenceUser[] }) => {
+      useUIStore.getState().setIncidentPresence(incident_id, users)
     })
   }
   return socket
 }
 
 export function joinIncident(incidentId: string) {
-  getSocket().emit('join:incident', { incident_id: incidentId })
+  const user = useAuthStore.getState().user
+  const presenceUser = user
+    ? {
+        id: user.id,
+        full_name: user.full_name,
+        avatar_initials: user.full_name
+          .split(' ')
+          .map((p) => p[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase(),
+      }
+    : null
+
+  getSocket().emit('join:incident', { incident_id: incidentId, user: presenceUser })
 }
 
 export function leaveIncident(incidentId: string) {
@@ -49,6 +81,7 @@ export function leaveIncident(incidentId: string) {
 }
 
 export function disconnectSocket() {
+  clearDisconnectTimer()
   if (socket) {
     socket.disconnect()
     socket = null

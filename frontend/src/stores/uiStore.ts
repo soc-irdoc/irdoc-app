@@ -8,6 +8,12 @@ export interface Toast {
   type: ToastType
 }
 
+export interface PresenceUser {
+  id: string
+  full_name: string
+  avatar_initials: string
+}
+
 interface UIStore {
   toasts: Toast[]
   addToast: (message: string, type?: ToastType) => void
@@ -17,6 +23,8 @@ interface UIStore {
   closeModal: () => void
   wsConnected: boolean
   setWsConnected: (connected: boolean) => void
+  incidentPresence: Record<string, PresenceUser[]>
+  setIncidentPresence: (incidentId: string, users: PresenceUser[]) => void
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -35,4 +43,9 @@ export const useUIStore = create<UIStore>((set) => ({
   closeModal: () => set({ activeModal: null }),
   wsConnected: true,
   setWsConnected: (connected) => set({ wsConnected: connected }),
+  incidentPresence: {},
+  setIncidentPresence: (incidentId, users) =>
+    set((state) => ({
+      incidentPresence: { ...state.incidentPresence, [incidentId]: users },
+    })),
 }))

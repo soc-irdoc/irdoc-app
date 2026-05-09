@@ -3,7 +3,8 @@ import type { Incident, Severity, IncidentStatus } from '@/types/incident'
 import { SEVERITY_COLORS, STATUS_COLORS } from '@/types/incident'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
 import { copyToClipboard } from '@/lib/utils'
-import { useUIStore } from '@/stores/uiStore'
+import { useUIStore, type PresenceUser } from '@/stores/uiStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useUpdateIncident } from '@/hooks/useIncident'
 import { useOrgUsers } from '@/hooks/useOrgUsers'
 
@@ -21,6 +22,61 @@ const SECTIONS = [
   { key: 'reports',  label: 'Reports',  icon: '📄' },
   { key: 'graph',    label: 'Graph',    icon: '🕸' },
 ]
+
+function PresenceAvatars({ incidentId }: { incidentId: string }) {
+  const currentUser = useAuthStore((s) => s.user)
+  const presence = useUIStore((s) => s.incidentPresence[incidentId] ?? [])
+  const others = presence.filter((u) => u.id !== currentUser?.id)
+  if (others.length === 0) return null
+
+  const visible = others.slice(0, 4)
+  const overflow = others.length - visible.length
+
+  const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#10b981', '#ec4899']
+
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}
+      title={others.map((u) => u.full_name).join(', ')}
+    >
+      <span style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 4 }}>Also viewing:</span>
+      {visible.map((u, i) => (
+        <div
+          key={u.id}
+          title={u.full_name}
+          style={{
+            width: 24, height: 24, borderRadius: '50%',
+            background: COLORS[i % COLORS.length],
+            color: '#fff',
+            fontSize: 9, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            marginLeft: i > 0 ? -6 : 0,
+            border: '2px solid var(--bg-surface)',
+            cursor: 'default',
+          }}
+        >
+          {u.avatar_initials || u.full_name.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()}
+        </div>
+      ))}
+      {overflow > 0 && (
+        <div
+          style={{
+            width: 24, height: 24, borderRadius: '50%',
+            background: 'var(--bg-elevated)',
+            border: '2px solid var(--border)',
+            color: 'var(--text-muted)',
+            fontSize: 9, fontWeight: 700,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginLeft: -6,
+          }}
+        >
+          +{overflow}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps) {
   const navigate = useNavigate()
@@ -180,6 +236,9 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
             ))}
           </select>
         </div>
+
+        {/* Presence */}
+        <PresenceAvatars incidentId={incident.id} />
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

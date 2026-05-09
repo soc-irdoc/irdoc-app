@@ -5,7 +5,7 @@ import { TimelineEntryCard } from './TimelineEntry'
 import { TimelineFilters } from './TimelineFilters'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
-import { getSocket, joinIncident, leaveIncident } from '@/lib/websocket'
+import { getSocket } from '@/lib/websocket'
 import { useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
 import type { EntryType } from '@/types/timeline'
@@ -24,9 +24,8 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
     typeFilter !== 'all' ? { entry_type: typeFilter } : undefined
   )
 
-  // WebSocket: join incident room and listen for real-time updates
+  // WebSocket: listen for real-time timeline updates (room join/leave handled by IncidentWorkspacePage)
   useEffect(() => {
-    joinIncident(incidentId)
     const socket = getSocket()
 
     const handlers: Array<[string, () => void]> = [
@@ -37,7 +36,6 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
     handlers.forEach(([event, handler]) => socket.on(event, handler))
 
     return () => {
-      leaveIncident(incidentId)
       handlers.forEach(([event, handler]) => socket.off(event, handler))
     }
   }, [incidentId, qc])
