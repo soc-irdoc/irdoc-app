@@ -3,19 +3,20 @@ import base64
 import secrets
 
 import pyotp
-from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from app.core.config import get_settings
-
-_ph = PasswordHasher()
+from app.core.security import ph
 
 
 def _get_fernet() -> Fernet:
     settings = get_settings()
-    # Derive a 32-byte key from SECRET_KEY (hex string, first 32 bytes)
-    raw = settings.SECRET_KEY.encode()[:32].ljust(32, b"\x00")
-    return Fernet(base64.urlsafe_b64encode(raw))
+    kdf = HKDF(algorithm=SHA256(), length=32, salt=None, info=b"irdoc-mfa-secret")
+    key = kdf.derive(settings.SECRET_KEY.encode())
+    return Fernet(base64.urlsafe_b64encode(key))
 
 
 def generate_totp_secret(email: str) -> tuple[str, str]:
@@ -34,7 +35,7 @@ def verify_totp(encrypted_secret: str, code: str) -> bool:
 def generate_backup_codes() -> tuple[list[str], list[str]]:
     """Return (plain_codes, argon2id_hashed_codes). 10 codes, format 'xxxx-xxxx'."""
     plain = [f"{secrets.token_hex(2)}-{secrets.token_hex(2)}" for _ in range(10)]
-    hashed = [_ph.hash(code) for code in plain]
+    hashed = [ph.hash(code) for code in plain]
     return plain, hashed
 
 
@@ -44,12 +45,12 @@ def verify_backup_code(user: object, code: str) -> bool:
         return False
     for i, hashed in enumerate(list(user.backup_codes)):
         try:
-            if _ph.verify(hashed, code):
+            if ph.verify(hashed, code):
                 codes = list(user.backup_codes)
                 codes.pop(i)
                 user.backup_codes = codes
                 return True
-        except Exception:
+        except VerifyMismatchError:
             continue
     return False
 
