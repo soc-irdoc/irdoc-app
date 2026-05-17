@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -26,9 +26,9 @@ class User(Base):
     must_reset_password: Mapped[bool] = mapped_column(Boolean, default=False)
     last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
-    backup_codes: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False, nullable=False)
+    totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # Fernet-encrypted
+    backup_codes: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     mfa_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
