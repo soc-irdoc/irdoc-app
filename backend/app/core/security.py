@@ -66,16 +66,42 @@ def create_refresh_token(subject: str, org_id: str) -> str:
     )
 
 
-def decode_token(token: str) -> dict:
-    """Raises HTTPException on invalid / expired token."""
+def create_mfa_challenge_token(user_id: str, org_id: str) -> str:
+    """Short-lived token for users who need to complete TOTP verification."""
+    expire = datetime.now(UTC) + timedelta(minutes=5)
+    return jwt.encode(
+        {"sub": str(user_id), "org": str(org_id), "exp": expire, "type": "mfa_challenge"},
+        settings.SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
+def create_mfa_setup_token(user_id: str, org_id: str) -> str:
+    """Short-lived token for users who need to enroll MFA (org policy requires it)."""
+    expire = datetime.now(UTC) + timedelta(minutes=10)
+    return jwt.encode(
+        {"sub": str(user_id), "org": str(org_id), "exp": expire, "type": "mfa_setup"},
+        settings.SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
+def decode_token(token: str, expected_type: str = "access") -> dict:
+    """Raises HTTPException on invalid / expired token or wrong token type."""
     try:
-        return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if payload.get("type") != expected_type:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+        )
+    return payload
 
 
 # ─── API Keys ──────────────────────────────────────────────────────────────────
@@ -159,7 +185,7 @@ async def get_current_user_from_cookie(
 
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
-    payload = decode_token(refresh_token)
+    payload = decode_token(refresh_token, expected_type="refresh")
     if payload.get("type") != "refresh":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
