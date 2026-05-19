@@ -76,6 +76,12 @@ async def login(data: LoginRequest, response: Response, db: AsyncSession = Depen
 
     user = await auth_service.authenticate(db, data.email, data.password)
 
+    if not user.org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User has no organisation assigned",
+        )
+
     # ── MFA branching ────────────────────────────────────────────────────────
     if user.mfa_enabled:
         # User has enrolled MFA — must verify TOTP before receiving real tokens
