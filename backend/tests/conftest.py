@@ -33,6 +33,24 @@ if "sqlite" in _TEST_DB_URL_RAW:
     if not hasattr(SQLiteTypeCompiler, "visit_INET"):
         SQLiteTypeCompiler.visit_INET = lambda self, type_, **kw: "TEXT"  # type: ignore[attr-defined]
 
+    # Patch the PostgreSQL UUID type's bind-parameter processor so that it stores
+    # UUID values as plain strings (VARCHAR-compatible) rather than calling .hex.
+    # Without this, WHERE clauses comparing UUID columns break under SQLite even
+    # though the DDL compiler already maps UUID → VARCHAR(36).
+    import uuid as _uuid_mod
+    from sqlalchemy.dialects.postgresql import UUID as _PG_UUID  # noqa: E402
+
+    def _sqlite_uuid_bind_processor(self, dialect):
+        def process(value):
+            if value is None:
+                return None
+            if isinstance(value, _uuid_mod.UUID):
+                return str(value)
+            return str(value)  # already a string — pass through
+        return process
+
+    _PG_UUID.bind_processor = _sqlite_uuid_bind_processor  # type: ignore[method-assign]
+
 from app.core.database import Base, get_db
 from app.core.security import hash_password
 # `app` is the Socket.io ASGIApp wrapper; `application` is the FastAPI instance.
