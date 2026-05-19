@@ -3,10 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import get_current_user, get_current_user_from_cookie
+from app.core.security import (
+    create_mfa_challenge_token,
+    create_mfa_setup_token,
+    get_current_user,
+    get_current_user_from_cookie,
+)
 from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
+    LoginResponse,
     RegisterRequest,
     SetupRequest,
     TokenResponse,
@@ -66,10 +72,43 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
 
 @router.post("/login")
 async def login(data: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+    from app.models.organization import Organization
+
     user = await auth_service.authenticate(db, data.email, data.password)
+
+    # ── MFA branching ────────────────────────────────────────────────────────
+    if user.mfa_enabled:
+        # User has enrolled MFA — must verify TOTP before receiving real tokens
+        challenge_token = create_mfa_challenge_token(str(user.id), str(user.org_id))
+        return {
+            "data": LoginResponse(mfa_challenge_token=challenge_token).model_dump(),
+            "meta": {},
+            "error": None,
+        }
+
+    org = await db.get(Organization, user.org_id)
+    mfa_required = (org.settings or {}).get("mfa_required", False) if org else False
+
+    if mfa_required and not user.mfa_enabled:
+        # Org policy requires MFA but user hasn't enrolled — must set up first
+        setup_token = create_mfa_setup_token(str(user.id), str(user.org_id))
+        return {
+            "data": LoginResponse(mfa_setup_token=setup_token).model_dump(),
+            "meta": {},
+            "error": None,
+        }
+    # ── Normal login ─────────────────────────────────────────────────────────
+
     access, refresh = auth_service.issue_tokens(user)
     response.set_cookie(REFRESH_COOKIE_NAME, refresh, **COOKIE_SETTINGS)
-    return {"data": TokenResponse(access_token=access), "user": UserOut.model_validate(user)}
+    return {
+        "data": LoginResponse(
+            access_token=access,
+            user=UserOut.model_validate(user),
+        ).model_dump(),
+        "meta": {},
+        "error": None,
+    }
 
 
 @router.post("/refresh")

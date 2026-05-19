@@ -9,9 +9,35 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+# ─── SQLite dialect shims (only active when using SQLite) ─────────────────────
+# PostgreSQL-specific column types (JSONB, UUID, ARRAY, INET) are not understood
+# by SQLite's DDL compiler. Patch the type compiler so that:
+#   JSONB  → JSON     (functionally equivalent for tests)
+#   UUID   → VARCHAR(36)
+#   ARRAY  → JSON     (stores list as JSON blob)
+#   INET   → TEXT     (stores IP as text)
+# This must happen before any model or app import so that create_all succeeds.
+_TEST_DB_URL_RAW = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+if "sqlite" in _TEST_DB_URL_RAW:
+    from sqlalchemy.dialects.sqlite.base import SQLiteTypeCompiler  # noqa: E402
+
+    if not hasattr(SQLiteTypeCompiler, "visit_JSONB"):
+        SQLiteTypeCompiler.visit_JSONB = SQLiteTypeCompiler.visit_JSON  # type: ignore[attr-defined]
+
+    if not hasattr(SQLiteTypeCompiler, "visit_UUID"):
+        SQLiteTypeCompiler.visit_UUID = lambda self, type_, **kw: "VARCHAR(36)"  # type: ignore[attr-defined]
+
+    if not hasattr(SQLiteTypeCompiler, "visit_ARRAY"):
+        SQLiteTypeCompiler.visit_ARRAY = SQLiteTypeCompiler.visit_JSON  # type: ignore[attr-defined]
+
+    if not hasattr(SQLiteTypeCompiler, "visit_INET"):
+        SQLiteTypeCompiler.visit_INET = lambda self, type_, **kw: "TEXT"  # type: ignore[attr-defined]
+
 from app.core.database import Base, get_db
 from app.core.security import hash_password
-from app.main import app
+# `app` is the Socket.io ASGIApp wrapper; `application` is the FastAPI instance.
+# dependency_overrides lives on the FastAPI instance.
+from app.main import app, application
 
 # ─── In-memory SQLite engine for unit tests ────────────────────────────────────
 TEST_DB_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -41,10 +67,10 @@ async def client(db_session: AsyncSession) -> AsyncClient:
     async def override_get_db():
         yield db_session
 
-    app.dependency_overrides[get_db] = override_get_db
+    application.dependency_overrides[get_db] = override_get_db
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
-    app.dependency_overrides.clear()
+    application.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture
