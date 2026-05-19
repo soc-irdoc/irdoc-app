@@ -35,7 +35,7 @@ async def connect(sid: str, environ: dict, auth: dict | None):
     if not token:
         raise ConnectionRefusedError("Authentication required")
     try:
-        decode_token(token)
+        decode_token(token, expected_type="access")
     except Exception:
         raise ConnectionRefusedError("Invalid token")
     await sio.save_session(sid, {"incident_rooms": []})

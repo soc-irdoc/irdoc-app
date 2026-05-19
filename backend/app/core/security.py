@@ -166,9 +166,6 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     payload = decode_token(credentials.credentials)
-    if payload.get("type") != "access":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
-
     user_id = payload.get("sub")
     result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))  # noqa: E712
     user = result.scalar_one_or_none()
@@ -186,9 +183,6 @@ async def get_current_user_from_cookie(
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
     payload = decode_token(refresh_token, expected_type="refresh")
-    if payload.get("type") != "refresh":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
-
     user_id = payload.get("sub")
     result = await db.execute(select(User).where(User.id == user_id, User.is_active == True))  # noqa: E712
     user = result.scalar_one_or_none()
