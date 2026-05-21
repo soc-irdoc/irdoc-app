@@ -1,8 +1,11 @@
 """
-MFA setup endpoints.
+MFA endpoints.
 
-GET  /auth/mfa/setup           — Generate a fresh TOTP secret (mfa_setup OR access token)
-POST /auth/mfa/setup/complete  — Verify code, enable MFA, return real tokens (mfa_setup OR access token)
+GET    /auth/mfa/setup                    — Generate a fresh TOTP secret (mfa_setup OR access token)
+POST   /auth/mfa/setup/complete           — Verify code, enable MFA, return real tokens (mfa_setup OR access token)
+POST   /auth/mfa/verify                   — Complete MFA challenge login (mfa_challenge token)
+POST   /auth/mfa/backup-codes/regenerate  — Regenerate backup codes (access token)
+DELETE /auth/mfa/disable                  — Disable MFA (access token)
 """
 from datetime import datetime, timezone
 
@@ -16,6 +19,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import decode_token
 from app.schemas.auth import (
+    BackupCodesResponse,
+    LoginResponse,
     MFASetupCompleteResponse,
     MFASetupInitResponse,
     MFAVerifyRequest,
@@ -61,6 +66,42 @@ async def _get_user_for_setup(
             detail="Invalid token type for MFA setup",
         )
 
+    user = await db.get(User, payload["sub"])
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+        )
+    return user
+
+
+async def _get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> "User":
+    """Dependency: validate a regular access token and return the active user."""
+    from app.models.user import User  # avoid circular import
+
+    token = credentials.credentials
+    payload = decode_token(token, expected_type="access")
+    user = await db.get(User, payload["sub"])
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+        )
+    return user
+
+
+async def _get_user_for_challenge(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    db: AsyncSession = Depends(get_db),
+) -> "User":
+    """Dependency: validate an mfa_challenge token and return the active user."""
+    from app.models.user import User  # avoid circular import
+
+    token = credentials.credentials
+    payload = decode_token(token, expected_type="mfa_challenge")
     user = await db.get(User, payload["sub"])
     if not user or not user.is_active:
         raise HTTPException(
@@ -131,3 +172,71 @@ async def complete_mfa_setup(
         user=user_out,
     )
     return {"data": result.model_dump(), "meta": {}, "error": None}
+
+
+@router.post("/verify")
+async def verify_mfa(
+    body: MFAVerifyRequest,
+    response: Response,
+    user=Depends(_get_user_for_challenge),
+    db: AsyncSession = Depends(get_db),
+):
+    """Complete an MFA challenge login. Accepts a 6-digit TOTP code or a backup code."""
+    # Backup code path: format is xxxx-xxxx (9 chars, dash at index 4)
+    if len(body.code) == 9 and body.code[4] == "-":
+        if not mfa_service.verify_backup_code(user, body.code):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid backup code",
+            )
+        await db.commit()  # persist the consumed code removal
+    else:
+        # TOTP path
+        if not mfa_service.verify_totp(user.totp_secret, body.code):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid TOTP code",
+            )
+
+    access_token, refresh_token = auth_service.issue_tokens(user)
+    response.set_cookie(REFRESH_COOKIE_NAME, refresh_token, **COOKIE_SETTINGS)
+
+    user_out = UserOut.model_validate(user)
+    result = LoginResponse(access_token=access_token, user=user_out)
+    return {"data": result.model_dump(), "meta": {}, "error": None}
+
+
+@router.post("/backup-codes/regenerate")
+async def regenerate_backup_codes(
+    user=Depends(_get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Regenerate the user's 10 backup codes. Old codes are immediately invalidated."""
+    plain_codes, hashed_codes = mfa_service.generate_backup_codes()
+    user.backup_codes = hashed_codes
+    await db.commit()
+    return {"data": BackupCodesResponse(codes=plain_codes).model_dump(), "meta": {}, "error": None}
+
+
+@router.delete("/disable")
+async def disable_mfa(
+    user=Depends(_get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Disable MFA for the current user. Blocked if the org mandates MFA."""
+    from app.models.organization import Organization
+
+    org = await db.get(Organization, user.org_id)
+    if org and (org.settings or {}).get("mfa_required", False):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="MFA cannot be disabled: your organisation requires it.",
+        )
+
+    user.mfa_enabled = False
+    user.totp_secret = None
+    user.backup_codes = None
+    user.mfa_enrolled_at = None
+    await db.commit()
+
+    return {"data": {"detail": "MFA disabled"}, "meta": {}, "error": None}
