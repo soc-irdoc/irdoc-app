@@ -3,7 +3,7 @@ import base64
 import secrets
 
 import pyotp
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import Argon2Error, VerifyMismatchError
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -50,7 +50,7 @@ def verify_backup_code(user: object, code: str) -> bool:
                 codes.pop(i)
                 user.backup_codes = codes
                 return True
-        except VerifyMismatchError:
+        except (VerifyMismatchError, Argon2Error):
             continue
     return False
 

@@ -9,7 +9,7 @@ DELETE /auth/mfa/disable                  — Disable MFA (access token)
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt as _jose_jwt
 from jose.exceptions import JWTError as _JWTError
@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.limiter import limiter
 from app.core.security import decode_token
 from app.schemas.auth import (
     BackupCodesResponse,
@@ -175,7 +176,9 @@ async def complete_mfa_setup(
 
 
 @router.post("/verify")
+@limiter.limit("5/minute")
 async def verify_mfa(
+    request: Request,
     body: MFAVerifyRequest,
     response: Response,
     user=Depends(_get_user_for_challenge),
@@ -212,6 +215,11 @@ async def regenerate_backup_codes(
     db: AsyncSession = Depends(get_db),
 ):
     """Regenerate the user's 10 backup codes. Old codes are immediately invalidated."""
+    if not user.mfa_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="MFA is not enabled.",
+        )
     plain_codes, hashed_codes = mfa_service.generate_backup_codes()
     user.backup_codes = hashed_codes
     await db.commit()
