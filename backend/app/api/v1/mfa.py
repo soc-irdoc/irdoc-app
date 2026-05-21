@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import jwt as _jose_jwt
+from jose.exceptions import JWTError as _JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,24 +39,30 @@ COOKIE_SETTINGS = {
 async def _get_user_for_setup(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
     db: AsyncSession = Depends(get_db),
-):
+) -> "User":
     """Accept either an mfa_setup token (forced/voluntary enrollment) or a regular access token."""
     from app.models.user import User  # avoid circular import
 
     token = credentials.credentials
 
-    # Try mfa_setup token first; fall back to access token
     try:
-        payload = decode_token(token, expected_type="mfa_setup")
-    except HTTPException:
-        payload = decode_token(token, expected_type="access")
+        unverified = _jose_jwt.get_unverified_claims(token)
+    except _JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-    user_id = payload["sub"]
-    result = await db.execute(
-        select(User).where(User.id == user_id, User.is_active == True)  # noqa: E712
-    )
-    user = result.scalar_one_or_none()
-    if not user:
+    token_type = unverified.get("type")
+    if token_type == "mfa_setup":
+        payload = decode_token(token, expected_type="mfa_setup")
+    elif token_type == "access":
+        payload = decode_token(token, expected_type="access")
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type for MFA setup",
+        )
+
+    user = await db.get(User, payload["sub"])
+    if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive",
@@ -68,6 +76,11 @@ async def get_mfa_setup(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate a new TOTP secret and store it (pending confirmation)."""
+    if user.mfa_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="MFA is already enabled. Disable it before re-enrolling.",
+        )
     raw_secret, uri = mfa_service.generate_totp_secret(user.email)
     user.totp_secret = mfa_service.encrypt_secret(raw_secret)
     await db.commit()
@@ -86,6 +99,11 @@ async def complete_mfa_setup(
     db: AsyncSession = Depends(get_db),
 ):
     """Verify TOTP code, enable MFA, return real tokens and one-time backup codes."""
+    if user.mfa_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="MFA is already enabled.",
+        )
     if not user.totp_secret:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
