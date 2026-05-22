@@ -572,6 +572,9 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+// Integrations hidden from UI until a future phase — backend plugins kept intact
+const HIDDEN_INTEGRATIONS = new Set(['teams', 'slack', 'crowdstrike', 'proofpoint', 'sentinel'])
+
 export function IntegrationsPage() {
   const { data: integrations, isLoading } = useIntegrations()
   const [activeCategory, setActiveCategory] = useState<string>('all')
@@ -586,9 +589,11 @@ export function IntegrationsPage() {
     )
   }
 
-  const categories = ['all', ...Array.from(new Set((integrations ?? []).map((i) => i.category)))]
+  const visible = (integrations ?? []).filter((i) => !HIDDEN_INTEGRATIONS.has(i.name))
 
-  const filtered = (integrations ?? []).filter(
+  const categories = ['all', ...Array.from(new Set(visible.map((i) => i.category)))]
+
+  const filtered = visible.filter(
     (i) => activeCategory === 'all' || i.category === activeCategory
   )
 

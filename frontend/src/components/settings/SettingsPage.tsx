@@ -145,17 +145,6 @@ export function SettingsPage() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-      <h2
-        style={{
-          fontSize: 18,
-          fontWeight: 800,
-          marginBottom: 24,
-          color: 'var(--text-primary)',
-        }}
-      >
-        ⚙ Settings
-      </h2>
-
       {/* Security */}
       <SettingsSection icon="🔐" title="Two-Factor Authentication">
         {user?.mfa_enabled ? (
