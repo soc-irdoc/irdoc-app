@@ -296,7 +296,7 @@ export function OrgSettingsPage() {
         ⚙️ Organisation Settings
       </h2>
 
-      <div style={{ maxWidth: 720 }}>
+      <div style={{ maxWidth: 1020 }}>
 
         {/* ── General ── */}
         <div style={cardStyle}>
@@ -356,6 +356,7 @@ export function OrgSettingsPage() {
                     <th style={tableHeaderStyle}>Email</th>
                     <th style={tableHeaderStyle}>Role</th>
                     <th style={tableHeaderStyle}>Status</th>
+                    <th style={tableHeaderStyle}>2FA</th>
                     <th style={tableHeaderStyle}>Joined</th>
                     <th style={{ ...tableHeaderStyle, textAlign: 'right' }}>Actions</th>
                   </tr>
@@ -418,6 +419,15 @@ export function OrgSettingsPage() {
                         <span className={`chip ${u.is_active ? 'chip-green' : 'chip-muted'}`}>
                           {u.is_active ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td style={tableCellStyle}>
+                        {u.mfa_enabled ? (
+                          <span className="chip chip-green">Enabled</span>
+                        ) : org?.mfa_required ? (
+                          <span className="chip chip-yellow">Not set</span>
+                        ) : (
+                          <span className="chip chip-muted">Off</span>
+                        )}
                       </td>
                       <td style={{ ...tableCellStyle, color: 'var(--text-muted)', fontSize: 12 }}>
                         {new Date(u.created_at).toLocaleDateString()}
