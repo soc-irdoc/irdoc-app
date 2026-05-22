@@ -58,6 +58,7 @@ async def get_org(
     }
 
 
+@router.patch("/org")
 @router.put("/org")
 async def update_org(
     data: OrgSettingsUpdate,
@@ -86,6 +87,9 @@ async def update_org(
     if data.invite_only is not None:
         settings_patch["invite_only"] = data.invite_only
         changes["invite_only"] = data.invite_only
+    if data.mfa_required is not None:
+        settings_patch["mfa_required"] = data.mfa_required
+        changes["mfa_required"] = data.mfa_required
 
     if settings_patch:
         org.settings = settings_patch

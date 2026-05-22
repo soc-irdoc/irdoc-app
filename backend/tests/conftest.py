@@ -33,6 +33,12 @@ if "sqlite" in _TEST_DB_URL_RAW:
     if not hasattr(SQLiteTypeCompiler, "visit_INET"):
         SQLiteTypeCompiler.visit_INET = lambda self, type_, **kw: "TEXT"  # type: ignore[attr-defined]
 
+    # SQLite only auto-increments INTEGER PRIMARY KEY, not BIGINT.
+    # Map BigInteger → INTEGER so audit_log.id auto-increments correctly.
+    if not hasattr(SQLiteTypeCompiler, "_visit_BIGINT_patched"):
+        SQLiteTypeCompiler.visit_BIGINT = lambda self, type_, **kw: "INTEGER"  # type: ignore[attr-defined]
+        SQLiteTypeCompiler._visit_BIGINT_patched = True  # type: ignore[attr-defined]
+
     # Patch the PostgreSQL UUID type's bind-parameter processor so that it stores
     # UUID values as plain strings (VARCHAR-compatible) rather than calling .hex.
     # Without this, WHERE clauses comparing UUID columns break under SQLite even

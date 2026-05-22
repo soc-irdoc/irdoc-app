@@ -352,6 +352,31 @@ async def list_invites(
     }
 
 
+@router.post("/{user_id}/mfa/reset")
+async def reset_user_mfa(
+    user_id: str,
+    current_user: User = Depends(require_permission("users.manage")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: clear MFA for a user so they re-enroll on next login."""
+    from uuid import UUID
+    try:
+        uid = UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    target = await db.get(User, uid)
+    if not target or target.org_id != current_user.org_id:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    target.mfa_enabled = False
+    target.totp_secret = None
+    target.backup_codes = None
+    target.mfa_enrolled_at = None
+    await db.commit()
+    return {"data": {"detail": "MFA reset"}, "meta": {}, "error": None}
+
+
 @router.delete("/invites/{invite_id}", status_code=204)
 async def revoke_invite(
     invite_id: str,
