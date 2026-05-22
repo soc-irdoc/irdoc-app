@@ -19,6 +19,7 @@ class UserOut(BaseModel):
     full_name: str
     role: str
     is_active: bool
+    mfa_enabled: bool = False
     avatar_initials: str | None = None
     created_at: datetime
 
