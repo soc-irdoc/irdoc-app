@@ -59,6 +59,16 @@ export function LoginPage() {
     }
   }
 
+  // Full-page takeover — wizard replaces the login page entirely
+  if (mfaSetupToken) {
+    return (
+      <MFASetupWizard
+        setupToken={mfaSetupToken}
+        onSuccess={() => navigate('/incidents', { replace: true })}
+      />
+    )
+  }
+
   async function handleSetup(e: React.FormEvent) {
     e.preventDefault()
     setSetupLoading(true)
@@ -293,12 +303,6 @@ export function LoginPage() {
       {mfaChallengeToken && (
         <MFAVerifyModal
           challengeToken={mfaChallengeToken}
-          onSuccess={() => navigate('/incidents', { replace: true })}
-        />
-      )}
-      {mfaSetupToken && (
-        <MFASetupWizard
-          setupToken={mfaSetupToken}
           onSuccess={() => navigate('/incidents', { replace: true })}
         />
       )}
