@@ -412,7 +412,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
     <div style={{ marginBottom: 32 }} id="identity-section">
       {/* Section heading */}
       <h3 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-        Identity &amp; Access
+        Single Sign-On
       </h3>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, marginTop: -8 }}>
         Connect your identity provider for SSO and user provisioning.
@@ -573,7 +573,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 // Integrations hidden from UI until a future phase — backend plugins kept intact
-const HIDDEN_INTEGRATIONS = new Set(['teams', 'slack', 'crowdstrike', 'proofpoint', 'sentinel'])
+const HIDDEN_INTEGRATIONS = new Set(['teams', 'slack', 'crowdstrike', 'proofpoint', 'sentinel', 'azuread'])
 
 export function IntegrationsPage() {
   const { data: integrations, isLoading } = useIntegrations()
