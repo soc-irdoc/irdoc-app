@@ -9,11 +9,13 @@ import {
   useRevokeInvite,
   useUpdateUserRole,
   useDeactivateUser,
+  useResetUserMFA,
 } from '@/hooks/useAdmin'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 import { Modal } from '@/components/common/Modal'
 import { PremiumGate } from '@/components/common/PremiumGate'
+import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/admin'
 import type { OrgUser } from '@/types/admin'
 
@@ -175,12 +177,15 @@ export function OrgSettingsPage() {
   const { data: invites = [], isLoading: invitesLoading } = useInvites()
   const updateRole = useUpdateUserRole()
   const deactivate = useDeactivateUser()
+  const resetMFA = useResetUserMFA()
   const revokeInvite = useRevokeInvite()
   const sendInvite = useSendInvite()
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
   const [pendingRole, setPendingRole] = useState('')
   const [deactivateTarget, setDeactivateTarget] = useState<OrgUser | null>(null)
+  const [resetMFATarget, setResetMFATarget] = useState<OrgUser | null>(null)
+  const [showMFAEnforceConfirm, setShowMFAEnforceConfirm] = useState(false)
 
   // User auth
   const [authSource, setAuthSource] = useState<AuthSource>('local')
@@ -228,6 +233,39 @@ export function OrgSettingsPage() {
       addToast('Invitation revoked', 'success')
     } catch {
       addToast('Failed to revoke invitation', 'error')
+    }
+  }
+
+  async function handleResetMFA(user: OrgUser) {
+    try {
+      await resetMFA.mutateAsync(user.id)
+      addToast(`MFA reset for ${user.full_name}`, 'success')
+      setResetMFATarget(null)
+    } catch {
+      addToast('Failed to reset MFA', 'error')
+    }
+  }
+
+  async function handleMFAToggle(value: boolean) {
+    if (value) {
+      setShowMFAEnforceConfirm(true)
+    } else {
+      try {
+        await updateOrg.mutateAsync({ mfa_required: false })
+        addToast('MFA requirement disabled', 'success')
+      } catch {
+        addToast('Failed to update MFA requirement', 'error')
+      }
+    }
+  }
+
+  async function handleMFAEnforceConfirm() {
+    try {
+      await updateOrg.mutateAsync({ mfa_required: true })
+      addToast('MFA is now required for all local users', 'success')
+      setShowMFAEnforceConfirm(false)
+    } catch {
+      addToast('Failed to enable MFA requirement', 'error')
     }
   }
 
@@ -393,6 +431,17 @@ export function OrgSettingsPage() {
                               onClick={() => { setEditingRoleId(u.id); setPendingRole(u.role) }}
                             >
                               Edit Role
+                            </button>
+                          )}
+                          {u.mfa_enabled && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--yellow)' }}
+                              onClick={() => setResetMFATarget(u)}
+                              title="Reset MFA — user must re-enroll on next login"
+                            >
+                              Reset MFA
                             </button>
                           )}
                           <button
@@ -641,6 +690,21 @@ export function OrgSettingsPage() {
               </div>
             )}
 
+            {/* MFA requirement toggle */}
+            <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Require MFA for all local users</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                  SSO users are unaffected — MFA for SSO is managed by your identity provider.
+                </div>
+              </div>
+              <ToggleSwitch
+                checked={org?.mfa_required ?? false}
+                onChange={handleMFAToggle}
+                ariaLabel="Require MFA for all local users"
+              />
+            </div>
+
           </div>
         </div>
 
@@ -727,6 +791,47 @@ export function OrgSettingsPage() {
           onConfirm={() => handleDeactivate(deactivateTarget)}
           onClose={() => setDeactivateTarget(null)}
         />
+      )}
+
+      {/* MFA enforce confirmation */}
+      {showMFAEnforceConfirm && (
+        <Modal open onClose={() => setShowMFAEnforceConfirm(false)} title="Require MFA for all local users?" size="sm">
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+            Users without MFA will be required to enrol on their next login. There is no grace period.
+            SSO users are not affected.
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowMFAEnforceConfirm(false)}>
+              Cancel
+            </button>
+            <button type="button" className="btn btn-accent btn-sm" onClick={handleMFAEnforceConfirm} disabled={updateOrg.isPending}>
+              {updateOrg.isPending ? 'Saving…' : 'Enable'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* MFA reset confirmation */}
+      {resetMFATarget && (
+        <Modal open onClose={() => setResetMFATarget(null)} title="Reset MFA for this user?" size="sm">
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+            <strong style={{ color: 'var(--text-primary)' }}>{resetMFATarget.full_name}</strong> will
+            be required to re-enrol MFA on their next login.
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setResetMFATarget(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-accent btn-sm"
+              onClick={() => handleResetMFA(resetMFATarget)}
+              disabled={resetMFA.isPending}
+            >
+              {resetMFA.isPending ? 'Resetting…' : 'Reset MFA'}
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   )

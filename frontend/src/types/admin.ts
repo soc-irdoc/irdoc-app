@@ -4,6 +4,7 @@ export interface OrgUser {
   full_name: string
   role: 'admin' | 'senior_analyst' | 'analyst' | 'viewer'
   is_active: boolean
+  mfa_enabled: boolean
   created_at: string
 }
 
@@ -22,6 +23,7 @@ export interface OrgSettings {
   slug: string
   plan: string
   allow_registration: boolean
+  mfa_required?: boolean
 }
 
 export interface StorageConfigOut {

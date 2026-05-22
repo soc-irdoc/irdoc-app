@@ -48,6 +48,18 @@ export function useDeactivateUser() {
   })
 }
 
+export function useResetUserMFA() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      await apiClient.post(`/users/${userId}/mfa/reset`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['org-users'] })
+    },
+  })
+}
+
 // ── Invites ────────────────────────────────────────────────
 
 export function useInvites() {
