@@ -99,12 +99,19 @@ export function useRevokeInvite() {
 
 // ── Org settings ───────────────────────────────────────────
 
+// The backend nests allow_registration and mfa_required inside a `settings` JSONB field.
+// Flatten them into the top-level object so callers can read org.mfa_required directly.
+function flattenOrgSettings(raw: Record<string, unknown>): OrgSettings {
+  const { settings, ...rest } = raw as { settings?: Record<string, unknown> } & Record<string, unknown>
+  return { ...rest, ...(settings ?? {}) } as unknown as OrgSettings
+}
+
 export function useOrgSettings() {
   return useQuery({
     queryKey: ['org-settings'],
     queryFn: async () => {
-      const res = await apiClient.get<ApiResponse<OrgSettings>>('/admin/org')
-      return res.data.data
+      const res = await apiClient.get<{ data: Record<string, unknown> }>('/admin/org')
+      return flattenOrgSettings(res.data.data)
     },
   })
 }
@@ -113,11 +120,11 @@ export function useUpdateOrgSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: Partial<OrgSettings>) => {
-      const res = await apiClient.put<ApiResponse<OrgSettings>>('/admin/org', payload)
-      return res.data.data
+      const res = await apiClient.put<{ data: Record<string, unknown> }>('/admin/org', payload)
+      return flattenOrgSettings(res.data.data)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['org-settings'] })
+    onSuccess: (data) => {
+      qc.setQueryData(['org-settings'], data)
     },
   })
 }
