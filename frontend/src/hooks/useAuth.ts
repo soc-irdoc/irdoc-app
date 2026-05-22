@@ -8,22 +8,25 @@ interface LoginPayload {
   password: string
 }
 
-// Backend response shape: { data: { access_token, token_type }, user: { ... } }
-interface LoginApiResponse {
-  data: { access_token: string }
-  user: User
+export interface LoginResult {
+  access_token?: string
+  mfa_challenge_token?: string
+  mfa_setup_token?: string
+  user?: User
 }
 
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth)
 
   return useMutation({
-    mutationFn: async (payload: LoginPayload) => {
-      const res = await apiClient.post<LoginApiResponse>('/auth/login', payload)
-      return { user: res.data.user, access_token: res.data.data.access_token }
+    mutationFn: async (payload: LoginPayload): Promise<LoginResult> => {
+      const res = await apiClient.post<{ data: LoginResult }>('/auth/login', payload)
+      return res.data.data
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.access_token)
+      if (data.access_token && data.user) {
+        setAuth(data.user, data.access_token)
+      }
     },
   })
 }

@@ -4,6 +4,8 @@ import { useLogin } from '@/hooks/useAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/common/Button'
 import apiClient from '@/lib/apiClient'
+import { MFAVerifyModal } from '@/components/auth/MFAVerifyModal'
+import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -15,6 +17,8 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const sessionExpired = searchParams.get('reason') === 'session_expired'
   const [error, setError] = useState(sessionExpired ? 'Your session expired. Please log in again.' : '')
+  const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(null)
+  const [mfaSetupToken, setMfaSetupToken] = useState<string | null>(null)
 
   // Check if first-run setup is needed
   const [needsSetup, setNeedsSetup] = useState(false)
@@ -39,7 +43,15 @@ export function LoginPage() {
     e.preventDefault()
     setError('')
     try {
-      await login.mutateAsync({ email, password })
+      const result = await login.mutateAsync({ email, password })
+      if (result.mfa_challenge_token) {
+        setMfaChallengeToken(result.mfa_challenge_token)
+        return
+      }
+      if (result.mfa_setup_token) {
+        setMfaSetupToken(result.mfa_setup_token)
+        return
+      }
       navigate('/incidents', { replace: true })
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } }
@@ -277,6 +289,19 @@ export function LoginPage() {
           IRDoc — Incident Response Documentation Platform
         </p>
       </div>
+
+      {mfaChallengeToken && (
+        <MFAVerifyModal
+          challengeToken={mfaChallengeToken}
+          onSuccess={() => navigate('/incidents', { replace: true })}
+        />
+      )}
+      {mfaSetupToken && (
+        <MFASetupWizard
+          setupToken={mfaSetupToken}
+          onSuccess={() => navigate('/incidents', { replace: true })}
+        />
+      )}
     </div>
   )
 }
