@@ -10,4 +10,6 @@ export interface User {
   theme: 'dark' | 'light'
   is_active: boolean
   must_reset_password: boolean
+  mfa_enabled: boolean
+  backup_codes_remaining: number
 }

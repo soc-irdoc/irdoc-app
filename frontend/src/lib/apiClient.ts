@@ -120,4 +120,40 @@ apiClient.interceptors.response.use(
   }
 )
 
+export const mfaApi = {
+  getSetup: (token: string) =>
+    apiClient.get<{ data: { secret_uri: string } }>('/auth/mfa/setup', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  getSetupWithAccessToken: () =>
+    apiClient.get<{ data: { secret_uri: string } }>('/auth/mfa/setup'),
+
+  completeSetup: (token: string, code: string) =>
+    apiClient.post<{ data: { access_token: string; backup_codes: string[]; user: import('@/types/user').User } }>(
+      '/auth/mfa/setup/complete',
+      { code },
+      { headers: { Authorization: `Bearer ${token}` } },
+    ),
+
+  completeSetupWithAccessToken: (code: string) =>
+    apiClient.post<{ data: { access_token: string; backup_codes: string[]; user: import('@/types/user').User } }>(
+      '/auth/mfa/setup/complete',
+      { code },
+    ),
+
+  verify: (token: string, code: string) =>
+    apiClient.post<{ data: { access_token: string; user: import('@/types/user').User } }>(
+      '/auth/mfa/verify',
+      { code },
+      { headers: { Authorization: `Bearer ${token}` } },
+    ),
+
+  regenerateBackupCodes: () =>
+    apiClient.post<{ data: { codes: string[] } }>('/auth/mfa/backup-codes/regenerate', {}),
+
+  disable: () =>
+    apiClient.delete('/auth/mfa/disable'),
+}
+
 export default apiClient
