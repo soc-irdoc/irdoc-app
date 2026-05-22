@@ -45,3 +45,4 @@ logs/
 
 # ignore temp folder
 --temp/
+.superpowers/
