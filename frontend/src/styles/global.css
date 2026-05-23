@@ -370,3 +370,178 @@ select.form-input {
 .stagger-list > *:nth-child(7)  { animation-delay: 240ms; }
 .stagger-list > *:nth-child(8)  { animation-delay: 280ms; }
 .stagger-list > *:nth-child(n+9){ animation-delay: 320ms; }
+
+/* ── Tiptap Rich Text Editor ──────────────────────────────── */
+.tiptap-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 6px 12px;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: normal;
+  text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+}
+
+.tb-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.tb-btn.active {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--accent);
+}
+
+.tb-task-btn {
+  width: auto;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.tb-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.tb-select {
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-base);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.tb-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.tiptap-body {
+  padding: 12px 16px;
+  min-height: 80px;
+}
+
+.tiptap-body .ProseMirror {
+  outline: none;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.tiptap-body .ProseMirror p {
+  margin-bottom: 6px;
+}
+
+.tiptap-body .ProseMirror h1 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+
+.tiptap-body .ProseMirror h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+.tiptap-body .ProseMirror ul,
+.tiptap-body .ProseMirror ol {
+  padding-left: 20px;
+  margin-bottom: 6px;
+}
+
+.tiptap-body .ProseMirror li {
+  margin-bottom: 2px;
+}
+
+.tiptap-body .ProseMirror blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 12px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+
+.tiptap-body .ProseMirror strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tiptap-body .ProseMirror em {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.tiptap-body .ProseMirror s {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Task list */
+.tiptap-body .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-body .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tiptap-body .ProseMirror ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.tiptap-body .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tiptap-body .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Placeholder */
+.tiptap-body .ProseMirror .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-muted);
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
