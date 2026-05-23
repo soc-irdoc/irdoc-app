@@ -54,7 +54,8 @@ type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 function SaveIndicator({ state }: { state: SaveState }) {
   if (state === 'idle') return null
 
-  if (state === 'dirty') {
+  if (state === 'dirty' || state === 'saving') {
+    const label = state === 'saving' ? 'Saving…' : 'Unsaved changes'
     return (
       <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--yellow)' }}>
         <span
@@ -66,13 +67,9 @@ function SaveIndicator({ state }: { state: SaveState }) {
             display: 'inline-block',
           }}
         />
-        Unsaved changes
+        {label}
       </span>
     )
-  }
-
-  if (state === 'saving') {
-    return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Saving…</span>
   }
 
   if (state === 'saved') {
@@ -88,6 +85,14 @@ function SaveIndicator({ state }: { state: SaveState }) {
           }}
         />
         Saved
+      </span>
+    )
+  }
+
+  if (state === 'error') {
+    return (
+      <span style={{ fontSize: 11, color: 'var(--red)' }}>
+        Save failed
       </span>
     )
   }
@@ -131,6 +136,8 @@ function RichTextSection({
     }
   }, [])
 
+  const isDirty = saveState === 'dirty' || saveState === 'saving'
+
   function handleChange(html: string) {
     setSaveState('dirty')
     clearTimeout(timerRef.current)
@@ -142,7 +149,7 @@ function RichTextSection({
         savedTimerRef.current = setTimeout(() => setSaveState('idle'), 3000)
       } catch {
         addToast(`Failed to save ${title}`, 'error')
-        setSaveState('dirty')
+        setSaveState('error')
       }
     }, 1500)
   }
@@ -174,6 +181,7 @@ function RichTextSection({
         onChange={handleChange}
         placeholder={placeholder}
         enableTaskList={enableTaskList}
+        isDirty={isDirty}
       />
     </div>
   )

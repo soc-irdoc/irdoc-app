@@ -132,3 +132,35 @@ async def test_rich_text_fields_round_trip(client: AsyncClient, auth_headers):
     assert data["notes"] == html_notes
     assert data["lessons_learned"] == html_lessons
     assert data["actions_todo"] == html_actions
+
+
+@pytest.mark.asyncio
+async def test_rich_text_fields_sanitize_xss(client: AsyncClient, auth_headers):
+    """Dangerous HTML in rich text fields is stripped by bleach on save."""
+    res = await client.post(
+        "/api/v1/incidents",
+        json={"title": "XSS Test", "severity": "sev3"},
+        headers=auth_headers,
+    )
+    assert res.status_code == 201
+    inc_id = res.json()["data"]["id"]
+
+    res = await client.put(
+        f"/api/v1/incidents/{inc_id}",
+        json={
+            # <script> tag should be stripped entirely (tag + content)
+            "notes": "<p>Safe</p><script>alert(1)</script>",
+            # Event handler on an allowed tag should be removed
+            "lessons_learned": '<p onclick="alert(1)">Click me</p>',
+            # <img> with onerror should be stripped (img not in allowlist)
+            "actions_todo": '<p>Text</p><img src="x" onerror="alert(1)">',
+        },
+        headers=auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert "<script>" not in data["notes"]
+    assert "alert" not in data["notes"]
+    assert 'onclick' not in data["lessons_learned"]
+    assert "<img" not in data["actions_todo"]
+    assert "onerror" not in data["actions_todo"]

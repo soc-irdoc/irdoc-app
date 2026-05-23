@@ -6,12 +6,21 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
 
+// Tiptap initialises an empty editor as '<p></p>'. Normalise to '' so that
+// the empty-string content prop doesn't trigger constant setContent calls.
+function normalizeHtml(html: string): string {
+  return html === '<p></p>' ? '' : html
+}
+
 interface RichTextEditorProps {
   content: string
   onChange: (html: string) => void
   placeholder?: string
   enableTaskList?: boolean
   readOnly?: boolean
+  // When true, external content syncs are skipped (prevents overwriting
+  // in-progress edits when the parent re-renders after a successful save).
+  isDirty?: boolean
 }
 
 export function RichTextEditor({
@@ -20,9 +29,10 @@ export function RichTextEditor({
   placeholder = 'Start typing…',
   enableTaskList = false,
   readOnly = false,
+  isDirty = false,
 }: RichTextEditorProps) {
   // Force toolbar re-render on cursor/selection changes so active states update
-  const [, forceUpdate] = useState(0)
+  const [, forceUpdate] = useState({})
 
   const editor = useEditor({
     extensions: [
@@ -42,24 +52,24 @@ export function RichTextEditor({
 
   useEffect(() => {
     if (!editor) return
-    const handler = () => forceUpdate((n) => n + 1)
+    const handler = () => forceUpdate({})
     editor.on('transaction', handler)
     return () => {
       editor.off('transaction', handler)
     }
   }, [editor])
 
-  // Sync external content changes into the editor (content prop is init-only in Tiptap)
+  // Sync external content changes into the editor. Skipped while the user has
+  // unsaved edits (isDirty) to prevent a completed save from overwriting text
+  // typed since the debounce fired.
   useEffect(() => {
-    if (!editor) return
-    if (editor.getHTML() !== content) {
+    if (!editor || isDirty) return
+    if (normalizeHtml(editor.getHTML()) !== (content ?? '')) {
       editor.commands.setContent(content ?? '', { emitUpdate: false })
     }
-  }, [editor, content])
+  }, [editor, content, isDirty])
 
   if (!editor) return null
-
-  const listItemName = enableTaskList ? 'taskItem' : 'listItem'
 
   const isHeading1 = editor.isActive('heading', { level: 1 })
   const isHeading2 = editor.isActive('heading', { level: 2 })
@@ -162,29 +172,29 @@ export function RichTextEditor({
               >
                 1≡
               </button>
+
+              <div className="tb-sep" />
+
+              <button
+                type="button"
+                aria-label="Indent"
+                className="tb-btn"
+                onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+                title="Indent"
+              >
+                →
+              </button>
+              <button
+                type="button"
+                aria-label="Outdent"
+                className="tb-btn"
+                onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+                title="Outdent"
+              >
+                ←
+              </button>
             </>
           )}
-
-          <div className="tb-sep" />
-
-          <button
-            type="button"
-            aria-label="Indent"
-            className="tb-btn"
-            onClick={() => editor.chain().focus().sinkListItem(listItemName).run()}
-            title="Indent"
-          >
-            →
-          </button>
-          <button
-            type="button"
-            aria-label="Outdent"
-            className="tb-btn"
-            onClick={() => editor.chain().focus().liftListItem(listItemName).run()}
-            title="Outdent"
-          >
-            ←
-          </button>
         </div>
       )}
       <EditorContent editor={editor} className="tiptap-body" />

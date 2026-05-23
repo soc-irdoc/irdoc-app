@@ -19,11 +19,14 @@ from app.schemas.incident import IncidentCreate, IncidentStats, IncidentUpdate
 
 _RICH_TEXT_TAGS = [
     "p", "br", "strong", "em", "u", "s", "b", "i",
-    "h1", "h2", "h3", "ul", "ol", "li", "blockquote", "label",
+    "h1", "h2", "h3", "ul", "ol", "li", "blockquote", "label", "input",
 ]
 _RICH_TEXT_ATTRS = {
     "ul": ["data-type"],
     "li": ["data-checked"],
+    # Tiptap TaskItem renders checkboxes as <input type="checkbox"> — preserve
+    # the type attribute so stored HTML is portable for future report rendering.
+    "input": ["type"],
 }
 _RICH_TEXT_FIELDS = {"executive_summary", "notes", "lessons_learned", "actions_todo"}
 
