@@ -1,24 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useIncident, useUpdateIncident } from '@/hooks/useIncident'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import { Button } from '@/components/common/Button'
+import { RichTextEditor } from '@/components/common/RichTextEditor'
 import { useUIStore } from '@/stores/uiStore'
-import { SEVERITY_LABELS, STATUS_LABELS } from '@/types/incident'
+import { SEVERITY_LABELS, STATUS_LABELS, type UpdateIncidentPayload } from '@/types/incident'
 import { formatDateTime, formatRelative } from '@/lib/utils'
 
 interface SummaryPageProps {
   incidentId: string
 }
 
-function StatCard({
-  title,
-  value,
-  color,
-}: {
-  title: string
-  value: string | number
-  color?: string
-}) {
+// ── Stat card ────────────────────────────────────────────────
+function StatCard({ title, value, color }: { title: string; value: string | number; color?: string }) {
   return (
     <div
       style={{
@@ -55,28 +48,140 @@ function StatCard({
   )
 }
 
-export function SummaryPage({ incidentId }: SummaryPageProps) {
+// ── Save state indicator ──────────────────────────────────────
+type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
+
+function SaveIndicator({ state }: { state: SaveState }) {
+  if (state === 'idle') return null
+
+  if (state === 'dirty') {
+    return (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--yellow)' }}>
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: 'var(--yellow)',
+            display: 'inline-block',
+          }}
+        />
+        Unsaved changes
+      </span>
+    )
+  }
+
+  if (state === 'saving') {
+    return <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Saving…</span>
+  }
+
+  if (state === 'saved') {
+    return (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--green)' }}>
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: 'var(--green)',
+            display: 'inline-block',
+          }}
+        />
+        Saved
+      </span>
+    )
+  }
+
+  return null
+}
+
+// ── Rich text section card ────────────────────────────────────
+type RichTextFieldKey = keyof Pick<
+  UpdateIncidentPayload,
+  'executive_summary' | 'notes' | 'lessons_learned' | 'actions_todo'
+>
+
+interface RichTextSectionProps {
+  title: string
+  fieldKey: RichTextFieldKey
+  content: string
+  incidentId: string
+  placeholder?: string
+  enableTaskList?: boolean
+}
+
+function RichTextSection({
+  title,
+  fieldKey,
+  content,
+  incidentId,
+  placeholder,
+  enableTaskList,
+}: RichTextSectionProps) {
   const addToast = useUIStore((s) => s.addToast)
-  const { data: incident, isLoading } = useIncident(incidentId)
   const updateIncident = useUpdateIncident(incidentId)
+  const [saveState, setSaveState] = useState<SaveState>('idle')
+  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
-  const [editing, setEditing] = useState(false)
-  const [summary, setSummary] = useState('')
-
-  function startEdit() {
-    setSummary(incident?.executive_summary ?? '')
-    setEditing(true)
-  }
-
-  async function saveSummary() {
-    try {
-      await updateIncident.mutateAsync({ executive_summary: summary })
-      setEditing(false)
-      addToast('Summary saved', 'success')
-    } catch {
-      addToast('Failed to save summary', 'error')
+  useEffect(() => {
+    return () => {
+      clearTimeout(timerRef.current)
+      clearTimeout(savedTimerRef.current)
     }
+  }, [])
+
+  function handleChange(html: string) {
+    setSaveState('dirty')
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(async () => {
+      setSaveState('saving')
+      try {
+        await updateIncident.mutateAsync({ [fieldKey]: html })
+        setSaveState('saved')
+        savedTimerRef.current = setTimeout(() => setSaveState('idle'), 3000)
+      } catch {
+        addToast(`Failed to save ${title}`, 'error')
+        setSaveState('dirty')
+      }
+    }, 1500)
   }
+
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
+        marginBottom: 16,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          borderBottom: '1px solid var(--border)',
+        }}
+      >
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h3>
+        <SaveIndicator state={saveState} />
+      </div>
+      <RichTextEditor
+        content={content}
+        onChange={handleChange}
+        placeholder={placeholder}
+        enableTaskList={enableTaskList}
+      />
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────
+export function SummaryPage({ incidentId }: SummaryPageProps) {
+  const { data: incident, isLoading } = useIncident(incidentId)
 
   if (isLoading) {
     return (
@@ -145,12 +250,8 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
               ['Reference', incident.incident_ref],
               ['Created', formatDateTime(incident.created_at)],
               ['Last Updated', formatRelative(incident.updated_at)],
-              ...(incident.contained_at
-                ? [['Contained', formatDateTime(incident.contained_at)]]
-                : []),
-              ...(incident.closed_at
-                ? [['Closed', formatDateTime(incident.closed_at)]]
-                : []),
+              ...(incident.contained_at ? [['Contained', formatDateTime(incident.contained_at)]] : []),
+              ...(incident.closed_at ? [['Closed', formatDateTime(incident.closed_at)]] : []),
               ...(incident.attack_vector.length > 0
                 ? [['Attack Vector', incident.attack_vector.join(', ')]]
                 : []),
@@ -183,71 +284,41 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
       </div>
 
       {/* Executive Summary */}
-      <div
-        style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 16,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 12,
-          }}
-        >
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-            📝 Executive Summary
-          </h3>
-          {!editing && (
-            <Button variant="ghost" size="sm" onClick={startEdit}>
-              Edit
-            </Button>
-          )}
-        </div>
+      <RichTextSection
+        title="📝 Executive Summary"
+        fieldKey="executive_summary"
+        content={incident.executive_summary ?? ''}
+        incidentId={incidentId}
+        placeholder="Write an executive summary of this incident…"
+      />
 
-        {editing ? (
-          <div>
-            <textarea
-              className="form-input"
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              rows={8}
-              placeholder="Write an executive summary of this incident..."
-              style={{ fontFamily: 'Syne, sans-serif', lineHeight: 1.6 }}
-            />
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
-              <Button
-                variant="accent"
-                size="sm"
-                loading={updateIncident.isPending}
-                onClick={saveSummary}
-              >
-                Save
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <p
-            style={{
-              fontSize: 13,
-              lineHeight: 1.7,
-              color: incident.executive_summary
-                ? 'var(--text-primary)'
-                : 'var(--text-muted)',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'JetBrains Mono, monospace',
-            }}
-          >
-            {incident.executive_summary || 'No executive summary yet. Click Edit to add one.'}
-          </p>
-        )}
-      </div>
+      {/* Notes */}
+      <RichTextSection
+        title="🗒️ Notes"
+        fieldKey="notes"
+        content={incident.notes ?? ''}
+        incidentId={incidentId}
+        placeholder="Investigation notes, observations, key findings…"
+      />
+
+      {/* Lessons Learned */}
+      <RichTextSection
+        title="💡 Lessons Learned"
+        fieldKey="lessons_learned"
+        content={incident.lessons_learned ?? ''}
+        incidentId={incidentId}
+        placeholder="What worked, what didn't, and what to improve for next time…"
+      />
+
+      {/* Actions To Do */}
+      <RichTextSection
+        title="✅ Actions To Do"
+        fieldKey="actions_todo"
+        content={incident.actions_todo ?? ''}
+        incidentId={incidentId}
+        placeholder="Click ☑ Task to add a follow-up action item…"
+        enableTaskList
+      />
     </div>
   )
 }

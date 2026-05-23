@@ -49,7 +49,17 @@ export function RichTextEditor({
     }
   }, [editor])
 
+  // Sync external content changes into the editor (content prop is init-only in Tiptap)
+  useEffect(() => {
+    if (!editor) return
+    if (editor.getHTML() !== content) {
+      editor.commands.setContent(content ?? '', { emitUpdate: false })
+    }
+  }, [editor, content])
+
   if (!editor) return null
+
+  const listItemName = enableTaskList ? 'taskItem' : 'listItem'
 
   const isHeading1 = editor.isActive('heading', { level: 1 })
   const isHeading2 = editor.isActive('heading', { level: 2 })
@@ -72,6 +82,7 @@ export function RichTextEditor({
           {enableTaskList ? (
             <button
               type="button"
+              aria-label="Insert task item"
               className={`tb-btn tb-task-btn${editor.isActive('taskList') ? ' active' : ''}`}
               onClick={() => editor.chain().focus().toggleTaskList().run()}
               title="Insert task item"
@@ -80,6 +91,7 @@ export function RichTextEditor({
             </button>
           ) : (
             <select
+              aria-label="Text style"
               className="tb-select"
               value={headingValue}
               onChange={(e) => setHeading(e.target.value)}
@@ -94,6 +106,7 @@ export function RichTextEditor({
 
           <button
             type="button"
+            aria-label="Bold"
             className={`tb-btn${editor.isActive('bold') ? ' active' : ''}`}
             onClick={() => editor.chain().focus().toggleBold().run()}
             title="Bold"
@@ -102,6 +115,7 @@ export function RichTextEditor({
           </button>
           <button
             type="button"
+            aria-label="Italic"
             className={`tb-btn${editor.isActive('italic') ? ' active' : ''}`}
             onClick={() => editor.chain().focus().toggleItalic().run()}
             title="Italic"
@@ -110,6 +124,7 @@ export function RichTextEditor({
           </button>
           <button
             type="button"
+            aria-label="Underline"
             className={`tb-btn${editor.isActive('underline') ? ' active' : ''}`}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             title="Underline"
@@ -118,6 +133,7 @@ export function RichTextEditor({
           </button>
           <button
             type="button"
+            aria-label="Strikethrough"
             className={`tb-btn${editor.isActive('strike') ? ' active' : ''}`}
             onClick={() => editor.chain().focus().toggleStrike().run()}
             title="Strikethrough"
@@ -130,6 +146,7 @@ export function RichTextEditor({
               <div className="tb-sep" />
               <button
                 type="button"
+                aria-label="Bullet list"
                 className={`tb-btn${editor.isActive('bulletList') ? ' active' : ''}`}
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
                 title="Bullet list"
@@ -138,6 +155,7 @@ export function RichTextEditor({
               </button>
               <button
                 type="button"
+                aria-label="Numbered list"
                 className={`tb-btn${editor.isActive('orderedList') ? ' active' : ''}`}
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
                 title="Numbered list"
@@ -151,16 +169,18 @@ export function RichTextEditor({
 
           <button
             type="button"
+            aria-label="Indent"
             className="tb-btn"
-            onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+            onClick={() => editor.chain().focus().sinkListItem(listItemName).run()}
             title="Indent"
           >
             →
           </button>
           <button
             type="button"
+            aria-label="Outdent"
             className="tb-btn"
-            onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+            onClick={() => editor.chain().focus().liftListItem(listItemName).run()}
             title="Outdent"
           >
             ←
