@@ -100,6 +100,11 @@ async def test_rich_text_fields_round_trip(client: AsyncClient, auth_headers):
     assert res.status_code == 201
     inc_id = res.json()["data"]["id"]
 
+    # Verify new fields default to null on creation
+    assert res.json()["data"]["notes"] is None
+    assert res.json()["data"]["lessons_learned"] is None
+    assert res.json()["data"]["actions_todo"] is None
+
     html_notes = "<p>Test <strong>notes</strong></p>"
     html_lessons = "<p>Lessons <em>learned</em></p>"
     html_actions = '<ul data-type="taskList"><li data-checked="false"><label>Action 1</label></li></ul>'
