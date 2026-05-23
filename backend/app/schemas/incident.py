@@ -42,6 +42,9 @@ class IncidentUpdate(BaseModel):
     severity: Literal["sev1", "sev2", "sev3", "sev4"] | None = None
     status: Literal["open", "contained", "closed", "monitoring"] | None = None
     executive_summary: str | None = None
+    notes: str | None = None
+    lessons_learned: str | None = None
+    actions_todo: str | None = None
     attack_vector: list[str] | None = None
     affected_users: int | None = None
     assigned_to: str | None = None
@@ -63,6 +66,9 @@ class IncidentOut(BaseModel):
     contained_at: datetime | None
     closed_at: datetime | None
     executive_summary: str | None
+    notes: str | None
+    lessons_learned: str | None
+    actions_todo: str | None
     attack_vector: list[str]
     affected_users: int
     metadata: dict
