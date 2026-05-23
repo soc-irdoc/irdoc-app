@@ -26,6 +26,9 @@ export interface Incident {
   assigned_to: string | null
   assigned_user: UserBrief | null
   executive_summary: string | null
+  notes: string | null
+  lessons_learned: string | null
+  actions_todo: string | null
   attack_vector: string[]
   affected_users: number
   metadata: Record<string, unknown>
@@ -55,7 +58,10 @@ export interface UpdateIncidentPayload {
   title?: string
   severity?: Severity
   status?: IncidentStatus
-  executive_summary?: string
+  executive_summary?: string | null
+  notes?: string | null
+  lessons_learned?: string | null
+  actions_todo?: string | null
   attack_vector?: string[]
   affected_users?: number
   assigned_to?: string | null
