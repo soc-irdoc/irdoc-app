@@ -86,3 +86,44 @@ async def test_incident_ref_sequential(client: AsyncClient, auth_headers):
     # Both should be INC-YYYY-NNNN format
     assert ref1 != ref2
     assert ref1.startswith("INC-")
+
+
+@pytest.mark.asyncio
+async def test_rich_text_fields_round_trip(client: AsyncClient, auth_headers):
+    """New rich text fields are persisted and returned correctly."""
+    # Create incident
+    res = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Rich Text Test", "severity": "sev2"},
+        headers=auth_headers,
+    )
+    assert res.status_code == 201
+    inc_id = res.json()["data"]["id"]
+
+    html_notes = "<p>Test <strong>notes</strong></p>"
+    html_lessons = "<p>Lessons <em>learned</em></p>"
+    html_actions = '<ul data-type="taskList"><li data-checked="false"><label>Action 1</label></li></ul>'
+
+    # Update with rich text fields
+    res = await client.put(
+        f"/api/v1/incidents/{inc_id}",
+        json={
+            "notes": html_notes,
+            "lessons_learned": html_lessons,
+            "actions_todo": html_actions,
+        },
+        headers=auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert data["notes"] == html_notes
+    assert data["lessons_learned"] == html_lessons
+    assert data["actions_todo"] == html_actions
+
+    # Verify fields survive a GET
+    res = await client.get(f"/api/v1/incidents/{inc_id}", headers=auth_headers)
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert data["notes"] == html_notes
+    assert data["lessons_learned"] == html_lessons
+    assert data["actions_todo"] == html_actions
