@@ -3,6 +3,7 @@ Incident service: CRUD, ref generation (INC-YYYY-NNNN), stats.
 """
 from datetime import UTC, datetime
 
+import bleach
 from fastapi import HTTPException, status
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,20 @@ from app.models.task import Task
 from app.models.template import IncidentTemplate
 from app.models.timeline import TimelineEntry
 from app.schemas.incident import IncidentCreate, IncidentStats, IncidentUpdate
+
+_RICH_TEXT_TAGS = [
+    "p", "br", "strong", "em", "u", "s", "b", "i",
+    "h1", "h2", "h3", "ul", "ol", "li", "blockquote", "label",
+]
+_RICH_TEXT_ATTRS = {
+    "ul": ["data-type"],
+    "li": ["data-checked"],
+}
+_RICH_TEXT_FIELDS = {"executive_summary", "notes", "lessons_learned", "actions_todo"}
+
+
+def _sanitize_html(value: str) -> str:
+    return bleach.clean(value, tags=_RICH_TEXT_TAGS, attributes=_RICH_TEXT_ATTRS, strip=True)
 
 
 async def generate_ref(db: AsyncSession, org_id: str) -> str:
@@ -134,6 +149,8 @@ async def update_incident(
     for key, value in update_data.items():
         if key == "metadata":
             incident.metadata_ = value
+        elif key in _RICH_TEXT_FIELDS and isinstance(value, str):
+            setattr(incident, key, _sanitize_html(value))
         else:
             setattr(incident, key, value)
 
