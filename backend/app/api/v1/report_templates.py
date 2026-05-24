@@ -108,10 +108,11 @@ async def preview_report_template(
 ):
     """Render the template as HTML using a real incident's data."""
     from app.models.user import User
-    from app.services.report_renderer import ReportRenderer, build_report_payload
+    from app.services.report_renderer import build_report_payload
+    from app.services.report_renderer.fixed_report import render_fixed_report_html
     from sqlalchemy import select
 
-    template = await template_service.get_report_template(db, template_id, str(current_user.org_id))
+    await template_service.get_report_template(db, template_id, str(current_user.org_id))
 
     result = await db.execute(select(User).where(User.id == current_user.id))
     analyst = result.scalar_one()
@@ -122,6 +123,5 @@ async def preview_report_template(
         db=db,
     )
 
-    renderer = ReportRenderer()
-    html = renderer.render_to_html(template.schema_json, payload)
+    html = render_fixed_report_html(payload)
     return HTMLResponse(content=html)
