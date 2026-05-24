@@ -15,12 +15,11 @@ class Report(Base):
     incident_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("incidents.id", ondelete="CASCADE"), nullable=False
     )
-    report_template_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("report_templates.id"), nullable=True
+    pdf_template_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("pdf_templates.id", ondelete="SET NULL"), nullable=True
     )
     report_type: Mapped[str] = mapped_column(String(30), nullable=False)
     destination: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    format: Mapped[str] = mapped_column(String(20), nullable=False)
     classification: Mapped[str] = mapped_column(String(30), default="confidential")
     generated_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True

@@ -7,9 +7,7 @@ from pydantic import BaseModel
 # ─── Report Schemas ──────────────────────────────────────────────────────────
 
 class ReportGenerateRequest(BaseModel):
-    report_template_id: str | None = None   # block-based template (v2.0); optional when using docx_template_id
-    docx_template_id: str | None = None     # custom DOCX template (v1.0 flow)
-    format: str = "docx"                    # markdown | html | pdf | docx
+    pdf_template_id: str | None = None
     classification: str = "confidential"
     include_ai: bool = False
 
@@ -17,14 +15,13 @@ class ReportGenerateRequest(BaseModel):
 class ReportOut(BaseModel):
     id: UUID
     incident_id: UUID
-    report_template_id: UUID | None
+    pdf_template_id: UUID | None
     report_type: str
     destination: str | None
-    format: str
     classification: str
     generated_by: UUID | None
     is_ai_assisted: bool
-    status: str                       # pending | generating | ready | failed
+    status: str
     error_message: str | None
     storage_path: str | None
     generated_at: datetime | None

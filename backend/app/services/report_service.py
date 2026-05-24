@@ -1,19 +1,13 @@
 """
-Report service — full Phase 3 implementation.
-
-Handles report record management; actual generation runs in the Celery worker.
+Report service — PDF-only pipeline.
 """
 from __future__ import annotations
-
-import uuid
-from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.report import Report
-from app.models.template import ReportTemplate
 from app.schemas.report import ReportGenerateRequest
 
 
@@ -25,73 +19,28 @@ async def enqueue_report(
     org_id: str,
 ) -> Report:
     """Create a pending Report record and enqueue the Celery task."""
-    from app.core.feature_flags import check_feature
     from app.workers.tasks import generate_report
 
-    # Validate format gating (PDF is always premium; DOCX is free when using custom templates)
-    if request.format == "pdf" and not check_feature("report_pdf_export"):
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="PDF export requires a premium license",
-        )
-    if request.include_ai and not check_feature("ai_summaries"):
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="AI summaries require a premium license",
-        )
+    if request.include_ai:
+        from app.core.feature_flags import check_feature
+        if not check_feature("ai_summaries"):
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="AI summaries require a premium license",
+            )
 
-    # ── DOCX template path (v1.0 simplified flow) ────────────────────────────
-    if request.docx_template_id or (request.format == "docx" and not request.report_template_id):
-        report_name = "DOCX Report"
-        report_dest = "custom"
-        template_id = None
-
-        if request.docx_template_id:
-            # Verify the docx template exists for this org
-            from app.services.docx_template_service import get_template
-            docx_t = await get_template(request.docx_template_id, org_id, db)
-            report_name = docx_t.name
-
-        report = Report(
-            incident_id=incident_id,
-            report_template_id=None,
-            report_type=report_name,
-            destination=report_dest,
-            format="docx",
-            classification=request.classification,
-            generated_by=generated_by,
-            is_ai_assisted=False,
-            status="pending",
-        )
-        db.add(report)
-        await db.commit()
-        await db.refresh(report)
-        generate_report.delay(str(report.id), False, request.docx_template_id)
-        return report
-
-    # ── Block-based template path (v2.0 / existing flow) ─────────────────────
-    if not request.report_template_id:
-        raise HTTPException(status_code=400, detail="report_template_id is required for non-DOCX formats")
-
-    if request.format == "docx" and not check_feature("report_docx_export"):
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="DOCX export via block templates requires a premium license",
-        )
-
-    result = await db.execute(
-        select(ReportTemplate).where(ReportTemplate.id == request.report_template_id)
-    )
-    template = result.scalar_one_or_none()
-    if not template:
-        raise HTTPException(status_code=404, detail="Report template not found")
+    if request.pdf_template_id:
+        from app.services.pdf_template_service import get_template
+        tmpl = await get_template(request.pdf_template_id, org_id, db)
+        report_name = tmpl.name
+    else:
+        report_name = "Incident Report"
 
     report = Report(
         incident_id=incident_id,
-        report_template_id=request.report_template_id,
-        report_type=template.name,
-        destination=template.destination,
-        format=request.format,
+        pdf_template_id=request.pdf_template_id,
+        report_type=report_name,
+        destination=None,
         classification=request.classification,
         generated_by=generated_by,
         is_ai_assisted=request.include_ai,
@@ -100,7 +49,6 @@ async def enqueue_report(
     db.add(report)
     await db.commit()
     await db.refresh(report)
-
     generate_report.delay(str(report.id), request.include_ai)
     return report
 
@@ -129,6 +77,6 @@ async def delete_report(db: AsyncSession, report: Report) -> None:
             backend = get_storage_backend()
             await backend.delete(report.storage_path)
         except Exception:
-            pass  # Best-effort file deletion
+            pass
     await db.delete(report)
     await db.commit()
