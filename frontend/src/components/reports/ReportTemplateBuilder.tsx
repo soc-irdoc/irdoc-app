@@ -25,9 +25,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import BlockConfigPanel from './BlockConfigPanel'
-import PremiumGate from '@/components/common/PremiumGate'
 import { ReportBlock, BlockType, BLOCK_LIBRARY } from '@/types/report'
-import { useFeatureFlags } from '@/hooks/useFeatureFlags'
 
 interface Props {
   blocks: ReportBlock[]
@@ -110,9 +108,6 @@ function SortableBlockCard({
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
               {libEntry?.label ?? block.type}
-              {block.premium && (
-                <span className="chip chip-purple" style={{ marginLeft: '6px', fontSize: '10px' }}>PREMIUM</span>
-              )}
             </div>
             {(block.label || block.filter || block.field) && (
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -155,20 +150,14 @@ function BlockLibraryItem({
   icon,
   label,
   description,
-  premium,
   onAdd,
 }: {
   type: BlockType
   icon: string
   label: string
   description: string
-  premium?: boolean
   onAdd: () => void
 }) {
-  const { hasFeature } = useFeatureFlags()
-  const aiBlocks: BlockType[] = ['text_block']
-  const isAiBlock = type === 'text_block' // only when field = ai.*
-  // Premium gate wraps if it's explicitly premium
   return (
     <div
       style={{
@@ -189,9 +178,6 @@ function BlockLibraryItem({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
           {label}
-          {premium && (
-            <span className="chip chip-purple" style={{ marginLeft: '5px', fontSize: '10px' }}>PREMIUM</span>
-          )}
         </div>
       </div>
       <button

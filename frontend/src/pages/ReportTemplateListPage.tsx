@@ -11,9 +11,9 @@ import {
   useDeleteReportTemplate,
   useCreateReportTemplate,
 } from '@/hooks/useReportTemplates'
-import PremiumGate from '@/components/common/PremiumGate'
 import { DESTINATION_OPTIONS } from '@/types/report'
 import { Modal } from '@/components/common/Modal'
+import { AppShell } from '@/components/layout/AppShell'
 
 const TEMPLATE_ICONS: Record<string, string> = {
   management: '📊',
@@ -49,7 +49,8 @@ export default function ReportTemplateListPage() {
   const orgTemplates = templates.filter((t) => !t.is_system)
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: '920px', margin: '0 auto' }}>
+    <AppShell>
+    <div style={{ padding: '32px 36px', maxWidth: '920px', margin: '0 auto', overflowY: 'auto', flex: 1 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <div>
           <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
@@ -60,14 +61,9 @@ export default function ReportTemplateListPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate(-1)}>
-            ← Back
+          <button className="btn btn-accent btn-sm" onClick={() => setShowNew(true)}>
+            + New Template
           </button>
-          <PremiumGate featureKey="report_template_builder">
-            <button className="btn btn-accent btn-sm" onClick={() => setShowNew(true)}>
-              + New Template
-            </button>
-          </PremiumGate>
         </div>
       </div>
 
@@ -104,15 +100,13 @@ export default function ReportTemplateListPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <PremiumGate featureKey="report_template_builder">
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => cloneTemplate.mutate(t.id)}
-                      disabled={cloneTemplate.isPending}
-                    >
-                      Clone
-                    </button>
-                  </PremiumGate>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => cloneTemplate.mutate(t.id)}
+                    disabled={cloneTemplate.isPending}
+                  >
+                    Clone
+                  </button>
                 </div>
               </div>
             ))}
@@ -226,5 +220,6 @@ export default function ReportTemplateListPage() {
         </Modal>
       )}
     </div>
+    </AppShell>
   )
 }

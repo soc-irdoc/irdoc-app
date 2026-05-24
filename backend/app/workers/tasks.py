@@ -16,20 +16,21 @@ logger = logging.getLogger(__name__)
 def run_async(coro):
     """Run an async coroutine from a sync Celery task.
 
-    Each Celery task runs in its own event loop.  asyncpg connections in the
-    shared pool are bound to the loop they were created on, so we must dispose
-    the pool *before* creating a new loop — otherwise the next task in the same
-    worker process gets a "Future attached to a different loop" error.
+    asyncio.run() creates a fresh event loop, runs the coroutine, and waits for
+    all pending callbacks before closing the loop.  The engine pool is disposed
+    *inside* the coroutine (while the loop is still active) so asyncpg can
+    properly close connections — calling dispose() outside the loop left stale
+    connections attached to the old loop, causing the next task to fail with
+    "Future attached to a different loop".
     """
-    from app.core.database import engine
-    engine.dispose()  # close stale connections from the previous loop (sync call in SQLAlchemy 2)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
-        asyncio.set_event_loop(None)
+    async def _with_pool_cleanup():
+        try:
+            return await coro
+        finally:
+            from app.core.database import engine
+            engine.dispose()
+
+    return asyncio.run(_with_pool_cleanup())
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=30)
@@ -108,8 +109,9 @@ def generate_report(self, report_id: str, include_ai: bool = False):
         from app.core.database import AsyncSessionLocal
         from app.models.report import Report
         from app.models.pdf_template import PdfTemplate
+        from app.models.template import ReportTemplate
         from app.models.user import User
-        from app.services.report_renderer import render_incident_pdf, build_report_payload
+        from app.services.report_renderer import render_incident_pdf, render_incident_pdf_from_schema, build_report_payload
         from app.services.storage.resolver import get_storage_backend
         from sqlalchemy import select
 
@@ -147,18 +149,39 @@ def generate_report(self, report_id: str, include_ai: bool = False):
                         sys_p, usr_p = build_executive_summary_prompt(payload)
                         payload.ai_executive_summary = await provider.complete(sys_p, usr_p, 400)
 
-                pdf_template = None
-                if report.pdf_template_id:
-                    pt_result = await db.execute(
-                        select(PdfTemplate).where(PdfTemplate.id == report.pdf_template_id)
+                if report.report_template_id:
+                    rt_result = await db.execute(
+                        select(ReportTemplate).where(ReportTemplate.id == report.report_template_id)
                     )
-                    pdf_template = pt_result.scalar_one_or_none()
+                    report_template = rt_result.scalar_one_or_none()
+                    if not report_template:
+                        raise RuntimeError(f"ReportTemplate {report.report_template_id} not found")
 
-                file_bytes = render_incident_pdf(
-                    payload=payload,
-                    pdf_template=pdf_template,
-                    classification=report.classification.upper(),
-                )
+                    schema_json = report_template.schema_json or []
+                    brand = {
+                        "logo_data_uri": report_template.logo_data_uri,
+                        "primary_colour": report_template.primary_colour or "#F97316",
+                        "company_name": report_template.company_name,
+                    }
+                    file_bytes = render_incident_pdf_from_schema(
+                        payload=payload,
+                        schema_json=schema_json,
+                        brand=brand,
+                        classification=report.classification.upper(),
+                    )
+                else:
+                    pdf_template = None
+                    if report.pdf_template_id:
+                        pt_result = await db.execute(
+                            select(PdfTemplate).where(PdfTemplate.id == report.pdf_template_id)
+                        )
+                        pdf_template = pt_result.scalar_one_or_none()
+
+                    file_bytes = render_incident_pdf(
+                        payload=payload,
+                        pdf_template=pdf_template,
+                        classification=report.classification.upper(),
+                    )
 
                 backend = get_storage_backend()
                 storage_path = f"reports/{report.incident_id}/{report_id}.pdf"

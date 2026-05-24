@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAuditLog, useExportAuditLog } from '@/hooks/useAdmin'
-import { PremiumGate } from '@/components/common/PremiumGate'
 
 const HIGH_RISK_ACTIONS = [
   'host.contain',
@@ -267,9 +266,7 @@ export function AuditLogPage() {
         📜 Audit Log
       </h2>
 
-      <div style={{ position: 'relative' }}>
-        <PremiumGate featureKey="audit_log">{inner}</PremiumGate>
-      </div>
+      <div>{inner}</div>
     </div>
   )
 }

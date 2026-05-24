@@ -128,6 +128,10 @@ function RichTextSection({
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
   const savedTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  // Incremented on every keystroke. The in-flight save only transitions to
+  // 'saved' when the generation it was started with is still current, preventing
+  // a slow save from clearing isDirty after the user has typed more.
+  const saveGenRef = useRef(0)
 
   useEffect(() => {
     return () => {
@@ -141,17 +145,20 @@ function RichTextSection({
   function handleChange(html: string) {
     setSaveState('dirty')
     clearTimeout(timerRef.current)
+    const gen = ++saveGenRef.current
     timerRef.current = setTimeout(async () => {
       setSaveState('saving')
       try {
         await updateIncident.mutateAsync({ [fieldKey]: html })
-        setSaveState('saved')
-        savedTimerRef.current = setTimeout(() => setSaveState('idle'), 3000)
+        if (saveGenRef.current === gen) {
+          setSaveState('saved')
+          savedTimerRef.current = setTimeout(() => setSaveState('idle'), 3000)
+        }
       } catch {
         addToast(`Failed to save ${title}`, 'error')
-        setSaveState('error')
+        if (saveGenRef.current === gen) setSaveState('error')
       }
-    }, 1500)
+    }, 2500)
   }
 
   return (

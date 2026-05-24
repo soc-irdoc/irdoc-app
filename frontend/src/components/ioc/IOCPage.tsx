@@ -56,7 +56,7 @@ function EnrichmentPanel({
       await apiClient.post(`/iocs/${iocId}/ai/narrative`)
       addToast('AI narrative queued', 'success')
     } catch {
-      addToast('AI narratives require premium plan', 'error')
+      addToast('AI narrative generation failed', 'error')
     }
   }
 

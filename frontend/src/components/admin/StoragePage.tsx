@@ -6,7 +6,6 @@ import {
   useSwitchStorageBackend,
 } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
-import { PremiumGate } from '@/components/common/PremiumGate'
 
 type Backend = 'local' | 's3' | 'azure_blob' | 'gcs'
 
@@ -344,11 +343,7 @@ export function StoragePage() {
             onSelect={() => setSelected('local')}
           />
 
-          <div style={{ position: 'relative' }}>
-            <PremiumGate featureKey="cloud_storage">
-              {cloudBackendContent}
-            </PremiumGate>
-          </div>
+          {cloudBackendContent}
         </SectionCard>
 
         {/* Test + Save actions */}

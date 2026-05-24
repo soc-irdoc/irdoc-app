@@ -64,6 +64,34 @@ def _build_jinja_env() -> jinja2.Environment:
 _jinja_env = _build_jinja_env()
 
 
+def render_incident_pdf_from_schema(
+    payload: "ReportPayload",
+    schema_json: list[dict],
+    brand: dict,
+    classification: str = "CONFIDENTIAL",
+) -> bytes:
+    """Render a schema-driven incident report as PDF bytes."""
+    from app.services.report_renderer.fixed_report import render_from_schema
+    from weasyprint import HTML as WeasyHTML
+
+    html = render_from_schema(
+        payload=payload,
+        schema_json=schema_json,
+        brand=brand,
+        classification=classification,
+        env=_jinja_env,
+    )
+
+    try:
+        return WeasyHTML(
+            string=html,
+            base_url=str(_TEMPLATE_DIR / "reports"),
+        ).write_pdf()
+    except Exception as exc:
+        logger.error("WeasyPrint schema PDF render failed: %s", exc)
+        raise
+
+
 def render_incident_pdf(
     payload: "ReportPayload",
     pdf_template: "PdfTemplate | None" = None,

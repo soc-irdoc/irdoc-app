@@ -140,7 +140,7 @@ export default function SyncPolicySection({ incidentId }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
               <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
-                Destination <span className="chip chip-blue" style={{ fontSize: '10px', marginLeft: '6px' }}>PREMIUM</span>
+                Destination
               </label>
               <div className="select-wrap">
                 <select

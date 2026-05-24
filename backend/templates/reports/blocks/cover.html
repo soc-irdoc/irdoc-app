@@ -1,4 +1,12 @@
 <div class="block cover-block">
+  {% if brand and brand.logo_data_uri %}
+  <div class="cover-logo" style="margin-bottom:20px;">
+    <img src="{{ brand.logo_data_uri }}" alt="Company logo" style="max-height:64px;max-width:200px;">
+  </div>
+  {% endif %}
+  {% if brand and brand.company_name %}
+  <div style="font-size:13pt;font-weight:600;color:#475569;margin-bottom:16px;">{{ brand.company_name }}</div>
+  {% endif %}
   <div class="incident-ref">{{ p.incident.incident_ref }}</div>
   <h1>{{ p.incident.title }}</h1>
   <div class="cover-meta">

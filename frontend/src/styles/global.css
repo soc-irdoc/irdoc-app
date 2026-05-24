@@ -473,8 +473,14 @@ select.form-input {
   margin-top: 4px;
 }
 
-.tiptap-body .ProseMirror ul,
+.tiptap-body .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-bottom: 6px;
+}
+
 .tiptap-body .ProseMirror ol {
+  list-style-type: decimal;
   padding-left: 20px;
   margin-bottom: 6px;
 }

@@ -8,7 +8,7 @@ export function useDocxTemplates() {
   return useQuery<DocxTemplate[]>({
     queryKey: [QK],
     queryFn: async () => {
-      const res = await apiClient.get('/docx-templates')
+      const res = await apiClient.get('/pdf-templates')
       return res.data.data ?? []
     },
     staleTime: 30_000,
@@ -18,7 +18,7 @@ export function useDocxTemplates() {
 export function useDownloadBaseTemplate() {
   return useMutation({
     mutationFn: async () => {
-      const res = await apiClient.get('/docx-templates/base', { responseType: 'blob' })
+      const res = await apiClient.get('/pdf-templates/base', { responseType: 'blob' })
       const url = URL.createObjectURL(new Blob([res.data]))
       const a = document.createElement('a')
       a.href = url
@@ -36,7 +36,7 @@ export function useUploadDocxTemplate() {
       const fd = new FormData()
       fd.append('name', name)
       fd.append('file', file)
-      const res = await apiClient.post('/docx-templates', fd, {
+      const res = await apiClient.post('/pdf-templates', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       return res.data.data as DocxTemplate
@@ -49,7 +49,7 @@ export function useSetDefaultDocxTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (templateId: string) => {
-      await apiClient.post(`/docx-templates/${templateId}/set-default`)
+      await apiClient.post(`/pdf-templates/${templateId}/set-default`)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: [QK] }),
   })
@@ -59,7 +59,7 @@ export function useRenameDocxTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      await apiClient.patch(`/docx-templates/${id}`, { name })
+      await apiClient.patch(`/pdf-templates/${id}`, { name })
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: [QK] }),
   })
@@ -69,7 +69,7 @@ export function useDeleteDocxTemplate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (templateId: string) => {
-      await apiClient.delete(`/docx-templates/${templateId}`)
+      await apiClient.delete(`/pdf-templates/${templateId}`)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: [QK] }),
   })

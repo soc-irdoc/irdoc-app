@@ -34,12 +34,24 @@ async def enqueue_report(
                 detail="AI summaries require a premium license",
             )
 
-    if request.pdf_template_id:
+    if request.report_template_id:
+        from app.models.template import ReportTemplate
+        rt_result = await db.execute(
+            select(ReportTemplate).where(
+                ReportTemplate.id == request.report_template_id,
+            ).where(
+                (ReportTemplate.org_id == org_id) | (ReportTemplate.org_id.is_(None))
+            )
+        )
+        if not rt_result.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Report template not found")
+    elif request.pdf_template_id:
         await get_template(request.pdf_template_id, org_id, db)
 
     report = Report(
         incident_id=incident_id,
-        pdf_template_id=request.pdf_template_id,
+        report_template_id=request.report_template_id,
+        pdf_template_id=request.pdf_template_id if not request.report_template_id else None,
         report_type="pdf",          # always "pdf" — the format discriminator
         destination=None,
         classification=request.classification,

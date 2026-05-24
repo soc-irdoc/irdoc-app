@@ -7,6 +7,7 @@ from pydantic import BaseModel
 # ─── Report Schemas ──────────────────────────────────────────────────────────
 
 class ReportGenerateRequest(BaseModel):
+    report_template_id: str | None = None
     pdf_template_id: str | None = None
     classification: str = "confidential"
     include_ai: bool = False
@@ -15,8 +16,10 @@ class ReportGenerateRequest(BaseModel):
 class ReportOut(BaseModel):
     id: UUID
     incident_id: UUID
+    report_template_id: UUID | None
     pdf_template_id: UUID | None
     report_type: str
+    format: str = "pdf"
     destination: str | None
     classification: str
     generated_by: UUID | None

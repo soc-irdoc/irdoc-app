@@ -7,6 +7,7 @@ export interface Report {
   id: string
   incident_id: string
   report_template_id: string | null
+  pdf_template_id: string | null
   report_type: string
   destination: string | null
   format: ReportFormat
@@ -22,7 +23,7 @@ export interface Report {
 
 export interface ReportGenerateRequest {
   report_template_id?: string
-  docx_template_id?: string
+  pdf_template_id?: string
   format: ReportFormat
   classification: string
   include_ai: boolean
@@ -57,6 +58,7 @@ export type BlockType =
   | 'page_break'
   | 'header'
   | 'tag_list'
+  | 'ai_strategy'
 
 export interface ReportBlock {
   id: string          // client-only; not persisted
@@ -84,6 +86,9 @@ export interface ReportTemplate {
   is_system: boolean
   is_default: boolean
   schema_json: Omit<ReportBlock, 'id'>[]
+  logo_data_uri: string | null
+  primary_colour: string | null
+  company_name: string | null
   created_at: string
   updated_at: string
 }
@@ -182,6 +187,13 @@ export const BLOCK_LIBRARY: {
     label: 'Page Break',
     icon: '↵',
     description: 'Forces page break in PDF',
+    defaultConfig: {},
+  },
+  {
+    type: 'ai_strategy',
+    label: 'AI Strategy Summary',
+    icon: '🤖',
+    description: 'AI-generated strategic incident summary (evidence-grounded, coming soon)',
     defaultConfig: {},
   },
 ]

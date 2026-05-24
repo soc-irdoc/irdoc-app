@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '@/components/common/Modal'
-import PremiumGate from '@/components/common/PremiumGate'
 import { useGenerateReport } from '@/hooks/useReports'
-import { useFeatureFlags } from '@/hooks/useFeatureFlags'
 import {
   ReportTemplate,
   ReportFormat,
@@ -16,30 +14,14 @@ interface Props {
   onClose: () => void
 }
 
-const FORMATS: { value: ReportFormat; premium: boolean }[] = [
-  { value: 'markdown', premium: false },
-  { value: 'html', premium: false },
-  { value: 'pdf', premium: true },
-  { value: 'docx', premium: true },
-]
+const FORMATS: ReportFormat[] = ['markdown', 'html', 'pdf', 'docx']
 
 export default function GenerateReportModal({ incidentId, template, onClose }: Props) {
-  const { hasFeature } = useFeatureFlags()
   const [format, setFormat] = useState<ReportFormat>('markdown')
   const [classification, setClassification] = useState('confidential')
   const [includeAi, setIncludeAi] = useState(false)
 
   const generate = useGenerateReport(incidentId)
-
-  const hasPdfExport = hasFeature('report_pdf_export')
-  const hasDocxExport = hasFeature('report_docx_export')
-  const hasAi = hasFeature('ai_summaries')
-
-  const formatEnabled = (f: ReportFormat) => {
-    if (f === 'pdf') return hasPdfExport
-    if (f === 'docx') return hasDocxExport
-    return true
-  }
 
   const handleGenerate = async () => {
     await generate.mutateAsync({
@@ -60,31 +42,15 @@ export default function GenerateReportModal({ incidentId, template, onClose }: P
             Format
           </label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {FORMATS.map(({ value: f, premium }) => {
-              const enabled = formatEnabled(f)
-              const selected = format === f
-              return (
-                <div key={f} style={{ position: 'relative' }}>
-                  {premium && !enabled ? (
-                    <PremiumGate featureKey={f === 'pdf' ? 'report_pdf_export' : 'report_docx_export'}>
-                      <button
-                        className={`btn ${selected ? 'btn-accent' : 'btn-ghost'} btn-sm`}
-                        disabled
-                      >
-                        {FORMAT_LABELS[f]}
-                      </button>
-                    </PremiumGate>
-                  ) : (
-                    <button
-                      className={`btn ${selected ? 'btn-accent' : 'btn-ghost'} btn-sm`}
-                      onClick={() => setFormat(f)}
-                    >
-                      {FORMAT_LABELS[f]}
-                    </button>
-                  )}
-                </div>
-              )
-            })}
+            {FORMATS.map((f) => (
+              <button
+                key={f}
+                className={`btn ${format === f ? 'btn-accent' : 'btn-ghost'} btn-sm`}
+                onClick={() => setFormat(f)}
+              >
+                {FORMAT_LABELS[f]}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -107,26 +73,21 @@ export default function GenerateReportModal({ incidentId, template, onClose }: P
         </div>
 
         {/* AI toggle */}
-        <div>
-          <PremiumGate featureKey="ai_summaries">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '13px' }}>Include AI Narrative</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  AI-generated executive summary &amp; recommendations
-                </div>
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: hasAi ? 'pointer' : 'not-allowed' }}>
-                <input
-                  type="checkbox"
-                  checked={includeAi}
-                  onChange={(e) => setIncludeAi(e.target.checked)}
-                  disabled={!hasAi}
-                  style={{ width: '16px', height: '16px' }}
-                />
-              </label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '13px' }}>Include AI Narrative</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              AI-generated executive summary &amp; recommendations
             </div>
-          </PremiumGate>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeAi}
+              onChange={(e) => setIncludeAi(e.target.checked)}
+              style={{ width: '16px', height: '16px' }}
+            />
+          </label>
         </div>
 
         {/* Actions */}

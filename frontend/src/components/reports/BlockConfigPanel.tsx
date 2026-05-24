@@ -55,8 +55,8 @@ const SECTION_FIELD_OPTIONS = [
   { value: 'incident.metadata.affected_data', label: 'Affected Data / Systems' },
   { value: 'incident.metadata.regulatory_notes', label: 'Regulatory Notes' },
   { value: 'incident.metadata.preventive_actions', label: 'Preventive Actions' },
-  { value: 'ai.executive_summary', label: 'AI Executive Summary (premium)' },
-  { value: 'ai.recommendations', label: 'AI Recommendations (premium)' },
+  { value: 'ai.executive_summary', label: 'AI Executive Summary' },
+  { value: 'ai.recommendations', label: 'AI Recommendations' },
 ]
 
 const inputStyle: React.CSSProperties = {

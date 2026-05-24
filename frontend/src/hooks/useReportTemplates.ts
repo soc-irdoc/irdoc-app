@@ -3,6 +3,31 @@ import apiClient from '@/lib/apiClient'
 import { ReportTemplate } from '@/types/report'
 import { useUIStore } from '@/stores/uiStore'
 
+export function useUploadTemplateLogo(templateId: string) {
+  const qc = useQueryClient()
+  const addToast = useUIStore((s) => s.addToast)
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await apiClient.post(`/report-templates/${templateId}/logo`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return data.data as ReportTemplate
+    },
+    onSuccess: (t) => {
+      qc.invalidateQueries({ queryKey: ['report-templates'] })
+      qc.setQueryData(['report-template', templateId], t)
+      addToast('Logo uploaded', 'success')
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.detail || 'Failed to upload logo'
+      addToast(msg, 'error')
+    },
+  })
+}
+
 export function useReportTemplates() {
   return useQuery<ReportTemplate[]>({
     queryKey: ['report-templates'],
@@ -50,7 +75,7 @@ export function useUpdateReportTemplate(templateId: string) {
   const addToast = useUIStore((s) => s.addToast)
 
   return useMutation({
-    mutationFn: async (payload: { name?: string; destination?: string; description?: string; schema_json?: object[] }) => {
+    mutationFn: async (payload: { name?: string; destination?: string; description?: string; schema_json?: object[]; primary_colour?: string; company_name?: string }) => {
       const { data } = await apiClient.put(`/report-templates/${templateId}`, payload)
       return data.data as ReportTemplate
     },

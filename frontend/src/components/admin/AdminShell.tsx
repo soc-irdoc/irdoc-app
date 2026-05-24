@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useFeatureFlags } from '@/hooks/useFeatureFlags'
 
 type AdminTab = 'team' | 'org' | 'storage' | 'templates' | 'reports' | 'integrations' | 'audit' | 'sso'
 
@@ -14,7 +13,6 @@ interface SidebarItem {
   id: AdminTab
   icon: string
   label: string
-  premium?: string
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -24,13 +22,12 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'templates', icon: '📋', label: 'Incident Templates' },
   { id: 'reports', icon: '📄', label: 'Report Templates' },
   { id: 'integrations', icon: '🔗', label: 'Integrations' },
-  { id: 'audit', icon: '📜', label: 'Audit Log', premium: 'audit_log' },
-  { id: 'sso', icon: '🔐', label: 'SSO', premium: 'sso_saml' },
+  { id: 'audit', icon: '📜', label: 'Audit Log' },
+  { id: 'sso', icon: '🔐', label: 'SSO' },
 ]
 
 export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps) {
   const navigate = useNavigate()
-  const { hasFeature } = useFeatureFlags()
 
   return (
     <div
@@ -99,8 +96,6 @@ export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps
         <nav style={{ flex: 1, padding: '0 8px' }}>
           {SIDEBAR_ITEMS.map((item) => {
             const isActive = activeTab === item.id
-            const isPremiumLocked = item.premium ? !hasFeature(item.premium) : false
-
             return (
               <button
                 key={item.id}
@@ -127,14 +122,6 @@ export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps
               >
                 <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
                 <span style={{ flex: 1 }}>{item.label}</span>
-                {isPremiumLocked && (
-                  <span
-                    style={{ fontSize: 11, color: 'var(--text-muted)' }}
-                    title="Premium feature"
-                  >
-                    🔒
-                  </span>
-                )}
               </button>
             )
           })}

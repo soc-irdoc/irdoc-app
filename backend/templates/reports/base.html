@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ incident.title }} — {{ incident.incident_ref }}</title>
 <style>
+  :root {
+    --brand-primary: {{ (brand.primary_colour if brand and brand.primary_colour) or '#F97316' }};
+  }
   /* ── Reset + Base ──────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -22,7 +25,7 @@
   /* ── Classification banner ─────────────────────────────── */
   .classification-banner {
     background: #1a1a2e;
-    color: #f97316;
+    color: var(--brand-primary);
     text-align: center;
     font-weight: 700;
     font-size: 10pt;
@@ -36,7 +39,7 @@
 
   /* ── Typography ────────────────────────────────────────── */
   h1 { font-size: 22pt; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-  h2 { font-size: 14pt; font-weight: 700; color: #1e293b; margin: 28px 0 10px; border-bottom: 2px solid #f97316; padding-bottom: 4px; }
+  h2 { font-size: 14pt; font-weight: 700; color: #1e293b; margin: 28px 0 10px; border-bottom: 2px solid var(--brand-primary); padding-bottom: 4px; }
   h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 16px 0 6px; }
   p { margin-bottom: 10px; }
 
@@ -80,7 +83,7 @@
   /* ── Timeline ────────────────────────────────────────────── */
   .timeline-entry { padding: 10px 0 10px 16px; border-left: 3px solid #e2e8f0; margin-bottom: 8px; position: relative; }
   .timeline-entry::before { content: ''; position: absolute; left: -5px; top: 14px; width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; }
-  .timeline-entry.type-detection::before { background: #f97316; }
+  .timeline-entry.type-detection::before { background: var(--brand-primary); }
   .timeline-entry.type-containment::before { background: #22c55e; }
   .timeline-entry.type-analysis::before { background: #3b82f6; }
   .timeline-entry.type-evidence::before { background: #8b5cf6; }
@@ -116,7 +119,7 @@
   .report-divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
 
   /* ── Text block ───────────────────────────────────────────── */
-  .text-block-content { background: #f8fafc; border-left: 4px solid #f97316; padding: 14px 18px; border-radius: 0 6px 6px 0; font-size: 10.5pt; line-height: 1.65; }
+  .text-block-content { background: #f8fafc; border-left: 4px solid var(--brand-primary); padding: 14px 18px; border-radius: 0 6px 6px 0; font-size: 10.5pt; line-height: 1.65; }
 
   /* ── Evidence register ────────────────────────────────────── */
   .sha-mono { font-family: 'Courier New', monospace; font-size: 8.5pt; color: #475569; }
@@ -143,7 +146,7 @@
   {{ block_html | safe }}
   {% endfor %}
   <div class="report-footer">
-    <span>{{ classification | upper }} — {{ incident.incident_ref }}</span>
+    <span>{% if brand and brand.company_name %}{{ brand.company_name }} · {% endif %}{{ classification | upper }} — {{ incident.incident_ref }}</span>
     <span>Generated {{ generated_at | format_dt }} by {{ analyst.full_name }}</span>
   </div>
 </div>

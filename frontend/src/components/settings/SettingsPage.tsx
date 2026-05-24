@@ -293,8 +293,7 @@ export function SettingsPage() {
           </p>
           <p style={{ marginTop: 8 }}>
             Licensed under{' '}
-            <span style={{ color: 'var(--accent)' }}>AGPL-3.0</span> (core features).
-            Premium features require a commercial license.
+            <span style={{ color: 'var(--accent)' }}>AGPL-3.0</span>.
           </p>
         </div>
       </SettingsSection>

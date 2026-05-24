@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSSOConfig, useUpdateSSOConfig } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
-import { PremiumGate } from '@/components/common/PremiumGate'
 
 const IDP_OPTIONS = [
   { value: 'azure_ad', label: 'Azure AD / Entra ID' },
@@ -431,11 +430,7 @@ export function SSOPage() {
         🔐 Single Sign-On (SAML 2.0)
       </h2>
 
-      <div style={{ position: 'relative' }}>
-        <PremiumGate featureKey="sso_saml">
-          <SSOForm />
-        </PremiumGate>
-      </div>
+      <SSOForm />
     </div>
   )
 }

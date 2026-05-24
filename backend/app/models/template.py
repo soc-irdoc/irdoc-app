@@ -36,6 +36,9 @@ class ReportTemplate(Base):
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
     schema_json: Mapped[list] = mapped_column(JSONB, default=list)
+    logo_data_uri: Mapped[str | None] = mapped_column(Text, nullable=True)
+    primary_colour: Mapped[str | None] = mapped_column(String(7), nullable=True)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )

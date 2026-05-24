@@ -42,6 +42,8 @@ class ReportTemplateUpdate(BaseModel):
     destination: str | None = None
     description: str | None = None
     schema_json: list | None = None
+    primary_colour: str | None = None
+    company_name: str | None = None
 
 
 class ReportTemplateOut(BaseModel):
@@ -53,6 +55,9 @@ class ReportTemplateOut(BaseModel):
     is_system: bool
     is_default: bool
     schema_json: list
+    logo_data_uri: str | None
+    primary_colour: str | None
+    company_name: str | None
     created_at: datetime
     updated_at: datetime
 

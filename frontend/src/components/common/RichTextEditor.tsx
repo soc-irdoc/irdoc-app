@@ -77,12 +77,18 @@ export function RichTextEditor({
 
   function setHeading(value: string) {
     if (value === 'h1') {
-      editor.chain().focus().toggleHeading({ level: 1 }).run()
+      editor.chain().toggleHeading({ level: 1 }).run()
     } else if (value === 'h2') {
-      editor.chain().focus().toggleHeading({ level: 2 }).run()
+      editor.chain().toggleHeading({ level: 2 }).run()
     } else {
-      editor.chain().focus().setParagraph().run()
+      editor.chain().setParagraph().run()
     }
+  }
+
+  // Prevent the editor from losing focus (and the selection from being cleared)
+  // when the user clicks a toolbar control.
+  function blockBlur(e: React.MouseEvent) {
+    e.preventDefault()
   }
 
   return (
@@ -94,7 +100,8 @@ export function RichTextEditor({
               type="button"
               aria-label="Insert task item"
               className={`tb-btn tb-task-btn${editor.isActive('taskList') ? ' active' : ''}`}
-              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              onMouseDown={blockBlur}
+              onClick={() => editor.chain().toggleTaskList().run()}
               title="Insert task item"
             >
               ☑ Task
@@ -104,6 +111,7 @@ export function RichTextEditor({
               aria-label="Text style"
               className="tb-select"
               value={headingValue}
+              onMouseDown={blockBlur}
               onChange={(e) => setHeading(e.target.value)}
             >
               <option value="normal">Normal</option>
@@ -118,7 +126,8 @@ export function RichTextEditor({
             type="button"
             aria-label="Bold"
             className={`tb-btn${editor.isActive('bold') ? ' active' : ''}`}
-            onClick={() => editor.chain().focus().toggleBold().run()}
+            onMouseDown={blockBlur}
+            onClick={() => editor.chain().toggleBold().run()}
             title="Bold"
           >
             <b>B</b>
@@ -127,7 +136,8 @@ export function RichTextEditor({
             type="button"
             aria-label="Italic"
             className={`tb-btn${editor.isActive('italic') ? ' active' : ''}`}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
+            onMouseDown={blockBlur}
+            onClick={() => editor.chain().toggleItalic().run()}
             title="Italic"
           >
             <em>I</em>
@@ -136,7 +146,8 @@ export function RichTextEditor({
             type="button"
             aria-label="Underline"
             className={`tb-btn${editor.isActive('underline') ? ' active' : ''}`}
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            onMouseDown={blockBlur}
+            onClick={() => editor.chain().toggleUnderline().run()}
             title="Underline"
           >
             <u>U</u>
@@ -145,7 +156,8 @@ export function RichTextEditor({
             type="button"
             aria-label="Strikethrough"
             className={`tb-btn${editor.isActive('strike') ? ' active' : ''}`}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
+            onMouseDown={blockBlur}
+            onClick={() => editor.chain().toggleStrike().run()}
             title="Strikethrough"
           >
             <s>S</s>
@@ -158,7 +170,8 @@ export function RichTextEditor({
                 type="button"
                 aria-label="Bullet list"
                 className={`tb-btn${editor.isActive('bulletList') ? ' active' : ''}`}
-                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                onMouseDown={blockBlur}
+                onClick={() => editor.chain().toggleBulletList().run()}
                 title="Bullet list"
               >
                 ≡
@@ -167,7 +180,8 @@ export function RichTextEditor({
                 type="button"
                 aria-label="Numbered list"
                 className={`tb-btn${editor.isActive('orderedList') ? ' active' : ''}`}
-                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                onMouseDown={blockBlur}
+                onClick={() => editor.chain().toggleOrderedList().run()}
                 title="Numbered list"
               >
                 1≡
@@ -179,7 +193,8 @@ export function RichTextEditor({
                 type="button"
                 aria-label="Indent"
                 className="tb-btn"
-                onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+                onMouseDown={blockBlur}
+                onClick={() => editor.chain().sinkListItem('listItem').run()}
                 title="Indent"
               >
                 →
@@ -188,7 +203,8 @@ export function RichTextEditor({
                 type="button"
                 aria-label="Outdent"
                 className="tb-btn"
-                onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+                onMouseDown={blockBlur}
+                onClick={() => editor.chain().liftListItem('listItem').run()}
                 title="Outdent"
               >
                 ←

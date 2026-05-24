@@ -4,7 +4,6 @@ import { useIntegrations, useSaveIntegrationConfig, useTestIntegration, useToggl
 import { useSSOConfig, useUpdateSSOConfig } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
-import PremiumGate from '@/components/common/PremiumGate'
 import { Modal } from '@/components/common/Modal'
 import { CATEGORY_LABELS } from '@/types/integration'
 import type { Integration } from '@/types/integration'
@@ -656,16 +655,11 @@ export function IntegrationsPage() {
               gap: 16,
             }}
           >
-            {items.map((integration) => {
-              const card = <IntegrationCard key={integration.name} integration={integration} />
-              return integration.is_premium ? (
-                <PremiumGate key={integration.name} featureKey="advanced_integrations">
-                  {card}
-                </PremiumGate>
-              ) : (
-                <div key={integration.name}>{card}</div>
-              )
-            })}
+            {items.map((integration) => (
+              <div key={integration.name}>
+                <IntegrationCard integration={integration} />
+              </div>
+            ))}
           </div>
         </div>
       ))}

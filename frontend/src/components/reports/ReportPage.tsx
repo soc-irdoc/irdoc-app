@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useDocxTemplates, useUploadDocxTemplate } from '@/hooks/useDocxTemplates'
+import { useReportTemplates } from '@/hooks/useReportTemplates'
 import { useReports, useDeleteReport, useDownloadReport, useGenerateReport } from '@/hooks/useReports'
 import { useUIStore } from '@/stores/uiStore'
 import { Report, FORMAT_LABELS } from '@/types/report'
@@ -22,7 +22,7 @@ export default function ReportPage({ incidentId }: Props) {
   const qc = useQueryClient()
   const addToast = useUIStore((s) => s.addToast)
 
-  const { data: docxTemplates = [], isLoading: loadingTemplates } = useDocxTemplates()
+  const { data: reportTemplates = [], isLoading: loadingTemplates } = useReportTemplates()
   const { data: reports = [], isLoading: loadingReports } = useReports(incidentId)
   const generateReport = useGenerateReport(incidentId)
   const deleteReport = useDeleteReport(incidentId)
@@ -44,8 +44,8 @@ export default function ReportPage({ incidentId }: Props) {
     setGeneratingFor(key)
     try {
       await generateReport.mutateAsync({
-        format: 'docx',
-        docx_template_id: templateId ?? undefined,
+        format: 'pdf',
+        report_template_id: templateId ?? undefined,
         classification: 'confidential',
         include_ai: false,
       })
@@ -58,10 +58,15 @@ export default function ReportPage({ incidentId }: Props) {
   }
 
   const handleDownload = (report: Report) => {
-    const ext: Record<string, string> = { pdf: 'pdf', docx: 'docx', markdown: 'md', html: 'html' }
-    const filename = `${report.report_type.replace(/\s/g, '_')}_${report.id.slice(0, 8)}.${ext[report.format] ?? 'bin'}`
+    const filename = `report_${report.id.slice(0, 8)}.pdf`
     downloadReport.mutate({ reportId: report.id, filename })
   }
+
+  // Sort: default first, then alphabetical
+  const sortedTemplates = [...reportTemplates].sort((a, b) => {
+    if (b.is_default !== a.is_default) return b.is_default ? 1 : -1
+    return a.name.localeCompare(b.name)
+  })
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: '960px' }}>
@@ -71,12 +76,12 @@ export default function ReportPage({ incidentId }: Props) {
           Reports
         </h2>
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-          Generate DOCX incident reports from your uploaded templates.
-          Manage templates in <strong>Admin → Report Templates</strong>.
+          Generate PDF incident reports using your report templates.
+          Build and manage templates in <strong>Admin → Report Templates</strong>.
         </p>
       </div>
 
-      {/* DOCX Templates */}
+      {/* Report Templates */}
       <section style={{ marginBottom: '36px' }}>
         <h3 style={{
           fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary)',
@@ -114,12 +119,12 @@ export default function ReportPage({ incidentId }: Props) {
                 disabled={generatingFor === '__base__'}
                 onClick={() => handleGenerate(null)}
               >
-                {generatingFor === '__base__' ? 'Starting…' : 'Generate DOCX'}
+                {generatingFor === '__base__' ? 'Starting…' : 'Generate PDF'}
               </button>
             </div>
 
-            {/* Custom uploaded templates — default first */}
-            {[...docxTemplates].sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0)).map((t) => (
+            {/* Custom report templates */}
+            {sortedTemplates.map((t) => (
               <div
                 key={t.id}
                 style={{
@@ -132,7 +137,15 @@ export default function ReportPage({ incidentId }: Props) {
                   gap: '8px',
                 }}
               >
-                <div style={{ fontSize: '24px' }}>📋</div>
+                {t.logo_data_uri ? (
+                  <img
+                    src={t.logo_data_uri}
+                    alt=""
+                    style={{ height: '32px', width: 'auto', objectFit: 'contain', alignSelf: 'flex-start' }}
+                  />
+                ) : (
+                  <div style={{ fontSize: '24px' }}>📋</div>
+                )}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -142,9 +155,11 @@ export default function ReportPage({ incidentId }: Props) {
                       <span className="chip chip-green" style={{ fontSize: '10px' }}>DEFAULT</span>
                     )}
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Custom template
-                  </div>
+                  {t.description && (
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {t.description}
+                    </div>
+                  )}
                 </div>
                 <button
                   className="btn btn-accent btn-sm"
@@ -152,7 +167,7 @@ export default function ReportPage({ incidentId }: Props) {
                   disabled={generatingFor === t.id}
                   onClick={() => handleGenerate(t.id)}
                 >
-                  {generatingFor === t.id ? 'Starting…' : 'Generate DOCX'}
+                  {generatingFor === t.id ? 'Starting…' : 'Generate PDF'}
                 </button>
               </div>
             ))}
@@ -234,12 +249,12 @@ export default function ReportPage({ incidentId }: Props) {
                             ⬇ Download
                           </button>
                         )}
-                        {r.status === 'failed' && (r as any).error_message && (
+                        {r.status === 'failed' && r.error_message && (
                           <span
-                            title={(r as any).error_message}
-                            style={{ fontSize: '11px', color: 'var(--status-red)', cursor: 'help', alignSelf: 'center' }}
+                            style={{ fontSize: '11px', color: 'var(--status-red)', alignSelf: 'center', maxWidth: 240, wordBreak: 'break-word' }}
+                            title={r.error_message}
                           >
-                            ⚠ Error
+                            ⚠ {r.error_message.length > 120 ? r.error_message.slice(0, 120) + '…' : r.error_message}
                           </span>
                         )}
                         <button

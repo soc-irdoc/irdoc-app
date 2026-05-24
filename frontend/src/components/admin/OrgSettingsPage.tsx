@@ -14,7 +14,6 @@ import {
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
 import { Modal } from '@/components/common/Modal'
-import { PremiumGate } from '@/components/common/PremiumGate'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/admin'
 import type { OrgUser } from '@/types/admin'
@@ -762,25 +761,23 @@ export function OrgSettingsPage() {
           </div>
 
           {/* Custom Branding */}
-          <div style={{ ...cardStyle, position: 'relative', marginBottom: 24 }}>
+          <div style={{ ...cardStyle, marginBottom: 24 }}>
             <div style={cardHeaderStyle}>Custom Branding</div>
-            <PremiumGate featureKey="custom_branding">
-              <div style={{ padding: 20 }}>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                  Upload your logo, set custom colours, and add a branded header to all reports.
-                </p>
-                <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div>
-                    <label style={labelStyle}>Logo URL</label>
-                    <input type="url" className="form-input" placeholder="https://…" disabled />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Accent Colour</label>
-                    <input type="color" className="form-input" style={{ height: 38 }} disabled />
-                  </div>
+            <div style={{ padding: 20 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                Upload your logo, set custom colours, and add a branded header to all reports.
+              </p>
+              <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <label style={labelStyle}>Logo URL</label>
+                  <input type="url" className="form-input" placeholder="https://…" disabled />
+                </div>
+                <div>
+                  <label style={labelStyle}>Accent Colour</label>
+                  <input type="color" className="form-input" style={{ height: 38 }} disabled />
                 </div>
               </div>
-            </PremiumGate>
+            </div>
           </div>
 
           <button

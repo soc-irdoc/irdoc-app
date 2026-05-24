@@ -83,6 +83,48 @@ _FIXED_SECTIONS = [
 ]
 
 
+def render_from_schema(
+    payload: "ReportPayload",
+    schema_json: list[dict],
+    brand: dict,
+    classification: str = "CONFIDENTIAL",
+    env: jinja2.Environment | None = None,
+) -> str:
+    """Render a report from a ReportTemplate's schema_json block list.
+
+    Iterates blocks in order; unknown block types are skipped with a warning.
+    brand dict: {logo_data_uri, primary_colour, company_name}
+    """
+    from app.services.report_renderer.engine import _build_jinja_env
+
+    jinja_env = env or _build_jinja_env()
+
+    rendered_blocks: list[str] = []
+    for block_config in schema_json:
+        block_type = block_config.get("type")
+        if not block_type:
+            continue
+        try:
+            partial = jinja_env.get_template(f"reports/blocks/{block_type}.html")
+            rendered_blocks.append(partial.render(block=block_config, p=payload, brand=brand))
+        except jinja2.TemplateNotFound:
+            logger.warning("render_from_schema: unknown block type '%s' — skipped", block_type)
+
+    base = jinja_env.get_template("reports/base.html")
+    return base.render(
+        blocks=rendered_blocks,
+        incident=payload.incident,
+        classification=classification,
+        generated_at=payload.generated_at,
+        analyst=payload.analyst,
+        p=payload,
+        brand=brand,
+        prefix_html="",
+        suffix_html="",
+        page_css="",
+    )
+
+
 def render_fixed_report_html(
     payload: "ReportPayload",
     classification: str = "CONFIDENTIAL",
@@ -107,7 +149,7 @@ def render_fixed_report_html(
         block_config = section["block"](payload, classification)
         block_type = block_config["type"]
         partial = jinja_env.get_template(f"reports/blocks/{block_type}.html")
-        rendered_blocks.append(partial.render(block=block_config, p=payload))
+        rendered_blocks.append(partial.render(block=block_config, p=payload, brand={}))
 
     base = jinja_env.get_template("reports/base.html")
     return base.render(
@@ -117,6 +159,7 @@ def render_fixed_report_html(
         generated_at=payload.generated_at,
         analyst=payload.analyst,
         p=payload,
+        brand={},
         prefix_html=prefix_html,
         suffix_html=suffix_html,
         page_css=page_css,
