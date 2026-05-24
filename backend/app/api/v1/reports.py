@@ -7,7 +7,9 @@ GET    /reports/{id}                    → status + metadata
 GET    /reports/{id}/download           → stream file
 DELETE /reports/{id}                    → delete report
 """
-from fastapi import APIRouter, Depends
+import io
+
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +17,7 @@ from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.schemas.report import ReportGenerateRequest, ReportOut
 from app.services import report_service
+from app.services.storage.resolver import get_storage_backend
 
 router = APIRouter(tags=["reports"])
 
@@ -66,10 +69,6 @@ async def download_report(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("reports.read")),
 ):
-    from fastapi import HTTPException
-    from app.services.storage.resolver import get_storage_backend
-    import io
-
     report = await report_service.get_report(db, report_id)
     if report.status != "ready" or not report.storage_path:
         raise HTTPException(status_code=404, detail="Report not ready or file not found")

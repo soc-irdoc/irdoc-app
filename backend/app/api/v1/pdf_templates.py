@@ -7,6 +7,9 @@ PATCH  /pdf-templates/{id}              → rename
 POST   /pdf-templates/{id}/set-default  → set as org default
 DELETE /pdf-templates/{id}              → delete
 """
+import io
+
+from docx import Document
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,9 +51,7 @@ async def upload_pdf_template(
         raise HTTPException(status_code=413, detail="File too large (max 20 MB)")
 
     try:
-        import io as _io
-        from docx import Document
-        Document(_io.BytesIO(file_bytes))
+        Document(io.BytesIO(file_bytes))
     except Exception:
         raise HTTPException(status_code=400, detail="File is not a valid .docx document")
 
