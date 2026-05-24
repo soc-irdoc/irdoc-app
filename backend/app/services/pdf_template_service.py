@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 _MARKER = "{{IRDoc_CONTENT}}"
 
+_ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+
 _DEFAULT_PAGE_CSS = """
 @page {
     margin: 25mm 20mm 25mm 20mm;
@@ -75,8 +77,10 @@ def _extract_page_css(docx_bytes: bytes) -> str:
         try:
             for rel in header.part.rels.values():
                 if "image" in rel.reltype:
-                    img_bytes = rel.target_part.blob
                     content_type = rel.target_part.content_type
+                    if content_type not in _ALLOWED_IMAGE_TYPES:
+                        continue
+                    img_bytes = rel.target_part.blob
                     b64 = base64.b64encode(img_bytes).decode()
                     logo_data_uri = f"data:{content_type};base64,{b64}"
                     break
@@ -133,8 +137,6 @@ async def create_template(
     prefix_html, suffix_html, page_css, warnings = _process_docx(file_bytes)
 
     storage_path = f"pdf-templates/{org_id}/{uuid.uuid4()}.docx"
-    backend = get_storage_backend()
-    await backend.store(file_bytes, storage_path)
 
     template = PdfTemplate(
         org_id=org_id,
@@ -151,6 +153,15 @@ async def create_template(
     db.add(template)
     await db.commit()
     await db.refresh(template)
+
+    try:
+        backend = get_storage_backend()
+        await backend.store(file_bytes, storage_path)
+    except Exception:
+        await db.delete(template)
+        await db.commit()
+        raise
+
     return template
 
 
@@ -210,7 +221,7 @@ async def delete_template(
             from app.services.storage.resolver import get_storage_backend
             backend = get_storage_backend()
             await backend.delete(t.original_docx_path)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to delete storage object %s: %s", t.original_docx_path, exc)
     await db.delete(t)
     await db.commit()
