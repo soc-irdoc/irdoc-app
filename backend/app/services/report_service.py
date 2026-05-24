@@ -3,12 +3,20 @@ Report service — PDF-only pipeline.
 """
 from __future__ import annotations
 
+import logging
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.feature_flags import check_feature
 from app.models.report import Report
 from app.schemas.report import ReportGenerateRequest
+from app.services.pdf_template_service import get_template
+from app.services.storage.resolver import get_storage_backend
+from app.workers.tasks import generate_report
+
+logger = logging.getLogger(__name__)
 
 
 async def enqueue_report(
@@ -19,10 +27,7 @@ async def enqueue_report(
     org_id: str,
 ) -> Report:
     """Create a pending Report record and enqueue the Celery task."""
-    from app.workers.tasks import generate_report
-
     if request.include_ai:
-        from app.core.feature_flags import check_feature
         if not check_feature("ai_summaries"):
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
@@ -30,16 +35,12 @@ async def enqueue_report(
             )
 
     if request.pdf_template_id:
-        from app.services.pdf_template_service import get_template
-        tmpl = await get_template(request.pdf_template_id, org_id, db)
-        report_name = tmpl.name
-    else:
-        report_name = "Incident Report"
+        await get_template(request.pdf_template_id, org_id, db)
 
     report = Report(
         incident_id=incident_id,
         pdf_template_id=request.pdf_template_id,
-        report_type=report_name,
+        report_type="pdf",          # always "pdf" — the format discriminator
         destination=None,
         classification=request.classification,
         generated_by=generated_by,
@@ -71,12 +72,11 @@ async def get_report(db: AsyncSession, report_id: str) -> Report:
 
 
 async def delete_report(db: AsyncSession, report: Report) -> None:
-    from app.services.storage.resolver import get_storage_backend
     if report.storage_path:
         try:
             backend = get_storage_backend()
             await backend.delete(report.storage_path)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to delete storage object %s: %s", report.storage_path, exc)
     await db.delete(report)
     await db.commit()
