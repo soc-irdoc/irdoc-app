@@ -147,7 +147,7 @@ from app.api.v1 import (  # noqa: E402
     audit,
     admin,
     saml,
-    docx_templates,
+    pdf_templates,
     mfa,
 )
 # Load all integration plugins on startup
@@ -180,7 +180,7 @@ application.include_router(audit.router, prefix=API_PREFIX)
 application.include_router(admin.router, prefix=API_PREFIX)
 application.include_router(saml.router, prefix=API_PREFIX)
 # Post-launch additions
-application.include_router(docx_templates.router, prefix=API_PREFIX)
+application.include_router(pdf_templates.router, prefix=API_PREFIX)
 # MFA
 application.include_router(mfa.router, prefix=API_PREFIX)
 
