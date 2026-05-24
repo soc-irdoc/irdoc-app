@@ -68,6 +68,7 @@ async def download_report(
 ):
     from fastapi import HTTPException
     from app.services.storage.resolver import get_storage_backend
+    import io
 
     report = await report_service.get_report(db, report_id)
     if report.status != "ready" or not report.storage_path:
@@ -75,22 +76,11 @@ async def download_report(
 
     backend = get_storage_backend()
     file_bytes = await backend.retrieve(report.storage_path)
+    filename = f"{report.report_type.replace(' ', '_')}_{report_id[:8]}.pdf"
 
-    mime_map = {
-        "pdf": "application/pdf",
-        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "markdown": "text/markdown",
-        "html": "text/html",
-    }
-    content_type = mime_map.get(report.format, "application/octet-stream")
-    ext_map = {"pdf": "pdf", "docx": "docx", "markdown": "md", "html": "html"}
-    ext = ext_map.get(report.format, "bin")
-    filename = f"{report.report_type.replace(' ', '_')}_{report_id[:8]}.{ext}"
-
-    import io
     return StreamingResponse(
         io.BytesIO(file_bytes),
-        media_type=content_type,
+        media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
