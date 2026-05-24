@@ -102,138 +102,78 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
-def generate_report(self, report_id: str, include_ai: bool = False, docx_template_id: str | None = None):
-    """
-    Full report generation pipeline.
-    1. Load Report + template + incident payload
-    2. If AI blocks present and licensed: call AI service, inject results
-    3. Render via ReportRenderer → format → store via StorageBackend
-    4. Update Report: status=ready, storage_path, generated_at
-    5. Emit WebSocket: report:ready
-    """
+def generate_report(self, report_id: str, include_ai: bool = False):
     async def _run():
         from datetime import datetime, timezone
         from app.core.database import AsyncSessionLocal
         from app.models.report import Report
-        from app.models.template import ReportTemplate
+        from app.models.pdf_template import PdfTemplate
         from app.models.user import User
-        from app.services.report_renderer import ReportRenderer, build_report_payload
+        from app.services.report_renderer import render_incident_pdf, build_report_payload
         from app.services.storage.resolver import get_storage_backend
         from sqlalchemy import select
 
         async with AsyncSessionLocal() as db:
-            # Load report record
             result = await db.execute(select(Report).where(Report.id == report_id))
             report = result.scalar_one_or_none()
             if not report:
                 logger.error("generate_report: report %s not found", report_id)
                 return
 
-            # Mark as generating
             report.status = "generating"
             await db.commit()
 
             try:
-                # Load analyst user
-                result = await db.execute(
-                    select(User).where(User.id == report.generated_by)
-                )
+                result = await db.execute(select(User).where(User.id == report.generated_by))
                 analyst = result.scalar_one_or_none()
                 if not analyst:
-                    # Fallback: any admin user
-                    result = await db.execute(
-                        select(User).where(User.role == "admin").limit(1)
-                    )
+                    result = await db.execute(select(User).where(User.role == "admin").limit(1))
                     analyst = result.scalar_one()
 
-                # Build payload
                 payload = await build_report_payload(
                     incident_id=str(report.incident_id),
                     analyst=analyst,
                     db=db,
                 )
 
-                # Render — custom DOCX template path or block-based path
-                if report.format == "docx" and docx_template_id:
-                    from app.services.docx_template_service import (
-                        get_template_bytes,
-                        render_with_template,
+                if include_ai:
+                    from app.core.feature_flags import check_feature
+                    if check_feature("ai_summaries"):
+                        from app.services.ai_service import (
+                            get_ai_provider,
+                            build_executive_summary_prompt,
+                        )
+                        provider = get_ai_provider()
+                        sys_p, usr_p = build_executive_summary_prompt(payload)
+                        payload.ai_executive_summary = await provider.complete(sys_p, usr_p, 400)
+
+                pdf_template = None
+                if report.pdf_template_id:
+                    pt_result = await db.execute(
+                        select(PdfTemplate).where(PdfTemplate.id == report.pdf_template_id)
                     )
-                    from app.models.docx_template import DocxTemplate
+                    pdf_template = pt_result.scalar_one_or_none()
 
-                    dt_result = await db.execute(
-                        select(DocxTemplate).where(DocxTemplate.id == docx_template_id)
-                    )
-                    docx_tmpl = dt_result.scalar_one_or_none()
-                    if docx_tmpl:
-                        tmpl_bytes = await get_template_bytes(docx_tmpl)
-                    else:
-                        from app.services.docx_template_service import generate_base_template
-                        tmpl_bytes = generate_base_template()
-                    file_bytes = render_with_template(tmpl_bytes, payload, report.classification)
-                elif report.format == "docx" and not report.report_template_id:
-                    # No block template — use generated base template
-                    from app.services.docx_template_service import (
-                        generate_base_template,
-                        render_with_template,
-                    )
-                    file_bytes = render_with_template(
-                        generate_base_template(), payload, report.classification
-                    )
-                else:
-                    # Block-based report — load the ReportTemplate schema
-                    tmpl_result = await db.execute(
-                        select(ReportTemplate).where(ReportTemplate.id == report.report_template_id)
-                    )
-                    template = tmpl_result.scalar_one_or_none()
-                    if not template:
-                        raise ValueError(f"Report template {report.report_template_id} not found")
+                file_bytes = render_incident_pdf(
+                    payload=payload,
+                    pdf_template=pdf_template,
+                    classification=report.classification.upper(),
+                )
 
-                    # AI enrichment if requested and licensed
-                    if include_ai:
-                        from app.core.feature_flags import check_feature
-                        if check_feature("ai_summaries"):
-                            from app.services.ai_service import (
-                                get_ai_provider,
-                                build_executive_summary_prompt,
-                                build_recommendations_prompt,
-                            )
-                            provider = get_ai_provider()
-
-                            schema_fields = [b.get("field", "") for b in template.schema_json]
-                            has_summary = "ai.executive_summary" in schema_fields
-                            has_recs = "ai.recommendations" in schema_fields
-
-                            if has_summary:
-                                sys_p, usr_p = build_executive_summary_prompt(payload)
-                                payload.ai_executive_summary = await provider.complete(sys_p, usr_p, 400)
-
-                            if has_recs:
-                                sys_p, usr_p = build_recommendations_prompt(payload)
-                                payload.ai_recommendations = await provider.complete(sys_p, usr_p, 600)
-
-                    renderer = ReportRenderer()
-                    file_bytes = renderer.render(template.schema_json, payload, report.format)
-
-                # Store
                 backend = get_storage_backend()
-                ext_map = {"pdf": "pdf", "docx": "docx", "markdown": "md", "html": "html"}
-                ext = ext_map.get(report.format, "bin")
-                storage_path = f"reports/{report.incident_id}/{report_id}.{ext}"
+                storage_path = f"reports/{report.incident_id}/{report_id}.pdf"
                 await backend.store(file_bytes, storage_path)
 
-                # Update report record
                 report.status = "ready"
                 report.storage_path = storage_path
                 report.generated_at = datetime.now(timezone.utc)
                 await db.commit()
 
                 logger.info(
-                    "generate_report: %s (%s) completed — %d bytes stored at %s",
-                    report_id, report.format, len(file_bytes), storage_path,
+                    "generate_report: %s completed — %d bytes at %s",
+                    report_id, len(file_bytes), storage_path,
                 )
 
-                # Emit WebSocket event (best effort)
                 try:
                     _emit_ws(str(report.incident_id), "report:ready", {"report_id": report_id})
                 except Exception as ws_err:
@@ -383,8 +323,7 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
 
         from app.core.database import AsyncSessionLocal
         from app.models.report import SyncPolicy
-        from app.models.template import ReportTemplate
-        from app.services.report_renderer import ReportRenderer, build_report_payload
+        from app.services.report_renderer import render_incident_pdf, build_report_payload
         from app.services.integration_service import decrypt_config
         from app.plugins.registry import PLUGINS
         from sqlalchemy import select
@@ -397,15 +336,6 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
                 logger.info("sync_to_sharepoint: policy %s inactive or missing", policy_id)
                 return
 
-            # Load template
-            result = await db.execute(
-                select(ReportTemplate).where(ReportTemplate.id == policy.report_template_id)
-            )
-            template = result.scalar_one_or_none()
-            if not template:
-                logger.error("sync_to_sharepoint: template not found for policy %s", policy_id)
-                return
-
             # Load analyst (admin user for background renders)
             from app.models.user import User
             result = await db.execute(select(User).where(User.role == "admin").limit(1))
@@ -414,9 +344,7 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
                 return
 
             payload = await build_report_payload(incident_id=incident_id, analyst=analyst, db=db)
-
-            renderer = ReportRenderer()
-            report_bytes = renderer.render(template.schema_json, payload, "pdf")
+            report_bytes = render_incident_pdf(payload=payload)
 
             # Build filename from pattern
             pattern = policy.destination_config.get("filename_pattern", "{incident_ref}.pdf")
