@@ -124,11 +124,11 @@ def generate_report(self, report_id: str, include_ai: bool = False):
             await db.commit()
 
             try:
-                result = await db.execute(select(User).where(User.id == report.generated_by))
-                analyst = result.scalar_one_or_none()
+                user_result = await db.execute(select(User).where(User.id == report.generated_by))
+                analyst = user_result.scalar_one_or_none()
                 if not analyst:
-                    result = await db.execute(select(User).where(User.role == "admin").limit(1))
-                    analyst = result.scalar_one()
+                    user_result = await db.execute(select(User).where(User.role == "admin").limit(1))
+                    analyst = user_result.scalar_one()
 
                 payload = await build_report_payload(
                     incident_id=str(report.incident_id),
@@ -181,9 +181,12 @@ def generate_report(self, report_id: str, include_ai: bool = False):
 
             except Exception as exc:
                 logger.exception("generate_report: failed for %s: %s", report_id, exc)
-                report.status = "failed"
-                report.error_message = str(exc)[:500]
-                await db.commit()
+                try:
+                    report.status = "failed"
+                    report.error_message = str(exc)[:500]
+                    await db.commit()
+                except Exception:
+                    logger.warning("generate_report: could not persist failed status for %s", report_id)
                 raise self.retry(exc=exc)
 
     run_async(_run())
@@ -373,8 +376,8 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
 
             try:
                 _emit_ws(incident_id, "sync:complete", {"policy_id": policy_id, "url": sharepoint_url})
-            except Exception:
-                pass
+            except Exception as ws_err:
+                logger.warning("sync_to_sharepoint: WS emit failed: %s", ws_err)
 
             # Also fire notifications
             send_notification.delay(
