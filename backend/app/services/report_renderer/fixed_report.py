@@ -106,11 +106,8 @@ def render_fixed_report_html(
             continue
         block_config = section["block"](payload, classification)
         block_type = block_config["type"]
-        try:
-            partial = jinja_env.get_template(f"reports/blocks/{block_type}.html")
-            rendered_blocks.append(partial.render(block=block_config, p=payload))
-        except jinja2.TemplateNotFound:
-            logger.warning("Block template not found: %s", block_type)
+        partial = jinja_env.get_template(f"reports/blocks/{block_type}.html")
+        rendered_blocks.append(partial.render(block=block_config, p=payload))
 
     base = jinja_env.get_template("reports/base.html")
     return base.render(

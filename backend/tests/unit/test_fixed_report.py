@@ -74,6 +74,16 @@ def test_evidence_register_hidden_when_no_attachments():
     assert _section("evidence_register")["has_data"](p) is False
 
 
+def test_task_list_shown_with_tasks():
+    p = _make_payload(tasks=[MagicMock()])
+    assert _section("task_list")["has_data"](p) is True
+
+
+def test_evidence_register_shown_with_attachments():
+    p = _make_payload(attachments=[MagicMock()])
+    assert _section("evidence_register")["has_data"](p) is True
+
+
 def test_ai_narrative_hidden_when_no_summary():
     p = _make_payload()
     p.ai_executive_summary = None
