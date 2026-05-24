@@ -130,8 +130,13 @@
     .page-break { page-break-before: always; }
   }
 </style>
+{% if page_css %}<style>{{ page_css | safe }}</style>{% endif %}
 </head>
 <body>
+{% if prefix_html %}
+<div class="template-prefix">{{ prefix_html | safe }}</div>
+<div style="page-break-after: always;"></div>
+{% endif %}
 <div class="classification-banner">{{ classification | upper }}</div>
 <div class="page-wrapper content-offset">
   {% for block_html in blocks %}
@@ -142,5 +147,9 @@
     <span>Generated {{ generated_at | format_dt }} by {{ analyst.full_name }}</span>
   </div>
 </div>
+{% if suffix_html %}
+<div style="page-break-before: always;"></div>
+<div class="template-suffix">{{ suffix_html | safe }}</div>
+{% endif %}
 </body>
 </html>

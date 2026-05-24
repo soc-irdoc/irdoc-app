@@ -1,4 +1,4 @@
-from app.services.report_renderer.engine import ReportRenderer
-from app.services.report_renderer.payload import ReportPayload, build_report_payload
+from app.services.report_renderer.engine import render_incident_pdf
+from app.services.report_renderer.payload import build_report_payload
 
-__all__ = ["ReportRenderer", "ReportPayload", "build_report_payload"]
+__all__ = ["render_incident_pdf", "build_report_payload"]
