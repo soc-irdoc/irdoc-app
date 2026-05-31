@@ -20,13 +20,19 @@ from app.schemas.incident import IncidentCreate, IncidentStats, IncidentUpdate
 _RICH_TEXT_TAGS = [
     "p", "br", "strong", "em", "u", "s", "b", "i",
     "h1", "h2", "h3", "ul", "ol", "li", "blockquote", "label", "input",
+    "img", "span",
 ]
-_RICH_TEXT_ATTRS = {
+_RICH_TEXT_ATTRS: dict[str, list[str]] = {
     "ul": ["data-type"],
-    "li": ["data-checked"],
+    # data-type="taskItem" must survive alongside data-checked so Tiptap can
+    # reconstruct task-list nodes when the HTML is reloaded.
+    "li": ["data-type", "data-checked"],
     # Tiptap TaskItem renders checkboxes as <input type="checkbox"> — preserve
     # the type attribute so stored HTML is portable for future report rendering.
     "input": ["type"],
+    "img": ["src", "alt"],
+    # FontSize extension stores size as data-font-size="Npx"; CSS handles rendering.
+    "span": ["data-font-size"],
 }
 _RICH_TEXT_FIELDS = {"executive_summary", "notes", "lessons_learned", "actions_todo"}
 

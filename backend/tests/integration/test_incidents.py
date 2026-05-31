@@ -107,7 +107,9 @@ async def test_rich_text_fields_round_trip(client: AsyncClient, auth_headers):
 
     html_notes = "<p>Test <strong>notes</strong></p>"
     html_lessons = "<p>Lessons <em>learned</em></p>"
-    html_actions = '<ul data-type="taskList"><li data-checked="false"><label>Action 1</label></li></ul>'
+    # Include data-type="taskItem" as Tiptap actually serialises it; the
+    # sanitiser must preserve both data-type and data-checked on <li>.
+    html_actions = '<ul data-type="taskList"><li data-type="taskItem" data-checked="false"><p>Action 1</p></li></ul>'
 
     # Update with rich text fields
     res = await client.put(
@@ -152,7 +154,7 @@ async def test_rich_text_fields_sanitize_xss(client: AsyncClient, auth_headers):
             "notes": "<p>Safe</p><script>alert(1)</script>",
             # Event handler on an allowed tag should be removed
             "lessons_learned": '<p onclick="alert(1)">Click me</p>',
-            # <img> with onerror should be stripped (img not in allowlist)
+            # <img> is now allowed but dangerous attributes must be stripped
             "actions_todo": '<p>Text</p><img src="x" onerror="alert(1)">',
         },
         headers=auth_headers,
@@ -162,5 +164,43 @@ async def test_rich_text_fields_sanitize_xss(client: AsyncClient, auth_headers):
     assert "<script>" not in data["notes"]
     assert "alert" not in data["notes"]
     assert 'onclick' not in data["lessons_learned"]
-    assert "<img" not in data["actions_todo"]
     assert "onerror" not in data["actions_todo"]
+    # The src attribute is safe and the tag itself is now allowed
+    assert 'src="x"' in data["actions_todo"]
+
+
+@pytest.mark.asyncio
+async def test_rich_text_font_size_round_trip(client: AsyncClient, auth_headers):
+    """font-size style on <span> is preserved; other CSS properties are stripped."""
+    res = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Font Size Test", "severity": "sev3"},
+        headers=auth_headers,
+    )
+    assert res.status_code == 201
+    inc_id = res.json()["data"]["id"]
+
+    res = await client.put(
+        f"/api/v1/incidents/{inc_id}",
+        json={
+            "notes": '<p><span data-font-size="16px">big text</span></p>',
+        },
+        headers=auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert 'data-font-size="16px"' in data["notes"]
+
+    # Disallowed attributes on span must be stripped, data-font-size preserved
+    res = await client.put(
+        f"/api/v1/incidents/{inc_id}",
+        json={
+            "notes": '<p><span data-font-size="14px" style="color: red">styled</span></p>',
+        },
+        headers=auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert "color" not in data["notes"]
+    assert "red" not in data["notes"]
+    assert 'data-font-size="14px"' in data["notes"]

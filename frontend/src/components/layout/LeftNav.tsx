@@ -44,7 +44,7 @@ function NavButton({
       aria-label={label}
       title={collapsed ? label : undefined}
       style={{
-        width: collapsed ? 42 : '100%',
+        width: '100%',
         height: 42,
         borderRadius: 10,
         border: 'none',
@@ -53,10 +53,10 @@ function NavButton({
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: collapsed ? 'center' : 'flex-start',
+        justifyContent: 'flex-start',
         gap: 10,
         fontSize: 18,
-        padding: collapsed ? 0 : '0 12px',
+        padding: '0 12px',
         transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
         position: 'relative',
         flexShrink: 0,
@@ -66,20 +66,18 @@ function NavButton({
       }}
     >
       <span style={{ flexShrink: 0, lineHeight: 1 }}>{icon}</span>
-      {!collapsed && (
-        <span style={{
-          fontSize: 13,
-          fontFamily: 'Syne, sans-serif',
-          fontWeight: 600,
-          color: active ? 'var(--accent)' : 'var(--text-secondary)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          opacity: 1,
-          transition: 'opacity 0.1s 0.05s',
-        }}>
-          {label}
-        </span>
-      )}
+      <span style={{
+        fontSize: 13,
+        fontFamily: 'Syne, sans-serif',
+        fontWeight: 600,
+        color: active ? 'var(--accent)' : 'var(--text-secondary)',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        opacity: collapsed ? 0 : 1,
+        transition: 'opacity 0.12s',
+      }}>
+        {label}
+      </span>
     </button>
   )
 }
@@ -107,18 +105,17 @@ export function LeftNav() {
     <nav
       style={{
         width: navWidth,
-        minWidth: navWidth,
         background: 'var(--bg-surface)',
         borderRight: '1px solid var(--border)',
         boxShadow: '2px 0 12px rgba(0,0,0,0.3)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: collapsed ? 'center' : 'stretch',
-        padding: collapsed ? '16px 0' : '16px 10px',
+        alignItems: 'stretch',
+        padding: '16px 8px',
         gap: 4,
         flexShrink: 0,
         zIndex: 100,
-        transition: 'width 0.2s ease, min-width 0.2s ease, padding 0.2s ease',
+        transition: 'width 0.25s ease',
         overflow: 'hidden',
       }}
     >
@@ -126,10 +123,10 @@ export function LeftNav() {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: collapsed ? 'center' : 'flex-start',
+        justifyContent: 'flex-start',
         gap: 10,
         flexShrink: 0,
-        padding: collapsed ? 0 : '0 2px',
+        padding: '0 2px',
       }}>
         <div
           style={{
@@ -166,31 +163,43 @@ export function LeftNav() {
         )}
       </div>
 
-      {/* Collapse toggle — small icon button, same size in both states */}
+      {/* Collapse toggle — nav item at top, above all other items */}
       <button
         onClick={toggleCollapsed}
         aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
         title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
         style={{
-          width: 28,
-          height: 28,
-          borderRadius: 8,
-          border: '1px solid var(--border)',
-          background: 'var(--bg-card)',
+          width: '100%',
+          height: 42,
+          borderRadius: 10,
+          border: 'none',
+          background: 'transparent',
           color: 'var(--text-muted)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 13,
-          padding: 0,
-          marginBottom: 8,
+          justifyContent: 'flex-start',
+          gap: 10,
+          padding: '0 12px',
+          fontSize: 18,
           flexShrink: 0,
-          lineHeight: 1,
-          alignSelf: collapsed ? 'center' : 'flex-start',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          borderBottom: '1px solid var(--border)',
+          marginBottom: 4,
         }}
       >
-        {collapsed ? '›' : '‹'}
+        <span style={{ flexShrink: 0, lineHeight: 1 }}>{collapsed ? '☰' : '◀'}</span>
+        <span style={{
+          fontSize: 13,
+          fontFamily: 'Syne, sans-serif',
+          fontWeight: 600,
+          color: 'var(--text-muted)',
+          opacity: collapsed ? 0 : 1,
+          transition: 'opacity 0.12s',
+        }}>
+          Collapse
+        </span>
       </button>
 
       {/* Nav Items */}
@@ -260,16 +269,16 @@ export function LeftNav() {
         title={user?.full_name ?? 'Profile'}
         style={{
           height: 42,
-          width: collapsed ? 42 : '100%',
+          width: '100%',
           borderRadius: 10,
           border: 'none',
           background: 'transparent',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
+          justifyContent: 'flex-start',
           gap: 10,
-          padding: collapsed ? 0 : '0 12px',
+          padding: '0 12px',
           flexShrink: 0,
           overflow: 'hidden',
           whiteSpace: 'nowrap',
@@ -290,18 +299,18 @@ export function LeftNav() {
         }}>
           {user ? getInitials(user.full_name) : '?'}
         </div>
-        {!collapsed && (
-          <span style={{
-            fontSize: 13,
-            fontFamily: 'Syne, sans-serif',
-            fontWeight: 600,
-            color: 'var(--text-secondary)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}>
-            {user?.full_name ?? 'Profile'}
-          </span>
-        )}
+        <span style={{
+          fontSize: 13,
+          fontFamily: 'Syne, sans-serif',
+          fontWeight: 600,
+          color: 'var(--text-secondary)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          opacity: collapsed ? 0 : 1,
+          transition: 'opacity 0.12s',
+        }}>
+          {user?.full_name ?? 'Profile'}
+        </span>
       </button>
 
       {/* Logout */}

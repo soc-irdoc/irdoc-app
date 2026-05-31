@@ -443,8 +443,57 @@ select.form-input {
 
 .tiptap-body {
   padding: 12px 16px;
-  min-height: 80px;
+  min-height: 180px;
 }
+
+.tiptap-body-wrap {
+  position: relative;
+}
+
+.tiptap-body-wrap .tiptap-body {
+  height: 100%;
+}
+
+.resize-grip {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 14px;
+  height: 14px;
+  cursor: ns-resize;
+  opacity: 0.3;
+  background-image: radial-gradient(circle, var(--text-muted) 1.5px, transparent 1.5px);
+  background-size: 4px 4px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.tiptap-body-wrap:hover .resize-grip {
+  opacity: 0.65;
+}
+
+.tiptap-body .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  display: block;
+  margin: 6px 0;
+}
+
+.tiptap-body .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+}
+
+/* Font size: FontSize extension stores size in data-font-size="Npx" */
+.tiptap-body .ProseMirror [data-font-size="10px"] { font-size: 10px; }
+.tiptap-body .ProseMirror [data-font-size="12px"] { font-size: 12px; }
+.tiptap-body .ProseMirror [data-font-size="13px"] { font-size: 13px; }
+.tiptap-body .ProseMirror [data-font-size="14px"] { font-size: 14px; }
+.tiptap-body .ProseMirror [data-font-size="16px"] { font-size: 16px; }
+.tiptap-body .ProseMirror [data-font-size="18px"] { font-size: 18px; }
+.tiptap-body .ProseMirror [data-font-size="20px"] { font-size: 20px; }
+.tiptap-body .ProseMirror [data-font-size="24px"] { font-size: 24px; }
+.tiptap-body .ProseMirror [data-font-size="28px"] { font-size: 28px; }
+.tiptap-body .ProseMirror [data-font-size="32px"] { font-size: 32px; }
 
 .tiptap-body .ProseMirror {
   outline: none;
