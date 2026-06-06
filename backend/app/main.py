@@ -149,6 +149,8 @@ from app.api.v1 import (  # noqa: E402
     saml,
     pdf_templates,
     mfa,
+    dashboard,
+    backup,
 )
 # Load all integration plugins on startup
 import app.plugins  # noqa: F401, E402
@@ -183,6 +185,10 @@ application.include_router(saml.router, prefix=API_PREFIX)
 application.include_router(pdf_templates.router, prefix=API_PREFIX)
 # MFA
 application.include_router(mfa.router, prefix=API_PREFIX)
+# Dashboard
+application.include_router(dashboard.router, prefix=API_PREFIX)
+# Backup
+application.include_router(backup.router, prefix=API_PREFIX)
 
 # ── Combined ASGI app (Socket.io + FastAPI) ─────────────────────────────────
 import socketio as _sio_lib  # noqa: E402

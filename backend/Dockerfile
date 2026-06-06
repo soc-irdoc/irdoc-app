@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libglib2.0-0 \
     gcc \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -25,6 +26,7 @@ COPY . .
 
 # ── Storage directory ────────────────────────────────────────────────────────────
 RUN mkdir -p /app/storage && chown -R irp:irp /app/storage
+RUN mkdir -p /app/backups && chown -R irp:irp /app/backups
 
 # ── Entrypoint ──────────────────────────────────────────────────────────────────
 COPY entrypoint.sh /entrypoint.sh

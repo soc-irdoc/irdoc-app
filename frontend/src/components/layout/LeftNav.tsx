@@ -12,6 +12,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { icon: '◈',  label: 'Overview',  path: '/overview' },
   { icon: '⚡', label: 'Incidents', path: '/incidents' },
   { icon: '⚙',  label: 'Settings', path: '/settings' },
 ]
@@ -19,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
 const MANAGEMENT_ITEMS: NavItem[] = [
   { icon: '⚙️', label: 'Org Settings', path: '/admin/org' },
   { icon: '🗄️', label: 'Storage', path: '/admin/storage' },
+  { icon: '💾', label: 'Backups', path: '/admin/backups' },
   { icon: '📋', label: 'Incident Templates', path: '/admin/templates' },
   { icon: '📄', label: 'Report Templates', path: '/admin/reports' },
   { icon: '🔗', label: 'Integrations', path: '/admin/integrations' },
@@ -144,7 +146,7 @@ export function LeftNav() {
             cursor: 'pointer',
             flexShrink: 0,
           }}
-          onClick={() => navigate('/incidents')}
+          onClick={() => navigate('/overview')}
           title="IRDoc"
         >
           IR

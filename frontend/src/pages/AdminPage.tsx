@@ -8,10 +8,11 @@ import { IncidentTemplatesPage } from '@/components/admin/IncidentTemplatesPage'
 import { AuditLogPage } from '@/components/admin/AuditLogPage'
 import { IntegrationsPage } from '@/components/integrations/IntegrationsPage'
 import { ReportsAdminPage } from '@/components/admin/ReportsAdminPage'
+import { BackupsPage } from '@/components/admin/BackupsPage'
 
-type AdminSection = 'org' | 'storage' | 'templates' | 'reports' | 'integrations' | 'audit'
+type AdminSection = 'org' | 'storage' | 'templates' | 'reports' | 'integrations' | 'audit' | 'backups'
 
-const VALID_SECTIONS: AdminSection[] = ['org', 'storage', 'templates', 'reports', 'integrations', 'audit']
+const VALID_SECTIONS: AdminSection[] = ['org', 'storage', 'templates', 'reports', 'integrations', 'audit', 'backups']
 
 export default function AdminPage() {
   const { section } = useParams<{ section?: string }>()
@@ -44,6 +45,7 @@ export default function AdminPage() {
       {activeSection === 'reports' && <ReportsAdminPage />}
       {activeSection === 'integrations' && <IntegrationsPage />}
       {activeSection === 'audit' && <AuditLogPage />}
+      {activeSection === 'backups' && <BackupsPage />}
     </AppShell>
   )
 }

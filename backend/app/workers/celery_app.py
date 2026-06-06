@@ -7,7 +7,7 @@ celery_app = Celery(
     "irp_worker",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.workers.tasks"],
+    include=["app.workers.tasks", "app.workers.backup_tasks"],
 )
 
 celery_app.conf.update(
@@ -32,6 +32,10 @@ celery_app.conf.update(
         "check-debounce-locks": {
             "task": "app.workers.tasks.process_expired_sync_locks",
             "schedule": 10.0,
+        },
+        "check-backup-schedule": {
+            "task": "app.workers.backup_tasks.check_and_run_backup",
+            "schedule": 3600.0,  # every hour
         },
     },
 )

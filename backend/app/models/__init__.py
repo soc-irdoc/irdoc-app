@@ -18,3 +18,4 @@ from app.models.graph import GraphEdge  # noqa: F401
 from app.models.user_invite import UserInvite  # noqa: F401
 from app.models.sso_config import SSOConfig  # noqa: F401
 from app.models.asset import Asset, AssetTimelineLink, AssetLink  # noqa: F401
+from app.models.backup import BackupConfig, BackupRecord  # noqa: F401
