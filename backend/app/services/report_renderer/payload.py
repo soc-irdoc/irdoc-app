@@ -85,6 +85,9 @@ class ReportPayload:
     ai_executive_summary: str | None = None
     ai_recommendations: str | None = None
 
+    # Graph diagram — SVG generated server-side from incident graph data
+    graph_svg: str | None = None
+
 
 def _group_by(items, key_fn) -> dict:
     result: dict = {}

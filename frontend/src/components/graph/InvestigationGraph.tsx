@@ -3,6 +3,7 @@
  * Phase 4 component: lazy-loaded from IncidentWorkspacePage.
  */
 import { useCallback, useRef, useState } from 'react'
+import { toPng } from 'html-to-image'
 import {
   ReactFlow,
   Background,
@@ -200,11 +201,54 @@ export default function InvestigationGraph({ incidentId }: InvestigationGraphPro
     }
   }
 
-  function exportAsPNG() {
-    if (!reactFlowRef.current) return
-    const svg = reactFlowRef.current.querySelector('.react-flow__viewport')
-    if (!svg) return
-    addToast('Export not available in this environment', 'info')
+  async function captureSnapshot(): Promise<string | null> {
+    const el = reactFlowRef.current
+    if (!el || nodes.length === 0) return null
+
+    // html-to-image resolves getComputedStyle() before applying any style override,
+    // so the only reliable way to inject light-mode values is to set them at :root
+    // before the call and restore immediately after.
+    const root = document.documentElement
+    const lightVars: Record<string, string> = {
+      '--bg-base':      '#ffffff',
+      '--bg-surface':   '#f8fafc',
+      '--bg-card':      '#ffffff',
+      '--bg-elevated':  '#f1f5f9',
+      '--border':       '#cbd5e1',
+      '--text-primary': '#0f172a',
+      '--text-secondary': '#334155',
+      '--text-muted':   '#64748b',
+    }
+    for (const [k, v] of Object.entries(lightVars)) root.style.setProperty(k, v)
+
+    try {
+      return await toPng(el, {
+        backgroundColor: '#ffffff',
+        filter: (node) =>
+          !(node instanceof HTMLElement) ||
+          (!node.classList.contains('react-flow__controls') &&
+           !node.classList.contains('react-flow__minimap') &&
+           !node.classList.contains('react-flow__panel') &&
+           !node.classList.contains('react-flow__background')),
+        pixelRatio: 1.5,
+      })
+    } catch {
+      return null
+    } finally {
+      for (const k of Object.keys(lightVars)) root.style.removeProperty(k)
+    }
+  }
+
+  async function exportAsPNG() {
+    const dataUrl = await captureSnapshot()
+    if (!dataUrl) {
+      addToast('Nothing to export', 'info')
+      return
+    }
+    const link = document.createElement('a')
+    link.download = `graph-${incidentId}.png`
+    link.href = dataUrl
+    link.click()
   }
 
   if (isLoading) {

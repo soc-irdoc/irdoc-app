@@ -110,6 +110,8 @@ def render_from_schema(
         except jinja2.TemplateNotFound:
             logger.warning("render_from_schema: unknown block type '%s' — skipped", block_type)
 
+    from app.services.report_renderer.engine import _DEFAULT_PAGE_CSS
+
     base = jinja_env.get_template("reports/base.html")
     return base.render(
         blocks=rendered_blocks,
@@ -121,7 +123,7 @@ def render_from_schema(
         brand=brand,
         prefix_html="",
         suffix_html="",
-        page_css="",
+        page_css=_DEFAULT_PAGE_CSS,
     )
 
 

@@ -28,7 +28,7 @@ def run_async(coro):
             return await coro
         finally:
             from app.core.database import engine
-            engine.dispose()
+            await engine.dispose()
 
     return asyncio.run(_with_pool_cleanup())
 
@@ -112,6 +112,8 @@ def generate_report(self, report_id: str, include_ai: bool = False):
         from app.models.template import ReportTemplate
         from app.models.user import User
         from app.services.report_renderer import render_incident_pdf, render_incident_pdf_from_schema, build_report_payload
+        from app.services.graph_service import build_graph
+        from app.services.graph_renderer import render_graph_svg
         from app.services.storage.resolver import get_storage_backend
         from sqlalchemy import select
 
@@ -137,6 +139,8 @@ def generate_report(self, report_id: str, include_ai: bool = False):
                     analyst=analyst,
                     db=db,
                 )
+                graph_data = await build_graph(str(report.incident_id), db)
+                payload.graph_svg = render_graph_svg(graph_data)
 
                 if include_ai:
                     from app.core.feature_flags import check_feature
@@ -528,4 +532,8 @@ def generate_ai_ioc_narrative(self, ioc_id: str):
             except Exception:
                 pass
 
-    run_async(_run())
+    try:
+        run_async(_run())
+    except Exception as exc:
+        logger.exception("generate_ai_ioc_narrative failed for ioc_id=%s: %s", ioc_id, exc)
+        raise self.retry(exc=exc)

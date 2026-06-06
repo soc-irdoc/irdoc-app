@@ -1,0 +1,13 @@
+{% if p.graph_svg %}
+<div class="block">
+  {% if block.get('label') %}
+  <h2>{{ block.get('label', 'Incident Graph') }}</h2>
+  {% endif %}
+  <div style="text-align: center; margin: 8px 0 6px;">
+    {{ p.graph_svg | safe }}
+  </div>
+  <p style="font-size: 9pt; color: #64748b; text-align: center; margin: 0;">
+    Incident relationship graph — {{ p.generated_at | format_dt }}
+  </p>
+</div>
+{% endif %}

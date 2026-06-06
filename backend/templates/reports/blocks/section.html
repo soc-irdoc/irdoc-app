@@ -32,7 +32,7 @@
     {% endif %}
   {% else %}
     {% if value.v %}
-      <p>{{ value.v }}</p>
+      {{ value.v | sanitize_html }}
     {% else %}
       <p><em>No data available.</em></p>
     {% endif %}

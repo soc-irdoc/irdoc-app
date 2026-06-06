@@ -21,7 +21,8 @@ _TEMPLATE_DIR = Path(__file__).parent.parent.parent.parent / "templates"
 
 _DEFAULT_PAGE_CSS = """
 @page {
-    margin: 25mm 20mm 25mm 20mm;
+    size: A4;
+    margin: 12mm 10mm 15mm 10mm;
     @bottom-right {
         content: "Page " counter(page) " of " counter(pages);
         font-size: 9pt;
@@ -56,12 +57,39 @@ def _build_jinja_env() -> jinja2.Environment:
             value /= 1024
         return f"{value:.1f} TB"
 
+    def sanitize_html(value) -> jinja2.Markup:
+        """Sanitize rich-text HTML and return a Markup object safe for rendering.
+
+        Defense-in-depth: content is also sanitized on write via incident_service,
+        but re-running bleach here ensures no field can bypass the allowlist at
+        render time, regardless of how it was stored.
+        """
+        if not value:
+            from markupsafe import Markup
+            return Markup("")
+        from markupsafe import Markup
+        from app.services.incident_service import _sanitize_html
+        return Markup(_sanitize_html(str(value)))
+
     env.filters["format_dt"] = format_dt
     env.filters["filesize"] = filesize
+    env.filters["sanitize_html"] = sanitize_html
     return env
 
 
 _jinja_env = _build_jinja_env()
+
+
+def _safe_url_fetcher(url: str):
+    """WeasyPrint url_fetcher that only allows data: URIs.
+
+    Blocks file://, http://, and any other scheme to prevent SSRF and local
+    file disclosure during PDF rendering.
+    """
+    if not url.startswith("data:"):
+        raise ValueError(f"URL scheme not permitted in PDF renderer: {url!r}")
+    from weasyprint.urls import default_url_fetcher
+    return default_url_fetcher(url)
 
 
 def render_incident_pdf_from_schema(
@@ -86,6 +114,7 @@ def render_incident_pdf_from_schema(
         return WeasyHTML(
             string=html,
             base_url=str(_TEMPLATE_DIR / "reports"),
+            url_fetcher=_safe_url_fetcher,
         ).write_pdf()
     except Exception as exc:
         logger.error("WeasyPrint schema PDF render failed: %s", exc)
@@ -121,6 +150,7 @@ def render_incident_pdf(
         return WeasyHTML(
             string=html,
             base_url=str(_TEMPLATE_DIR / "reports"),
+            url_fetcher=_safe_url_fetcher,
         ).write_pdf()
     except Exception as exc:
         logger.error("WeasyPrint PDF render failed: %s", exc)

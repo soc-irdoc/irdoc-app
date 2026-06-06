@@ -135,7 +135,7 @@ export function StoragePage() {
   }
 
   function buildPayload() {
-    return { backend: selected, ...form }
+    return { backend: selected, config: form }
   }
 
   async function handleTest() {

@@ -7,6 +7,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { ToastContainer } from '@/components/common/Toast'
 import { LoginPage } from '@/pages/LoginPage'
 import { IncidentListPage } from '@/pages/IncidentListPage'
+import { OverviewPage } from '@/pages/OverviewPage'
 import { IncidentWorkspacePage } from '@/pages/IncidentWorkspacePage'
 import { SettingsPageWrapper } from '@/pages/SettingsPageWrapper'
 import { PageLoader } from '@/components/common/LoadingSpinner'
@@ -60,7 +61,15 @@ export function App() {
     <>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<Navigate to="/incidents" replace />} />
+        <Route path="/" element={<Navigate to="/overview" replace />} />
+        <Route
+          path="/overview"
+          element={
+            <ProtectedRoute isRestoring={isRestoring}>
+              <OverviewPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/incidents"
           element={
@@ -139,7 +148,7 @@ export function App() {
             </Suspense>
           }
         />
-        <Route path="*" element={<Navigate to="/incidents" replace />} />
+        <Route path="*" element={<Navigate to="/overview" replace />} />
       </Routes>
 
       <ToastContainer />

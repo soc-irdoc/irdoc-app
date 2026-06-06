@@ -16,7 +16,7 @@
   {% if label %}<h2>{{ label }}</h2>{% endif %}
   <div class="text-block-content">
     {% if value.v %}
-      {{ value.v | replace('\n', '<br>') | safe }}
+      {{ value.v | sanitize_html }}
     {% else %}
       <em style="color:#94a3b8;">No content available.</em>
     {% endif %}

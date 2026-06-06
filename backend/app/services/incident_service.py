@@ -1,6 +1,7 @@
 """
 Incident service: CRUD, ref generation (INC-YYYY-NNNN), stats.
 """
+import re
 from datetime import UTC, datetime
 
 import bleach
@@ -36,9 +37,24 @@ _RICH_TEXT_ATTRS: dict[str, list[str]] = {
 }
 _RICH_TEXT_FIELDS = {"executive_summary", "notes", "lessons_learned", "actions_todo"}
 
+# Only image MIME types are safe as data: URIs in img src.
+# data:text/html and data:application/javascript must be rejected.
+_IMG_DATA_URI_RE = re.compile(
+    r"^data:image/(png|jpe?g|gif|webp|svg\+xml);base64,", re.IGNORECASE
+)
+
+
+def _allow_attr(tag: str, name: str, value: str) -> bool:
+    if name not in _RICH_TEXT_ATTRS.get(tag, []):
+        return False
+    if tag == "img" and name == "src" and value.startswith("data:"):
+        return bool(_IMG_DATA_URI_RE.match(value))
+    return True
+
 
 def _sanitize_html(value: str) -> str:
-    return bleach.clean(value, tags=_RICH_TEXT_TAGS, attributes=_RICH_TEXT_ATTRS, strip=True)
+    return bleach.clean(value, tags=_RICH_TEXT_TAGS, attributes=_allow_attr,
+                        protocols=["http", "https", "data"], strip=True)
 
 
 async def generate_ref(db: AsyncSession, org_id: str) -> str:

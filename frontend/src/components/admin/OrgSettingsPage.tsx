@@ -169,6 +169,8 @@ export function OrgSettingsPage() {
   const updateOrg = useUpdateOrgSettings()
   const [name, setName] = useState('')
   const [allowRegistration, setAllowRegistration] = useState(true)
+  const [logoUrl, setLogoUrl] = useState('')
+  const [accentColor, setAccentColor] = useState('#6366f1')
 
   // Team
   const currentUser = useAuthStore((s) => s.user)
@@ -193,13 +195,15 @@ export function OrgSettingsPage() {
     if (org) {
       setName(org.name)
       setAllowRegistration(org.allow_registration)
+      if (org.logo_url !== undefined) setLogoUrl(org.logo_url)
+      if (org.accent_color !== undefined) setAccentColor(org.accent_color)
     }
   }, [org])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     try {
-      await updateOrg.mutateAsync({ name, allow_registration: allowRegistration })
+      await updateOrg.mutateAsync({ name, allow_registration: allowRegistration, logo_url: logoUrl, accent_color: accentColor })
       addToast('Organisation settings saved', 'success')
     } catch {
       addToast('Failed to save settings', 'error')
@@ -770,11 +774,23 @@ export function OrgSettingsPage() {
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div>
                   <label style={labelStyle}>Logo URL</label>
-                  <input type="url" className="form-input" placeholder="https://…" disabled />
+                  <input
+                    type="url"
+                    className="form-input"
+                    placeholder="https://…"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                  />
                 </div>
                 <div>
                   <label style={labelStyle}>Accent Colour</label>
-                  <input type="color" className="form-input" style={{ height: 38 }} disabled />
+                  <input
+                    type="color"
+                    className="form-input"
+                    style={{ height: 38 }}
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                  />
                 </div>
               </div>
             </div>

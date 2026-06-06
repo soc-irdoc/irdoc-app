@@ -73,6 +73,8 @@ class OrgSettingsUpdate(BaseModel):
     allow_registration: bool | None = None
     invite_only: bool | None = None
     mfa_required: bool | None = None
+    logo_url: str | None = None
+    accent_color: str | None = None
 
 
 # ── Storage config ────────────────────────────────────────────────────────────

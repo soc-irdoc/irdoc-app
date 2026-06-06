@@ -90,6 +90,12 @@ async def update_org(
     if data.mfa_required is not None:
         settings_patch["mfa_required"] = data.mfa_required
         changes["mfa_required"] = data.mfa_required
+    if data.logo_url is not None:
+        settings_patch["logo_url"] = data.logo_url
+        changes["logo_url"] = data.logo_url
+    if data.accent_color is not None:
+        settings_patch["accent_color"] = data.accent_color
+        changes["accent_color"] = data.accent_color
 
     if settings_patch:
         org.settings = settings_patch

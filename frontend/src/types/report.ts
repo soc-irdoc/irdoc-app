@@ -59,6 +59,7 @@ export type BlockType =
   | 'header'
   | 'tag_list'
   | 'ai_strategy'
+  | 'graph_snapshot'
 
 export interface ReportBlock {
   id: string          // client-only; not persisted
@@ -195,6 +196,13 @@ export const BLOCK_LIBRARY: {
     icon: '🤖',
     description: 'AI-generated strategic incident summary (evidence-grounded, coming soon)',
     defaultConfig: {},
+  },
+  {
+    type: 'graph_snapshot',
+    label: 'Graph Snapshot',
+    icon: '🕸️',
+    description: 'Embeds a white-paper-ready snapshot of the incident relationship graph',
+    defaultConfig: { label: 'Incident Graph' },
   },
 ]
 

@@ -24,6 +24,8 @@ export interface OrgSettings {
   plan: string
   allow_registration: boolean
   mfa_required?: boolean
+  logo_url?: string
+  accent_color?: string
 }
 
 export interface StorageConfigOut {

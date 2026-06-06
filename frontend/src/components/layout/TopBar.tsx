@@ -200,7 +200,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           onChange={handleStatusChange}
           disabled={updateIncident.isPending}
           aria-label="Change status"
-          style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6 }}
+          style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6, flexShrink: 0 }}
         >
           <option value="open">OPEN</option>
           <option value="contained">CONTAINED</option>
