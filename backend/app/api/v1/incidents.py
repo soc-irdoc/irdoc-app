@@ -78,6 +78,10 @@ async def update_incident(
     updated = await incident_service.update_incident(db, incident, data)
     out = IncidentOut.model_validate(updated)
     await publish_ws(incident_id, "incident:updated", out.model_dump(mode="json"))
+
+    from app.services.report_service import maybe_trigger_ai_report
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
+
     return {"data": out, "error": None}
 
 

@@ -14,6 +14,7 @@ export interface Report {
   classification: string
   generated_by: string | null
   is_ai_assisted: boolean
+  version_number: number
   status: ReportStatus
   error_message: string | null
   storage_path: string | null
@@ -86,6 +87,7 @@ export interface ReportTemplate {
   description: string | null
   is_system: boolean
   is_default: boolean
+  ai_auto_generate: boolean
   schema_json: Omit<ReportBlock, 'id'>[]
   logo_data_uri: string | null
   primary_colour: string | null

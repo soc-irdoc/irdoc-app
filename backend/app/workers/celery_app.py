@@ -22,6 +22,7 @@ celery_app.conf.update(
     task_default_queue="default",
     task_routes={
         "app.workers.tasks.generate_report": {"queue": "reports"},
+        "app.workers.tasks.generate_ai_report": {"queue": "ai"},
         "app.workers.tasks.enrich_ioc": {"queue": "enrichment"},
         "app.workers.tasks.verify_file_hash": {"queue": "default"},
         "app.workers.tasks.auto_detect_iocs_from_entry": {"queue": "default"},

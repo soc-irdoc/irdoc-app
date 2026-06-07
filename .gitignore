@@ -27,6 +27,9 @@ frontend/build/
 # Storage (never commit uploaded files)
 storage/
 
+# Backups
+backups/
+
 # IDE
 .idea/
 .vscode/

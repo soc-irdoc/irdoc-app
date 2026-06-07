@@ -152,6 +152,7 @@ from app.api.v1 import (  # noqa: E402
     dashboard,
     backup,
     smtp,
+    ai_config,
 )
 # Load all integration plugins on startup
 import app.plugins  # noqa: F401, E402
@@ -191,6 +192,7 @@ application.include_router(dashboard.router, prefix=API_PREFIX)
 # Backup
 application.include_router(backup.router, prefix=API_PREFIX)
 application.include_router(smtp.router, prefix=API_PREFIX)
+application.include_router(ai_config.router, prefix=API_PREFIX)
 
 # ── Combined ASGI app (Socket.io + FastAPI) ─────────────────────────────────
 import socketio as _sio_lib  # noqa: E402

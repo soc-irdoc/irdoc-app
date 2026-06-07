@@ -25,7 +25,7 @@ FEATURE_MAP: dict[str, str] = {
     "report_template_builder": "pro",
     "report_pdf_export": "pro",
     "report_docx_export": "pro",
-    "ai_summaries": "pro",
+    "ai_summaries": "core",  # Ollama is local/free — no license gate
     "sharepoint_sync": "pro",
     "cloud_storage": "pro",       # S3 / Azure / GCS backends
     "advanced_integrations": "pro",  # VT, AbuseIPDB, Sentinel, CrowdStrike

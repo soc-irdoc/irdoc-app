@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useReportTemplates } from '@/hooks/useReportTemplates'
 import { useReports, useDeleteReport, useDownloadReport, useGenerateReport } from '@/hooks/useReports'
 import { useUIStore } from '@/stores/uiStore'
+import { useAiConfig } from '@/hooks/useAiConfig'
 import { Report, FORMAT_LABELS } from '@/types/report'
 import { formatRelative } from '@/lib/utils'
 import { getSocket } from '@/lib/websocket'
@@ -16,6 +17,74 @@ const STATUS_CHIP: Record<string, string> = {
   generating: 'chip chip-blue',
   ready: 'chip chip-green',
   failed: 'chip chip-red',
+}
+
+function AiBanner({ reports }: { reports: Report[] }) {
+  const { data: aiConfig } = useAiConfig()
+  if (!aiConfig?.is_enabled) return null
+
+  const aiReports = reports.filter((r) => r.is_ai_assisted)
+  const isGenerating = aiReports.some((r) => r.status === 'pending' || r.status === 'generating')
+  const latestReady = aiReports.find((r) => r.status === 'ready')
+  const latestFailed = !isGenerating && !latestReady && aiReports.find((r) => r.status === 'failed')
+
+  let bg = 'rgba(99,102,241,0.06)'
+  let border = 'rgba(99,102,241,0.2)'
+  let icon = '🤖'
+  let text: React.ReactNode = null
+
+  if (isGenerating) {
+    bg = 'rgba(59,130,246,0.06)'
+    border = 'rgba(59,130,246,0.2)'
+    icon = '⏳'
+    text = <span style={{ color: 'var(--text-secondary)' }}>AI is generating a new report version…</span>
+  } else if (latestReady) {
+    bg = 'rgba(34,197,94,0.06)'
+    border = 'rgba(34,197,94,0.2)'
+    icon = '✓'
+    text = (
+      <span style={{ color: 'var(--text-secondary)' }}>
+        AI report is current.{' '}
+        <span style={{ color: 'var(--text-muted)' }}>
+          Last generated: {formatRelative(latestReady.generated_at ?? latestReady.created_at)} (v{latestReady.version_number})
+        </span>
+      </span>
+    )
+  } else if (latestFailed) {
+    bg = 'rgba(239,68,68,0.06)'
+    border = 'rgba(239,68,68,0.2)'
+    icon = '⚠'
+    text = <span style={{ color: 'var(--red)' }}>AI report generation failed. It will retry on the next incident update.</span>
+  } else {
+    text = (
+      <span style={{ color: 'var(--text-muted)' }}>
+        AI report generation is enabled. Update the incident to trigger the first AI report.
+      </span>
+    )
+  }
+
+  return (
+    <div style={{
+      background: bg,
+      border: `1px solid ${border}`,
+      borderRadius: 10,
+      padding: '12px 16px',
+      marginBottom: 24,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      fontSize: 13,
+    }}>
+      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <strong style={{ color: 'var(--text-primary)', fontSize: 12 }}>AI Report Assistant </strong>
+        {text}
+      </div>
+      <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0, fontFamily: 'monospace' }}>
+        {aiConfig.model_name}
+      </span>
+    </div>
+  )
 }
 
 export default function ReportPage({ incidentId }: Props) {
@@ -175,6 +244,9 @@ export default function ReportPage({ incidentId }: Props) {
         )}
       </section>
 
+      {/* AI Report Banner */}
+      <AiBanner reports={reports} />
+
       {/* Generated Reports */}
       <section>
         <h3 style={{
@@ -202,7 +274,7 @@ export default function ReportPage({ incidentId }: Props) {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
-                  {['Template', 'Format', 'Status', 'Generated', ''].map((h) => (
+                  {['Template', 'Format', 'Version', 'Status', 'Generated', ''].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -224,10 +296,18 @@ export default function ReportPage({ incidentId }: Props) {
                 {reports.map((r) => (
                   <tr key={r.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>
-                      {r.report_type}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        {r.report_type}
+                        {r.is_ai_assisted && (
+                          <span className="chip chip-blue" style={{ fontSize: '10px', padding: '1px 6px' }}>AI</span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                       {FORMAT_LABELS[r.format as keyof typeof FORMAT_LABELS] ?? r.format}
+                    </td>
+                    <td style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {r.is_ai_assisted ? `v${r.version_number}` : '—'}
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <span className={STATUS_CHIP[r.status] ?? 'chip chip-muted'} style={{ fontSize: '11px' }}>

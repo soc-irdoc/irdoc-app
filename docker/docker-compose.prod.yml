@@ -72,10 +72,22 @@ services:
       - "8000"
     # Not exposed directly — traffic goes through nginx (frontend service)
 
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   worker:
     image: soc-irdoc/irdoc-backend:${VERSION:-latest}
     restart: unless-stopped
-    command: celery -A app.workers.celery_app worker -c 4 -Q default,reports,enrichment --loglevel=warning
+    command: celery -A app.workers.celery_app worker -c 4 -Q default,reports,enrichment,ai --loglevel=warning
     environment: *backend-env
     volumes:
       - ./storage:/app/storage
@@ -111,3 +123,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  ollama_data:

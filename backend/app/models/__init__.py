@@ -20,3 +20,5 @@ from app.models.sso_config import SSOConfig  # noqa: F401
 from app.models.asset import Asset, AssetTimelineLink, AssetLink  # noqa: F401
 from app.models.backup import BackupConfig, BackupRecord  # noqa: F401
 from app.models.smtp_config import SmtpConfig  # noqa: F401
+from app.models.pdf_template import PdfTemplate  # noqa: F401
+from app.models.ai_config import AiConfig  # noqa: F401

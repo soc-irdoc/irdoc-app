@@ -39,6 +39,7 @@ class ReportTemplate(Base):
     logo_data_uri: Mapped[str | None] = mapped_column(Text, nullable=True)
     primary_colour: Mapped[str | None] = mapped_column(String(7), nullable=True)
     company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    ai_auto_generate: Mapped[bool] = mapped_column(Boolean, default=False)
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )

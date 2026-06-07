@@ -24,6 +24,7 @@ class ReportOut(BaseModel):
     classification: str
     generated_by: UUID | None
     is_ai_assisted: bool
+    version_number: int = 1
     status: str
     error_message: str | None
     storage_path: str | None

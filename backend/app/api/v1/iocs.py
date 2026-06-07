@@ -29,6 +29,8 @@ async def create_ioc(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     ioc = await ioc_service.create_ioc(db, incident_id, data, str(current_user.id))
+    from app.services.report_service import maybe_trigger_ai_report
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
     return {"data": IOCOut.model_validate(ioc), "error": None}
 
 
@@ -41,6 +43,8 @@ async def bulk_import_iocs(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     iocs = await ioc_service.bulk_import(db, incident_id, data.text, str(current_user.id))
+    from app.services.report_service import maybe_trigger_ai_report
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
     return {"data": [IOCOut.model_validate(i) for i in iocs], "error": None}
 
 

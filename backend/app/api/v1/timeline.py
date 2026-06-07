@@ -53,6 +53,9 @@ async def create_timeline_entry(
 
     out = TimelineEntryOut.model_validate(entry)
     await publish_ws(incident_id, "timeline:entry:added", out.model_dump(mode="json"))
+
+    from app.services.report_service import maybe_trigger_ai_report
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
     return {"data": out, "error": None}
 
 
@@ -69,6 +72,9 @@ async def update_timeline_entry(
     updated = await timeline_service.update_entry(db, entry, data)
     out = TimelineEntryOut.model_validate(updated)
     await publish_ws(incident_id, "timeline:entry:updated", out.model_dump(mode="json"))
+
+    from app.services.report_service import maybe_trigger_ai_report
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
     return {"data": out, "error": None}
 
 

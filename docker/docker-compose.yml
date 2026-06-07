@@ -59,12 +59,24 @@ services:
     ports:
       - "8000:8000"
 
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   worker:
     build:
       context: ../backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: celery -A app.workers.celery_app worker --loglevel=info -Q default,reports,enrichment
+    command: celery -A app.workers.celery_app worker --loglevel=info -Q default,reports,enrichment,ai
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -111,3 +123,4 @@ services:
 
 volumes:
   postgres_data:
+  ollama_data:

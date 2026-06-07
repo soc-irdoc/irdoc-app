@@ -103,7 +103,7 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
-def generate_report(self, report_id: str, include_ai: bool = False):
+def generate_report(self, report_id: str, include_ai: bool = False, org_id: str | None = None):
     async def _run():
         from datetime import datetime, timezone
         from app.core.database import AsyncSessionLocal
@@ -115,7 +115,7 @@ def generate_report(self, report_id: str, include_ai: bool = False):
         from app.services.graph_service import build_graph
         from app.services.graph_renderer import render_graph_svg
         from app.services.storage.resolver import get_storage_backend
-        from sqlalchemy import select
+        from sqlalchemy import select, func as sqlfunc
 
         async with AsyncSessionLocal() as db:
             result = await db.execute(select(Report).where(Report.id == report_id))
@@ -145,13 +145,59 @@ def generate_report(self, report_id: str, include_ai: bool = False):
                 if include_ai:
                     from app.core.feature_flags import check_feature
                     if check_feature("ai_summaries"):
-                        from app.services.ai_service import (
-                            get_ai_provider,
-                            build_executive_summary_prompt,
+                        from app.services.ai_service import get_ai_provider, build_delta_report_prompt
+                        from app.services.ai_config_service import get_ai_config
+
+                        ai_cfg = None
+                        if org_id:
+                            ai_cfg = await get_ai_config(db, org_id)
+
+                        max_events = ai_cfg.max_timeline_events if ai_cfg else 20
+
+                        # Version scoped to (incident, template) — exclude self to get prior max
+                        version_result = await db.execute(
+                            select(sqlfunc.max(Report.version_number)).where(
+                                Report.incident_id == report.incident_id,
+                                Report.report_template_id == report.report_template_id,
+                                Report.id != report.id,
+                            )
                         )
-                        provider = get_ai_provider()
-                        sys_p, usr_p = build_executive_summary_prompt(payload)
-                        payload.ai_executive_summary = await provider.complete(sys_p, usr_p, 400)
+                        max_ver = version_result.scalar_one_or_none() or 0
+                        report.version_number = max_ver + 1
+
+                        # Delta context from previous AI version of same template
+                        prev_result = await db.execute(
+                            select(Report)
+                            .where(
+                                Report.incident_id == report.incident_id,
+                                Report.report_template_id == report.report_template_id,
+                                Report.is_ai_assisted.is_(True),
+                                Report.status == "ready",
+                                Report.id != report.id,
+                            )
+                            .order_by(Report.version_number.desc())
+                            .limit(1)
+                        )
+                        prev_report = prev_result.scalar_one_or_none()
+                        previous_narrative = prev_report.ai_raw_content if prev_report else None
+
+                        # Audience from template destination (management/analyst/legal/custom)
+                        audience = None
+                        if report.report_template_id:
+                            aud_result = await db.execute(
+                                select(ReportTemplate.destination).where(
+                                    ReportTemplate.id == report.report_template_id
+                                )
+                            )
+                            audience = aud_result.scalar_one_or_none()
+
+                        provider = get_ai_provider(ai_cfg)
+                        sys_p, usr_p = build_delta_report_prompt(
+                            payload, previous_narrative, max_events, audience
+                        )
+                        ai_text = await provider.complete(sys_p, usr_p, 800)
+                        payload.ai_executive_summary = ai_text
+                        report.ai_raw_content = ai_text
 
                 if report.report_template_id:
                     rt_result = await db.execute(
@@ -229,6 +275,79 @@ def _emit_ws(incident_id: str, event: str, data: dict):
     payload = json.dumps({"incident_id": incident_id, "event": event, "data": data})
     r.publish(f"irp:ws:{incident_id}", payload)
     r.close()
+
+
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
+def generate_ai_report(self, incident_id: str, org_id: str):
+    """
+    Auto-triggered AI report generation routed to the 'ai' queue.
+
+    For each ReportTemplate flagged ai_auto_generate=True in this org:
+    - Skips templates with no prior report for this incident (seed not yet generated)
+    - Creates one pending Report per activated template and delegates to generate_report
+    """
+    async def _run():
+        from app.core.database import AsyncSessionLocal
+        from app.models.report import Report
+        from app.models.template import ReportTemplate
+        from app.services.ai_config_service import get_ai_config
+        from sqlalchemy import select, func as sqlfunc
+
+        async with AsyncSessionLocal() as db:
+            ai_cfg = await get_ai_config(db, org_id)
+            if not ai_cfg or not ai_cfg.is_enabled:
+                return
+
+            tmpl_result = await db.execute(
+                select(ReportTemplate).where(
+                    ReportTemplate.org_id == org_id,
+                    ReportTemplate.ai_auto_generate.is_(True),
+                )
+            )
+            flagged = tmpl_result.scalars().all()
+            if not flagged:
+                return
+
+            reports_to_generate = []
+            for template in flagged:
+                count_result = await db.execute(
+                    select(sqlfunc.count(Report.id)).where(
+                        Report.incident_id == incident_id,
+                        Report.report_template_id == template.id,
+                    )
+                )
+                if count_result.scalar_one() == 0:
+                    logger.info(
+                        "generate_ai_report: skipping template %s for incident %s — no seed report yet",
+                        template.id, incident_id,
+                    )
+                    continue
+
+                report = Report(
+                    incident_id=incident_id,
+                    report_template_id=template.id,
+                    report_type="pdf",
+                    classification="confidential",
+                    is_ai_assisted=True,
+                    status="pending",
+                )
+                db.add(report)
+                reports_to_generate.append(report)
+
+            if not reports_to_generate:
+                return
+
+            await db.commit()
+            for report in reports_to_generate:
+                await db.refresh(report)
+
+        for report in reports_to_generate:
+            generate_report.apply_async(
+                args=[str(report.id)],
+                kwargs={"include_ai": True, "org_id": org_id},
+            )
+
+    run_async(_run())
 
 
 @celery_app.task(bind=True, max_retries=2)

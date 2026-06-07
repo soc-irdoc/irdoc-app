@@ -10,6 +10,7 @@ import {
   useCloneReportTemplate,
   useDeleteReportTemplate,
   useCreateReportTemplate,
+  useToggleAiAutoGenerate,
 } from '@/hooks/useReportTemplates'
 import { DESTINATION_OPTIONS } from '@/types/report'
 import { Modal } from '@/components/common/Modal'
@@ -28,6 +29,7 @@ export default function ReportTemplateListPage() {
   const cloneTemplate = useCloneReportTemplate()
   const deleteTemplate = useDeleteReportTemplate()
   const createTemplate = useCreateReportTemplate()
+  const toggleAi = useToggleAiAutoGenerate()
 
   const [showNew, setShowNew] = useState(false)
   const [newName, setNewName] = useState('')
@@ -140,14 +142,26 @@ export default function ReportTemplateListPage() {
               >
                 <span style={{ fontSize: '22px' }}>{TEMPLATE_ICONS[t.destination] ?? '📋'}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {t.name}
+                    {t.ai_auto_generate && (
+                      <span className="chip" style={{ fontSize: '10px', background: 'var(--accent-subtle, rgba(249,115,22,0.12))', color: 'var(--accent)' }}>AI</span>
+                    )}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', textTransform: 'capitalize' }}>
                     {t.destination} · {t.schema_json.length} blocks
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button
+                    className={`btn btn-sm ${t.ai_auto_generate ? 'btn-accent' : 'btn-ghost'}`}
+                    style={{ fontSize: '11px' }}
+                    title={t.ai_auto_generate ? 'AI auto-generate ON — click to disable' : 'AI auto-generate OFF — click to enable'}
+                    onClick={() => toggleAi.mutate({ templateId: t.id, enabled: !t.ai_auto_generate })}
+                    disabled={toggleAi.isPending}
+                  >
+                    AI {t.ai_auto_generate ? 'On' : 'Off'}
+                  </button>
                   <button
                     className="btn btn-ghost btn-sm"
                     onClick={() => navigate(`/report-templates/${t.id}`)}

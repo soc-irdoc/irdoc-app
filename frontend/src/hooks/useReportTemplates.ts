@@ -106,6 +106,31 @@ export function useDeleteReportTemplate() {
   })
 }
 
+export function useToggleAiAutoGenerate() {
+  const qc = useQueryClient()
+  const addToast = useUIStore((s) => s.addToast)
+
+  return useMutation({
+    mutationFn: async ({ templateId, enabled }: { templateId: string; enabled: boolean }) => {
+      const { data } = await apiClient.put(`/report-templates/${templateId}`, { ai_auto_generate: enabled })
+      return data.data as ReportTemplate
+    },
+    onSuccess: (t) => {
+      qc.invalidateQueries({ queryKey: ['report-templates'] })
+      addToast(
+        t.ai_auto_generate
+          ? `AI auto-generate enabled for "${t.name}"`
+          : `AI auto-generate disabled for "${t.name}"`,
+        'success',
+      )
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.detail || 'Failed to update template'
+      addToast(msg, 'error')
+    },
+  })
+}
+
 export function useCloneReportTemplate() {
   const qc = useQueryClient()
   const addToast = useUIStore((s) => s.addToast)

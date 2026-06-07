@@ -29,6 +29,8 @@ class Report(Base):
     )
     storage_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_ai_assisted: Mapped[bool] = mapped_column(Boolean, default=False)
+    version_number: Mapped[int] = mapped_column(Integer, default=1)
+    ai_raw_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
