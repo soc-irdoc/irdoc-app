@@ -3,7 +3,7 @@ FROM python:3.12-slim-bookworm
 # ── Non-root user (security hardening) ─────────────────────────────────────────
 RUN groupadd -r irp && useradd -r -g irp irp
 
-# ── System deps for WeasyPrint + asyncpg ───────────────────────────────────────
+# ── System deps for WeasyPrint + asyncpg + pg_dump ─────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
@@ -12,7 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libglib2.0-0 \
     gcc \
-    postgresql-client \
+    curl \
+    gnupg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+       | gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+       > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-16 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

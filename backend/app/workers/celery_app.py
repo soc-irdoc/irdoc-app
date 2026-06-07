@@ -19,6 +19,7 @@ celery_app.conf.update(
     task_track_started=True,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    task_default_queue="default",
     task_routes={
         "app.workers.tasks.generate_report": {"queue": "reports"},
         "app.workers.tasks.enrich_ioc": {"queue": "enrichment"},

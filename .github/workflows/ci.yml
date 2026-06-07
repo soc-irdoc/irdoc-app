@@ -68,6 +68,7 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: postgresql+asyncpg://irp:testpassword@localhost/irp_test
+          TEST_DATABASE_URL: postgresql+asyncpg://irp:testpassword@localhost/irp_test
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test_secret_key_not_for_production_use_at_all
           STORAGE_BACKEND: local

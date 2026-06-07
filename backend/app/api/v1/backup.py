@@ -96,9 +96,13 @@ async def list_backups(
 
 @router.post("/run")
 async def run_backup(
+    db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("users.manage")),
 ):
     from app.workers.backup_tasks import trigger_manual_backup
+    config = await get_or_create_config(db)
+    config.last_backup_status = "running"
+    await db.commit()
     trigger_manual_backup.delay()
     return {"data": {"queued": True}, "error": None}
 

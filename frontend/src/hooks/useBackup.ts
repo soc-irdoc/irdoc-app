@@ -10,15 +10,24 @@ export function useBackupConfig() {
       const res = await apiClient.get<ApiResponse<BackupConfig>>('/admin/backup/config')
       return res.data.data
     },
+    refetchInterval: (query) =>
+      (query.state.data as BackupConfig | undefined)?.last_backup_status === 'running'
+        ? 2000
+        : false,
   })
 }
 
 export function useBackupRecords() {
+  const qc = useQueryClient()
   return useQuery({
     queryKey: ['backup-records'],
     queryFn: async () => {
       const res = await apiClient.get<ApiResponse<BackupRecord[]>>('/admin/backup/backups')
       return res.data.data
+    },
+    refetchInterval: () => {
+      const config = qc.getQueryData<BackupConfig>(['backup-config'])
+      return config?.last_backup_status === 'running' ? 2000 : false
     },
   })
 }
@@ -43,9 +52,9 @@ export function useTriggerBackup() {
       const res = await apiClient.post<ApiResponse<null>>('/admin/backup/run')
       return res.data.data
     },
-    onSuccess: async () => {
-      // Wait for the Celery task to start and update status before refreshing
-      await new Promise(r => setTimeout(r, 3000))
+    onSuccess: () => {
+      // Config already shows "running" (set by the API before dispatching the
+      // task), so refetchInterval activates immediately on the next fetch.
       qc.invalidateQueries({ queryKey: ['backup-config'] })
       qc.invalidateQueries({ queryKey: ['backup-records'] })
     },
