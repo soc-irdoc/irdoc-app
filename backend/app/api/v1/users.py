@@ -211,6 +211,8 @@ async def create_invite(
             inviter_name=current_user.full_name,
             org_name=org_name,
             token=invite.token,
+            db=db,
+            org_id=str(current_user.org_id),
         )
     except Exception:
         import logging

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useIntegrations, useSaveIntegrationConfig, useTestIntegration, useToggleIntegration } from '@/hooks/useIntegrations'
 import { useSSOConfig, useUpdateSSOConfig } from '@/hooks/useAdmin'
+import { SmtpSection } from '@/components/integrations/SmtpSection'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { Modal } from '@/components/common/Modal'
@@ -672,6 +673,10 @@ export function IntegrationsPage() {
 
       {(activeCategory === 'all' || activeCategory === 'sso') && (
         <IdentitySection autoExpand={autoExpandIdentity} />
+      )}
+
+      {(activeCategory === 'all' || activeCategory === 'sso') && (
+        <SmtpSection />
       )}
     </div>
   )

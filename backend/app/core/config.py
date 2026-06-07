@@ -35,23 +35,12 @@ class Settings(BaseSettings):
     WEBHOOK_RATE_LIMIT: int = 20
     WEBHOOK_MAX_PAYLOAD_BYTES: int = 65536
 
-    # Email
-    EMAIL_BACKEND: Literal["console", "smtp", "resend"] = "console"
-
     # AI (Phase 3)
     AI_BACKEND: Literal["anthropic", "openai", "ollama"] = "anthropic"
     AI_MODEL: str = "claude-sonnet-4-6"
     ANTHROPIC_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://ollama:11434"
-
-    # SMTP / Email
-    SMTP_HOST: str = ""
-    SMTP_PORT: int = 587
-    SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
-    SMTP_TLS: bool = True
-    EMAIL_FROM: str = "IRDoc <noreply@localhost>"
 
     # MSSP
     MSSP_MODE: bool = False

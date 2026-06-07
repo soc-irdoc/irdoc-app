@@ -46,11 +46,11 @@ services:
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
       WEBHOOK_RATE_LIMIT: ${WEBHOOK_RATE_LIMIT:-20}
       WEBHOOK_MAX_PAYLOAD_BYTES: ${WEBHOOK_MAX_PAYLOAD_BYTES:-65536}
-      EMAIL_BACKEND: ${EMAIL_BACKEND:-console}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
     volumes:
       - ../storage:/app/storage
+      - ../backups:/app/backups
     depends_on:
       db:
         condition: service_healthy
@@ -75,6 +75,7 @@ services:
       BASE_URL: ${BASE_URL:-http://localhost:3000}
     volumes:
       - ../storage:/app/storage
+      - ../backups:/app/backups
     depends_on:
       db:
         condition: service_healthy
