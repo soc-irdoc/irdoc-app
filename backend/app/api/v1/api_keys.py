@@ -32,9 +32,7 @@ async def create_api_key(
         scopes=data.scopes,
         expires_at=data.expires_at,
     )
-    out = APIKeyCreated.model_validate(key)
-    out.raw_key = raw_key
-    return out
+    return APIKeyCreated(**APIKeyOut.model_validate(key).model_dump(), raw_key=raw_key)
 
 
 @router.delete("/{key_id}", status_code=204)
