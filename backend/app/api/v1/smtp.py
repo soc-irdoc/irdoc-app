@@ -61,7 +61,7 @@ def _config_to_dict(cfg) -> dict:
 @router.get("")
 async def get_smtp_config(
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_permission("org.manage")),
+    current_user=Depends(require_permission("users.manage")),
 ):
     config = await smtp_config_service.get_smtp_config(db, str(current_user.org_id))
     data = _config_to_dict(config) if config else None
@@ -72,7 +72,7 @@ async def get_smtp_config(
 async def save_smtp_config(
     payload: SmtpConfigPayload,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_permission("org.manage")),
+    current_user=Depends(require_permission("users.manage")),
 ):
     data = payload.model_dump(exclude_none=True)
     config = await smtp_config_service.upsert_smtp_config(db, str(current_user.org_id), data)
@@ -83,7 +83,7 @@ async def save_smtp_config(
 async def test_smtp(
     payload: SmtpTestPayload,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_permission("org.manage")),
+    current_user=Depends(require_permission("users.manage")),
 ):
     """Send a test email to the calling admin's address using the provided (unsaved) settings."""
     from_addr = f"{payload.from_name} <{payload.from_address}>" if payload.from_name and payload.from_address else (payload.from_address or "noreply@localhost")

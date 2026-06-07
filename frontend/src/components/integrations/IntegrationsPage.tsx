@@ -591,7 +591,7 @@ export function IntegrationsPage() {
 
   const visible = (integrations ?? []).filter((i) => !HIDDEN_INTEGRATIONS.has(i.name))
 
-  const categories = ['all', ...Array.from(new Set(visible.map((i) => i.category))), 'sso']
+  const categories = ['all', ...Array.from(new Set(visible.map((i) => i.category))), 'sso', 'email']
 
   const filtered = visible.filter(
     (i) => activeCategory === 'all' || i.category === activeCategory
@@ -638,7 +638,7 @@ export function IntegrationsPage() {
               textTransform: 'capitalize',
             }}
           >
-            {cat === 'all' ? 'All' : cat === 'sso' ? 'Single Sign-On' : CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] ?? cat}
+            {cat === 'all' ? 'All' : cat === 'sso' ? 'Single Sign-On' : cat === 'email' ? 'Email' : CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] ?? cat}
           </button>
         ))}
       </div>
@@ -665,7 +665,7 @@ export function IntegrationsPage() {
         </div>
       ))}
 
-      {filtered.length === 0 && activeCategory !== 'all' && activeCategory !== 'sso' && (
+      {filtered.length === 0 && activeCategory !== 'all' && activeCategory !== 'sso' && activeCategory !== 'email' && (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40, fontSize: 13 }}>
           No integrations in this category.
         </div>
@@ -675,7 +675,7 @@ export function IntegrationsPage() {
         <IdentitySection autoExpand={autoExpandIdentity} />
       )}
 
-      {(activeCategory === 'all' || activeCategory === 'sso') && (
+      {(activeCategory === 'all' || activeCategory === 'email') && (
         <SmtpSection />
       )}
     </div>

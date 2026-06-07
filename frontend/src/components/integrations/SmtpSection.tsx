@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useSmtpConfig, useSaveSmtpConfig, useTestSmtp } from '@/hooks/useSmtp'
+import { useOrgSettings } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 
 const MASKED = '••••••'
+const PRODUCT_ORANGE = '#f97316'
 
 const subLabel = (text: string, optional = false) => (
   <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 6, display: 'block' }}>
@@ -24,7 +26,7 @@ interface FormState {
   port: number
   useTls: boolean
   username: string
-  password: string  // "" means unchanged when a saved value exists
+  password: string
   fromName: string
   fromAddress: string
   subjectTemplate: string
@@ -44,20 +46,20 @@ const DEFAULT_STATE: FormState = {
   fromAddress: '',
   subjectTemplate: "You've been invited to join {org_name}",
   logoUrl: '',
-  accentColor: '#6c63ff',
+  accentColor: PRODUCT_ORANGE,
   footerText: '',
 }
 
-function InvitePreview({ fromName, subjectTemplate, accentColor, logoUrl, footerText }: {
+function InvitePreview({ fromName, subjectTemplate, accentColor, logoUrl, footerText, orgName }: {
   fromName: string
   subjectTemplate: string
   accentColor: string
   logoUrl: string
   footerText: string
+  orgName: string
 }) {
-  const orgName = 'Acme Corp'
-  const subject = subjectTemplate.replace('{org_name}', orgName) || "You've been invited to join Acme Corp"
-  const color = accentColor || '#6c63ff'
+  const subject = subjectTemplate.replace('{org_name}', orgName) || `You've been invited to join ${orgName}`
+  const color = accentColor || PRODUCT_ORANGE
 
   return (
     <div style={{ background: '#ffffff', borderRadius: 8, padding: '18px 16px', fontFamily: 'Arial, sans-serif', fontSize: 12, color: '#222', border: '1px solid #e0e0e0', lineHeight: 1.5 }}>
@@ -88,7 +90,8 @@ function InvitePreview({ fromName, subjectTemplate, accentColor, logoUrl, footer
 
 export function SmtpSection() {
   const addToast = useUIStore((s) => s.addToast)
-  const { data: smtpConfig, isLoading } = useSmtpConfig()
+  const { data: smtpConfig } = useSmtpConfig()
+  const { data: orgSettings } = useOrgSettings()
   const saveConfig = useSaveSmtpConfig()
   const testSmtp = useTestSmtp()
 
@@ -97,7 +100,14 @@ export function SmtpSection() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [testResult, setTestResult] = useState<{ ok: boolean; error: string | null } | null>(null)
 
+  // Seed form from DB config, falling back to org settings for logo/accent
   useEffect(() => {
+    // Wait until at least orgSettings is available so defaults are accurate
+    if (orgSettings === undefined) return
+
+    const orgAccent = orgSettings?.accent_color || PRODUCT_ORANGE
+    const orgLogo = orgSettings?.logo_url || ''
+
     if (smtpConfig) {
       setForm({
         isEnabled: smtpConfig.is_enabled,
@@ -105,18 +115,21 @@ export function SmtpSection() {
         port: smtpConfig.port,
         useTls: smtpConfig.use_tls,
         username: smtpConfig.username ?? '',
-        password: '',  // always empty — typed password replaces; blank = keep
+        password: '',
         fromName: smtpConfig.from_name ?? 'IRDoc Alerts',
         fromAddress: smtpConfig.from_address ?? '',
         subjectTemplate: smtpConfig.subject_template,
-        logoUrl: smtpConfig.logo_url ?? '',
-        accentColor: smtpConfig.accent_color,
+        logoUrl: smtpConfig.logo_url ?? orgLogo,
+        accentColor: smtpConfig.accent_color || orgAccent,
         footerText: smtpConfig.footer_text ?? '',
       })
       setPasswordSaved(smtpConfig.password === MASKED)
       if (smtpConfig.is_enabled || smtpConfig.host) setExpanded(true)
+    } else if (smtpConfig === null) {
+      // No config yet — pre-fill branding from org settings
+      setForm((prev) => ({ ...prev, logoUrl: orgLogo, accentColor: orgAccent }))
     }
-  }, [smtpConfig])
+  }, [smtpConfig, orgSettings])
 
   const set = (key: keyof FormState) => (value: FormState[typeof key]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -128,6 +141,8 @@ export function SmtpSection() {
     : isConfigured
     ? 'Configured (disabled)'
     : 'Not configured'
+
+  const orgName = orgSettings?.name || 'Your Organization'
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -170,8 +185,6 @@ export function SmtpSection() {
       setTestResult({ ok: false, error: err instanceof Error ? err.message : 'Unknown error' })
     }
   }
-
-  if (isLoading) return null
 
   return (
     <div style={{ marginBottom: 32 }} id="smtp-section">
@@ -283,7 +296,7 @@ export function SmtpSection() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
@@ -357,10 +370,16 @@ export function SmtpSection() {
                       <input
                         className="form-input"
                         type="url"
-                        placeholder="https://example.com/logo.png"
+                        placeholder={orgSettings?.logo_url || 'https://example.com/logo.png'}
                         value={form.logoUrl}
                         onChange={(e) => set('logoUrl')(e.target.value)}
                       />
+                      {orgSettings?.logo_url && !form.logoUrl && (
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                          Leave blank to use the logo from{' '}
+                          <span style={{ color: 'var(--accent)' }}>Organization Settings</span>
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px', gap: 8 }}>
@@ -369,16 +388,16 @@ export function SmtpSection() {
                         <input
                           className="form-input"
                           type="text"
-                          placeholder="#6c63ff"
+                          placeholder={PRODUCT_ORANGE}
                           value={form.accentColor}
                           onChange={(e) => set('accentColor')(e.target.value)}
                         />
                       </div>
                       <div>
-                        {subLabel(' ')}
+                        {subLabel(' ')}
                         <input
                           type="color"
-                          value={form.accentColor}
+                          value={form.accentColor || PRODUCT_ORANGE}
                           onChange={(e) => set('accentColor')(e.target.value)}
                           style={{ width: '100%', height: 36, border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-elevated)', cursor: 'pointer', padding: 2 }}
                         />
@@ -390,7 +409,7 @@ export function SmtpSection() {
                       <input
                         className="form-input"
                         type="text"
-                        placeholder="© 2025 Acme Corp. All rights reserved."
+                        placeholder={`© ${new Date().getFullYear()} ${orgName}. All rights reserved.`}
                         value={form.footerText}
                         onChange={(e) => set('footerText')(e.target.value)}
                       />
@@ -408,6 +427,7 @@ export function SmtpSection() {
                       accentColor={form.accentColor}
                       logoUrl={form.logoUrl}
                       footerText={form.footerText}
+                      orgName={orgName}
                     />
                   </div>
                 </div>
