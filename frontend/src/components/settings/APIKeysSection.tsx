@@ -308,12 +308,12 @@ export function APIKeysSection() {
             variant="accent"
             onClick={() => {
               if (showRawKey) navigator.clipboard.writeText(showRawKey)
-              addToast('Copied to clipboard', 'success')
+              addToast('Copied to clipboard — key will not be shown again', 'success')
+              setShowRawKey(null)
             }}
           >
-            Copy Key
+            Copy & Close
           </Button>
-          <Button variant="ghost" onClick={() => setShowRawKey(null)}>Done</Button>
         </div>
       </Modal>
     </div>

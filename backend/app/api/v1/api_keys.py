@@ -18,7 +18,7 @@ async def list_api_keys(
     return {"data": [APIKeyOut.model_validate(k) for k in keys], "error": None}
 
 
-@router.post("", response_model=APIKeyCreated, status_code=201)
+@router.post("", status_code=201)
 async def create_api_key(
     data: APIKeyCreate,
     db: AsyncSession = Depends(get_db),
@@ -32,7 +32,8 @@ async def create_api_key(
         scopes=data.scopes,
         expires_at=data.expires_at,
     )
-    return APIKeyCreated(**APIKeyOut.model_validate(key).model_dump(), raw_key=raw_key)
+    out = APIKeyCreated(**APIKeyOut.model_validate(key).model_dump(), raw_key=raw_key)
+    return {"data": out, "error": None}
 
 
 @router.delete("/{key_id}", status_code=204)
