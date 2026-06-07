@@ -146,10 +146,10 @@ export function SmtpSection() {
         accent_color: form.accentColor || undefined,
         footer_text: form.footerText || null,
       })
-      addToast({ type: 'success', message: 'SMTP configuration saved.' })
+      addToast('SMTP configuration saved.', 'success')
       setForm((prev) => ({ ...prev, password: '' }))
     } catch {
-      addToast({ type: 'error', message: 'Failed to save SMTP configuration.' })
+      addToast('Failed to save SMTP configuration.', 'error')
     }
   }
 
