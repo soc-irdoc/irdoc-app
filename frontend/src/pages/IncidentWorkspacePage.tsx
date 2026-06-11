@@ -86,7 +86,7 @@ export function IncidentWorkspacePage() {
             {activeSection === 'iocs'     && <IOCPage incidentId={incident.id} />}
             {activeSection === 'assets'   && <AssetsPage incidentId={incident.id} />}
             {activeSection === 'summary'  && <SummaryPage incidentId={incident.id} />}
-            {activeSection === 'reports'  && <ReportPage incidentId={incident.id} />}
+            {activeSection === 'reports'  && <ReportPage incidentId={incident.id} incidentUpdatedAt={incident.updated_at} />}
             {activeSection === 'graph' && (
               <Suspense fallback={<PageLoader />}>
                 <InvestigationGraph incidentId={incident.id} />

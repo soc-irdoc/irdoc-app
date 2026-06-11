@@ -103,7 +103,7 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
-def generate_report(self, report_id: str, include_ai: bool = False, org_id: str | None = None):
+def generate_report(self, report_id: str, include_ai: bool = False, org_id: str | None = None, trigger_sharepoint: bool = False):
     async def _run():
         from datetime import datetime, timezone
         from app.core.database import AsyncSessionLocal
@@ -251,6 +251,9 @@ def generate_report(self, report_id: str, include_ai: bool = False, org_id: str 
                     _emit_ws(str(report.incident_id), "report:ready", {"report_id": report_id})
                 except Exception as ws_err:
                     logger.warning("generate_report: WS emit failed: %s", ws_err)
+
+                if (report.is_ai_assisted or trigger_sharepoint) and org_id:
+                    push_report_to_sharepoint.delay(report_id, org_id)
 
             except Exception as exc:
                 logger.exception("generate_report: failed for %s: %s", report_id, exc)
@@ -574,6 +577,138 @@ def send_notification(self, org_id: str, event: str, payload: dict):
     run_async(_run())
 
 
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
+def push_report_to_sharepoint(self, report_id: str, org_id: str):
+    """Push an already-generated report PDF to SharePoint and store the returned webUrl."""
+    async def _run():
+        import app.plugins  # noqa: F401 — loads SharePointPlugin
+        from app.core.database import AsyncSessionLocal
+        from app.models.report import Report
+        from app.models.template import ReportTemplate
+        from app.models.incident import Incident
+        from app.services.integration_service import get_integration, decrypt_config
+        from app.services.storage.resolver import get_storage_backend
+        from app.plugins.registry import PLUGINS
+        from sqlalchemy import select
+
+        async with AsyncSessionLocal() as db:
+            report = (await db.execute(select(Report).where(Report.id == report_id))).scalar_one_or_none()
+            if not report or report.status != "ready" or not report.storage_path:
+                logger.info("push_report_to_sharepoint: skipping %s — not ready or no storage_path", report_id)
+                return
+
+            sp_record = await get_integration(org_id, "sharepoint", db)
+            if not sp_record or not sp_record.is_enabled:
+                return
+
+            config = decrypt_config(sp_record.config)
+            backend = get_storage_backend()
+            file_bytes = await backend.retrieve(report.storage_path)
+
+            template_name = "Incident Report"
+            if report.report_template_id:
+                tmpl = (await db.execute(
+                    select(ReportTemplate).where(ReportTemplate.id == report.report_template_id)
+                )).scalar_one_or_none()
+                if tmpl:
+                    template_name = tmpl.name
+
+            incident = (await db.execute(
+                select(Incident).where(Incident.id == report.incident_id)
+            )).scalar_one_or_none()
+
+            pattern = config.get("filename_pattern", "{incident_ref} - {template_name}.pdf")
+            try:
+                filename = pattern.format(
+                    incident_ref=incident.incident_ref if incident else "INC",
+                    incident_title=(incident.title[:50].replace("/", "-") if incident else "Incident"),
+                    template_name=template_name,
+                )
+            except KeyError:
+                filename = f"{(incident.incident_ref if incident else 'INC')} - {template_name}.pdf"
+
+            sp_plugin = PLUGINS.get("sharepoint")
+            if not sp_plugin:
+                raise RuntimeError("SharePoint plugin not loaded")
+
+            sharepoint_url = await sp_plugin().push_report(file_bytes, filename, config)
+
+            report.sharepoint_url = sharepoint_url
+            await db.commit()
+
+            logger.info("push_report_to_sharepoint: %s → %s", report_id, sharepoint_url)
+
+            try:
+                _emit_ws(str(report.incident_id), "report:sharepoint_synced", {
+                    "report_id": report_id,
+                    "sharepoint_url": sharepoint_url,
+                })
+            except Exception as ws_err:
+                logger.warning("push_report_to_sharepoint: WS emit failed: %s", ws_err)
+
+    try:
+        run_async(_run())
+    except Exception as exc:
+        logger.exception("push_report_to_sharepoint: failed report=%s: %s", report_id, exc)
+        raise self.retry(exc=exc)
+
+
+@celery_app.task(bind=True, max_retries=2)
+def auto_generate_for_sharepoint(self, incident_id: str, org_id: str):
+    """Non-AI SharePoint sync: generate a fresh PDF from the default template and push."""
+    async def _run():
+        from app.core.database import AsyncSessionLocal
+        from app.models.report import Report
+        from app.models.template import ReportTemplate
+        from sqlalchemy import select
+
+        async with AsyncSessionLocal() as db:
+            # Prefer the default template; fall back to ai_auto_generate templates
+            tmpl_result = await db.execute(
+                select(ReportTemplate).where(
+                    ReportTemplate.org_id == org_id,
+                    ReportTemplate.is_default.is_(True),
+                ).limit(1)
+            )
+            templates = tmpl_result.scalars().all()
+            if not templates:
+                tmpl_result = await db.execute(
+                    select(ReportTemplate).where(
+                        ReportTemplate.org_id == org_id,
+                        ReportTemplate.ai_auto_generate.is_(True),
+                    )
+                )
+                templates = tmpl_result.scalars().all()
+            if not templates:
+                logger.info("auto_generate_for_sharepoint: no template for org %s, skipping", org_id)
+                return
+
+            reports_created = []
+            for template in templates:
+                report = Report(
+                    incident_id=incident_id,
+                    report_template_id=template.id,
+                    report_type="pdf",
+                    classification="confidential",
+                    is_ai_assisted=False,
+                    status="pending",
+                )
+                db.add(report)
+                reports_created.append(report)
+
+            await db.commit()
+            for report in reports_created:
+                await db.refresh(report)
+
+        for report in reports_created:
+            generate_report.apply_async(
+                args=[str(report.id)],
+                kwargs={"include_ai": False, "org_id": org_id, "trigger_sharepoint": True},
+            )
+
+    run_async(_run())
+
+
 @celery_app.task
 def process_expired_sync_locks():
     """
@@ -589,7 +724,7 @@ def process_expired_sync_locks():
 
     r = redis_sync.from_url(settings.REDIS_URL)
     try:
-        # Scan for sync_pending keys
+        # Scan for legacy per-policy sync_pending keys
         keys = list(r.scan_iter("sync_pending:*", count=100))
         for key in keys:
             ttl = r.ttl(key)
@@ -604,6 +739,21 @@ def process_expired_sync_locks():
                         logger.info("process_expired_sync_locks: fired sync incident=%s policy=%s", incident_id, policy_id)
                 except Exception as exc:
                     logger.warning("process_expired_sync_locks: failed to parse key %s: %s", key, exc)
+
+        # Global SharePoint no-AI sync keys: sp_nosync:{incident_id}:{org_id}
+        sp_keys = list(r.scan_iter("sp_nosync:*", count=100))
+        for key in sp_keys:
+            ttl = r.ttl(key)
+            if ttl == -2 or (0 <= ttl <= 2):
+                try:
+                    parts = key.decode().split(":")
+                    if len(parts) == 3:
+                        _, incident_id, org_id = parts
+                        auto_generate_for_sharepoint.delay(incident_id, org_id)
+                        r.delete(key)
+                        logger.info("process_expired_sync_locks: sp_nosync fired incident=%s org=%s", incident_id, org_id)
+                except Exception as exc:
+                    logger.warning("process_expired_sync_locks: sp_nosync key %s failed: %s", key, exc)
     finally:
         r.close()
 

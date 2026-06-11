@@ -79,8 +79,9 @@ async def update_incident(
     out = IncidentOut.model_validate(updated)
     await publish_ws(incident_id, "incident:updated", out.model_dump(mode="json"))
 
-    from app.services.report_service import maybe_trigger_ai_report
+    from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
     await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
+    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
 
     return {"data": out, "error": None}
 

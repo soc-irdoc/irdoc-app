@@ -28,8 +28,10 @@ class SharePointPlugin:
                           "placeholder": "https://company.sharepoint.com/sites/SOC"},
         "library":       {"type": "string",   "label": "Document Library",      "default": "IR Reports"},
         "filename_pattern": {"type": "string", "label": "Filename Pattern",
-                             "default": "{incident_ref} - {incident_title}.pdf",
-                             "placeholder": "{incident_ref} - {incident_title}.pdf"},
+                             "default": "{incident_ref} - {template_name}.pdf",
+                             "placeholder": "{incident_ref} - {template_name}.pdf"},
+        "debounce_seconds": {"type": "string", "label": "Sync Delay (seconds)",
+                             "default": "120", "placeholder": "120"},
     }
 
     async def test_connection(self, config: dict) -> bool:

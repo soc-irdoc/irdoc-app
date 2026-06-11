@@ -4,12 +4,14 @@ import { useReportTemplates } from '@/hooks/useReportTemplates'
 import { useReports, useDeleteReport, useDownloadReport, useGenerateReport } from '@/hooks/useReports'
 import { useUIStore } from '@/stores/uiStore'
 import { useAiConfig } from '@/hooks/useAiConfig'
+import { useIntegrations } from '@/hooks/useIntegrations'
 import { Report, FORMAT_LABELS } from '@/types/report'
 import { formatRelative } from '@/lib/utils'
 import { getSocket } from '@/lib/websocket'
 
 interface Props {
   incidentId: string
+  incidentUpdatedAt?: string
 }
 
 const STATUS_CHIP: Record<string, string> = {
@@ -87,7 +89,80 @@ function AiBanner({ reports }: { reports: Report[] }) {
   )
 }
 
-export default function ReportPage({ incidentId }: Props) {
+function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], incidentUpdatedAt?: string }) {
+  const { data: integrations = [] } = useIntegrations()
+  const spEnabled = (integrations as any[]).find((i) => i.plugin_name === 'sharepoint')?.is_enabled ?? false
+  if (!spEnabled) return null
+
+  const syncedReports = reports.filter((r) => r.sharepoint_url)
+  const lastSynced = [...syncedReports].sort(
+    (a, b) => new Date(b.generated_at ?? b.created_at).getTime() - new Date(a.generated_at ?? a.created_at).getTime()
+  )[0] ?? null
+
+  const hasPendingChanges =
+    lastSynced != null &&
+    incidentUpdatedAt != null &&
+    new Date(incidentUpdatedAt) > new Date(lastSynced.generated_at ?? lastSynced.created_at)
+
+  let bg = 'rgba(14,165,233,0.06)'
+  let border = 'rgba(14,165,233,0.2)'
+  let icon = '📂'
+  let text: React.ReactNode
+
+  if (!lastSynced) {
+    text = (
+      <span style={{ color: 'var(--text-muted)' }}>
+        SharePoint sync active. Reports will be pushed automatically after each update.
+      </span>
+    )
+  } else if (hasPendingChanges) {
+    bg = 'rgba(234,179,8,0.06)'
+    border = 'rgba(234,179,8,0.2)'
+    icon = '🔄'
+    text = (
+      <span style={{ color: 'var(--text-secondary)' }}>
+        SharePoint sync active.{' '}
+        <span style={{ color: 'var(--text-muted)' }}>
+          Last synced: {formatRelative(lastSynced.generated_at ?? lastSynced.created_at)} — incident has changes, sync pending.
+        </span>
+      </span>
+    )
+  } else {
+    bg = 'rgba(34,197,94,0.06)'
+    border = 'rgba(34,197,94,0.2)'
+    icon = '✓'
+    text = (
+      <span style={{ color: 'var(--text-secondary)' }}>
+        SharePoint sync active.{' '}
+        <span style={{ color: 'var(--text-muted)' }}>
+          Last synced: {formatRelative(lastSynced.generated_at ?? lastSynced.created_at)} — report is current.
+        </span>
+      </span>
+    )
+  }
+
+  return (
+    <div style={{
+      background: bg,
+      border: `1px solid ${border}`,
+      borderRadius: 10,
+      padding: '12px 16px',
+      marginBottom: 24,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      fontSize: 13,
+    }}>
+      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <strong style={{ color: 'var(--text-primary)', fontSize: 12 }}>SharePoint Sync </strong>
+        {text}
+      </div>
+    </div>
+  )
+}
+
+export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
   const qc = useQueryClient()
   const addToast = useUIStore((s) => s.addToast)
 
@@ -99,13 +174,17 @@ export default function ReportPage({ incidentId }: Props) {
 
   const [generatingFor, setGeneratingFor] = useState<string | null>(null)
 
-  // Listen for report:ready WebSocket event
+  // Listen for report:ready and report:sharepoint_synced WebSocket events
   useEffect(() => {
     const socket = getSocket()
     if (!socket) return
     const handler = () => qc.invalidateQueries({ queryKey: ['reports', incidentId] })
     socket.on('report:ready', handler)
-    return () => { socket.off('report:ready', handler) }
+    socket.on('report:sharepoint_synced', handler)
+    return () => {
+      socket.off('report:ready', handler)
+      socket.off('report:sharepoint_synced', handler)
+    }
   }, [incidentId, qc])
 
   const handleGenerate = async (templateId: string | null) => {
@@ -247,6 +326,9 @@ export default function ReportPage({ incidentId }: Props) {
       {/* AI Report Banner */}
       <AiBanner reports={reports} />
 
+      {/* SharePoint Sync Banner */}
+      <SharePointBanner reports={reports} incidentUpdatedAt={incidentUpdatedAt} />
+
       {/* Generated Reports */}
       <section>
         <h3 style={{
@@ -320,7 +402,17 @@ export default function ReportPage({ incidentId }: Props) {
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                        {r.status === 'ready' && (
+                        {r.status === 'ready' && r.sharepoint_url && (
+                          <a
+                            href={r.sharepoint_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-ghost btn-sm"
+                          >
+                            🔗 Access Report
+                          </a>
+                        )}
+                        {r.status === 'ready' && !r.sharepoint_url && (
                           <button
                             className="btn btn-ghost btn-sm"
                             onClick={() => handleDownload(r)}

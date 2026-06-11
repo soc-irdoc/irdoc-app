@@ -101,6 +101,29 @@ async def enqueue_ai_report(incident_id: str, org_id: str, debounce_seconds: int
         r.close()
 
 
+async def maybe_trigger_sharepoint_sync(db: AsyncSession, incident_id: str, org_id: str) -> None:
+    """Debounced SharePoint sync for non-AI orgs. No-op if AI is enabled (AI path handles push)."""
+    try:
+        from app.services.ai_config_service import get_ai_config
+        from app.services.integration_service import get_integration, decrypt_config
+        ai_cfg = await get_ai_config(db, org_id)
+        if ai_cfg and ai_cfg.is_enabled:
+            return
+        sp = await get_integration(org_id, "sharepoint", db)
+        if not sp or not sp.is_enabled:
+            return
+        debounce = int(decrypt_config(sp.config).get("debounce_seconds") or "120")
+        import redis as redis_sync
+        from app.core.config import settings
+        r = redis_sync.from_url(settings.REDIS_URL)
+        try:
+            r.set(f"sp_nosync:{incident_id}:{org_id}", "1", ex=debounce)
+        finally:
+            r.close()
+    except Exception as exc:
+        logger.warning("maybe_trigger_sharepoint_sync failed for %s: %s", incident_id, exc)
+
+
 async def list_reports(db: AsyncSession, incident_id: str) -> list[Report]:
     result = await db.execute(
         select(Report)

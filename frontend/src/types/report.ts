@@ -18,6 +18,7 @@ export interface Report {
   status: ReportStatus
   error_message: string | null
   storage_path: string | null
+  sharepoint_url: string | null
   generated_at: string | null
   created_at: string
 }

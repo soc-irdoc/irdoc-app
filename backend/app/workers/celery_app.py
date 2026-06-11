@@ -28,6 +28,8 @@ celery_app.conf.update(
         "app.workers.tasks.auto_detect_iocs_from_entry": {"queue": "default"},
         "app.workers.tasks.send_notification": {"queue": "default"},
         "app.workers.tasks.sync_to_sharepoint": {"queue": "default"},
+        "app.workers.tasks.push_report_to_sharepoint": {"queue": "default"},
+        "app.workers.tasks.auto_generate_for_sharepoint": {"queue": "default"},
     },
     beat_schedule={
         # Check for expired debounce locks every 10 seconds → fire sync tasks

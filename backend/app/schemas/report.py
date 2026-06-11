@@ -28,6 +28,7 @@ class ReportOut(BaseModel):
     status: str
     error_message: str | None
     storage_path: str | None
+    sharepoint_url: str | None = None
     generated_at: datetime | None
     created_at: datetime
 
