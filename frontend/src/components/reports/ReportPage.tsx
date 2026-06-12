@@ -210,14 +210,16 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
     downloadReport.mutate({ reportId: report.id, filename })
   }
 
-  // Sort: default first, then alphabetical
-  const sortedTemplates = [...reportTemplates].sort((a, b) => {
-    if (b.is_default !== a.is_default) return b.is_default ? 1 : -1
-    return a.name.localeCompare(b.name)
-  })
+  // Sort: default first, then alphabetical; exclude hidden templates
+  const sortedTemplates = [...reportTemplates]
+    .filter((t) => !t.is_hidden)
+    .sort((a, b) => {
+      if (b.is_default !== a.is_default) return b.is_default ? 1 : -1
+      return a.name.localeCompare(b.name)
+    })
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: '960px' }}>
+    <div style={{ padding: '24px 28px', maxWidth: '960px', overflowY: 'auto', height: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>

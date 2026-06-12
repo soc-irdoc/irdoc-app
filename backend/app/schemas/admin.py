@@ -101,27 +101,17 @@ class SSOConfigOut(BaseModel):
 
     id: UUID
     org_id: UUID
-    provider: str
     is_enabled: bool
-    entity_id: str | None = None
-    sso_url: str | None = None
-    idp_metadata_url: str | None = None
-    attr_email: str | None = None
-    attr_name: str | None = None
-    attr_groups: str | None = None
+    tenant_id: str | None = None
+    client_id: str | None = None
+    # client_secret is intentionally omitted — never returned to client
     role_mappings: dict[str, Any] = {}
-    # certificate is intentionally omitted — never returned to client
 
 
 class SSOConfigUpdate(BaseModel):
-    provider: str | None = None
-    idp_metadata_url: str | None = None
-    entity_id: str | None = None
-    sso_url: str | None = None
-    certificate: str | None = None
-    attr_email: str | None = None
-    attr_name: str | None = None
-    attr_groups: str | None = None
+    tenant_id: str | None = None
+    client_id: str | None = None
+    client_secret: str | None = None  # plaintext — encrypted at the service layer
     role_mappings: dict[str, Any] | None = None
     is_enabled: bool | None = None
 

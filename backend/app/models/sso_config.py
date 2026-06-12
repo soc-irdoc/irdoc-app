@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Text, func
+from sqlalchemy import Boolean, DateTime, Text, ForeignKey, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,14 +20,9 @@ class SSOConfig(Base):
         unique=True,
         nullable=False,
     )
-    provider: Mapped[str] = mapped_column(Text, nullable=False, default="saml")
-    idp_metadata_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    entity_id: Mapped[str | None] = mapped_column(Text, nullable=True)
-    sso_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    certificate: Mapped[str | None] = mapped_column(Text, nullable=True)
-    attr_email: Mapped[str | None] = mapped_column(Text, nullable=True)
-    attr_name: Mapped[str | None] = mapped_column(Text, nullable=True)
-    attr_groups: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tenant_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # Fernet-encrypted
     role_mappings: Mapped[dict] = mapped_column(JSONB, default=dict)
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -37,7 +32,6 @@ class SSOConfig(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # Relationships
     organization: Mapped["Organization"] = relationship(  # noqa: F821
         "Organization", lazy="noload"
     )

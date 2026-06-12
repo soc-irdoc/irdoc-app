@@ -124,7 +124,6 @@ export function SmtpSection() {
         footerText: smtpConfig.footer_text ?? '',
       })
       setPasswordSaved(smtpConfig.password === MASKED)
-      if (smtpConfig.is_enabled || smtpConfig.host) setExpanded(true)
     } else if (smtpConfig === null) {
       // No config yet — pre-fill branding from org settings
       setForm((prev) => ({ ...prev, logoUrl: orgLogo, accentColor: orgAccent }))
@@ -146,6 +145,14 @@ export function SmtpSection() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
+    if (!form.host.trim()) {
+      addToast('SMTP host is required', 'error')
+      return
+    }
+    if (!form.fromAddress.trim()) {
+      addToast('From address is required', 'error')
+      return
+    }
     try {
       await saveConfig.mutateAsync({
         is_enabled: form.isEnabled,

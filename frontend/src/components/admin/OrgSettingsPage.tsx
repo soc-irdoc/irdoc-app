@@ -656,7 +656,7 @@ export function OrgSettingsPage() {
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Entra ID / Azure AD</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-                      Not configured — set up SAML 2.0 SSO in Integrations
+                      Not configured — set up SSO (OIDC) in Integrations
                     </div>
                   </div>
                 </div>
@@ -688,7 +688,7 @@ export function OrgSettingsPage() {
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>On-Premises AD / LDAP</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-                      Configure SAML or LDAP identity in Integrations
+                      Configure identity provider in Integrations
                     </div>
                   </div>
                 </div>

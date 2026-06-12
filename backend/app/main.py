@@ -147,6 +147,7 @@ from app.api.v1 import (  # noqa: E402
     audit,
     admin,
     saml,
+    oidc,
     pdf_templates,
     mfa,
     dashboard,
@@ -183,6 +184,7 @@ application.include_router(users.router, prefix=API_PREFIX)
 application.include_router(audit.router, prefix=API_PREFIX)
 application.include_router(admin.router, prefix=API_PREFIX)
 application.include_router(saml.router, prefix=API_PREFIX)
+application.include_router(oidc.router, prefix=API_PREFIX)
 # Post-launch additions
 application.include_router(pdf_templates.router, prefix=API_PREFIX)
 # MFA

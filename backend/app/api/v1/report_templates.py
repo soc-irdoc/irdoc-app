@@ -73,10 +73,12 @@ async def update_report_template(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("templates.update")),
 ):
-    if not check_feature("report_template_builder"):
-        raise HTTPException(status_code=402, detail="Report Template Builder requires a premium license")
     template = await template_service.get_report_template(db, template_id, str(current_user.org_id))
-    if template.is_system:
+    updates = data.model_dump(exclude_none=True)
+    is_hide_only = set(updates.keys()) <= {"is_hidden"}
+    if not is_hide_only and not check_feature("report_template_builder"):
+        raise HTTPException(status_code=402, detail="Report Template Builder requires a premium license")
+    if template.is_system and not is_hide_only:
         raise HTTPException(status_code=403, detail="System templates are read-only — clone first")
     updated = await template_service.update_report_template(db, template, data)
     return {"data": ReportTemplateOut.model_validate(updated), "error": None}

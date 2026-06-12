@@ -11,6 +11,7 @@ import {
   useDeleteReportTemplate,
   useCreateReportTemplate,
   useToggleAiAutoGenerate,
+  useToggleHideReportTemplate,
 } from '@/hooks/useReportTemplates'
 import { DESTINATION_OPTIONS } from '@/types/report'
 import { Modal } from '@/components/common/Modal'
@@ -30,6 +31,7 @@ export default function ReportTemplateListPage() {
   const deleteTemplate = useDeleteReportTemplate()
   const createTemplate = useCreateReportTemplate()
   const toggleAi = useToggleAiAutoGenerate()
+  const toggleHide = useToggleHideReportTemplate()
 
   const [showNew, setShowNew] = useState(false)
   const [newName, setNewName] = useState('')
@@ -96,12 +98,24 @@ export default function ReportTemplateListPage() {
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {t.name}
                     <span className="chip chip-muted" style={{ marginLeft: '8px', fontSize: '10px' }}>SYSTEM</span>
+                    {t.is_hidden && (
+                      <span className="chip chip-muted" style={{ marginLeft: '4px', fontSize: '10px', opacity: 0.65 }}>HIDDEN</span>
+                    )}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', textTransform: 'capitalize' }}>
                     {t.destination} · {t.schema_json.length} blocks
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    style={{ fontSize: '11px', color: 'var(--text-muted)' }}
+                    onClick={() => toggleHide.mutate({ templateId: t.id, hidden: !t.is_hidden })}
+                    disabled={toggleHide.isPending}
+                    title={t.is_hidden ? 'Restore to Reports tab' : 'Hide from Reports tab'}
+                  >
+                    {t.is_hidden ? 'Unhide' : 'Hide'}
+                  </button>
                   <button
                     className="btn btn-ghost btn-sm"
                     onClick={() => cloneTemplate.mutate(t.id)}

@@ -32,6 +32,13 @@ function IntegrationConfigModal({
   const [testResult, setTestResult] = useState<{ ok: boolean; error: string | null } | null>(null)
 
   async function handleSave() {
+    const missingFields = Object.entries(integration.config_schema)
+      .filter(([key, field]) => field.required && !values[key]?.trim())
+      .map(([_, field]) => field.label)
+    if (missingFields.length > 0) {
+      addToast(`Required fields missing: ${missingFields.join(', ')}`, 'error')
+      return
+    }
     try {
       await saveConfig.mutateAsync({ pluginName: integration.name, config: values })
       addToast('Configuration saved', 'success')
@@ -227,60 +234,9 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   )
 }
 
-// ── Identity & Access Section (SSO / SAML 2.0) ───────────────────────────────
-
-const IDP_OPTIONS = [
-  { value: 'azure_ad', label: 'Entra ID / Azure AD' },
-  { value: 'okta', label: 'Okta' },
-  { value: 'google', label: 'Google Workspace' },
-  { value: 'generic_saml', label: 'Generic SAML 2.0' },
-]
+// ── Identity & Access Section (SSO / OIDC) ───────────────────────────────────
 
 const ROLE_OPTIONS = ['viewer', 'analyst', 'senior_analyst', 'admin']
-
-interface IdpConfig {
-  metadataUrlPlaceholder: string
-  entityIdPlaceholder: string
-  ssoUrlPlaceholder: string
-  defaultAttrEmail: string
-  defaultAttrName: string
-  defaultAttrGroups: string
-}
-
-const IDP_CONFIGS: Record<string, IdpConfig> = {
-  azure_ad: {
-    metadataUrlPlaceholder: 'https://login.microsoftonline.com/{tenant-id}/federationmetadata/2007-06/federationmetadata.xml',
-    entityIdPlaceholder: 'https://sts.windows.net/{tenant-id}/',
-    ssoUrlPlaceholder: 'https://login.microsoftonline.com/{tenant-id}/saml2',
-    defaultAttrEmail: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
-    defaultAttrName: 'displayName',
-    defaultAttrGroups: 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups',
-  },
-  okta: {
-    metadataUrlPlaceholder: 'https://{subdomain}.okta.com/app/{app-id}/sso/saml/metadata',
-    entityIdPlaceholder: 'http://www.okta.com/{app-id}',
-    ssoUrlPlaceholder: 'https://{subdomain}.okta.com/app/{app-id}/sso/saml',
-    defaultAttrEmail: 'email',
-    defaultAttrName: 'displayName',
-    defaultAttrGroups: 'groups',
-  },
-  google: {
-    metadataUrlPlaceholder: 'https://accounts.google.com/o/saml2?idpid={idp-entity-id}',
-    entityIdPlaceholder: 'https://accounts.google.com/o/saml2?idpid={idp-entity-id}',
-    ssoUrlPlaceholder: 'https://accounts.google.com/o/saml2/idp?idpid={idp-entity-id}',
-    defaultAttrEmail: 'email',
-    defaultAttrName: 'displayName',
-    defaultAttrGroups: 'groups',
-  },
-  generic_saml: {
-    metadataUrlPlaceholder: 'https://your-idp.example.com/saml/metadata',
-    entityIdPlaceholder: 'https://your-idp.example.com/',
-    ssoUrlPlaceholder: 'https://your-idp.example.com/sso/saml',
-    defaultAttrEmail: 'email',
-    defaultAttrName: 'displayName',
-    defaultAttrGroups: 'groups',
-  },
-}
 
 interface RoleMapping { group: string; role: string }
 
@@ -291,15 +247,10 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
 
   const [expanded, setExpanded] = useState(autoExpand)
   const [isEnabled, setIsEnabled] = useState(false)
-  const [provider, setProvider] = useState('azure_ad')
-  const [metadataUrl, setMetadataUrl] = useState('')
-  const [entityId, setEntityId] = useState('')
-  const [ssoUrl, setSsoUrl] = useState('')
-  const [attrEmail, setAttrEmail] = useState('email')
-  const [attrName, setAttrName] = useState('displayName')
-  const [attrGroups, setAttrGroups] = useState('groups')
+  const [tenantId, setTenantId] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [clientSecret, setClientSecret] = useState('')
   const [roleMappings, setRoleMappings] = useState<RoleMapping[]>([])
-  const [loadingMetadata, setLoadingMetadata] = useState(false)
 
   useEffect(() => {
     if (autoExpand) setExpanded(true)
@@ -308,42 +259,14 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
   useEffect(() => {
     if (ssoConfig) {
       setIsEnabled(ssoConfig.is_enabled)
-      setProvider(ssoConfig.provider || 'azure_ad')
-      setMetadataUrl(ssoConfig.idp_metadata_url ?? '')
-      setEntityId(ssoConfig.entity_id ?? '')
-      setSsoUrl(ssoConfig.sso_url ?? '')
-      setAttrEmail(ssoConfig.attr_email ?? 'email')
-      setAttrName(ssoConfig.attr_name ?? 'displayName')
-      setAttrGroups(ssoConfig.attr_groups ?? 'groups')
+      setTenantId(ssoConfig.tenant_id ?? '')
+      setClientId(ssoConfig.client_id ?? '')
+      // client_secret is never returned — leave blank (user re-enters to rotate)
       setRoleMappings(
         Object.entries(ssoConfig.role_mappings ?? {}).map(([group, role]) => ({ group, role }))
       )
     }
   }, [ssoConfig])
-
-  function handleProviderChange(newProvider: string) {
-    const oldConfig = IDP_CONFIGS[provider]
-    const newConfig = IDP_CONFIGS[newProvider] ?? IDP_CONFIGS.generic_saml
-    // Only update attribute names if they still match the previous provider's defaults
-    // (i.e., the user hasn't customised them yet)
-    if (attrEmail === oldConfig?.defaultAttrEmail) setAttrEmail(newConfig.defaultAttrEmail)
-    if (attrName === oldConfig?.defaultAttrName) setAttrName(newConfig.defaultAttrName)
-    if (attrGroups === oldConfig?.defaultAttrGroups) setAttrGroups(newConfig.defaultAttrGroups)
-    setProvider(newProvider)
-  }
-
-  async function handleLoadMetadata() {
-    if (!metadataUrl) return
-    setLoadingMetadata(true)
-    try {
-      await updateSSO.mutateAsync({ idp_metadata_url: metadataUrl })
-      addToast('Metadata loaded', 'success')
-    } catch {
-      addToast('Failed to load metadata', 'error')
-    } finally {
-      setLoadingMetadata(false)
-    }
-  }
 
   async function handleToggleEnable(enabled: boolean) {
     setIsEnabled(enabled)
@@ -352,20 +275,32 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
+    if (!tenantId.trim()) {
+      addToast('Directory (Tenant) ID is required', 'error')
+      return
+    }
+    if (!clientId.trim()) {
+      addToast('Application (Client) ID is required', 'error')
+      return
+    }
+    // Client secret required on first save — afterwards it stays encrypted in the DB
+    const hasExistingSecret = !!ssoConfig?.client_id  // if client_id is saved, secret was previously set
+    if (!hasExistingSecret && !clientSecret.trim()) {
+      addToast('Client Secret is required for the initial configuration', 'error')
+      return
+    }
     const mappingsObj: Record<string, string> = {}
-    roleMappings.forEach(({ group, role }) => { if (group) mappingsObj[group] = role })
+    roleMappings.forEach(({ group, role }) => { if (group.trim()) mappingsObj[group.trim()] = role })
+    const payload: Record<string, unknown> = {
+      is_enabled: isEnabled,
+      tenant_id: tenantId || null,
+      client_id: clientId || null,
+      role_mappings: mappingsObj,
+    }
+    if (clientSecret.trim()) payload.client_secret = clientSecret.trim()
     try {
-      await updateSSO.mutateAsync({
-        is_enabled: isEnabled,
-        provider,
-        idp_metadata_url: metadataUrl || null,
-        entity_id: entityId || null,
-        sso_url: ssoUrl || null,
-        attr_email: attrEmail,
-        attr_name: attrName,
-        attr_groups: attrGroups,
-        role_mappings: mappingsObj,
-      })
+      await updateSSO.mutateAsync(payload)
+      setClientSecret('')  // clear after save — never persisted in UI
       addToast('SSO configuration saved', 'success')
     } catch {
       addToast('Failed to save SSO configuration', 'error')
@@ -381,18 +316,14 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
     }
   }
 
-  const baseUrl = window.location.origin
-  const spEntityId = `${baseUrl}/api/v1/auth/saml/metadata`
-  const acsUrl = `${baseUrl}/api/v1/auth/saml/acs`
-
-  const idpConfig = IDP_CONFIGS[provider] ?? IDP_CONFIGS.generic_saml
+  const redirectUri = `${window.location.origin}/api/v1/auth/oidc/callback`
 
   const statusColor = isEnabled ? 'var(--green)' : 'var(--text-muted)'
   const statusText = isLoading
     ? 'Loading…'
     : isEnabled
     ? 'SSO Active'
-    : ssoConfig?.entity_id || ssoConfig?.idp_metadata_url
+    : ssoConfig?.client_id
     ? 'Configured — inactive'
     : 'Not configured'
 
@@ -411,15 +342,13 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
 
   return (
     <div style={{ marginBottom: 32 }} id="identity-section">
-      {/* Section heading */}
       <h3 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
         Single Sign-On
       </h3>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, marginTop: -8 }}>
-        Connect your identity provider for SSO and user provisioning.
+        Connect your identity provider for SSO and automatic user provisioning.
       </p>
 
-      {/* SSO card */}
       <div style={{
         background: 'var(--bg-surface)',
         border: `1px solid ${isEnabled ? 'var(--accent)' : 'var(--border)'}`,
@@ -433,131 +362,143 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
             🔐
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>SSO / SAML 2.0</p>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              Single Sign-On for Entra ID, Okta, Google Workspace, or any SAML 2.0 provider
-            </p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Single Sign-On (SSO)</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Entra ID / Azure AD — OAuth2 / OIDC</p>
           </div>
-          <ToggleSwitch
-            checked={isEnabled}
-            onChange={handleToggleEnable}
-            ariaLabel="Toggle SSO"
-          />
+          <ToggleSwitch checked={isEnabled} onChange={handleToggleEnable} ariaLabel="Toggle SSO" />
         </div>
 
-        {/* Status + configure button */}
+        {/* Status + configure */}
         <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 11, color: statusColor }}>{statusText}</span>
-          <button
-            className="btn btn-ghost btn-sm"
-            style={{ fontSize: 11, padding: '2px 10px' }}
-            onClick={() => setExpanded((v) => !v)}
-          >
+          <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 10px' }} onClick={() => setExpanded((v) => !v)}>
             {expanded ? 'Collapse ▲' : 'Configure ▼'}
           </button>
         </div>
 
-        {/* Expanded config form */}
         {expanded && (
           <form onSubmit={handleSave}>
             <div style={{ borderTop: '1px solid var(--border)', padding: '20px 20px 0' }}>
 
-              {/* Identity Provider */}
-              {subCard('Identity Provider',
+              {subCard('Azure App Registration Credentials',
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div>
-                    {subLabel('Provider')}
-                    <div className="select-wrap">
-                      <select className="form-input" value={provider} onChange={(e) => handleProviderChange(e.target.value)}>
-                        {IDP_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div style={{ background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                    <strong style={{ color: 'var(--text-primary)' }}>OAuth2 / OIDC — no SAML required.</strong>{' '}
+                    Create an <strong>App Registration</strong> (not an Enterprise Application) in Entra ID and add the Redirect URI below.
+                    The same App Registration can be shared with SharePoint sync — they are configured independently.
                   </div>
-                  <div>
-                    {subLabel('IdP Metadata URL')}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <input type="url" className="form-input" placeholder={idpConfig.metadataUrlPlaceholder} value={metadataUrl} onChange={(e) => setMetadataUrl(e.target.value)} />
-                      <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={handleLoadMetadata} disabled={loadingMetadata || !metadataUrl}>
-                        {loadingMetadata ? 'Loading…' : 'Load Metadata'}
-                      </button>
-                    </div>
-                  </div>
-                  <div style={{ padding: '10px 14px', background: 'var(--bg-card)', borderRadius: 8, fontSize: 12, color: 'var(--text-muted)' }}>
-                    Or configure manually:
-                  </div>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
-                      {subLabel('Entity ID (Issuer)')}
-                      <input type="text" className="form-input" placeholder={idpConfig.entityIdPlaceholder} value={entityId} onChange={(e) => setEntityId(e.target.value)} />
+                      {subLabel('Directory (Tenant) ID')}
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                        value={tenantId}
+                        onChange={(e) => setTenantId(e.target.value)}
+                      />
+                      <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
+                        Azure portal → Entra ID → Overview → Directory (tenant) ID
+                      </p>
                     </div>
                     <div>
-                      {subLabel('SSO URL')}
-                      <input type="url" className="form-input" placeholder={idpConfig.ssoUrlPlaceholder} value={ssoUrl} onChange={(e) => setSsoUrl(e.target.value)} />
+                      {subLabel('Application (Client) ID')}
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                        value={clientId}
+                        onChange={(e) => setClientId(e.target.value)}
+                      />
+                      <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
+                        App Registration → Overview → Application (client) ID
+                      </p>
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Attribute Mapping */}
-              {subCard('Attribute Mapping',
-                <div>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>Map SAML assertion attributes to IRDoc user fields.</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                    <div>{subLabel('Email attribute')}<input type="text" className="form-input" value={attrEmail} onChange={(e) => setAttrEmail(e.target.value)} /></div>
-                    <div>{subLabel('Name attribute')}<input type="text" className="form-input" value={attrName} onChange={(e) => setAttrName(e.target.value)} /></div>
-                    <div>{subLabel('Groups attribute')}<input type="text" className="form-input" value={attrGroups} onChange={(e) => setAttrGroups(e.target.value)} /></div>
+                  <div>
+                    {subLabel('Client Secret')}
+                    <input
+                      type="password"
+                      className="form-input"
+                      placeholder="Paste new secret to set or rotate — leave blank to keep existing"
+                      value={clientSecret}
+                      onChange={(e) => setClientSecret(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                    <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
+                      App Registration → Certificates &amp; secrets → Client secrets → + New client secret. Stored encrypted.
+                    </p>
                   </div>
                 </div>
               )}
 
-              {/* Role Mappings */}
+              {subCard('Redirect URI — Register in Azure',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    In your App Registration → <strong>Authentication → Add a platform → Web</strong>, add this Redirect URI:
+                  </p>
+                  <div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" className="form-input" value={redirectUri} readOnly style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, opacity: 0.85 }} />
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={() => copyToClipboard(redirectUri)}>Copy</button>
+                    </div>
+                    <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                      Also ensure <strong>ID tokens</strong> is checked under Implicit grant, and the app has <strong>openid, profile, email</strong> API permissions granted.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {subCard('Role Mappings',
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Map IdP groups to IRDoc roles. Unmapped users receive the Analyst role by default.</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
+                    Map Azure AD group Object IDs to IRDoc roles. Unmapped users receive the Analyst role by default.
+                    To include group claims, enable <strong>Groups</strong> in your App Registration → Token configuration.
+                  </p>
                   {roleMappings.map((mapping, i) => (
                     <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <input type="text" className="form-input" style={{ flex: 1 }} placeholder="IdP Group name" value={mapping.group} onChange={(e) => setRoleMappings((prev) => prev.map((m, idx) => idx === i ? { ...m, group: e.target.value } : m))} />
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ flex: 1 }}
+                        placeholder="Azure AD group Object ID (GUID)"
+                        value={mapping.group}
+                        onChange={(e) => setRoleMappings((prev) => prev.map((m, idx) => idx === i ? { ...m, group: e.target.value } : m))}
+                      />
                       <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>→</span>
                       <div className="select-wrap" style={{ width: 150 }}>
-                        <select className="form-input" value={mapping.role} onChange={(e) => setRoleMappings((prev) => prev.map((m, idx) => idx === i ? { ...m, role: e.target.value } : m))}>
+                        <select
+                          className="form-input"
+                          value={mapping.role}
+                          onChange={(e) => setRoleMappings((prev) => prev.map((m, idx) => idx === i ? { ...m, role: e.target.value } : m))}
+                        >
                           {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
                         </select>
                       </div>
-                      <button type="button" className="icon-btn" style={{ color: 'var(--red)', flexShrink: 0 }} onClick={() => setRoleMappings((prev) => prev.filter((_, idx) => idx !== i))} aria-label="Remove mapping">✕</button>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        style={{ color: 'var(--red)', flexShrink: 0 }}
+                        onClick={() => setRoleMappings((prev) => prev.filter((_, idx) => idx !== i))}
+                        aria-label="Remove mapping"
+                      >✕</button>
                     </div>
                   ))}
-                  <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => setRoleMappings((prev) => [...prev, { group: '', role: 'analyst' }])}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ alignSelf: 'flex-start' }}
+                    onClick={() => setRoleMappings((prev) => [...prev, { group: '', role: 'analyst' }])}
+                  >
                     + Add Mapping
                   </button>
                 </div>
               )}
 
-              {/* SP Metadata */}
-              {subCard('Service Provider Metadata',
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Configure these values in your Identity Provider.</p>
-                  <div>
-                    {subLabel('SP Entity ID / Audience')}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <input type="text" className="form-input" value={spEntityId} readOnly style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, opacity: 0.8 }} />
-                      <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={() => copyToClipboard(spEntityId)}>Copy</button>
-                    </div>
-                  </div>
-                  <div>
-                    {subLabel('ACS URL (Assertion Consumer Service)')}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <input type="text" className="form-input" value={acsUrl} readOnly style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, opacity: 0.8 }} />
-                      <button type="button" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }} onClick={() => copyToClipboard(acsUrl)}>Copy</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
             </div>
 
-            {/* Save bar */}
             <div style={{ padding: '14px 20px 20px', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpanded(false)}>Collapse</button>
               <button type="submit" className="btn btn-accent btn-sm" disabled={updateSSO.isPending}>

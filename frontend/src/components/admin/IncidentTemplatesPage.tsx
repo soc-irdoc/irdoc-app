@@ -34,6 +34,7 @@ interface IncidentTemplate {
   name: string
   slug: string
   is_system: boolean
+  is_hidden: boolean
   org_id: string | null
   tasks_json: TemplateTask[]
 }
@@ -106,6 +107,23 @@ function useCloneIncidentTemplate() {
       return res.data.data
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['incident-templates-admin'] }),
+  })
+}
+
+function useToggleHideIncidentTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, hidden }: { id: string; hidden: boolean }) => {
+      const res = await apiClient.put<ApiResponse<IncidentTemplate>>(
+        `/templates/incident/${id}`,
+        { is_hidden: hidden }
+      )
+      return res.data.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incident-templates-admin'] })
+      qc.invalidateQueries({ queryKey: ['incident-templates'] })
+    },
   })
 }
 
@@ -484,6 +502,7 @@ export function IncidentTemplatesPage() {
   const updateTemplate = useUpdateIncidentTemplate()
   const deleteTemplate = useDeleteIncidentTemplate()
   const cloneTemplate = useCloneIncidentTemplate()
+  const toggleHide = useToggleHideIncidentTemplate()
 
   const [editing, setEditing] = useState<Partial<IncidentTemplate> | null>(null)
   const [showEditor, setShowEditor] = useState(false)
@@ -633,6 +652,18 @@ export function IncidentTemplatesPage() {
             <span className="chip chip-muted" style={{ fontSize: 10 }}>
               SYSTEM
             </span>
+            {t.is_hidden && (
+              <span className="chip chip-muted" style={{ fontSize: 10, opacity: 0.65 }}>HIDDEN</span>
+            )}
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ fontSize: 11, color: 'var(--text-muted)' }}
+              onClick={() => toggleHide.mutate({ id: t.id, hidden: !t.is_hidden })}
+              disabled={toggleHide.isPending}
+              title={t.is_hidden ? 'Restore to incident creation' : 'Hide from incident creation'}
+            >
+              {t.is_hidden ? 'Unhide' : 'Hide'}
+            </button>
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => handleClone(t.id)}

@@ -15,6 +15,7 @@ class IncidentTemplateUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     tasks_json: list | None = None
+    is_hidden: bool | None = None
 
 
 class IncidentTemplateOut(BaseModel):
@@ -24,6 +25,7 @@ class IncidentTemplateOut(BaseModel):
     slug: str
     description: str | None
     is_system: bool
+    is_hidden: bool
     tasks_json: list
     created_at: datetime
 
@@ -45,6 +47,7 @@ class ReportTemplateUpdate(BaseModel):
     primary_colour: str | None = None
     company_name: str | None = None
     ai_auto_generate: bool | None = None
+    is_hidden: bool | None = None
 
 
 class ReportTemplateOut(BaseModel):
@@ -56,6 +59,7 @@ class ReportTemplateOut(BaseModel):
     is_system: bool
     is_default: bool
     ai_auto_generate: bool
+    is_hidden: bool
     schema_json: list
     logo_data_uri: str | None
     primary_colour: str | None

@@ -37,14 +37,10 @@ export interface StorageConfigOut {
 export interface SSOConfig {
   id: string
   org_id: string
-  provider: string
   is_enabled: boolean
-  idp_metadata_url: string | null
-  entity_id: string | null
-  sso_url: string | null
-  attr_email: string | null
-  attr_name: string | null
-  attr_groups: string | null
+  tenant_id: string | null
+  client_id: string | null
+  // client_secret is never returned by the API
   role_mappings: Record<string, string>
 }
 

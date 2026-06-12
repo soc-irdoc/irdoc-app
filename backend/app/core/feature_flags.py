@@ -30,7 +30,7 @@ FEATURE_MAP: dict[str, str] = {
     "cloud_storage": "pro",       # S3 / Azure / GCS backends
     "advanced_integrations": "pro",  # VT, AbuseIPDB, Sentinel, CrowdStrike
     "multi_tenancy": "enterprise",
-    "sso_saml": "enterprise",
+    "sso_oidc": "enterprise",
     "audit_log": "enterprise",
     "custom_branding": "enterprise",
     "mssp_mode": "enterprise",

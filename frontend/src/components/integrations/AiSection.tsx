@@ -57,7 +57,6 @@ export function AiSection() {
       debounceSeconds: config.debounce_seconds,
       maxTimelineEvents: config.max_timeline_events,
     })
-    if (config.is_enabled) setExpanded(true)
   }, [config])
 
   const set = (key: keyof FormState) => (value: FormState[typeof key]) =>
@@ -70,6 +69,16 @@ export function AiSection() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
+    if (form.isEnabled) {
+      if (!form.ollamaBaseUrl.trim()) {
+        addToast('Ollama base URL is required to enable AI', 'error')
+        return
+      }
+      if (!form.modelName.trim()) {
+        addToast('Model name is required to enable AI', 'error')
+        return
+      }
+    }
     try {
       await saveConfig.mutateAsync({
         is_enabled: form.isEnabled,

@@ -71,8 +71,22 @@ export function useIncidentTemplates() {
   return useQuery({
     queryKey: ['incident-templates'],
     queryFn: async () => {
-      const res = await apiClient.get<ApiResponse<Array<{ id: string; name: string; slug: string }>>>('/templates/incident')
+      const res = await apiClient.get<ApiResponse<Array<{ id: string; name: string; slug: string; is_hidden: boolean }>>>('/templates/incident')
       return res.data.data
+    },
+  })
+}
+
+export function useToggleHideIncidentTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ templateId, hidden }: { templateId: string; hidden: boolean }) => {
+      const res = await apiClient.put(`/templates/incident/${templateId}`, { is_hidden: hidden })
+      return res.data.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incident-templates'] })
+      qc.invalidateQueries({ queryKey: ['incident-templates-admin'] })
     },
   })
 }

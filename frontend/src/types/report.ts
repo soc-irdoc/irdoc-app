@@ -89,6 +89,7 @@ export interface ReportTemplate {
   is_system: boolean
   is_default: boolean
   ai_auto_generate: boolean
+  is_hidden: boolean
   schema_json: Omit<ReportBlock, 'id'>[]
   logo_data_uri: string | null
   primary_colour: string | null

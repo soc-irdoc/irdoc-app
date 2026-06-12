@@ -34,7 +34,7 @@ const TOOLTIP_STYLE = {
   background: 'var(--bg-surface)',
   border: '1px solid var(--border)',
   borderRadius: 6,
-  fontSize: 11,
+  fontSize: 13,
   color: 'var(--text-primary)',
 }
 
@@ -50,7 +50,7 @@ function Tile({ children, accent = false, style = {} }: {
       border: `1px solid ${accent ? 'rgba(249,115,22,0.35)' : 'var(--border)'}`,
       borderLeft: accent ? '2px solid var(--accent)' : undefined,
       borderRadius: 10,
-      padding: '14px 16px',
+      padding: '18px 20px',
       display: 'flex',
       flexDirection: 'column',
       gap: 6,
@@ -65,10 +65,10 @@ function Tile({ children, accent = false, style = {} }: {
 function SectionLabel({ children, accent = false }: { children: React.ReactNode; accent?: boolean }) {
   return (
     <div style={{
-      fontSize: 9,
+      fontSize: 13,
       fontWeight: 700,
       textTransform: 'uppercase',
-      letterSpacing: '0.1em',
+      letterSpacing: '0.08em',
       color: accent ? 'var(--accent)' : 'var(--text-muted)',
       marginBottom: 2,
     }}>
@@ -104,8 +104,8 @@ function SevChip({ severity }: { severity: string }) {
       background: `${color}22`,
       color,
       borderRadius: 3,
-      padding: '1px 5px',
-      fontSize: 8,
+      padding: '2px 6px',
+      fontSize: 12,
       fontWeight: 700,
       flexShrink: 0,
       textTransform: 'uppercase',
@@ -117,7 +117,7 @@ function SevChip({ severity }: { severity: string }) {
 
 function IncidentTitle({ title }: { title: string }) {
   return (
-    <span style={{ flex: 1, fontSize: 11, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+    <span style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
       {title}
     </span>
   )
@@ -127,12 +127,12 @@ function Ago({ iso }: { iso: string }) {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
   const label = mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins / 60)}h` : `${Math.floor(mins / 1440)}d`
-  return <span style={{ fontSize: 9, color: 'var(--text-muted)', flexShrink: 0 }}>{label} ago</span>
+  return <span style={{ fontSize: 13, color: 'var(--text-muted)', flexShrink: 0 }}>{label} ago</span>
 }
 
 function StatRow({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
       <span style={{ color: 'var(--text-muted)' }}>{label}</span>
       <span style={{ fontWeight: 600, color: color ?? 'var(--text-primary)' }}>{value}</span>
     </div>
@@ -178,11 +178,11 @@ function StatusDonutTile({ data }: { data: DashboardStats }) {
             textAlign: 'center',
             pointerEvents: 'none',
           }}>
-            <div style={{ fontSize: 34, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{total}</div>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>cases</div>
+            <div style={{ fontSize: 38, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{total}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>cases</div>
           </div>
         </div>
-        <div style={{ fontSize: 9, lineHeight: 2, alignSelf: 'stretch' }}>
+        <div style={{ fontSize: 11, lineHeight: 2, alignSelf: 'stretch' }}>
           {Object.entries(data.incidents.by_status).map(([k, v]) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: STATUS_COLORS[k] ?? 'var(--text-muted)' }}>● {k}</span>
@@ -219,15 +219,15 @@ function SeverityDonutTile({ data }: { data: DashboardStats }) {
             textAlign: 'center',
             pointerEvents: 'none',
           }}>
-            <div style={{ fontSize: 34, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+            <div style={{ fontSize: 38, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
               {data.incidents.total}
             </div>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>total</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>total</div>
           </div>
         </div>
         <div style={{ alignSelf: 'stretch' }}>
           {Object.entries(data.incidents.by_severity).map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, marginBottom: 4 }}>
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
               <span style={{ color: SEV_COLORS[k] }}>■ {SEV_LABELS[k]}</span>
               <span style={{ color: 'var(--text-secondary)' }}>{v}</span>
             </div>
@@ -246,7 +246,7 @@ function RecentCasesTile({ data }: { data: DashboardStats }) {
     <Tile>
       <SectionLabel>Recent Cases</SectionLabel>
       {incidents.length === 0
-        ? <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>No recent cases</div>
+        ? <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>No recent cases</div>
         : incidents.map((inc) => (
           <ItemRow key={inc.id} onClick={() => navigate(`/incidents/${inc.id}`)}>
             <SevChip severity={inc.severity} />
@@ -267,20 +267,20 @@ function TeamWorkloadTile({ data }: { data: DashboardStats }) {
     <Tile>
       <SectionLabel>Team Workload — Open Cases</SectionLabel>
       {workload.length === 0
-        ? <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>No active assignments</div>
+        ? <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>No active assignments</div>
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
             {workload.map((member) => {
               const pct = Math.round((member.open_count / maxCount) * 100)
               const color = pct >= 80 ? '#f85149' : pct >= 50 ? '#e3b341' : '#3fb950'
               return (
                 <div key={member.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 72, fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <div style={{ width: 72, fontSize: 13, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {member.full_name.split(' ')[0]}
                   </div>
                   <div style={{ flex: 1 }}>
                     <ProgressBar value={pct} color={color} />
                   </div>
-                  <div style={{ width: 18, fontSize: 10, color: 'var(--text-muted)', textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ width: 18, fontSize: 12, color: 'var(--text-muted)', textAlign: 'right', flexShrink: 0 }}>
                     {member.open_count}
                   </div>
                 </div>
@@ -300,18 +300,18 @@ function MyTasksTile({ data }: { data: DashboardStats }) {
     <Tile accent>
       <SectionLabel accent>My Tasks</SectionLabel>
       {!stats || stats.recent_tasks.length === 0
-        ? <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>No pending tasks</div>
+        ? <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>No pending tasks</div>
         : <>
             {stats.recent_tasks.map((task) => (
               <ItemRow key={task.id} onClick={() => navigate(`/incidents/${task.incident_id}/tasks`)}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: PRIORITY_COLORS[task.priority] ?? '#484f58', flexShrink: 0 }} />
                 <IncidentTitle title={task.title} />
-                <span style={{ fontSize: 9, color: 'var(--text-muted)', flexShrink: 0 }}>{task.incident_ref}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>{task.incident_ref}</span>
               </ItemRow>
             ))}
             <div style={{ marginTop: 'auto', paddingTop: 6, display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>{stats.pending_tasks}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>{stats.pending_tasks}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                 pending tasks<br />across {stats.assigned_count} case{stats.assigned_count !== 1 ? 's' : ''}
               </div>
             </div>
@@ -342,7 +342,7 @@ function MyCasesTile({ data }: { data: DashboardStats }) {
         ].map(({ value, label, color }) => (
           <div key={label} style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 18, fontWeight: 700, color, lineHeight: 1 }}>{value}</div>
-            <div style={{ fontSize: 8.5, color, marginTop: 2 }}>{label}</div>
+            <div style={{ fontSize: 11, color, marginTop: 2 }}>{label}</div>
           </div>
         ))}
       </div>
@@ -358,17 +358,17 @@ function AttackVectorsTile({ data }: { data: DashboardStats }) {
     <Tile accent>
       <SectionLabel accent>Top Attack Vectors</SectionLabel>
       {vectors.length === 0
-        ? <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>No data in this period</div>
+        ? <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>No data in this period</div>
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
             {vectors.map((v, i) => (
               <div key={v.vector} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 72, fontSize: 11, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0, textTransform: 'capitalize' }}>
+                <div style={{ width: 72, fontSize: 13, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0, textTransform: 'capitalize' }}>
                   {v.vector}
                 </div>
                 <div style={{ flex: 1 }}>
                   <ProgressBar value={Math.round((v.count / maxCount) * 100)} color={VECTOR_COLORS[i % VECTOR_COLORS.length]} />
                 </div>
-                <div style={{ width: 18, fontSize: 10, color: 'var(--text-muted)', textAlign: 'right', flexShrink: 0 }}>{v.count}</div>
+                <div style={{ width: 18, fontSize: 12, color: 'var(--text-muted)', textAlign: 'right', flexShrink: 0 }}>{v.count}</div>
               </div>
             ))}
           </div>
@@ -412,7 +412,7 @@ function UserActivityTile({ data }: { data: DashboardStats }) {
     <Tile accent>
       <SectionLabel accent>Recent Activity</SectionLabel>
       {audit.length === 0
-        ? <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>No recent activity</div>
+        ? <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>No recent activity</div>
         : audit.map((entry, i) => (
           <ItemRow key={i}>
             <span style={{
@@ -420,13 +420,13 @@ function UserActivityTile({ data }: { data: DashboardStats }) {
               color: 'var(--text-muted)',
               borderRadius: 3,
               padding: '1px 5px',
-              fontSize: 8,
+              fontSize: 10,
               fontWeight: 600,
               flexShrink: 0,
             }}>
               {entry.action.split('.').pop()}
             </span>
-            <span style={{ flex: 1, fontSize: 10, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ flex: 1, fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {entry.user_email}
             </span>
             <Ago iso={entry.created_at} />
@@ -444,7 +444,7 @@ export function OverviewPage() {
   const { from_dt, to_dt } = useMemo(() => getTimeRange(range), [range])
   const { data, isLoading, isError } = useDashboardStats(from_dt, to_dt)
   const isAdmin = user?.role === 'admin'
-  const TILE_H = 400
+  const TILE_H = 440
 
   return (
     <AppShell>

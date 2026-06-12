@@ -131,6 +131,26 @@ export function useToggleAiAutoGenerate() {
   })
 }
 
+export function useToggleHideReportTemplate() {
+  const qc = useQueryClient()
+  const addToast = useUIStore((s) => s.addToast)
+
+  return useMutation({
+    mutationFn: async ({ templateId, hidden }: { templateId: string; hidden: boolean }) => {
+      const { data } = await apiClient.put(`/report-templates/${templateId}`, { is_hidden: hidden })
+      return data.data as ReportTemplate
+    },
+    onSuccess: (t) => {
+      qc.invalidateQueries({ queryKey: ['report-templates'] })
+      addToast(t.is_hidden ? `"${t.name}" hidden from Reports tab` : `"${t.name}" restored`, 'success')
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.detail || 'Failed to update template'
+      addToast(msg, 'error')
+    },
+  })
+}
+
 export function useCloneReportTemplate() {
   const qc = useQueryClient()
   const addToast = useUIStore((s) => s.addToast)

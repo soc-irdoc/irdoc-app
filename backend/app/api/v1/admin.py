@@ -299,11 +299,11 @@ async def get_sso(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("users.manage")),
 ):
-    """Get SSO config (certificate redacted). Enterprise only."""
-    if not check_feature("sso_saml"):
+    """Get SSO config (client_secret redacted). Enterprise only."""
+    if not check_feature("sso_oidc"):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="SSO/SAML requires an enterprise license",
+            detail="SSO/OIDC requires an enterprise license",
         )
 
     cfg = await sso_service.get_sso_config(db, str(current_user.org_id))
@@ -320,10 +320,10 @@ async def update_sso(
     current_user=Depends(require_permission("users.manage")),
 ):
     """Create or update SSO config. Enterprise only."""
-    if not check_feature("sso_saml"):
+    if not check_feature("sso_oidc"):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="SSO/SAML requires an enterprise license",
+            detail="SSO/OIDC requires an enterprise license",
         )
 
     patch = data.model_dump(exclude_none=True)
@@ -337,7 +337,7 @@ async def update_sso(
         action="sso.config_updated",
         entity_type="sso_config",
         entity_id=str(cfg.id),
-        diff={k: v for k, v in patch.items() if k != "certificate"},
+        diff={k: v for k, v in patch.items() if k != "client_secret"},
     )
     await db.commit()
 

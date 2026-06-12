@@ -59,12 +59,13 @@ async def create_incident_template(
 async def update_incident_template(
     db: AsyncSession, template: IncidentTemplate, data: IncidentTemplateUpdate
 ) -> IncidentTemplate:
-    if template.is_system:
+    updates = data.model_dump(exclude_none=True)
+    if template.is_system and set(updates.keys()) - {"is_hidden"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="System templates are read-only. Clone to customize.",
         )
-    for key, value in data.model_dump(exclude_none=True).items():
+    for key, value in updates.items():
         setattr(template, key, value)
     await db.flush()
     await db.refresh(template)
@@ -126,12 +127,13 @@ async def create_report_template(
 async def update_report_template(
     db: AsyncSession, template: ReportTemplate, data: ReportTemplateUpdate
 ) -> ReportTemplate:
-    if template.is_system:
+    updates = data.model_dump(exclude_none=True)
+    if template.is_system and set(updates.keys()) - {"is_hidden"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="System templates are read-only. Clone to customize.",
         )
-    for key, value in data.model_dump(exclude_none=True).items():
+    for key, value in updates.items():
         # Assign a new list object for JSONB columns to ensure SQLAlchemy detects the change
         setattr(template, key, list(value) if isinstance(value, list) else value)
     await db.flush()

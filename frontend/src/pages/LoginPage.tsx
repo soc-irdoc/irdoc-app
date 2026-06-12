@@ -275,7 +275,7 @@ export function LoginPage() {
                 style={{ width: '100%', justifyContent: 'center' }}
                 onClick={async () => {
                   try {
-                    const res = await apiClient.get<{ data: { redirect_url: string } }>('/auth/saml/login')
+                    const res = await apiClient.get<{ data: { redirect_url: string } }>('/auth/oidc/login')
                     window.location.href = res.data.data.redirect_url
                   } catch {
                     setError('SSO is not configured for this organisation.')

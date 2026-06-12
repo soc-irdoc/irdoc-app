@@ -4,6 +4,8 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useLogout } from '@/hooks/useAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { getInitials } from '@/lib/utils'
+import irdocDark from '@/assets/irdoc_dark.svg'
+import irdocLight from '@/assets/irdoc_light.svg'
 
 interface NavItem {
   icon: string
@@ -22,7 +24,7 @@ const MANAGEMENT_ITEMS: NavItem[] = [
   { icon: '🗄️', label: 'Storage', path: '/admin/storage' },
   { icon: '💾', label: 'Backups', path: '/admin/backups' },
   { icon: '📋', label: 'Incident Templates', path: '/admin/templates' },
-  { icon: '📄', label: 'Report Templates', path: '/admin/reports' },
+  { icon: '📄', label: 'Report Templates', path: '/report-templates' },
   { icon: '🔗', label: 'Integrations', path: '/admin/integrations' },
   { icon: '📜', label: 'Audit Log', path: '/admin/audit' },
 ]
@@ -87,7 +89,7 @@ function NavButton({
 export function LeftNav() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { toggle } = useThemeStore()
+  const { toggle, theme } = useThemeStore()
   const logout = useLogout()
   const user = useAuthStore((s) => s.user)
 
@@ -130,27 +132,13 @@ export function LeftNav() {
         flexShrink: 0,
         padding: '0 2px',
       }}>
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            background: 'var(--accent)',
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: 12,
-            color: '#fff',
-            letterSpacing: '-0.5px',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-          onClick={() => navigate('/overview')}
+        <img
+          src={theme === 'dark' ? irdocDark : irdocLight}
+          alt="IRDoc"
           title="IRDoc"
-        >
-          IR
-        </div>
+          onClick={() => navigate('/overview')}
+          style={{ width: 70, height: 70, objectFit: 'contain', cursor: 'pointer', flexShrink: 0 }}
+        />
 
         {!collapsed && (
           <span style={{

@@ -3,8 +3,13 @@
   {% if block.get('label') %}
   <h2>{{ block.get('label', 'Incident Graph') }}</h2>
   {% endif %}
-  <div style="text-align: center; margin: 8px 0 6px;">
-    {{ p.graph_svg | safe }}
+  <div style="text-align: center; margin: 8px 0 6px; max-width: 100%; overflow: hidden;">
+    <style>
+      .graph-snapshot svg { max-width: 100% !important; height: auto !important; width: auto !important; }
+    </style>
+    <div class="graph-snapshot" style="display: inline-block; max-width: 100%;">
+      {{ p.graph_svg | safe }}
+    </div>
   </div>
   <p style="font-size: 9pt; color: #64748b; text-align: center; margin: 0;">
     Incident relationship graph — {{ p.generated_at | format_dt }}

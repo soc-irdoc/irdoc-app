@@ -182,7 +182,8 @@ export function IncidentListPage() {
   })
   const incidents = data?.data ?? []
 
-  const { data: templates = [] } = useIncidentTemplates()
+  const { data: allTemplates = [] } = useIncidentTemplates()
+  const templates = allTemplates.filter((t) => !t.is_hidden)
   const createIncident = useCreateIncident()
 
   async function handleCreate(e: React.FormEvent) {
