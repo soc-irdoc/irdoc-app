@@ -95,6 +95,64 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
 }
 [data-theme="light"] .theme-toggle-knob { transform: translateX(16px); background: var(--accent); }
 @media (max-width: 768px) { .nav-links { display: none; } nav { padding: 0 20px; } }
+
+/* ══ HERO ══ */
+#hero {
+  position: relative; min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 120px 40px 80px; text-align: center; overflow: hidden;
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px; opacity: .1;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+.hero-orb-1 {
+  width: 600px; height: 400px;
+  background: radial-gradient(ellipse, rgba(249,115,22,.2) 0%, transparent 70%);
+  top: -100px; left: 50%;
+  animation: orb-float 8s ease-in-out infinite;
+}
+.hero-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(ellipse, rgba(88,166,255,.12) 0%, transparent 70%);
+  bottom: 100px; left: -100px;
+  animation: orb-side 10s ease-in-out infinite reverse;
+}
+.hero-orb-3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(ellipse, rgba(188,140,255,.1) 0%, transparent 70%);
+  bottom: 150px; right: -80px;
+  animation: orb-side 12s ease-in-out infinite;
+}
+@keyframes orb-float {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-30px); }
+}
+@keyframes orb-side {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+.hero-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.particle {
+  position: absolute; border-radius: 50%; opacity: 0;
+  animation: particle-rise linear infinite;
+}
+@keyframes particle-rise {
+  0% { opacity: 0; transform: translate(0, 0); }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+}
+#hero::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 200px; background: linear-gradient(transparent, var(--bg)); pointer-events: none;
+}
   </style>
 </head>
 <body>
@@ -116,11 +174,41 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
       <a href="#waitlist" class="btn btn-accent">Join Waitlist</a>
     </div>
   </nav>
+  <section id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+    <div class="hero-particles" id="hero-particles"></div>
+    <!-- hero logo and content added in Tasks 5 and 6 -->
+  </section>
   <script>
 // Nav scroll shadow
 window.addEventListener('scroll', () => {
   document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
 });
+
+// Spawn hero particles
+(function() {
+  const container = document.getElementById('hero-particles');
+  if (!container) return;
+  const colors = ['#f97316','#58a6ff','#e3b341','#bc8cff','#f97316'];
+  for (let i = 0; i < 14; i++) {
+    const el = document.createElement('div');
+    el.className = 'particle';
+    const size = Math.random() * 2.5 + 1.5;
+    el.style.cssText = [
+      `width:${size}px`, `height:${size}px`,
+      `left:${Math.random() * 100}%`, `top:${50 + Math.random() * 45}%`,
+      `background:${colors[i % colors.length]}`,
+      `--dx:${(Math.random() - 0.5) * 130}px`,
+      `--dy:${-(Math.random() * 200 + 80)}px`,
+      `animation-duration:${Math.random() * 3 + 3.5}s`,
+      `animation-delay:${Math.random() * 5}s`,
+    ].join(';');
+    container.appendChild(el);
+  }
+})();
   </script>
 </body>
 </html>
