@@ -12,13 +12,115 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* CSS added per task */
+/* ══ TOKENS ══ */
+:root {
+  --bg: #080b12; --bg-2: #0d1117; --bg-3: #10141c; --bg-4: #161b26; --bg-5: #1c2333;
+  --border: #2a3344; --border-hi: #3d4f66;
+  --text: #e6edf3; --text-2: #8b949e; --text-3: #484f58;
+  --accent: #f97316; --accent-2: #fb923c;
+  --accent-dim: rgba(249,115,22,.12); --accent-glow: rgba(249,115,22,.3);
+  --green: #3fb950; --green-dim: rgba(63,185,80,.12);
+  --red: #f85149; --red-dim: rgba(248,81,73,.12);
+  --yellow: #e3b341; --yellow-dim: rgba(227,179,65,.12);
+  --blue: #58a6ff; --blue-dim: rgba(88,166,255,.12);
+  --purple: #bc8cff; --purple-dim: rgba(188,140,255,.12);
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
+  --radius: 12px;
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --bg-2: #f1f5f9; --bg-3: #e8eef4; --bg-4: #dde6ef; --bg-5: #cdd8e3;
+  --border: #cbd5e1; --border-hi: #94a3b8;
+  --text: #053059; --text-2: #334155; --text-3: #64748b;
+  --accent: #f86d05; --accent-2: #fb923c;
+  --accent-dim: rgba(248,109,5,.1); --accent-glow: rgba(248,109,5,.25);
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans); background: var(--bg); color: var(--text);
+  overflow-x: hidden; line-height: 1.6;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+a { color: inherit; text-decoration: none; }
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.4;
+}
+
+/* ══ BUTTONS ══ */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 8px; border: none; cursor: pointer;
+  font-family: var(--sans); font-weight: 700; font-size: 13px;
+  padding: 8px 18px; transition: all .15s; text-decoration: none;
+}
+.btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg-4); color: var(--text); border-color: var(--border-hi); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+.btn-lg { padding: 14px 28px; font-size: 15px; border-radius: 10px; }
+
+/* ══ NAV ══ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 64px;
+  background: rgba(8,11,18,.85); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(42,51,68,.5);
+  transition: all .3s;
+}
+[data-theme="light"] nav { background: rgba(248,250,252,.9); }
+nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0,0,0,.3); }
+.nav-logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; }
+.nav-logo img { height: 26px; width: auto; }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a { font-size: 13px; font-weight: 600; color: var(--text-2); transition: color .15s; }
+.nav-links a:hover { color: var(--text); }
+.nav-actions { display: flex; gap: 12px; align-items: center; }
+.theme-toggle {
+  width: 38px; height: 22px; border-radius: 11px;
+  background: var(--bg-4); border: 1px solid var(--border);
+  cursor: pointer; position: relative; display: flex; align-items: center; padding: 3px;
+  transition: background .3s;
+}
+.theme-toggle-knob {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--text-3); transition: transform .3s, background .3s; flex-shrink: 0;
+}
+[data-theme="light"] .theme-toggle-knob { transform: translateX(16px); background: var(--accent); }
+@media (max-width: 768px) { .nav-links { display: none; } nav { padding: 0 20px; } }
   </style>
 </head>
 <body>
-  <p style="color:white;padding:100px;text-align:center">scaffold ok</p>
+  <nav id="navbar">
+    <div class="nav-logo">
+      <img src="irdoc_dark.svg" alt="IRDoc" id="logo-img">
+      IRDoc
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="https://docs.irdoc.io" target="_blank" rel="noopener">Docs</a>
+      <a href="https://github.com/irdoc-io/irdoc" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="nav-actions">
+      <div class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
+        <div class="theme-toggle-knob"></div>
+      </div>
+      <a href="#waitlist" class="btn btn-accent">Join Waitlist</a>
+    </div>
+  </nav>
   <script>
-    /* JS added per task */
+// Nav scroll shadow
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+});
   </script>
 </body>
 </html>
