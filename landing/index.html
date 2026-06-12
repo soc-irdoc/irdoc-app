@@ -187,6 +187,56 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
 
 [data-theme="light"] .lf-w { animation: none; fill: #053059; }
 [data-theme="light"] .lp-w { stroke: #053059; }
+
+/* ══ HERO CONTENT ══ */
+.hero-content { position: relative; z-index: 2; text-align: center; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent-dim); border: 1px solid rgba(249,115,22,.3);
+  border-radius: 100px; padding: 6px 16px;
+  font-size: 12px; font-weight: 700; color: var(--accent);
+  margin-bottom: 28px; font-family: var(--mono); letter-spacing: .3px;
+  opacity: 0; animation: hero-reveal 0.8s 2.8s ease forwards;
+}
+.badge-dot {
+  width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+  animation: pulse-dot 2s ease infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.6)} }
+.hero-title {
+  font-size: clamp(38px, 6vw, 76px); font-weight: 800;
+  line-height: 1.06; letter-spacing: -2.5px; max-width: 860px;
+  opacity: 0; animation: hero-reveal 0.8s 3.0s ease forwards;
+}
+.hero-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--yellow) 60%, var(--accent-2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero-sub {
+  max-width: 560px; font-size: 17px; color: var(--text-2);
+  margin: 20px auto 36px; line-height: 1.7; font-weight: 500;
+  opacity: 0; animation: hero-reveal 0.8s 3.2s ease forwards;
+}
+.hero-cta {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  opacity: 0; animation: hero-reveal 0.8s 3.4s ease forwards;
+}
+.hero-proof {
+  display: flex; align-items: center; gap: 16px; margin-top: 48px;
+  font-size: 12px; color: var(--text-3); font-family: var(--mono);
+  flex-wrap: wrap; justify-content: center;
+  opacity: 0; animation: hero-reveal 0.8s 3.6s ease forwards;
+}
+.hero-proof .sep { width: 1px; height: 16px; background: var(--border); }
+@keyframes hero-reveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 600px) {
+  #hero { padding: 100px 20px 60px; }
+  .hero-proof .sep { display: none; }
+}
   </style>
 </head>
 <body>
@@ -229,7 +279,32 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
         <path class="lp lp-o d09 lf-o f15" d="M 206.08 175.94 A 0.46 0.46 0.0 0 1 206.52 176.41 Q 206.50 177.80 206.46 186.99 C 206.43 195.57 199.40 203.42 191.70 206.05 C 186.06 207.97 177.53 207.34 171.40 207.41 A 0.89 0.89 0.0 0 1 170.50 206.48 L 171.06 192.38 A 0.41 0.40 -86.6 0 1 171.49 191.99 Q 172.66 192.08 181.28 192.21 Q 185.26 192.28 187.02 191.48 C 191.20 189.60 190.80 186.40 191.03 181.82 Q 191.17 179.22 191.11 176.28 A 0.88 0.87 -89.1 0 1 192.02 175.39 L 206.08 175.94 Z"/>
       </svg>
     </div>
-    <!-- hero content added in Task 6 -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Early development · Alpha Q4 2026
+      </div>
+      <h1 class="hero-title">
+        Incident response docs,<br>
+        <em>without the chaos.</em>
+      </h1>
+      <p class="hero-sub">
+        Self-hosted IR workspace for SOC teams. Timeline-first, local-AI assisted, SharePoint-synced. Deploy in under 3 minutes.
+      </p>
+      <div class="hero-cta">
+        <a href="#waitlist" class="btn btn-accent btn-lg">⚡ Join the waitlist</a>
+        <a href="#features" class="btn btn-ghost btn-lg">See features →</a>
+      </div>
+      <div class="hero-proof">
+        <span>🐳 Docker in &lt;3 min</span>
+        <span class="sep"></span>
+        <span>🔒 Self-hosted</span>
+        <span class="sep"></span>
+        <span>AGPL-3.0</span>
+        <span class="sep"></span>
+        <span>🤖 Local AI (Ollama)</span>
+      </div>
+    </div>
   </section>
   <script>
 // Nav scroll shadow
