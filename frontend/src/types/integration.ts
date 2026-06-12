@@ -31,6 +31,8 @@ export interface Integration {
   last_tested: string | null
   last_test_status: 'ok' | 'fail' | null
   last_error: string | null
+  // Non-password saved config values (for pre-populating the config modal)
+  config_values?: Record<string, string>
 }
 
 export const CATEGORY_LABELS: Record<IntegrationCategory, string> = {

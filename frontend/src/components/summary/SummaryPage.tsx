@@ -40,6 +40,9 @@ function StatCard({ title, value, color }: { title: string; value: string | numb
           color: color ?? 'var(--text-primary)',
           fontVariantNumeric: 'tabular-nums',
           letterSpacing: '-0.02em',
+          wordBreak: 'break-word',
+          overflowWrap: 'anywhere',
+          lineHeight: 1.2,
         }}
       >
         {value}

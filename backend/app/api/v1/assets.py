@@ -15,6 +15,7 @@ from app.schemas.asset import (
     AssetUpdate,
 )
 from app.services import asset_service, incident_service
+from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
 
 router = APIRouter(tags=["assets"])
 
@@ -41,6 +42,8 @@ async def create_asset(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     asset = await asset_service.create_asset(db, incident_id, data, str(current_user.id))
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
+    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
     return {"data": AssetOut.model_validate(asset), "error": None}
 
 
@@ -53,6 +56,8 @@ async def bulk_create_assets(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     assets = await asset_service.bulk_create_assets(db, incident_id, data, str(current_user.id))
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
+    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
     return {"data": [AssetOut.model_validate(a) for a in assets], "error": None}
 
 
@@ -67,6 +72,8 @@ async def update_asset(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     asset = await asset_service.get_asset(db, asset_id, incident_id)
     updated = await asset_service.update_asset(db, asset, data)
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
+    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
     return {"data": AssetOut.model_validate(updated), "error": None}
 
 
@@ -80,6 +87,8 @@ async def delete_asset(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     asset = await asset_service.get_asset(db, asset_id, incident_id)
     await asset_service.delete_asset(db, asset)
+    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
+    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
 
 
 # ── Asset-timeline links ──────────────────────────────────────────────────────

@@ -30,6 +30,7 @@ class User(Base):
     totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # Fernet-encrypted
     backup_codes: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     mfa_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    auth_provider: Mapped[str] = mapped_column(String(20), server_default="local", default="local", nullable=False)
 
     # Relationships
     organization: Mapped["Organization"] = relationship("Organization", back_populates="users", lazy="noload")  # noqa: F821

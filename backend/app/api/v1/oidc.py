@@ -247,6 +247,7 @@ async def oidc_callback(
                 existing.full_name = full_name
                 initials = "".join(p[0].upper() for p in full_name.split()[:2])
                 existing.avatar_initials = initials or full_name[:2].upper()
+            existing.auth_provider = "oidc"
             user = existing
         else:
             temp_password = secrets.token_urlsafe(32)
@@ -258,6 +259,7 @@ async def oidc_callback(
                 org_id=str(org.id),
                 role=role,
             )
+            user.auth_provider = "oidc"
         await db.commit()
     except Exception as exc:
         logger.error("User provisioning during OIDC callback failed: %s", exc)

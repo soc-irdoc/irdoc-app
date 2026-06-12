@@ -91,7 +91,7 @@ function AiBanner({ reports }: { reports: Report[] }) {
 
 function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], incidentUpdatedAt?: string }) {
   const { data: integrations = [] } = useIntegrations()
-  const spEnabled = (integrations as any[]).find((i) => i.plugin_name === 'sharepoint')?.is_enabled ?? false
+  const spEnabled = (integrations as any[]).find((i) => i.name === 'sharepoint')?.is_enabled ?? false
   if (!spEnabled) return null
 
   const syncedReports = reports.filter((r) => r.sharepoint_url)
@@ -219,7 +219,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
     })
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: '960px', overflowY: 'auto', height: '100%' }}>
+    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>

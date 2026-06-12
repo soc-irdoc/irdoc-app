@@ -424,7 +424,9 @@ export function OrgSettingsPage() {
                         </span>
                       </td>
                       <td style={tableCellStyle}>
-                        {u.mfa_enabled ? (
+                        {u.auth_provider === 'oidc' ? (
+                          <span className="chip chip-blue" title="MFA is managed by the identity provider">Via SSO</span>
+                        ) : u.mfa_enabled ? (
                           <span className="chip chip-green">Enabled</span>
                         ) : org?.mfa_required ? (
                           <span className="chip chip-yellow">Not set</span>
@@ -446,7 +448,7 @@ export function OrgSettingsPage() {
                               Edit Role
                             </button>
                           )}
-                          {u.mfa_enabled && (
+                          {u.mfa_enabled && u.auth_provider !== 'oidc' && (
                             <button
                               type="button"
                               className="btn btn-ghost btn-sm"

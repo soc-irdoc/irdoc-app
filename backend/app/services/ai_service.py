@@ -81,7 +81,7 @@ class OllamaProvider:
             "stream": False,
             "options": {"num_predict": max_tokens},
         }
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=300) as client:
             response = await client.post(f"{self.base_url}/api/generate", json=payload)
             response.raise_for_status()
             return response.json().get("response", "")

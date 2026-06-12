@@ -25,7 +25,8 @@ function IntegrationConfigModal({
   const [values, setValues] = useState<Record<string, string>>(() => {
     const defaults: Record<string, string> = {}
     for (const [key, field] of Object.entries(integration.config_schema)) {
-      defaults[key] = field.default ?? ''
+      // Pre-populate with saved non-password values; password fields stay blank
+      defaults[key] = integration.config_values?.[key] ?? field.default ?? ''
     }
     return defaults
   })

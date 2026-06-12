@@ -5,6 +5,7 @@ export interface OrgUser {
   role: 'admin' | 'senior_analyst' | 'analyst' | 'viewer'
   is_active: boolean
   mfa_enabled: boolean
+  auth_provider: 'local' | 'oidc'
   created_at: string
 }
 

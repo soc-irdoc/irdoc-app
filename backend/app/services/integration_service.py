@@ -69,6 +69,17 @@ async def list_integrations(org_id: str, db: AsyncSession) -> list[dict]:
     for plugin_meta in all_plugins:
         name = plugin_meta["name"]
         record = org_configs.get(name)
+
+        # Return non-password config fields so the UI can pre-populate them.
+        # Password fields are never included.
+        safe_config: dict = {}
+        if record and record.config:
+            full_config = decrypt_config(record.config)
+            schema = plugin_meta.get("config_schema", {})
+            for field_key, field_def in schema.items():
+                if field_def.get("type") != "password" and field_key in full_config:
+                    safe_config[field_key] = full_config[field_key]
+
         output.append({
             **plugin_meta,
             "is_enabled": record.is_enabled if record else False,
@@ -76,6 +87,7 @@ async def list_integrations(org_id: str, db: AsyncSession) -> list[dict]:
             "last_tested": record.last_tested.isoformat() if record and record.last_tested else None,
             "last_test_status": record.last_test_status if record else None,
             "last_error": record.last_error if record else None,
+            "config_values": safe_config,
         })
     return output
 

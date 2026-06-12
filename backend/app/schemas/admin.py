@@ -20,6 +20,7 @@ class UserOut(BaseModel):
     role: str
     is_active: bool
     mfa_enabled: bool = False
+    auth_provider: str = "local"
     avatar_initials: str | None = None
     created_at: datetime
 

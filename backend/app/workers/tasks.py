@@ -655,7 +655,14 @@ def push_report_to_sharepoint(self, report_id: str, org_id: str):
 
 @celery_app.task(bind=True, max_retries=2)
 def auto_generate_for_sharepoint(self, incident_id: str, org_id: str):
-    """Non-AI SharePoint sync: generate a fresh PDF from the default template and push."""
+    """
+    Non-AI SharePoint sync: regenerate reports for templates already seeded on this incident.
+
+    Only templates for which the user has already manually generated at least one report
+    are considered. This mirrors the AI seed-based logic so the user controls which
+    templates get auto-synced by generating the first report manually.
+    Base scaffold reports (report_template_id=NULL) are excluded.
+    """
     async def _run():
         from app.core.database import AsyncSessionLocal
         from app.models.report import Report
@@ -663,25 +670,28 @@ def auto_generate_for_sharepoint(self, incident_id: str, org_id: str):
         from sqlalchemy import select
 
         async with AsyncSessionLocal() as db:
-            # Prefer the default template; fall back to ai_auto_generate templates
+            # Find distinct custom templates already used for this incident
+            seeded_ids_result = await db.execute(
+                select(Report.report_template_id)
+                .where(
+                    Report.incident_id == incident_id,
+                    Report.report_template_id.is_not(None),
+                )
+                .distinct()
+            )
+            seeded_template_ids = [row[0] for row in seeded_ids_result.all()]
+
+            if not seeded_template_ids:
+                logger.info(
+                    "auto_generate_for_sharepoint: no seeded templates for incident %s, skipping",
+                    incident_id,
+                )
+                return
+
             tmpl_result = await db.execute(
-                select(ReportTemplate).where(
-                    ReportTemplate.org_id == org_id,
-                    ReportTemplate.is_default.is_(True),
-                ).limit(1)
+                select(ReportTemplate).where(ReportTemplate.id.in_(seeded_template_ids))
             )
             templates = tmpl_result.scalars().all()
-            if not templates:
-                tmpl_result = await db.execute(
-                    select(ReportTemplate).where(
-                        ReportTemplate.org_id == org_id,
-                        ReportTemplate.ai_auto_generate.is_(True),
-                    )
-                )
-                templates = tmpl_result.scalars().all()
-            if not templates:
-                logger.info("auto_generate_for_sharepoint: no template for org %s, skipping", org_id)
-                return
 
             reports_created = []
             for template in templates:
@@ -695,6 +705,9 @@ def auto_generate_for_sharepoint(self, incident_id: str, org_id: str):
                 )
                 db.add(report)
                 reports_created.append(report)
+
+            if not reports_created:
+                return
 
             await db.commit()
             for report in reports_created:
