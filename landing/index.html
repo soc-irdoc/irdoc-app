@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,13 +27,6 @@
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Syne', sans-serif;
   --radius: 12px;
-}
-[data-theme="light"] {
-  --bg: #f8fafc; --bg-2: #f1f5f9; --bg-3: #e8eef4; --bg-4: #dde6ef; --bg-5: #cdd8e3;
-  --border: #cbd5e1; --border-hi: #94a3b8;
-  --text: #053059; --text-2: #334155; --text-3: #64748b;
-  --accent: #f86d05; --accent-2: #fb923c;
-  --accent-dim: rgba(248,109,5,.1); --accent-glow: rgba(248,109,5,.25);
 }
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -75,25 +68,13 @@ nav {
   border-bottom: 1px solid rgba(42,51,68,.5);
   transition: all .3s;
 }
-[data-theme="light"] nav { background: rgba(248,250,252,.9); }
 nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0,0,0,.3); }
 .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; }
-.nav-logo img { height: 26px; width: auto; }
+.nav-logo img { height: 60px; width: auto; }
 .nav-links { display: flex; gap: 32px; }
 .nav-links a { font-size: 13px; font-weight: 600; color: var(--text-2); transition: color .15s; }
 .nav-links a:hover { color: var(--text); }
 .nav-actions { display: flex; gap: 12px; align-items: center; }
-.theme-toggle {
-  width: 38px; height: 22px; border-radius: 11px;
-  background: var(--bg-4); border: 1px solid var(--border);
-  cursor: pointer; position: relative; display: flex; align-items: center; padding: 3px;
-  transition: background .3s;
-}
-.theme-toggle-knob {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: var(--text-3); transition: transform .3s, background .3s; flex-shrink: 0;
-}
-[data-theme="light"] .theme-toggle-knob { transform: translateX(16px); background: var(--accent); }
 @media (max-width: 768px) { .nav-links { display: none; } nav { padding: 0 20px; } }
 
 /* ══ HERO ══ */
@@ -154,39 +135,25 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
   height: 200px; background: linear-gradient(transparent, var(--bg)); pointer-events: none;
 }
 
-/* ══ LOGO DRAW-IN ══ */
+/* ══ LOGO FILL ANIMATION ══ */
 .hero-logo-wrap { margin-bottom: 28px; position: relative; z-index: 2; }
 .hero-logo-svg { width: 200px; height: auto; overflow: visible; }
 
-.lp {
-  fill: none;
-  stroke-dasharray: 3000;
-  stroke-dashoffset: 3000;
-  animation: lp-draw 2s ease forwards;
-}
-.lp-w { stroke: #ffffff; stroke-width: 2; }
-.lp-o { stroke: #f97316; stroke-width: 2.5; }
-.lf-w { fill: none; animation: lf-white 0.5s ease forwards; }
-.lf-o { fill: none; animation: lf-orange 0.5s ease forwards; }
+@keyframes svg-fill-white  { 0% { fill: transparent; } 100% { fill: #ffffff; } }
+@keyframes svg-fill-orange { 0% { fill: transparent; } 100% { fill: #f97316; } }
 
-@keyframes lp-draw  { to { stroke-dashoffset: 0; } }
-@keyframes lf-white  { to { fill: #ffffff; } }
-@keyframes lf-orange { to { fill: #f97316; } }
+.svg-elem-1  { animation: svg-fill-white  0.7s ease-in 0.50s both; }
+.svg-elem-2  { animation: svg-fill-white  0.7s ease-in 0.62s both; }
+.svg-elem-3  { animation: svg-fill-white  0.7s ease-in 0.74s both; }
+.svg-elem-4  { animation: svg-fill-white  0.7s ease-in 0.86s both; }
+.svg-elem-5  { animation: svg-fill-white  0.7s ease-in 0.98s both; }
+.svg-elem-6  { animation: svg-fill-white  0.7s ease-in 1.10s both; }
+.svg-elem-7  { animation: svg-fill-white  0.7s ease-in 1.22s both; }
+.svg-elem-8  { animation: svg-fill-orange 0.7s ease-in 0.56s both; }
+.svg-elem-9  { animation: svg-fill-orange 0.7s ease-in 0.50s both; }
+.svg-elem-10 { animation: svg-fill-orange 0.7s ease-in 0.68s both; }
+.svg-elem-11 { animation: svg-fill-orange 0.7s ease-in 0.80s both; }
 
-.d0  { animation-delay: 0s; }
-.d03 { animation-delay: 0.3s; }
-.d06 { animation-delay: 0.6s; }
-.d09 { animation-delay: 0.9s; }
-.d12 { animation-delay: 1.2s; }
-.d15 { animation-delay: 1.5s; }
-.f20 { animation-delay: 2.0s; }
-.f21 { animation-delay: 2.1s; }
-.f22 { animation-delay: 2.2s; }
-.f23 { animation-delay: 2.3s; }
-.f15 { animation-delay: 1.5s; }
-
-[data-theme="light"] .lf-w { animation: none; fill: #053059; }
-[data-theme="light"] .lp-w { stroke: #053059; }
 
 /* ══ HERO CONTENT ══ */
 .hero-content { position: relative; z-index: 2; text-align: center; }
@@ -538,16 +505,8 @@ footer {
       <img src="irdoc_dark.svg" alt="IRDoc" id="logo-img">
       IRDoc
     </div>
-    <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#roadmap">Roadmap</a>
-      <a href="https://docs.irdoc.io" target="_blank" rel="noopener">Docs</a>
-      <a href="https://github.com/irdoc-io/irdoc" target="_blank" rel="noopener">GitHub</a>
-    </div>
+    <div class="nav-links">    </div>
     <div class="nav-actions">
-      <div class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
-        <div class="theme-toggle-knob"></div>
-      </div>
       <a href="#waitlist" class="btn btn-accent">Join Waitlist</a>
     </div>
   </nav>
@@ -559,17 +518,17 @@ footer {
     <div class="hero-particles" id="hero-particles"></div>
     <div class="hero-logo-wrap" aria-label="IRDoc logo">
       <svg class="hero-logo-svg" viewBox="0.00 0.00 321.00 290.00" xmlns="http://www.w3.org/2000/svg">
-        <path class="lp lp-w d0 lf-w f20" d="M 66.58 74.69 L 65.77 95.26 A 0.24 0.24 0.0 0 1 65.43 95.47 Q 58.67 92.30 51.33 96.12 A 0.38 0.38 0.0 0 1 50.77 95.79 Q 50.68 79.22 52.46 65.26 Q 53.11 60.20 58.11 59.70 Q 74.06 58.12 77.83 57.59 Q 116.35 52.26 149.09 32.07 Q 150.39 31.26 157.70 26.17 Q 161.51 23.52 166.07 26.65 Q 179.14 35.64 191.16 41.14 A 0.81 0.80 21.3 0 1 191.60 42.13 L 187.16 55.48 A 0.37 0.37 0.0 0 1 186.66 55.70 Q 173.32 49.88 162.54 42.55 A 2.05 2.04 44.8 0 0 160.23 42.55 C 151.79 48.38 142.90 53.47 133.37 57.41 Q 122.76 61.79 120.96 62.43 Q 111.88 65.69 99.91 68.79 Q 87.54 72.00 67.22 74.02 A 0.71 0.71 0.0 0 0 66.58 74.69 Z"/>
-        <path class="lp lp-w d03 lf-w f21" d="M 271.09 119.89 A 0.64 0.64 0.0 0 1 270.12 120.39 Q 264.21 116.75 257.00 115.78 A 0.84 0.83 -87.1 0 1 256.29 114.99 Q 256.18 111.85 256.51 108.50 Q 258.20 91.33 256.38 74.87 A 0.77 0.76 -89.1 0 0 255.74 74.20 L 227.75 69.82 A 1.19 1.18 4.6 0 1 226.75 68.65 Q 226.74 60.53 222.73 53.54 A 0.44 0.44 0.0 0 1 223.23 52.90 Q 243.41 58.23 264.88 59.71 Q 270.28 60.09 270.77 65.41 Q 272.69 86.52 272.34 95.51 Q 271.70 111.57 271.09 119.89 Z"/>
-        <path class="lp lp-w d06 lf-w f21" d="M 152.84 125.37 A 0.31 0.31 0.0 0 0 153.29 125.10 Q 153.41 108.85 153.21 100.30 Q 153.06 93.93 154.47 90.43 C 158.49 80.46 167.45 76.21 177.96 77.13 A 0.72 0.72 0.0 0 1 178.62 77.88 L 178.08 91.44 A 0.48 0.47 -86.0 0 1 177.56 91.90 C 172.57 91.49 167.87 93.53 167.68 99.26 Q 167.39 108.06 167.64 140.78 Q 167.72 150.82 166.31 154.56 C 163.22 162.80 156.77 167.85 148.06 169.18 C 138.15 170.70 127.33 167.78 122.16 158.46 Q 114.95 145.48 122.66 132.81 C 128.85 122.65 142.68 120.07 152.84 125.37 Z M 143.6450 134.3722 A 11.72 10.72 -88.9 0 0 132.7020 145.8842 A 11.72 10.72 -88.9 0 0 143.1950 157.8078 A 11.72 10.72 -88.9 0 0 154.1380 146.2958 A 11.72 10.72 -88.9 0 0 143.6450 134.3722 Z"/>
-        <path class="lp lp-w d09 lf-w f22" d="M 241.92 146.23 C 241.97 152.10 246.07 157.67 252.38 157.72 Q 258.02 157.77 261.36 152.86 A 0.48 0.47 -57.7 0 1 261.98 152.71 L 271.86 158.42 A 0.89 0.88 -57.5 0 1 272.14 159.69 C 268.93 164.26 265.24 167.41 259.49 168.79 C 243.68 172.58 228.59 163.39 228.43 146.36 C 228.26 129.33 243.17 119.85 259.06 123.33 C 264.83 124.60 268.58 127.68 271.87 132.18 A 0.89 0.88 56.4 0 1 271.62 133.46 L 261.85 139.36 A 0.48 0.47 56.6 0 1 261.23 139.22 Q 257.79 134.37 252.16 134.53 C 245.85 134.71 241.86 140.35 241.92 146.23 Z"/>
-        <path class="lp lp-w d09 lf-w f22" d="M 98.85 127.57 A 0.37 0.37 0.0 0 0 99.47 127.86 Q 106.01 121.87 115.04 123.18 A 0.57 0.56 5.1 0 1 115.53 123.76 L 115.07 135.31 A 0.61 0.61 0.0 0 1 114.36 135.88 C 107.10 134.53 100.49 136.96 100.11 145.35 Q 99.69 154.66 99.90 166.50 C 100.08 176.68 97.17 186.63 85.58 188.42 C 71.05 190.67 64.88 182.35 61.10 169.92 Q 59.44 164.49 55.80 149.50 Q 53.42 139.72 52.14 124.22 A 0.67 0.66 -1.5 0 1 52.83 123.50 L 66.88 124.06 A 0.30 0.29 -2.2 0 1 67.17 124.32 Q 69.65 147.43 76.93 169.82 C 77.58 171.82 78.47 174.36 80.86 174.57 C 85.37 174.98 85.83 171.39 85.81 167.73 Q 85.70 148.49 85.68 124.07 A 0.77 0.77 0.0 0 1 86.48 123.30 L 98.47 123.78 A 0.52 0.51 2.7 0 1 98.97 124.32 L 98.85 127.57 Z"/>
-        <path class="lp lp-w d12 lf-w f23" d="M 260.09 176.00 A 0.34 0.34 0.0 0 1 260.47 176.45 Q 252.34 198.83 237.85 217.89 C 228.29 230.46 218.64 240.45 207.24 249.57 A 0.56 0.56 0.0 0 1 206.34 249.05 Q 207.27 243.06 206.23 237.27 C 205.91 235.51 205.15 233.93 204.83 232.27 A 0.93 0.92 -26.1 0 1 205.13 231.40 Q 228.10 210.94 241.33 183.10 Q 242.77 180.06 243.89 176.70 A 1.04 1.04 0.0 0 1 245.06 176.00 Q 252.50 177.32 260.09 176.00 Z"/>
-        <path class="lp lp-w d15 lf-w f23" d="M 71.44 194.04 C 72.22 194.08 73.26 194.71 74.27 194.91 Q 80.71 196.20 87.97 195.04 A 1.39 1.38 70.4 0 1 89.39 195.72 Q 102.63 218.32 123.76 235.80 Q 142.96 251.68 161.23 258.95 A 1.28 1.26 -43.9 0 0 162.14 258.96 Q 172.20 255.00 182.70 248.47 C 186.85 245.88 186.37 240.98 182.42 238.42 Q 181.22 237.64 177.43 237.65 Q 171.03 237.67 163.88 237.78 Q 155.54 237.91 150.87 235.99 C 140.21 231.61 136.31 221.22 137.96 210.23 C 139.34 201.05 146.57 194.55 155.44 192.69 Q 157.80 192.19 163.98 192.14 A 0.69 0.69 0.0 0 1 164.67 192.82 L 164.80 206.60 A 0.74 0.74 0.0 0 1 164.18 207.33 Q 164.17 207.34 159.55 207.42 Q 152.79 207.54 152.38 214.35 C 151.90 222.44 157.15 223.34 164.40 222.97 Q 165.98 222.88 180.32 223.15 C 192.50 223.37 200.52 232.04 200.13 244.13 C 199.85 252.45 195.33 258.22 188.44 262.44 Q 177.08 269.39 164.96 274.22 Q 161.99 275.40 160.04 274.73 C 152.78 272.24 145.06 267.92 139.72 265.03 Q 123.01 255.99 107.42 241.56 C 92.60 227.86 80.11 212.23 71.05 194.64 A 0.41 0.41 0.0 0 1 71.44 194.04 Z"/>
-        <path class="lp lp-o d03 lf-o f15" d="M 192.86 57.61 L 197.14 44.73 A 0.77 0.77 0.0 0 1 198.11 44.24 C 210.47 48.25 220.31 54.19 220.48 68.77 C 220.63 81.64 211.80 91.77 198.36 92.11 Q 191.54 92.28 184.77 92.09 A 0.76 0.76 0.0 0 1 184.03 91.30 L 184.57 77.52 A 0.71 0.71 0.0 0 1 185.27 76.84 Q 194.93 76.79 196.72 76.78 C 201.43 76.77 204.85 74.62 205.16 69.51 C 205.61 62.11 198.70 60.65 193.22 58.40 A 0.64 0.63 20.7 0 1 192.86 57.61 Z"/>
-        <circle class="lf-o f15" cx="59.18" cy="109.18" r="8.69"/>
-        <path class="lp lp-o d06 lf-o f15" d="M 222.5730 148.6553 A 21.10 21.10 0.0 0 1 201.0358 169.3088 L 194.9371 169.1811 A 21.10 21.10 0.0 0 1 174.2836 147.6438 L 174.3670 143.6647 A 21.10 21.10 0.0 0 1 195.9042 123.0112 L 202.0029 123.1389 A 21.10 21.10 0.0 0 1 222.6564 144.6762 L 222.5730 148.6553 Z M 198.6333 134.4418 A 11.65 10.73 -89.0 0 0 187.7016 145.9027 A 11.65 10.73 -89.0 0 0 198.2267 157.7382 A 11.65 10.73 -89.0 0 0 209.1584 146.2773 A 11.65 10.73 -89.0 0 0 198.6333 134.4418 Z"/>
-        <path class="lp lp-o d09 lf-o f15" d="M 206.08 175.94 A 0.46 0.46 0.0 0 1 206.52 176.41 Q 206.50 177.80 206.46 186.99 C 206.43 195.57 199.40 203.42 191.70 206.05 C 186.06 207.97 177.53 207.34 171.40 207.41 A 0.89 0.89 0.0 0 1 170.50 206.48 L 171.06 192.38 A 0.41 0.40 -86.6 0 1 171.49 191.99 Q 172.66 192.08 181.28 192.21 Q 185.26 192.28 187.02 191.48 C 191.20 189.60 190.80 186.40 191.03 181.82 Q 191.17 179.22 191.11 176.28 A 0.88 0.87 -89.1 0 1 192.02 175.39 L 206.08 175.94 Z"/>
+        <path class="svg-elem-1" d="M 66.58 74.69 L 65.77 95.26 A 0.24 0.24 0.0 0 1 65.43 95.47 Q 58.67 92.30 51.33 96.12 A 0.38 0.38 0.0 0 1 50.77 95.79 Q 50.68 79.22 52.46 65.26 Q 53.11 60.20 58.11 59.70 Q 74.06 58.12 77.83 57.59 Q 116.35 52.26 149.09 32.07 Q 150.39 31.26 157.70 26.17 Q 161.51 23.52 166.07 26.65 Q 179.14 35.64 191.16 41.14 A 0.81 0.80 21.3 0 1 191.60 42.13 L 187.16 55.48 A 0.37 0.37 0.0 0 1 186.66 55.70 Q 173.32 49.88 162.54 42.55 A 2.05 2.04 44.8 0 0 160.23 42.55 C 151.79 48.38 142.90 53.47 133.37 57.41 Q 122.76 61.79 120.96 62.43 Q 111.88 65.69 99.91 68.79 Q 87.54 72.00 67.22 74.02 A 0.71 0.71 0.0 0 0 66.58 74.69 Z"/>
+        <path class="svg-elem-2" d="M 271.09 119.89 A 0.64 0.64 0.0 0 1 270.12 120.39 Q 264.21 116.75 257.00 115.78 A 0.84 0.83 -87.1 0 1 256.29 114.99 Q 256.18 111.85 256.51 108.50 Q 258.20 91.33 256.38 74.87 A 0.77 0.76 -89.1 0 0 255.74 74.20 L 227.75 69.82 A 1.19 1.18 4.6 0 1 226.75 68.65 Q 226.74 60.53 222.73 53.54 A 0.44 0.44 0.0 0 1 223.23 52.90 Q 243.41 58.23 264.88 59.71 Q 270.28 60.09 270.77 65.41 Q 272.69 86.52 272.34 95.51 Q 271.70 111.57 271.09 119.89 Z"/>
+        <path class="svg-elem-3" d="M 152.84 125.37 A 0.31 0.31 0.0 0 0 153.29 125.10 Q 153.41 108.85 153.21 100.30 Q 153.06 93.93 154.47 90.43 C 158.49 80.46 167.45 76.21 177.96 77.13 A 0.72 0.72 0.0 0 1 178.62 77.88 L 178.08 91.44 A 0.48 0.47 -86.0 0 1 177.56 91.90 C 172.57 91.49 167.87 93.53 167.68 99.26 Q 167.39 108.06 167.64 140.78 Q 167.72 150.82 166.31 154.56 C 163.22 162.80 156.77 167.85 148.06 169.18 C 138.15 170.70 127.33 167.78 122.16 158.46 Q 114.95 145.48 122.66 132.81 C 128.85 122.65 142.68 120.07 152.84 125.37 Z M 143.6450 134.3722 A 11.72 10.72 -88.9 0 0 132.7020 145.8842 A 11.72 10.72 -88.9 0 0 143.1950 157.8078 A 11.72 10.72 -88.9 0 0 154.1380 146.2958 A 11.72 10.72 -88.9 0 0 143.6450 134.3722 Z"/>
+        <path class="svg-elem-4" d="M 241.92 146.23 C 241.97 152.10 246.07 157.67 252.38 157.72 Q 258.02 157.77 261.36 152.86 A 0.48 0.47 -57.7 0 1 261.98 152.71 L 271.86 158.42 A 0.89 0.88 -57.5 0 1 272.14 159.69 C 268.93 164.26 265.24 167.41 259.49 168.79 C 243.68 172.58 228.59 163.39 228.43 146.36 C 228.26 129.33 243.17 119.85 259.06 123.33 C 264.83 124.60 268.58 127.68 271.87 132.18 A 0.89 0.88 56.4 0 1 271.62 133.46 L 261.85 139.36 A 0.48 0.47 56.6 0 1 261.23 139.22 Q 257.79 134.37 252.16 134.53 C 245.85 134.71 241.86 140.35 241.92 146.23 Z"/>
+        <path class="svg-elem-5" d="M 98.85 127.57 A 0.37 0.37 0.0 0 0 99.47 127.86 Q 106.01 121.87 115.04 123.18 A 0.57 0.56 5.1 0 1 115.53 123.76 L 115.07 135.31 A 0.61 0.61 0.0 0 1 114.36 135.88 C 107.10 134.53 100.49 136.96 100.11 145.35 Q 99.69 154.66 99.90 166.50 C 100.08 176.68 97.17 186.63 85.58 188.42 C 71.05 190.67 64.88 182.35 61.10 169.92 Q 59.44 164.49 55.80 149.50 Q 53.42 139.72 52.14 124.22 A 0.67 0.66 -1.5 0 1 52.83 123.50 L 66.88 124.06 A 0.30 0.29 -2.2 0 1 67.17 124.32 Q 69.65 147.43 76.93 169.82 C 77.58 171.82 78.47 174.36 80.86 174.57 C 85.37 174.98 85.83 171.39 85.81 167.73 Q 85.70 148.49 85.68 124.07 A 0.77 0.77 0.0 0 1 86.48 123.30 L 98.47 123.78 A 0.52 0.51 2.7 0 1 98.97 124.32 L 98.85 127.57 Z"/>
+        <path class="svg-elem-6" d="M 260.09 176.00 A 0.34 0.34 0.0 0 1 260.47 176.45 Q 252.34 198.83 237.85 217.89 C 228.29 230.46 218.64 240.45 207.24 249.57 A 0.56 0.56 0.0 0 1 206.34 249.05 Q 207.27 243.06 206.23 237.27 C 205.91 235.51 205.15 233.93 204.83 232.27 A 0.93 0.92 -26.1 0 1 205.13 231.40 Q 228.10 210.94 241.33 183.10 Q 242.77 180.06 243.89 176.70 A 1.04 1.04 0.0 0 1 245.06 176.00 Q 252.50 177.32 260.09 176.00 Z"/>
+        <path class="svg-elem-7" d="M 71.44 194.04 C 72.22 194.08 73.26 194.71 74.27 194.91 Q 80.71 196.20 87.97 195.04 A 1.39 1.38 70.4 0 1 89.39 195.72 Q 102.63 218.32 123.76 235.80 Q 142.96 251.68 161.23 258.95 A 1.28 1.26 -43.9 0 0 162.14 258.96 Q 172.20 255.00 182.70 248.47 C 186.85 245.88 186.37 240.98 182.42 238.42 Q 181.22 237.64 177.43 237.65 Q 171.03 237.67 163.88 237.78 Q 155.54 237.91 150.87 235.99 C 140.21 231.61 136.31 221.22 137.96 210.23 C 139.34 201.05 146.57 194.55 155.44 192.69 Q 157.80 192.19 163.98 192.14 A 0.69 0.69 0.0 0 1 164.67 192.82 L 164.80 206.60 A 0.74 0.74 0.0 0 1 164.18 207.33 Q 164.17 207.34 159.55 207.42 Q 152.79 207.54 152.38 214.35 C 151.90 222.44 157.15 223.34 164.40 222.97 Q 165.98 222.88 180.32 223.15 C 192.50 223.37 200.52 232.04 200.13 244.13 C 199.85 252.45 195.33 258.22 188.44 262.44 Q 177.08 269.39 164.96 274.22 Q 161.99 275.40 160.04 274.73 C 152.78 272.24 145.06 267.92 139.72 265.03 Q 123.01 255.99 107.42 241.56 C 92.60 227.86 80.11 212.23 71.05 194.64 A 0.41 0.41 0.0 0 1 71.44 194.04 Z"/>
+        <path class="svg-elem-8" d="M 192.86 57.61 L 197.14 44.73 A 0.77 0.77 0.0 0 1 198.11 44.24 C 210.47 48.25 220.31 54.19 220.48 68.77 C 220.63 81.64 211.80 91.77 198.36 92.11 Q 191.54 92.28 184.77 92.09 A 0.76 0.76 0.0 0 1 184.03 91.30 L 184.57 77.52 A 0.71 0.71 0.0 0 1 185.27 76.84 Q 194.93 76.79 196.72 76.78 C 201.43 76.77 204.85 74.62 205.16 69.51 C 205.61 62.11 198.70 60.65 193.22 58.40 A 0.64 0.63 20.7 0 1 192.86 57.61 Z"/>
+        <circle class="svg-elem-9" cx="59.18" cy="109.18" r="8.69"/>
+        <path class="svg-elem-10" d="M 222.5730 148.6553 A 21.10 21.10 0.0 0 1 201.0358 169.3088 L 194.9371 169.1811 A 21.10 21.10 0.0 0 1 174.2836 147.6438 L 174.3670 143.6647 A 21.10 21.10 0.0 0 1 195.9042 123.0112 L 202.0029 123.1389 A 21.10 21.10 0.0 0 1 222.6564 144.6762 L 222.5730 148.6553 Z M 198.6333 134.4418 A 11.65 10.73 -89.0 0 0 187.7016 145.9027 A 11.65 10.73 -89.0 0 0 198.2267 157.7382 A 11.65 10.73 -89.0 0 0 209.1584 146.2773 A 11.65 10.73 -89.0 0 0 198.6333 134.4418 Z"/>
+        <path class="svg-elem-11" d="M 206.08 175.94 A 0.46 0.46 0.0 0 1 206.52 176.41 Q 206.50 177.80 206.46 186.99 C 206.43 195.57 199.40 203.42 191.70 206.05 C 186.06 207.97 177.53 207.34 171.40 207.41 A 0.89 0.89 0.0 0 1 170.50 206.48 L 171.06 192.38 A 0.41 0.40 -86.6 0 1 171.49 191.99 Q 172.66 192.08 181.28 192.21 Q 185.26 192.28 187.02 191.48 C 191.20 189.60 190.80 186.40 191.03 181.82 Q 191.17 179.22 191.11 176.28 A 0.88 0.87 -89.1 0 1 192.02 175.39 L 206.08 175.94 Z"/>
       </svg>
     </div>
     <div class="hero-content">
@@ -605,21 +564,13 @@ footer {
         <div class="ticker-item"><span class="ticker-item-icon">🔍</span> VirusTotal</div>
         <div class="ticker-item"><span class="ticker-item-icon">🛡️</span> AbuseIPDB</div>
         <div class="ticker-item"><span class="ticker-item-icon">🕵️</span> Shodan</div>
-        <div class="ticker-item"><span class="ticker-item-icon">🔷</span> Microsoft Sentinel</div>
         <div class="ticker-item"><span class="ticker-item-icon">🔑</span> Azure AD / Entra</div>
-        <div class="ticker-item"><span class="ticker-item-icon">💬</span> Slack / Teams</div>
-        <div class="ticker-item"><span class="ticker-item-icon">🎫</span> ServiceDesk Plus</div>
-        <div class="ticker-item"><span class="ticker-item-icon">🟠</span> Jira / ServiceNow</div>
         <div class="ticker-item"><span class="ticker-item-icon">📤</span> SharePoint</div>
-        <div class="ticker-item"><span class="ticker-item-icon">🤖</span> Ollama / Claude / OpenAI</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🤖</span> Ollama</div>
         <div class="ticker-item"><span class="ticker-item-icon">🔍</span> VirusTotal</div>
         <div class="ticker-item"><span class="ticker-item-icon">🛡️</span> AbuseIPDB</div>
         <div class="ticker-item"><span class="ticker-item-icon">🕵️</span> Shodan</div>
-        <div class="ticker-item"><span class="ticker-item-icon">🔷</span> Microsoft Sentinel</div>
         <div class="ticker-item"><span class="ticker-item-icon">🔑</span> Azure AD / Entra</div>
-        <div class="ticker-item"><span class="ticker-item-icon">💬</span> Slack / Teams</div>
-        <div class="ticker-item"><span class="ticker-item-icon">🎫</span> ServiceDesk Plus</div>
-        <div class="ticker-item"><span class="ticker-item-icon">🟠</span> Jira / ServiceNow</div>
         <div class="ticker-item"><span class="ticker-item-icon">📤</span> SharePoint</div>
         <div class="ticker-item"><span class="ticker-item-icon">🤖</span> Ollama / Claude / OpenAI</div>
       </div>
@@ -646,8 +597,8 @@ footer {
         <div class="bcard-desc">Paste any text — IPs, domains, hashes, emails auto-detected. VirusTotal + AbuseIPDB + Shodan fire on add.</div>
         <div class="bcard-visual">
           <div class="ioc-visual">
-            <div class="ioc-row"><span class="ioc-type">📧 Email</span><span class="ioc-val">attacker@phish.ru</span><span class="conf-bar"><span class="conf-fill" style="background:var(--red);width:90%"></span></span></div>
-            <div class="ioc-row"><span class="ioc-type">🌐 Domain</span><span class="ioc-val">support-verify.ru</span><span class="conf-bar"><span class="conf-fill" style="background:var(--red);width:85%"></span></span></div>
+            <div class="ioc-row"><span class="ioc-type">📧 Email</span><span class="ioc-val">attacker@phish.xyz</span><span class="conf-bar"><span class="conf-fill" style="background:var(--red);width:90%"></span></span></div>
+            <div class="ioc-row"><span class="ioc-type">🌐 Domain</span><span class="ioc-val">support-verify.xyz</span><span class="conf-bar"><span class="conf-fill" style="background:var(--red);width:85%"></span></span></div>
             <div class="ioc-row"><span class="ioc-type">🔢 IP</span><span class="ioc-val">185.220.101.47</span><span class="conf-bar"><span class="conf-fill" style="background:var(--yellow);width:60%"></span></span></div>
           </div>
         </div>
@@ -663,7 +614,7 @@ footer {
             <span id="ai-typed"></span><span class="ai-cursor"> </span>
           </div>
         </div>
-        <span class="bcard-tag">Ollama · Claude · OpenAI</span>
+        <span class="bcard-tag">Ollama</span>
       </div>
 
       <div class="bcard reveal">
@@ -677,7 +628,7 @@ footer {
             <div class="rb-block"><span class="rb-handle">⋮⋮</span><span>🤖</span><span class="rb-name">AI Narrative</span><span class="rb-config">local Ollama</span></div>
           </div>
         </div>
-        <span class="bcard-tag">PDF · DOCX · Markdown</span>
+        <span class="bcard-tag">PDF</span>
       </div>
 
       <div class="bcard reveal">
@@ -718,9 +669,6 @@ footer {
         </div>
         <div class="pill-row">
           <span class="pill">📄 PDF</span>
-          <span class="pill">📝 DOCX</span>
-          <span class="pill">⬇️ Markdown</span>
-          <span class="pill">🌐 HTML</span>
         </div>
       </div>
       <div class="showcase-mockup">
@@ -840,7 +788,7 @@ footer {
         <div class="rm-dot done"></div>
         <div class="rm-content">
           <div class="rm-label">Integrations + Enterprise Auth</div>
-          <div class="rm-desc">Microsoft Sentinel, Azure AD, ServiceDesk Plus, Jira, Slack, Teams, PagerDuty. SAML 2.0 SSO (Okta, Azure AD, Google Workspace). Inbound webhook API for any ticketing tool.</div>
+          <div class="rm-desc">VirusTotal, AbuseIPDB, Shdoan. OIDC SSO (ENTRA ID / Azure AD). Inbound webhook API for any ticketing tool.</div>
           <span class="rm-tag shipped">✓ Shipped</span>
         </div>
       </div>
@@ -882,20 +830,17 @@ footer {
     </form>
     <div class="wl-success" id="wl-success">✓ You're on the list. We'll reach out when alpha is ready.</div>
     <div class="wl-error" id="wl-error"></div>
-    <p class="wl-fine">Stored securely in Cloudflare KV · No third-party email tools · You write the invites yourself</p>
+    <p class="wl-fine">Your email goes to our Brevo list · No spam, no SaaS pitch</p>
   </div>
 </section>
 <footer>
   <div class="footer-logo">
-    <img src="irdoc_dark.svg" alt="IRDoc" id="footer-logo-img" style="height:22px">
+    <img src="irdoc_dark.svg" alt="IRDoc" id="footer-logo-img" style="height:60px">
     IRDoc
   </div>
   <div class="footer-links">
     <a href="#features">Features</a>
     <a href="#roadmap">Roadmap</a>
-    <a href="https://docs.irdoc.io" target="_blank" rel="noopener">Docs</a>
-    <a href="https://github.com/irdoc-io/irdoc" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://docs.irdoc.io/changelog" target="_blank" rel="noopener">Changelog</a>
     <a href="#waitlist">Join waitlist</a>
   </div>
   <div class="footer-legal">AGPL-3.0 · Self-hosted · © 2026 IRDoc</div>
@@ -1131,30 +1076,6 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 });
 
-// Dark/light theme toggle
-(function initTheme() {
-  const root = document.documentElement;
-  const toggle = document.getElementById('theme-toggle');
-  const logoImg = document.getElementById('logo-img');
-  const footerLogo = document.getElementById('footer-logo-img');
-
-  function applyTheme(theme) {
-    root.dataset.theme = theme;
-    localStorage.setItem('irdoc-theme', theme);
-    if (logoImg) logoImg.src = theme === 'light' ? 'irdoc_light.svg' : 'irdoc_dark.svg';
-    if (footerLogo) footerLogo.src = theme === 'light' ? 'irdoc_light.svg' : 'irdoc_dark.svg';
-  }
-
-  const saved = localStorage.getItem('irdoc-theme') || 'dark';
-  applyTheme(saved);
-
-  if (toggle) {
-    toggle.addEventListener('click', () => {
-      const next = root.dataset.theme === 'light' ? 'dark' : 'light';
-      applyTheme(next);
-    });
-  }
-})();
   </script>
 </body>
 </html>

@@ -30,29 +30,70 @@ async function handlePost(request, env) {
     return new Response(JSON.stringify({ error: 'Please enter a valid email address.' }), { status: 400, headers });
   }
 
+  // Rate limit by IP (1 submission per IP per hour)
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   const rlKey = `rl:${ip}`;
-  const rateHit = await env.WAITLIST.get(rlKey);
-  if (rateHit) {
+  if (await env.WAITLIST.get(rlKey)) {
     return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), { status: 429, headers });
   }
 
-  const emailKey = `email:${email}`;
-  const existing = await env.WAITLIST.get(emailKey);
-  if (existing) {
+  // Add to Brevo list
+  const brevo = await addToBrevo(email, env);
+
+  if (brevo.duplicate) {
+    // Already signed up — return current count without incrementing
     const count = parseInt(await env.WAITLIST.get('count') || '0');
     return new Response(JSON.stringify({ success: true, count }), { status: 200, headers });
   }
 
-  await env.WAITLIST.put(emailKey, JSON.stringify({ email, timestamp: new Date().toISOString() }));
+  if (!brevo.ok) {
+    return new Response(JSON.stringify({ error: brevo.error || 'Failed to join. Please try again.' }), { status: 500, headers });
+  }
 
-  const currentCount = parseInt(await env.WAITLIST.get('count') || '0');
-  const newCount = currentCount + 1;
-  await env.WAITLIST.put('count', String(newCount));
-
-  await env.WAITLIST.put(rlKey, '1', { expirationTtl: 3600 });
+  // New signup — increment counter and set rate limit
+  const current = parseInt(await env.WAITLIST.get('count') || '0');
+  const newCount = current + 1;
+  await Promise.all([
+    env.WAITLIST.put('count', String(newCount)),
+    env.WAITLIST.put(rlKey, '1', { expirationTtl: 3600 }),
+  ]);
 
   return new Response(JSON.stringify({ success: true, count: newCount }), { status: 201, headers });
+}
+
+async function addToBrevo(email, env) {
+  const apiKey = env.BREVO_API_KEY;
+  const listId = parseInt(env.BREVO_LIST_ID || '0');
+
+  if (!apiKey || !listId) {
+    return { ok: false, error: 'Waitlist service not configured.' };
+  }
+
+  let res;
+  try {
+    res = await fetch('https://api.brevo.com/v3/contacts', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ email, listIds: [listId], updateEnabled: false }),
+    });
+  } catch {
+    return { ok: false, error: 'Network error reaching email service.' };
+  }
+
+  if (res.status === 201) return { ok: true };
+
+  if (res.status === 400) {
+    let data;
+    try { data = await res.json(); } catch {}
+    if (data?.code === 'duplicate_parameter') return { ok: true, duplicate: true };
+    return { ok: false, error: 'Invalid request to email service.' };
+  }
+
+  return { ok: false, error: 'Email service error. Please try again.' };
 }
 
 async function handleGetCount(env) {
