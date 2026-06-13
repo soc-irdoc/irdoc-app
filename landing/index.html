@@ -351,6 +351,53 @@ h2 em { font-style: normal; color: var(--accent); }
 
 @media (max-width: 900px) { .bento { grid-template-columns: 1fr 1fr; } .bcard-wide { grid-column: span 1; } }
 @media (max-width: 600px) { .bento { grid-template-columns: 1fr; } section { padding: 60px 20px; } }
+
+/* ══ SHOWCASE SECTIONS ══ */
+.showcase-section { overflow: hidden; }
+.showcase-section.alt { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.showcase-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; max-width: 1100px; margin: 0 auto; }
+.showcase-inner.flipped { direction: rtl; }
+.showcase-inner.flipped > * { direction: ltr; }
+.showcase-text .label { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.showcase-text .label::before { content:''; width: 20px; height: 1px; background: var(--accent); }
+.showcase-text h2 { margin-bottom: 16px; }
+.showcase-text p { font-size: 15px; color: var(--text-2); line-height: 1.75; margin-bottom: 20px; }
+.feature-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+.feature-list-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 10px; }
+.feature-list-item-icon { font-size: 20px; flex-shrink: 0; }
+.feature-list-item-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.feature-list-item-desc { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; }
+
+/* Builder mockup */
+.showcase-mockup { background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,.5); }
+.mockup-topbar { background: var(--bg-3); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; align-items: center; gap: 6px; }
+.mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+.mockup-title { font-size: 11px; font-weight: 700; margin-left: 6px; flex: 1; }
+.mockup-action { font-size: 10px; color: var(--accent); font-weight: 700; font-family: var(--mono); }
+.builder-body { display: flex; height: 320px; }
+.builder-canvas { flex: 1; padding: 14px; border-right: 1px solid var(--border); overflow-y: auto; background: var(--bg-3); }
+.b-block {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  background: var(--bg-4); border: 1px solid var(--border);
+  margin-bottom: 7px; cursor: grab;
+  opacity: 0; transform: translateX(-12px);
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.b-block.b-in { opacity: 1; transform: translateX(0); transition: opacity .4s ease, transform .4s ease, background .15s, border-color .15s; }
+.b-block:hover { background: var(--bg-5); border-color: var(--accent); transform: translateX(3px); }
+.b-handle { color: var(--text-3); font-size: 10px; letter-spacing: 1px; }
+.b-icon { font-size: 15px; }
+.b-name { font-size: 12px; font-weight: 600; flex: 1; }
+.b-filter { font-size: 9px; color: var(--text-3); font-family: var(--mono); }
+.builder-sidebar { width: 150px; padding: 12px; background: var(--bg-4); }
+.builder-sidebar h4 { font-size: 10px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; }
+.b-available { padding: 7px 9px; border-radius: 6px; background: var(--bg-5); border: 1px solid var(--border); font-size: 11px; margin-bottom: 5px; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: all .15s; }
+.b-available:hover { border-color: var(--accent); background: var(--accent-dim); }
+
+@media (max-width: 900px) { .showcase-inner { grid-template-columns: 1fr; gap: 40px; } .showcase-inner.flipped { direction: ltr; } }
   </style>
 </head>
 <body>
@@ -524,6 +571,56 @@ h2 em { font-style: normal; color: var(--accent); }
     </div>
   </div>
 </section>
+
+<section id="builder-showcase" class="showcase-section">
+  <div class="container">
+    <div class="showcase-inner reveal">
+      <div class="showcase-text">
+        <div class="label">Report Builder</div>
+        <h2>Reports for <em>every audience</em></h2>
+        <p>Compose reports from drag-and-drop field blocks. Save named templates per audience. Management gets executive language; analysts get full technical depth; legal gets the compliance structure.</p>
+        <div class="feature-list">
+          <div class="feature-list-item"><span class="feature-list-item-icon">📊</span><div><div class="feature-list-item-title">Management Brief</div><div class="feature-list-item-desc">Executive summary, stat row, active IOCs, AI narrative, containment actions.</div></div></div>
+          <div class="feature-list-item"><span class="feature-list-item-icon">🔬</span><div><div class="feature-list-item-title">Technical Report</div><div class="feature-list-item-desc">Full timeline, all IOCs with enrichment scores, evidence register, task checklist.</div></div></div>
+          <div class="feature-list-item"><span class="feature-list-item-icon">⚖️</span><div><div class="feature-list-item-title">Legal / Compliance</div><div class="feature-list-item-desc">Root cause, detection timeline, affected data, regulatory obligations, preventive actions.</div></div></div>
+        </div>
+        <div class="pill-row">
+          <span class="pill">📄 PDF</span>
+          <span class="pill">📝 DOCX</span>
+          <span class="pill">⬇️ Markdown</span>
+          <span class="pill">🌐 HTML</span>
+        </div>
+      </div>
+      <div class="showcase-mockup">
+        <div class="mockup-topbar">
+          <div class="mockup-dot" style="background:#f85149"></div>
+          <div class="mockup-dot" style="background:#e3b341"></div>
+          <div class="mockup-dot" style="background:#3fb950"></div>
+          <span class="mockup-title">Report Template Builder — Management Brief</span>
+          <span class="mockup-action">Preview ↗</span>
+        </div>
+        <div class="builder-body">
+          <div class="builder-canvas" id="builder-canvas">
+            <div class="b-block" data-delay="0"><span class="b-handle">⋮⋮</span><span class="b-icon">📄</span><span class="b-name">Cover Page</span><span class="b-filter">title, ref, severity</span></div>
+            <div class="b-block" data-delay="150"><span class="b-handle">⋮⋮</span><span class="b-icon">📊</span><span class="b-name">Stat Row</span><span class="b-filter">severity · duration · users</span></div>
+            <div class="b-block" data-delay="300"><span class="b-handle">⋮⋮</span><span class="b-icon">📝</span><span class="b-name">Executive Summary</span><span class="b-filter">incident.exec_summary</span></div>
+            <div class="b-block" data-delay="450"><span class="b-handle">⋮⋮</span><span class="b-icon">🤖</span><span class="b-name">AI Narrative</span><span class="b-filter">local Ollama</span></div>
+            <div class="b-block" data-delay="600"><span class="b-handle">⋮⋮</span><span class="b-icon">🎯</span><span class="b-name">IOC Table</span><span class="b-filter">filter: active</span></div>
+            <div class="b-block" data-delay="750"><span class="b-handle">⋮⋮</span><span class="b-icon">🕐</span><span class="b-name">Timeline</span><span class="b-filter">filter: containment</span></div>
+          </div>
+          <div class="builder-sidebar">
+            <h4>Add Block</h4>
+            <div class="b-available">📋 <span>Text Block</span></div>
+            <div class="b-available">📎 <span>Evidence Reg.</span></div>
+            <div class="b-available">H <span>Header</span></div>
+            <div class="b-available">── <span>Divider</span></div>
+            <div class="b-available">↵ <span>Page Break</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
   <script>
 // Nav scroll shadow
 window.addEventListener('scroll', () => {
@@ -616,6 +713,28 @@ window.addEventListener('scroll', () => {
   let i = 0;
   setInterval(() => { el.textContent = states[++i % states.length]; }, 3500);
 })();
+
+// Builder blocks slide in when section enters viewport
+function initBuilderAnimation() {
+  const canvas = document.getElementById('builder-canvas');
+  if (!canvas) return;
+  const blocks = canvas.querySelectorAll('.b-block');
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        blocks.forEach(block => {
+          const delay = parseInt(block.dataset.delay || 0);
+          setTimeout(() => block.classList.add('b-in'), delay);
+        });
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  obs.observe(canvas);
+}
+initBuilderAnimation();
   </script>
 </body>
 </html>
