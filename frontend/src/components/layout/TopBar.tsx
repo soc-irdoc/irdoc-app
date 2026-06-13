@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Incident, Severity, IncidentStatus } from '@/types/incident'
 import { SEVERITY_COLORS, STATUS_COLORS } from '@/types/incident'
@@ -7,6 +8,10 @@ import { useUIStore, type PresenceUser } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useUpdateIncident } from '@/hooks/useIncident'
 import { useOrgUsers } from '@/hooks/useOrgUsers'
+import { usePermission } from '@/lib/permissions'
+import { useDeleteIncident } from '@/hooks/useIncident'
+import { Modal } from '@/components/common/Modal'
+import { Button } from '@/components/common/Button'
 
 interface TopBarProps {
   incident: Incident
@@ -83,6 +88,9 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
   const addToast = useUIStore((s) => s.addToast)
   const updateIncident = useUpdateIncident(incident.id)
   const { data: orgUsers = [] } = useOrgUsers()
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const deleteIncident = useDeleteIncident()
+  const canDelete = usePermission('senior_analyst')
 
   async function handleSeverityChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const severity = e.target.value as Severity
@@ -108,6 +116,16 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
       await updateIncident.mutateAsync({ assigned_to })
     } catch {
       addToast('Failed to update assignee', 'error')
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    try {
+      await deleteIncident.mutateAsync(incident.id)
+      addToast('Incident deleted', 'success')
+      navigate('/incidents')
+    } catch {
+      addToast('Failed to delete incident', 'error')
     }
   }
 
@@ -257,6 +275,16 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           >
             Report
           </button>
+          {canDelete && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowDeleteModal(true)}
+              title="Delete incident"
+              style={{ fontSize: 14, padding: '4px 8px' }}
+            >
+              🗑
+            </button>
+          )}
         </div>
       </div>
 
@@ -294,6 +322,32 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           </button>
         ))}
       </div>
+
+      <Modal open={showDeleteModal} title="Delete Incident" onClose={() => setShowDeleteModal(false)}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+            Delete{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>
+              {incident.incident_ref}
+            </strong>
+            ? This will permanently remove all timeline entries, IOCs, tasks, and
+            attachments. This cannot be undone.
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteConfirm}
+              loading={deleteIncident.isPending}
+              disabled={deleteIncident.isPending}
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
