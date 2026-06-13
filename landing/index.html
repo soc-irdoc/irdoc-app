@@ -447,6 +447,54 @@ h2 em { font-style: normal; color: var(--accent); }
 .rm-tag.shipped { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
 .rm-tag.alpha { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(249,115,22,.3); font-size: 12px; padding: 4px 14px; }
 .rm-tag.future-tag { background: var(--bg-3); color: var(--text-3); border: 1px solid var(--border); }
+
+/* ══ WAITLIST ══ */
+#waitlist {
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  padding: 120px 40px;
+  text-align: center; position: relative; overflow: hidden;
+}
+#waitlist::before {
+  content: '';
+  position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 400px;
+  background: radial-gradient(ellipse, rgba(249,115,22,.1) 0%, transparent 70%);
+  filter: blur(40px); pointer-events: none;
+}
+.wl-inner { position: relative; max-width: 580px; margin: 0 auto; }
+.wl-counter {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-2);
+  background: var(--green-dim); border: 1px solid rgba(63,185,80,.25);
+  border-radius: 100px; padding: 5px 16px; margin-bottom: 24px;
+}
+.wl-counter-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse-dot 1.5s infinite; }
+.wl-title {
+  font-size: clamp(32px, 5vw, 56px); font-weight: 800;
+  letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px;
+}
+.wl-title em { font-style: normal; color: var(--accent); }
+.wl-sub { font-size: 16px; color: var(--text-2); line-height: 1.7; margin-bottom: 32px; }
+.wl-form { display: flex; gap: 10px; max-width: 460px; margin: 0 auto; }
+.wl-input {
+  flex: 1; background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px 18px;
+  font-family: var(--sans); font-size: 14px; color: var(--text);
+  transition: border-color .2s, box-shadow .2s; outline: none;
+}
+.wl-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.wl-input::placeholder { color: var(--text-3); }
+.wl-btn { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 13px 24px; font-family: var(--sans); font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all .15s; }
+.wl-btn:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
+.wl-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.wl-success { display: none; color: var(--green); font-size: 14px; font-weight: 600; padding: 14px; background: var(--green-dim); border: 1px solid rgba(63,185,80,.3); border-radius: 10px; margin-top: 12px; }
+.wl-error { display: none; color: var(--red); font-size: 13px; margin-top: 10px; }
+.wl-fine { font-size: 12px; color: var(--text-3); margin-top: 16px; font-family: var(--mono); }
+@media (max-width: 600px) {
+  .wl-form { flex-direction: column; }
+  #waitlist { padding: 80px 20px; }
+}
   </style>
 </head>
 <body>
@@ -783,6 +831,25 @@ h2 em { font-style: normal; color: var(--accent); }
     </div>
   </div>
 </section>
+<section id="waitlist">
+  <div class="wl-inner reveal">
+    <div class="wl-counter">
+      <span class="wl-counter-dot"></span>
+      <span><strong id="wl-count">—</strong> people on the list</span>
+    </div>
+    <h2 class="wl-title">
+      Stop writing incident<br>reports <em>by hand.</em>
+    </h2>
+    <p class="wl-sub">IRDoc alpha ships Q4 2026. Enter your email and we'll send you an invite — no marketing, no SaaS pitch, just access when it's ready.</p>
+    <form class="wl-form" id="wl-form" novalidate>
+      <input class="wl-input" type="email" id="wl-email" placeholder="you@yourorg.com" autocomplete="email" required>
+      <button class="wl-btn" type="submit" id="wl-submit">Join →</button>
+    </form>
+    <div class="wl-success" id="wl-success">✓ You're on the list. We'll reach out when alpha is ready.</div>
+    <div class="wl-error" id="wl-error"></div>
+    <p class="wl-fine">Stored securely in Cloudflare KV · No third-party email tools · You write the invites yourself</p>
+  </div>
+</section>
   <script>
 // Nav scroll shadow
 window.addEventListener('scroll', () => {
@@ -932,6 +999,62 @@ initBuilderAnimation();
     }
   }, 3500);
 })();
+
+// Fetch initial waitlist count
+(async function loadCount() {
+  try {
+    const r = await fetch('/api/waitlist');
+    if (!r.ok) return;
+    const { count } = await r.json();
+    const el = document.getElementById('wl-count');
+    if (el && count > 0) el.textContent = count;
+  } catch {}
+})();
+
+// Waitlist form submission
+document.getElementById('wl-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('wl-email').value.trim();
+  const btn = document.getElementById('wl-submit');
+  const successEl = document.getElementById('wl-success');
+  const errorEl = document.getElementById('wl-error');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errorEl.textContent = 'Please enter a valid email address.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Joining...';
+  errorEl.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await r.json();
+
+    if (r.ok && data.success) {
+      document.getElementById('wl-form').style.display = 'none';
+      successEl.style.display = 'block';
+      const countEl = document.getElementById('wl-count');
+      if (countEl && data.count) countEl.textContent = data.count;
+    } else {
+      errorEl.textContent = data.error || 'Something went wrong. Please try again.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Join →';
+    }
+  } catch {
+    errorEl.textContent = 'Network error. Please try again.';
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Join →';
+  }
+});
   </script>
 </body>
 </html>
