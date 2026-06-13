@@ -420,6 +420,33 @@ h2 em { font-style: normal; color: var(--accent); }
 .sync-log-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 5px; font-size: 10px; }
 .sync-log-time { font-family: var(--mono); color: var(--accent); min-width: 38px; flex-shrink: 0; }
 .sync-log-event { color: var(--text-2); }
+/* ══ ROADMAP ══ */
+#roadmap { background: var(--bg); }
+.roadmap-wrap { position: relative; max-width: 700px; margin-top: 56px; padding-left: 36px; }
+.roadmap-line {
+  position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px;
+  background: linear-gradient(to bottom, var(--border), var(--accent) 50%, var(--border));
+}
+.rm-item { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 32px; position: relative; }
+.rm-dot {
+  position: absolute; left: -36px; top: 3px;
+  width: 16px; height: 16px; border-radius: 50%; border: 2px solid; flex-shrink: 0; z-index: 1;
+  background: var(--bg);
+}
+.rm-dot.done { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(63,185,80,.3); }
+.rm-dot.active { background: var(--accent); border-color: var(--accent); animation: rm-glow 1.8s ease-in-out infinite; }
+.rm-dot.future { background: var(--bg); border-color: var(--border); }
+@keyframes rm-glow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(249,115,22,.4); }
+  50% { box-shadow: 0 0 0 8px rgba(249,115,22,.0); }
+}
+.rm-content { flex: 1; }
+.rm-label { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+.rm-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+.rm-tag { display: inline-block; margin-top: 8px; font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 2px 10px; border-radius: 4px; letter-spacing: .3px; }
+.rm-tag.shipped { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+.rm-tag.alpha { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(249,115,22,.3); font-size: 12px; padding: 4px 14px; }
+.rm-tag.future-tag { background: var(--bg-3); color: var(--text-3); border: 1px solid var(--border); }
   </style>
 </head>
 <body>
@@ -686,6 +713,73 @@ h2 em { font-style: normal; color: var(--accent); }
           <div class="feature-list-item"><span class="feature-list-item-icon">🔐</span><div><div class="feature-list-item-title">They never need IRDoc access</div><div class="feature-list-item-desc">Management reads a SharePoint document — the tool they already use. No new logins, no training.</div></div></div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="container">
+    <p class="section-label reveal">Roadmap</p>
+    <h2 class="reveal">Built in the open.<br><em>Shipping Q4 2026.</em></h2>
+    <p class="section-sub reveal">Everything listed as shipped is already in the codebase. Alpha puts it in your hands.</p>
+
+    <div class="roadmap-wrap">
+      <div class="roadmap-line"></div>
+
+      <div class="rm-item reveal">
+        <div class="rm-dot done"></div>
+        <div class="rm-content">
+          <div class="rm-label">Core Incident Workspace</div>
+          <div class="rm-desc">Timeline-first investigation with entry types (detection, analysis, containment), IOC management with auto-enrichment, evidence attachments, structured task playbooks, and investigation graph.</div>
+          <span class="rm-tag shipped">✓ Shipped</span>
+        </div>
+      </div>
+
+      <div class="rm-item reveal">
+        <div class="rm-dot done"></div>
+        <div class="rm-content">
+          <div class="rm-label">Report Builder + Local AI</div>
+          <div class="rm-desc">Drag-and-drop template builder composing reports from field blocks. PDF, DOCX, Markdown export. Local Ollama AI for executive summaries and analyst recommendations — no data leaves your network.</div>
+          <span class="rm-tag shipped">✓ Shipped</span>
+        </div>
+      </div>
+
+      <div class="rm-item reveal">
+        <div class="rm-dot done"></div>
+        <div class="rm-content">
+          <div class="rm-label">SharePoint Auto-Sync</div>
+          <div class="rm-desc">Debounced automatic push to SharePoint on every incident update. Management reads a link — no IRDoc access required.</div>
+          <span class="rm-tag shipped">✓ Shipped</span>
+        </div>
+      </div>
+
+      <div class="rm-item reveal">
+        <div class="rm-dot done"></div>
+        <div class="rm-content">
+          <div class="rm-label">Integrations + Enterprise Auth</div>
+          <div class="rm-desc">Microsoft Sentinel, Azure AD, ServiceDesk Plus, Jira, Slack, Teams, PagerDuty. SAML 2.0 SSO (Okta, Azure AD, Google Workspace). Inbound webhook API for any ticketing tool.</div>
+          <span class="rm-tag shipped">✓ Shipped</span>
+        </div>
+      </div>
+
+      <div class="rm-item reveal">
+        <div class="rm-dot active"></div>
+        <div class="rm-content">
+          <div class="rm-label" style="color:var(--accent)">Alpha Release</div>
+          <div class="rm-desc">First public release for early testers. Self-hosted via Docker Compose in under 3 minutes. Open invitation to everyone on this waitlist.</div>
+          <span class="rm-tag alpha">⚡ Q4 2026</span>
+        </div>
+      </div>
+
+      <div class="rm-item reveal">
+        <div class="rm-dot future"></div>
+        <div class="rm-content" style="opacity:.6">
+          <div class="rm-label">Multi-tenancy + MSSP Mode</div>
+          <div class="rm-desc">Full org isolation, immutable audit log, custom branding, and MSSP-ready architecture for managing multiple clients.</div>
+          <span class="rm-tag future-tag">2027</span>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
