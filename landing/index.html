@@ -495,6 +495,27 @@ h2 em { font-style: normal; color: var(--accent); }
   .wl-form { flex-direction: column; }
   #waitlist { padding: 80px 20px; }
 }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 900px) {
+  .showcase-inner { grid-template-columns: 1fr; gap: 40px; }
+  .showcase-inner.flipped { direction: ltr; }
+  .builder-body { height: auto; flex-direction: column; }
+  .builder-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+}
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .bento { grid-template-columns: 1fr 1fr; }
+  .bcard-wide { grid-column: span 2; }
+  section { padding: 60px 20px; }
+  #waitlist { padding: 80px 20px; }
+}
+@media (max-width: 480px) {
+  .bento { grid-template-columns: 1fr; }
+  .bcard-wide { grid-column: span 1; }
+  .hero-title { font-size: 34px; letter-spacing: -1.5px; }
+  .wl-form { flex-direction: column; }
+}
   </style>
 </head>
 <body>
@@ -1054,6 +1075,31 @@ document.getElementById('wl-form').addEventListener('submit', async function(e) 
     btn.disabled = false;
     btn.textContent = 'Join →';
   }
+});
+
+// Scroll-reveal for .reveal elements
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach((el) => {
+  revealObserver.observe(el);
+});
+
+// Smooth anchor scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
 });
 
 // Dark/light theme toggle
