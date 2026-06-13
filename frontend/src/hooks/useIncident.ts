@@ -90,3 +90,15 @@ export function useToggleHideIncidentTemplate() {
     },
   })
 }
+
+export function useDeleteIncident() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiClient.delete(`/incidents/${id}`)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incidents'] })
+    },
+  })
+}
