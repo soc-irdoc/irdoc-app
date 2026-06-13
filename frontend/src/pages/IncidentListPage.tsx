@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useIncidents, useCreateIncident, useIncidentTemplates, useUpdateIncident } from '@/hooks/useIncident'
+import { useIncidents, useCreateIncident, useIncidentTemplates, useUpdateIncident, useDeleteIncident } from '@/hooks/useIncident'
 import { AppShell } from '@/components/layout/AppShell'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
+import { usePermission } from '@/lib/permissions'
 import {
   SEVERITY_LABELS,
   SEVERITY_COLORS,
@@ -56,7 +57,17 @@ function AssigneeDisplay({ incident, onPickUp }: { incident: Incident; onPickUp:
   )
 }
 
-function IncidentCard({ incident, onClick }: { incident: Incident; onClick: () => void }) {
+function IncidentCard({
+  incident,
+  onClick,
+  canDelete,
+  onDeleteRequest,
+}: {
+  incident: Incident
+  onClick: () => void
+  canDelete: boolean
+  onDeleteRequest: (incident: Incident) => void
+}) {
   const addToast = useUIStore((s) => s.addToast)
   const currentUser = useAuthStore((s) => s.user)
   const updateIncident = useUpdateIncident(incident.id)
@@ -150,6 +161,17 @@ function IncidentCard({ incident, onClick }: { incident: Incident; onClick: () =
       <span className={`chip ${STATUS_COLORS[incident.status]}`} style={{ flexShrink: 0 }}>
         {STATUS_LABELS[incident.status]}
       </span>
+
+      {canDelete && (
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={(e) => { e.stopPropagation(); onDeleteRequest(incident) }}
+          title="Delete incident"
+          style={{ flexShrink: 0, fontSize: 14, padding: '2px 6px' }}
+        >
+          🗑
+        </button>
+      )}
     </div>
   )
 }
@@ -171,6 +193,9 @@ export function IncidentListPage() {
   const [statusFilter, setStatusFilter] = useState<IncidentStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
+  const [deletingIncident, setDeletingIncident] = useState<Incident | null>(null)
+  const deleteIncident = useDeleteIncident()
+  const canDelete = usePermission('senior_analyst')
 
   const [newTitle, setNewTitle] = useState('')
   const [newSeverity, setNewSeverity] = useState<Severity>('sev2')
@@ -185,6 +210,17 @@ export function IncidentListPage() {
   const { data: allTemplates = [] } = useIncidentTemplates()
   const templates = allTemplates.filter((t) => !t.is_hidden)
   const createIncident = useCreateIncident()
+
+  async function handleDeleteConfirm() {
+    if (!deletingIncident) return
+    try {
+      await deleteIncident.mutateAsync(deletingIncident.id)
+      addToast('Incident deleted', 'success')
+      setDeletingIncident(null)
+    } catch {
+      addToast('Failed to delete incident', 'error')
+    }
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -307,12 +343,41 @@ export function IncidentListPage() {
                   key={incident.id}
                   incident={incident}
                   onClick={() => navigate(`/incidents/${incident.id}/timeline`)}
+                  canDelete={canDelete}
+                  onDeleteRequest={setDeletingIncident}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {deletingIncident && (
+        <Modal title="Delete Incident" onClose={() => setDeletingIncident(null)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+              Delete{' '}
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {deletingIncident.incident_ref}
+              </strong>
+              ? This will permanently remove all timeline entries, IOCs, tasks, and
+              attachments. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <Button variant="ghost" onClick={() => setDeletingIncident(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeleteConfirm}
+                disabled={deleteIncident.isPending}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Create Incident Modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New Incident">
