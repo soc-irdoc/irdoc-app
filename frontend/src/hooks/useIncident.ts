@@ -97,7 +97,8 @@ export function useDeleteIncident() {
     mutationFn: async (id: string) => {
       await apiClient.delete(`/incidents/${id}`)
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['incident', id] })
       qc.invalidateQueries({ queryKey: ['incidents'] })
     },
   })
