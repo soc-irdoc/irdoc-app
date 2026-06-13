@@ -398,6 +398,28 @@ h2 em { font-style: normal; color: var(--accent); }
 .b-available:hover { border-color: var(--accent); background: var(--accent-dim); }
 
 @media (max-width: 900px) { .showcase-inner { grid-template-columns: 1fr; gap: 40px; } .showcase-inner.flipped { direction: ltr; } }
+
+/* SharePoint sync mockup */
+.sync-mockup { background: var(--bg-3); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,.5); }
+.sync-header { background: var(--bg-4); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.sync-header h4 { font-size: 12px; font-weight: 700; flex: 1; }
+.sync-body { padding: 16px; }
+.sync-incident-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 12px; background: var(--bg-4); border-radius: 8px; border: 1px solid var(--border); }
+.sync-badge { font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+.sync-title { font-size: 12px; font-weight: 700; flex: 1; }
+.sync-ref { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+.sync-status-card { background: var(--bg-4); border: 1px solid rgba(63,185,80,.3); border-radius: 10px; padding: 14px; }
+.sync-status-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.sync-active-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse-dot 2s infinite; }
+.sync-status-header h5 { font-size: 12px; font-weight: 700; flex: 1; }
+.sync-detail { font-size: 11px; color: var(--text-2); margin-bottom: 5px; display: flex; gap: 6px; }
+.sync-detail strong { color: var(--text); min-width: 80px; }
+.sync-last { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 11px; font-family: var(--mono); color: var(--green); padding: 6px 10px; background: var(--green-dim); border-radius: 6px; }
+.sync-log { margin-top: 12px; }
+.sync-log-title { font-size: 9px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.sync-log-item { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 5px; font-size: 10px; }
+.sync-log-time { font-family: var(--mono); color: var(--accent); min-width: 38px; flex-shrink: 0; }
+.sync-log-event { color: var(--text-2); }
   </style>
 </head>
 <body>
@@ -621,6 +643,52 @@ h2 em { font-style: normal; color: var(--accent); }
     </div>
   </div>
 </section>
+<section id="sync-section" class="showcase-section alt">
+  <div class="container">
+    <div class="showcase-inner flipped reveal">
+      <div class="sync-mockup">
+        <div class="sync-header">
+          <span style="font-size:16px">📤</span>
+          <h4>SharePoint Auto-Sync — INC-2026-0315</h4>
+        </div>
+        <div class="sync-body">
+          <div class="sync-incident-row">
+            <span class="sync-badge">SEV-1</span>
+            <span class="sync-title">Phishing — Finance Team</span>
+            <span class="sync-ref">INC-2026-0315</span>
+          </div>
+          <div class="sync-status-card">
+            <div class="sync-status-header">
+              <span class="sync-active-dot"></span>
+              <h5>SharePoint Sync — Active</h5>
+            </div>
+            <div class="sync-detail"><strong>Template:</strong> Management Brief</div>
+            <div class="sync-detail"><strong>Trigger:</strong> On every change (60s debounce)</div>
+            <div class="sync-detail"><strong>Destination:</strong> /sites/SOC/IR Reports/</div>
+            <div class="sync-last">✓ <span id="sp-last-sync">Last synced 2 minutes ago</span></div>
+          </div>
+          <div class="sync-log">
+            <div class="sync-log-title">Recent Sync Events</div>
+            <div id="sync-log-entries">
+              <div class="sync-log-item"><span class="sync-log-time">11:33</span><span class="sync-log-event">📤 Report rendered → uploaded to SharePoint</span></div>
+              <div class="sync-log-item"><span class="sync-log-time">11:32</span><span class="sync-log-event">✓ New timeline entry → sync queued</span></div>
+              <div class="sync-log-item"><span class="sync-log-time">11:15</span><span class="sync-log-event">📤 Document updated → management notified</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="showcase-text">
+        <div class="label">SharePoint Auto-Sync</div>
+        <h2>Management is always <em>up to date</em></h2>
+        <p>Every update to the incident — new timeline entry, task ticked, IOC added — regenerates the management document on SharePoint automatically. No manual steps. No stale reports.</p>
+        <div class="feature-list">
+          <div class="feature-list-item"><span class="feature-list-item-icon">⏱</span><div><div class="feature-list-item-title">60-second debounce</div><div class="feature-list-item-desc">Rapid changes don't fire multiple uploads. Waits 60 seconds of quiet, then renders and uploads once.</div></div></div>
+          <div class="feature-list-item"><span class="feature-list-item-icon">🔐</span><div><div class="feature-list-item-title">They never need IRDoc access</div><div class="feature-list-item-desc">Management reads a SharePoint document — the tool they already use. No new logins, no training.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
   <script>
 // Nav scroll shadow
 window.addEventListener('scroll', () => {
@@ -735,6 +803,41 @@ function initBuilderAnimation() {
   obs.observe(canvas);
 }
 initBuilderAnimation();
+
+// SharePoint sync status cycling
+(function syncPulse() {
+  const lastSyncEl = document.getElementById('sp-last-sync');
+  const logEl = document.getElementById('sync-log-entries');
+  if (!lastSyncEl) return;
+
+  const syncStates = ['2 minutes ago', 'just now', '45 seconds ago', '1 minute ago'];
+  let idx = 0;
+
+  const newEvents = [
+    { time: 'now', event: '✓ Task completed → sync queued' },
+    { time: 'now', event: '📤 Report rendered → uploaded to SharePoint' },
+  ];
+  let eIdx = 0;
+
+  setInterval(() => {
+    idx = (idx + 1) % syncStates.length;
+    lastSyncEl.textContent = `Last synced ${syncStates[idx]}`;
+
+    if (idx % 2 === 0 && logEl) {
+      const ev = newEvents[eIdx % newEvents.length];
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const item = document.createElement('div');
+      item.className = 'sync-log-item';
+      item.style.cssText = 'opacity:0;transition:opacity .4s';
+      item.innerHTML = `<span class="sync-log-time">${timeStr}</span><span class="sync-log-event">${ev.event}</span>`;
+      logEl.prepend(item);
+      requestAnimationFrame(() => requestAnimationFrame(() => item.style.opacity = '1'));
+      while (logEl.children.length > 4) logEl.removeChild(logEl.lastChild);
+      eIdx++;
+    }
+  }, 3500);
+})();
   </script>
 </body>
 </html>
