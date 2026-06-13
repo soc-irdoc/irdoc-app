@@ -237,6 +237,34 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
   #hero { padding: 100px 20px 60px; }
   .hero-proof .sep { display: none; }
 }
+
+/* ══ TICKER ══ */
+#ticker {
+  background: var(--bg-2);
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 20px 0; overflow: hidden;
+}
+.ticker-wrap { position: relative; }
+.ticker-wrap::before, .ticker-wrap::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 120px; z-index: 2;
+}
+.ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg-2), transparent); }
+.ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg-2), transparent); }
+.ticker-track {
+  display: flex; gap: 40px; width: max-content;
+  animation: ticker-scroll 28s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+.ticker-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text-3);
+  white-space: nowrap; padding: 4px 0;
+}
+.ticker-item-icon { font-size: 16px; }
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
   </style>
 </head>
 <body>
@@ -306,6 +334,32 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
       </div>
     </div>
   </section>
+  <div id="ticker">
+    <div class="ticker-wrap">
+      <div class="ticker-track">
+        <div class="ticker-item"><span class="ticker-item-icon">🔍</span> VirusTotal</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🛡️</span> AbuseIPDB</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🕵️</span> Shodan</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🔷</span> Microsoft Sentinel</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🔑</span> Azure AD / Entra</div>
+        <div class="ticker-item"><span class="ticker-item-icon">💬</span> Slack / Teams</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🎫</span> ServiceDesk Plus</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🟠</span> Jira / ServiceNow</div>
+        <div class="ticker-item"><span class="ticker-item-icon">📤</span> SharePoint</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🤖</span> Ollama / Claude / OpenAI</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🔍</span> VirusTotal</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🛡️</span> AbuseIPDB</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🕵️</span> Shodan</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🔷</span> Microsoft Sentinel</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🔑</span> Azure AD / Entra</div>
+        <div class="ticker-item"><span class="ticker-item-icon">💬</span> Slack / Teams</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🎫</span> ServiceDesk Plus</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🟠</span> Jira / ServiceNow</div>
+        <div class="ticker-item"><span class="ticker-item-icon">📤</span> SharePoint</div>
+        <div class="ticker-item"><span class="ticker-item-icon">🤖</span> Ollama / Claude / OpenAI</div>
+      </div>
+    </div>
+  </div>
   <script>
 // Nav scroll shadow
 window.addEventListener('scroll', () => {
