@@ -516,6 +516,20 @@ h2 em { font-style: normal; color: var(--accent); }
   .hero-title { font-size: 34px; letter-spacing: -1.5px; }
   .wl-form { flex-direction: column; }
 }
+
+/* ══ FOOTER ══ */
+footer {
+  background: var(--bg); border-top: 1px solid var(--border);
+  padding: 40px; display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 20px;
+}
+.footer-logo { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; }
+.footer-logo img { height: 22px; width: auto; }
+.footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+.footer-links a { font-size: 12px; color: var(--text-3); transition: color .15s; }
+.footer-links a:hover { color: var(--text-2); }
+.footer-legal { font-size: 11px; color: var(--text-3); font-family: var(--mono); }
+@media (max-width: 600px) { footer { flex-direction: column; padding: 32px 20px; gap: 16px; } }
   </style>
 </head>
 <body>
@@ -871,6 +885,21 @@ h2 em { font-style: normal; color: var(--accent); }
     <p class="wl-fine">Stored securely in Cloudflare KV · No third-party email tools · You write the invites yourself</p>
   </div>
 </section>
+<footer>
+  <div class="footer-logo">
+    <img src="irdoc_dark.svg" alt="IRDoc" id="footer-logo-img" style="height:22px">
+    IRDoc
+  </div>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="https://docs.irdoc.io" target="_blank" rel="noopener">Docs</a>
+    <a href="https://github.com/irdoc-io/irdoc" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://docs.irdoc.io/changelog" target="_blank" rel="noopener">Changelog</a>
+    <a href="#waitlist">Join waitlist</a>
+  </div>
+  <div class="footer-legal">AGPL-3.0 · Self-hosted · © 2026 IRDoc</div>
+</footer>
   <script>
 // Nav scroll shadow
 window.addEventListener('scroll', () => {
