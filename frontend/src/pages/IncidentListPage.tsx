@@ -352,32 +352,31 @@ export function IncidentListPage() {
         </div>
       </div>
 
-      {deletingIncident && (
-        <Modal title="Delete Incident" onClose={() => setDeletingIncident(null)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-              Delete{' '}
-              <strong style={{ color: 'var(--text-primary)' }}>
-                {deletingIncident.incident_ref}
-              </strong>
-              ? This will permanently remove all timeline entries, IOCs, tasks, and
-              attachments. This cannot be undone.
-            </p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <Button variant="ghost" onClick={() => setDeletingIncident(null)}>
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleDeleteConfirm}
-                disabled={deleteIncident.isPending}
-              >
-                Delete
-              </Button>
-            </div>
+      <Modal open={!!deletingIncident} title="Delete Incident" onClose={() => setDeletingIncident(null)}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+            Delete{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>
+              {deletingIncident?.incident_ref}
+            </strong>
+            ? This will permanently remove all timeline entries, IOCs, tasks, and
+            attachments. This cannot be undone.
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" onClick={() => setDeletingIncident(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteConfirm}
+              loading={deleteIncident.isPending}
+              disabled={deleteIncident.isPending}
+            >
+              Delete
+            </Button>
           </div>
-        </Modal>
-      )}
+        </div>
+      </Modal>
 
       {/* Create Incident Modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New Incident">
