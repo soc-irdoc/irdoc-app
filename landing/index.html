@@ -265,6 +265,92 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
+
+/* ══ SECTIONS UTILITY ══ */
+section { padding: 100px 40px; }
+.container { max-width: 1100px; margin: 0 auto; }
+.section-label {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--accent); text-transform: uppercase; letter-spacing: 2px;
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.section-label::before { content:''; width: 20px; height: 1px; background: var(--accent); }
+h2 { font-size: clamp(30px, 4vw, 52px); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; }
+h2 em { font-style: normal; color: var(--accent); }
+.section-sub { font-size: 16px; color: var(--text-2); max-width: 560px; margin-top: 16px; line-height: 1.7; }
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ══ BENTO ══ */
+#features { background: var(--bg); }
+.bento { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 56px; }
+.bcard {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; transition: border-color .2s, box-shadow .2s, transform .2s;
+  overflow: hidden; position: relative;
+}
+.bcard:hover { border-color: var(--border-hi); box-shadow: 0 8px 40px rgba(0,0,0,.4); transform: translateY(-2px); }
+.bcard::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, var(--accent-dim) 0%, transparent 70%);
+  opacity: 0; transition: opacity .3s;
+}
+.bcard:hover::before { opacity: 1; }
+.bcard-wide { grid-column: span 2; }
+.bcard-icon { width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px; }
+.bcard-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+.bcard-desc { font-size: 13px; color: var(--text-2); line-height: 1.65; }
+.bcard-tag { display: inline-block; margin-top: 14px; font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--accent); background: var(--accent-dim); border: 1px solid rgba(249,115,22,.2); border-radius: 4px; padding: 2px 8px; letter-spacing: .3px; }
+.bcard-visual { margin-top: 20px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--bg-4); }
+
+/* Timeline visual */
+.tl-visual { padding: 12px; }
+.tl-entry { display: flex; gap: 9px; margin-bottom: 8px; opacity: 0; transform: translateX(-8px); }
+.tl-entry.tl-show { animation: tl-in 0.5s ease forwards; }
+@keyframes tl-in { to { opacity: 1; transform: translateX(0); } }
+.tl-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.tl-body { flex: 1; }
+.tl-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 3px; }
+.tl-time { font-family: var(--mono); font-size: 9px; color: var(--accent); }
+.tl-type { font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; }
+.tl-desc { font-size: 10px; color: var(--text-2); line-height: 1.4; }
+
+/* IOC confidence bars */
+.ioc-visual { padding: 10px; }
+.ioc-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; font-family: var(--mono); font-size: 10px; margin-bottom: 5px; background: var(--bg-5); }
+.ioc-type { font-size: 9px; padding: 1px 6px; border-radius: 3px; background: var(--bg-3); color: var(--text-2); flex-shrink: 0; border: 1px solid var(--border); }
+.ioc-val { color: var(--accent); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conf-bar { width: 40px; height: 3px; border-radius: 2px; background: var(--bg-4); overflow: hidden; flex-shrink: 0; }
+.conf-fill { height: 100%; border-radius: 2px; }
+
+/* AI typewriter */
+.ai-visual { padding: 12px; font-family: var(--mono); font-size: 10px; line-height: 1.7; color: var(--green); }
+.ai-cursor { border-right: 2px solid var(--green); animation: blink-c .7s step-end infinite; }
+@keyframes blink-c { 0%,100%{border-color:transparent} 50%{border-color:var(--green)} }
+
+/* Drag blocks */
+.rb-visual { padding: 10px; }
+.rb-block { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; background: var(--bg-5); border: 1px solid var(--border); margin-bottom: 6px; cursor: grab; transition: background .15s, border-color .15s; }
+.rb-block:hover { background: var(--bg-4); border-color: var(--accent); }
+.rb-handle { color: var(--text-3); font-size: 12px; }
+.rb-name { font-size: 11px; font-weight: 600; flex: 1; }
+.rb-config { font-size: 9px; color: var(--text-3); font-family: var(--mono); }
+
+/* SP sync */
+.sp-sync-pill { display: flex; align-items: center; gap: 6px; background: var(--green-dim); border: 1px solid rgba(63,185,80,.3); border-radius: 6px; padding: 6px 10px; font-size: 10px; font-family: var(--mono); color: var(--green); margin: 12px; }
+.sp-sync-dot { width: 5px; height: 5px; background: var(--green); border-radius: 50%; animation: pulse-dot 1.5s infinite; }
+
+/* Task checks */
+.task-visual { padding: 10px; }
+.task-row { display: flex; align-items: center; gap: 7px; padding: 5px 6px; border-radius: 6px; margin-bottom: 3px; }
+.task-check { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; }
+.check-done { background: var(--green); color: #fff; }
+.check-empty { border: 2px solid var(--border); }
+.task-text { font-size: 10px; line-height: 1.4; color: var(--text-2); }
+.task-row.done .task-text { text-decoration: line-through; color: var(--text-3); }
+
+@media (max-width: 900px) { .bento { grid-template-columns: 1fr 1fr; } .bcard-wide { grid-column: span 1; } }
+@media (max-width: 600px) { .bento { grid-template-columns: 1fr; } section { padding: 60px 20px; } }
   </style>
 </head>
 <body>
@@ -360,6 +446,84 @@ nav.scrolled { border-bottom-color: var(--border); box-shadow: 0 4px 40px rgba(0
       </div>
     </div>
   </div>
+  <section id="features">
+  <div class="container">
+    <p class="section-label reveal">Core Platform</p>
+    <h2 class="reveal">Everything your SOC team needs.<br><em>Nothing they don't.</em></h2>
+    <p class="section-sub reveal">From first alert to final report — all in one self-hosted workspace. Free, open-source, yours.</p>
+
+    <div class="bento">
+
+      <div class="bcard bcard-wide reveal">
+        <div class="bcard-icon" style="background:var(--red-dim)">🕐</div>
+        <div class="bcard-title">Timeline-First Investigation</div>
+        <div class="bcard-desc">The timeline is the central record. Add entries by type, auto-timestamp, paste screenshots, drag to reorder. IOCs in your text are auto-detected on save.</div>
+        <div class="bcard-visual"><div class="tl-visual" id="tl-bento"></div></div>
+      </div>
+
+      <div class="bcard reveal">
+        <div class="bcard-icon" style="background:var(--accent-dim)">🎯</div>
+        <div class="bcard-title">IOC Auto-Enrichment</div>
+        <div class="bcard-desc">Paste any text — IPs, domains, hashes, emails auto-detected. VirusTotal + AbuseIPDB + Shodan fire on add.</div>
+        <div class="bcard-visual">
+          <div class="ioc-visual">
+            <div class="ioc-row"><span class="ioc-type">📧 Email</span><span class="ioc-val">attacker@phish.ru</span><span class="conf-bar"><span class="conf-fill" style="background:var(--red);width:90%"></span></span></div>
+            <div class="ioc-row"><span class="ioc-type">🌐 Domain</span><span class="ioc-val">support-verify.ru</span><span class="conf-bar"><span class="conf-fill" style="background:var(--red);width:85%"></span></span></div>
+            <div class="ioc-row"><span class="ioc-type">🔢 IP</span><span class="ioc-val">185.220.101.47</span><span class="conf-bar"><span class="conf-fill" style="background:var(--yellow);width:60%"></span></span></div>
+          </div>
+        </div>
+        <span class="bcard-tag">VT + AbuseIPDB + Shodan</span>
+      </div>
+
+      <div class="bcard reveal">
+        <div class="bcard-icon" style="background:var(--green-dim)">🤖</div>
+        <div class="bcard-title">Local AI Reports</div>
+        <div class="bcard-desc">Runs Ollama locally. Generates executive summaries and analyst recommendations. No data leaves your network.</div>
+        <div class="bcard-visual">
+          <div class="ai-visual">
+            <span id="ai-typed"></span><span class="ai-cursor"> </span>
+          </div>
+        </div>
+        <span class="bcard-tag">Ollama · Claude · OpenAI</span>
+      </div>
+
+      <div class="bcard reveal">
+        <div class="bcard-icon" style="background:var(--blue-dim)">📊</div>
+        <div class="bcard-title">Report Template Builder</div>
+        <div class="bcard-desc">Compose reports from drag-and-drop blocks. Save named templates per audience — management, analysts, legal.</div>
+        <div class="bcard-visual">
+          <div class="rb-visual">
+            <div class="rb-block"><span class="rb-handle">⋮⋮</span><span>📄</span><span class="rb-name">Cover Page</span></div>
+            <div class="rb-block"><span class="rb-handle">⋮⋮</span><span>📊</span><span class="rb-name">Stat Row</span><span class="rb-config">severity · duration</span></div>
+            <div class="rb-block"><span class="rb-handle">⋮⋮</span><span>🤖</span><span class="rb-name">AI Narrative</span><span class="rb-config">local Ollama</span></div>
+          </div>
+        </div>
+        <span class="bcard-tag">PDF · DOCX · Markdown</span>
+      </div>
+
+      <div class="bcard reveal">
+        <div class="bcard-icon" style="background:var(--purple-dim)">📤</div>
+        <div class="bcard-title">SharePoint Auto-Sync</div>
+        <div class="bcard-desc">Every update regenerates the management brief on SharePoint. 60s debounce. Management opens a link — no logins.</div>
+        <div class="sp-sync-pill"><span class="sp-sync-dot"></span><span id="sp-sync-text">Last synced 2 min ago</span></div>
+      </div>
+
+      <div class="bcard reveal">
+        <div class="bcard-icon" style="background:var(--yellow-dim)">✅</div>
+        <div class="bcard-title">Structured Task Playbooks</div>
+        <div class="bcard-desc">Phase-grouped checklists load from the incident template the moment a case opens. Always visible on the right side.</div>
+        <div class="bcard-visual">
+          <div class="task-visual">
+            <div class="task-row done"><div class="task-check check-done">✓</div><div class="task-text">Validate phishing report</div></div>
+            <div class="task-row done"><div class="task-check check-done">✓</div><div class="task-text">Block domain at DNS</div></div>
+            <div class="task-row"><div class="task-check check-empty"></div><div class="task-text">Reset 3 compromised accounts</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
   <script>
 // Nav scroll shadow
 window.addEventListener('scroll', () => {
@@ -386,6 +550,71 @@ window.addEventListener('scroll', () => {
     ].join(';');
     container.appendChild(el);
   }
+})();
+
+// Timeline bento animation
+(function bentoTimeline() {
+  const container = document.getElementById('tl-bento');
+  if (!container) return;
+  const entries = [
+    { bg: 'var(--red-dim)', border: 'var(--red)', icon: '🔴', time: '09:12', type: 'Detection', desc: 'Phishing email reported — finance team' },
+    { bg: 'var(--blue-dim)', border: 'var(--blue)', icon: '🔵', time: '09:38', type: 'Analysis', desc: '7 users affected. IOCs extracted. VT 47/64.' },
+    { bg: 'var(--yellow-dim)', border: 'var(--yellow)', icon: '🟡', time: '10:15', type: 'Containment', desc: 'Domain blocked. Sessions revoked.' },
+  ];
+  function render() {
+    container.innerHTML = entries.map((e, i) => `
+      <div class="tl-entry" style="animation-delay:${i * 0.45}s">
+        <div class="tl-dot" style="background:${e.bg};border:1.5px solid ${e.border}">${e.icon}</div>
+        <div class="tl-body">
+          <div class="tl-meta">
+            <span class="tl-time">${e.time}</span>
+            <span class="tl-type" style="background:rgba(88,166,255,.12);color:var(--blue)">${e.type}</span>
+          </div>
+          <div class="tl-desc">${e.desc}</div>
+        </div>
+      </div>`).join('');
+    container.querySelectorAll('.tl-entry').forEach((el, i) => {
+      setTimeout(() => el.classList.add('tl-show'), i * 500);
+    });
+    setTimeout(render, entries.length * 500 + 3000);
+  }
+  setTimeout(render, 800);
+})();
+
+// AI typewriter animation
+(function aiTypewriter() {
+  const el = document.getElementById('ai-typed');
+  if (!el) return;
+  const phrases = [
+    'Generating executive summary...',
+    'Summary: SEV-1 phishing targeting finance team. 7 users exposed. Contained in 58 minutes.',
+    'Recommendation: enforce MFA, review email filtering rules.',
+  ];
+  let p = 0, c = 0, deleting = false;
+  function tick() {
+    const phrase = phrases[p];
+    if (!deleting) {
+      el.textContent = phrase.slice(0, ++c);
+      if (c === phrase.length) {
+        if (p < phrases.length - 1) { setTimeout(() => { deleting = true; tick(); }, 1800); return; }
+        else { setTimeout(() => { c = 0; p = 0; tick(); }, 3000); return; }
+      }
+    } else {
+      el.textContent = phrase.slice(0, --c);
+      if (c === 0) { deleting = false; p++; }
+    }
+    setTimeout(tick, deleting ? 18 : 45);
+  }
+  setTimeout(tick, 1200);
+})();
+
+// SharePoint sync text cycling
+(function spSync() {
+  const el = document.getElementById('sp-sync-text');
+  if (!el) return;
+  const states = ['Last synced 2 min ago', 'Last synced just now', 'Last synced 45 sec ago', 'Last synced 1 min ago'];
+  let i = 0;
+  setInterval(() => { el.textContent = states[++i % states.length]; }, 3500);
 })();
   </script>
 </body>
