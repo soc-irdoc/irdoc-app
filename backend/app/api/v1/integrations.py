@@ -7,10 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fastapi import Body
+
 from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.models.user import User
-from app.services import integration_service
+from app.services import audit_service, integration_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/integrations", tags=["integrations"])
@@ -69,7 +71,8 @@ async def list_integrations(
 @router.put("/{plugin_name}")
 async def save_config(
     plugin_name: str,
-    body: IntegrationConfigRequest,
+    request: Request,
+    config: dict = Body(...),
     current_user: User = Depends(require_permission("api_keys.manage")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -79,7 +82,17 @@ async def save_config(
         raise HTTPException(status_code=404, detail=f"Plugin '{plugin_name}' not found")
 
     record = await integration_service.save_integration_config(
-        str(current_user.org_id), plugin_name, body.config, db
+        str(current_user.org_id), plugin_name, config, db
+    )
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="integration.config_saved",
+        entity_type="integration",
+        actor_label=current_user.email,
+        entity_label=plugin_name,
+        user_id=str(current_user.id),
+        request=request,
     )
     return {"data": {"plugin_name": record.plugin_name, "updated": True}, "meta": {}, "error": None}
 
@@ -87,12 +100,24 @@ async def save_config(
 @router.post("/{plugin_name}/test")
 async def test_connection(
     plugin_name: str,
+    request: Request,
     current_user: User = Depends(require_permission("api_keys.manage")),
     db: AsyncSession = Depends(get_db),
 ):
     """Test the integration connection. Updates last_tested + last_test_status."""
     result = await integration_service.test_integration_connection(
         str(current_user.org_id), plugin_name, db
+    )
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="integration.tested",
+        entity_type="integration",
+        actor_label=current_user.email,
+        entity_label=plugin_name,
+        diff={"status": "ok" if result.get("ok") else "fail"},
+        user_id=str(current_user.id),
+        request=request,
     )
     return {"data": result, "meta": {}, "error": None}
 
@@ -101,6 +126,7 @@ async def test_connection(
 async def toggle_integration(
     plugin_name: str,
     body: IntegrationToggleRequest,
+    request: Request,
     current_user: User = Depends(require_permission("api_keys.manage")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -110,6 +136,17 @@ async def toggle_integration(
     )
     if not record:
         raise HTTPException(status_code=404, detail="Integration not configured")
+    action = "integration.enabled" if body.enabled else "integration.disabled"
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action=action,
+        entity_type="integration",
+        actor_label=current_user.email,
+        entity_label=plugin_name,
+        user_id=str(current_user.id),
+        request=request,
+    )
     return {"data": {"plugin_name": plugin_name, "is_enabled": record.is_enabled}, "meta": {}, "error": None}
 
 
@@ -151,6 +188,7 @@ async def sentinel_pull_alerts(
 @router.post("/crowdstrike/contain")
 async def crowdstrike_contain_host(
     body: CrowdStrikeContainRequest,
+    request: Request,
     current_user: User = Depends(require_permission("incidents.close")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -176,21 +214,18 @@ async def crowdstrike_contain_host(
     config = decrypt_config(record.config)
     ok = await plugin().contain_host(body.device_id, config)
 
-    # Audit log
-    try:
-        from app.models.audit import AuditLog
-        audit = AuditLog(
-            org_id=current_user.org_id,
-            user_id=current_user.id,
-            action="crowdstrike.contain_host",
-            entity_type="device",
-            entity_id=None,
-            diff={"device_id": body.device_id, "incident_id": body.incident_id, "success": ok},
-        )
-        db.add(audit)
-        await db.commit()
-    except Exception:
-        pass
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="crowdstrike.contain_host",
+        entity_type="device",
+        actor_label=current_user.email,
+        entity_label=body.device_id,
+        diff={"device_id": body.device_id, "incident_id": body.incident_id, "success": ok},
+        risk_level="high",
+        user_id=str(current_user.id),
+        request=request,
+    )
 
     return {"data": {"contained": ok, "device_id": body.device_id}, "meta": {}, "error": None}
 
@@ -198,6 +233,7 @@ async def crowdstrike_contain_host(
 @router.post("/azuread/revoke-sessions")
 async def azuread_revoke_sessions(
     body: AzureADRevokeRequest,
+    request: Request,
     current_user: User = Depends(require_permission("incidents.close")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -219,20 +255,18 @@ async def azuread_revoke_sessions(
     config = decrypt_config(record.config)
     ok = await plugin().revoke_sessions(body.user_id, config)
 
-    try:
-        from app.models.audit import AuditLog
-        audit = AuditLog(
-            org_id=current_user.org_id,
-            user_id=current_user.id,
-            action="azuread.revoke_sessions",
-            entity_type="user",
-            entity_id=None,
-            diff={"user_id": body.user_id, "incident_id": body.incident_id, "success": ok, "risk": "high"},
-        )
-        db.add(audit)
-        await db.commit()
-    except Exception:
-        pass
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="azuread.revoke_sessions",
+        entity_type="user",
+        actor_label=current_user.email,
+        entity_label=body.user_id,
+        diff={"user_id": body.user_id, "incident_id": body.incident_id, "success": ok},
+        risk_level="high",
+        user_id=str(current_user.id),
+        request=request,
+    )
 
     return {"data": {"revoked": ok, "user_id": body.user_id}, "meta": {}, "error": None}
 
@@ -240,6 +274,7 @@ async def azuread_revoke_sessions(
 @router.post("/azuread/reset-password")
 async def azuread_reset_password(
     body: AzureADResetRequest,
+    request: Request,
     current_user: User = Depends(require_permission("incidents.close")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -261,19 +296,17 @@ async def azuread_reset_password(
     config = decrypt_config(record.config)
     message = await plugin().reset_password(body.user_id, config)
 
-    try:
-        from app.models.audit import AuditLog
-        audit = AuditLog(
-            org_id=current_user.org_id,
-            user_id=current_user.id,
-            action="azuread.reset_password",
-            entity_type="user",
-            entity_id=None,
-            diff={"user_id": body.user_id, "incident_id": body.incident_id, "risk": "high"},
-        )
-        db.add(audit)
-        await db.commit()
-    except Exception:
-        pass
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="azuread.reset_password",
+        entity_type="user",
+        actor_label=current_user.email,
+        entity_label=body.user_id,
+        diff={"user_id": body.user_id, "incident_id": body.incident_id},
+        risk_level="high",
+        user_id=str(current_user.id),
+        request=request,
+    )
 
     return {"data": {"message": message, "user_id": body.user_id}, "meta": {}, "error": None}
