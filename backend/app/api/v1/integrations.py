@@ -7,8 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import Body
-
 from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.models.user import User
@@ -71,8 +69,8 @@ async def list_integrations(
 @router.put("/{plugin_name}")
 async def save_config(
     plugin_name: str,
+    data: IntegrationConfigRequest,
     request: Request,
-    config: dict = Body(...),
     current_user: User = Depends(require_permission("api_keys.manage")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -82,7 +80,7 @@ async def save_config(
         raise HTTPException(status_code=404, detail=f"Plugin '{plugin_name}' not found")
 
     record = await integration_service.save_integration_config(
-        str(current_user.org_id), plugin_name, config, db
+        str(current_user.org_id), plugin_name, data.config, db
     )
     await audit_service.log(
         db,

@@ -186,13 +186,37 @@ async def test_revoke_api_key_writes_high_risk_audit(client: AsyncClient, auth_h
 async def test_save_integration_config_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     resp = await client.put(
         "/api/v1/integrations/crowdstrike",
-        json={"client_id": "abc", "client_secret": "def", "base_url": "https://api.test"},
+        json={"config": {"client_id": "abc", "client_secret": "def", "base_url": "https://api.test"}},
         headers=auth_headers,
     )
     assert resp.status_code < 500
 
     result = await db_session.execute(
         select(AuditLog).where(AuditLog.action == "integration.config_saved")
+    )
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.actor_label == "admin@test.com"
+
+
+@pytest.mark.asyncio
+async def test_toggle_integration_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    # First save a config so the integration record exists
+    await client.put(
+        "/api/v1/integrations/crowdstrike",
+        json={"config": {"client_id": "abc", "client_secret": "def", "base_url": "https://api.test"}},
+        headers=auth_headers,
+    )
+
+    resp = await client.post(
+        "/api/v1/integrations/crowdstrike/toggle",
+        json={"enabled": True},
+        headers=auth_headers,
+    )
+    assert resp.status_code < 500
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "integration.enabled")
     )
     entry = result.scalar_one_or_none()
     assert entry is not None
