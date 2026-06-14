@@ -360,11 +360,9 @@ export function AuditLogPage() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-      <h2
-        style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}
-      >
-        📜 Audit Log
-      </h2>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif', marginBottom: 24 }}>
+        Audit Log
+      </div>
 
       <div>{inner}</div>
     </div>

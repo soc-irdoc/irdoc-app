@@ -18,11 +18,11 @@ export function useCreateIOC(incidentId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: CreateIOCPayload) => {
-      const res = await apiClient.post<ApiResponse<IOC>>(
+      const res = await apiClient.post<{ data: IOC; meta: { enrichment_queued: boolean }; error: null }>(
         `/incidents/${incidentId}/iocs`,
         payload
       )
-      return res.data.data
+      return { ioc: res.data.data, enrichment_queued: res.data.meta?.enrichment_queued ?? false }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['iocs', incidentId] })
@@ -64,11 +64,11 @@ export function useBulkImportIOCs(incidentId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (text: string) => {
-      const res = await apiClient.post<ApiResponse<IOC[]>>(
+      const res = await apiClient.post<{ data: IOC[]; meta: { enrichment_queued: boolean }; error: null }>(
         `/incidents/${incidentId}/iocs/bulk`,
         { text }
       )
-      return res.data.data
+      return { iocs: res.data.data, enrichment_queued: res.data.meta?.enrichment_queued ?? false }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['iocs', incidentId] })

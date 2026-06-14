@@ -327,11 +327,9 @@ export function StoragePage() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-      <h2
-        style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}
-      >
-        🗄️ Storage Configuration
-      </h2>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif', marginBottom: 24 }}>
+        Storage
+      </div>
 
       <div style={{ maxWidth: 640 }}>
         <SectionCard title="Storage Backend">

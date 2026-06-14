@@ -581,9 +581,9 @@ export function IncidentTemplatesPage() {
           marginBottom: 24,
         }}
       >
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
-          📋 Incident Templates
-        </h2>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif' }}>
+          Incident Templates
+        </div>
         <button className="btn btn-accent btn-sm" onClick={handleNew}>
           + New Template
         </button>

@@ -440,7 +440,7 @@ function UserActivityTile({ data }: { data: DashboardStats }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function OverviewPage() {
   const user = useAuthStore((s) => s.user)
-  const [range, setRange] = useState<TimeRangeOption>('7d')
+  const [range, setRange] = useState<TimeRangeOption>('30d')
   const { from_dt, to_dt } = useMemo(() => getTimeRange(range), [range])
   const { data, isLoading, isError } = useDashboardStats(from_dt, to_dt)
   const isAdmin = user?.role === 'admin'

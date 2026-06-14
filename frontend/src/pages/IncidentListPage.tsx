@@ -252,34 +252,26 @@ export function IncidentListPage() {
           background: 'var(--bg-base)',
         }}
       >
-        {/* Top bar */}
+        {/* Header */}
         <div
           style={{
-            height: 56,
-            background: 'var(--bg-surface)',
-            borderBottom: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
-            padding: '0 24px',
-            gap: 16,
+            justifyContent: 'space-between',
+            padding: '24px 24px 12px',
             flexShrink: 0,
           }}
         >
           <div
             style={{
               fontFamily: 'Syne, sans-serif',
-              fontWeight: 800,
-              fontSize: 22,
+              fontWeight: 700,
+              fontSize: 18,
               color: 'var(--text-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              letterSpacing: '-0.02em',
             }}
           >
-            <span style={{ filter: 'drop-shadow(0 0 8px rgba(249,115,22,0.4))' }}>⚡</span> Incidents
+            Incidents
           </div>
-          <div style={{ flex: 1 }} />
           <Button variant="accent" size="sm" onClick={() => setShowCreate(true)}>
             + New Incident
           </Button>
@@ -288,9 +280,7 @@ export function IncidentListPage() {
         {/* Filters */}
         <div
           style={{
-            background: 'var(--bg-surface)',
-            borderBottom: '1px solid var(--border)',
-            padding: '12px 24px',
+            padding: '0 24px 12px',
             display: 'flex',
             gap: 12,
             alignItems: 'center',

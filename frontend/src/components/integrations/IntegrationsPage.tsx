@@ -570,9 +570,9 @@ export function IntegrationsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            🔗 Integrations
-          </h2>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif' }}>
+            Integrations
+          </div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
             Connect external tools. Enable enrichment, notifications, and report delivery.
           </p>

@@ -9,9 +9,9 @@ export function ReportsAdminPage() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif', marginBottom: 6 }}>
         Report Templates
-      </h2>
+      </div>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 28, lineHeight: 1.6 }}>
         Build custom PDF report layouts using the drag-and-drop report builder.
         Set your brand colours, logo, and choose which sections to include.

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useIOCs, useCreateIOC, useUpdateIOC, useDeleteIOC, useBulkImportIOCs } from '@/hooks/useIOCs'
 import { detectIOCs } from '@/lib/iocDetector'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
@@ -8,6 +9,7 @@ import { Button } from '@/components/common/Button'
 import { ConfidenceBar } from './ConfidenceBar'
 import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
+import { getSocket } from '@/lib/websocket'
 import {
   IOC_TYPE_ICONS,
   IOC_STATUS_COLORS,
@@ -42,8 +44,12 @@ function EnrichmentPanel({
   async function handleEnrich() {
     setEnriching(true)
     try {
-      await apiClient.post(`/iocs/${iocId}/enrich`)
-      addToast('Enrichment queued — results will appear shortly', 'success')
+      const res = await apiClient.post<{ data: { enrichment_queued: boolean } }>(`/iocs/${iocId}/enrich`)
+      if (res.data.data.enrichment_queued) {
+        addToast('Enrichment queued — results will appear shortly', 'success')
+      } else {
+        addToast('No TI integrations enabled — enrichment skipped', 'info')
+      }
     } catch {
       addToast('Failed to queue enrichment', 'error')
     } finally {
@@ -51,20 +57,10 @@ function EnrichmentPanel({
     }
   }
 
-  async function handleAINarrative() {
-    try {
-      await apiClient.post(`/iocs/${iocId}/ai/narrative`)
-      addToast('AI narrative queued', 'success')
-    } catch {
-      addToast('AI narrative generation failed', 'error')
-    }
-  }
-
   const vt = enrichment?.virustotal as Record<string, unknown> | undefined
   const abuse = enrichment?.abuseipdb as Record<string, unknown> | undefined
   const shodan = enrichment?.shodan as Record<string, unknown> | undefined
-  const aiNarrative = enrichment?.ai_narrative as string | undefined
-  const hasAny = vt || abuse || shodan || aiNarrative
+  const hasAny = vt || abuse || shodan
 
   return (
     <div
@@ -89,13 +85,6 @@ function EnrichmentPanel({
           style={{ fontSize: 11 }}
         >
           {enriching ? 'Queuing…' : '↻ Re-enrich'}
-        </button>
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={handleAINarrative}
-          style={{ fontSize: 11 }}
-        >
-          ✨ AI Narrative
         </button>
       </div>
 
@@ -220,25 +209,6 @@ function EnrichmentPanel({
         </div>
       )}
 
-      {/* AI Narrative */}
-      {aiNarrative && (
-        <div
-          style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            padding: '10px 12px',
-            fontSize: 12,
-            color: 'var(--text-secondary)',
-            lineHeight: 1.6,
-          }}
-        >
-          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', display: 'block', marginBottom: 4 }}>
-            ✨ AI ANALYSIS
-          </span>
-          {aiNarrative}
-        </div>
-      )}
     </div>
   )
 }
@@ -392,8 +362,17 @@ function IOCRow({
 
 export function IOCPage({ incidentId }: IOCPageProps) {
   const addToast = useUIStore((s) => s.addToast)
+  const qc = useQueryClient()
   const { data: iocs = [], isLoading } = useIOCs(incidentId)
   const createIOC = useCreateIOC(incidentId)
+
+  // Listen for enrichment results and refresh IOC list without a page reload
+  useEffect(() => {
+    const socket = getSocket()
+    const handler = () => qc.invalidateQueries({ queryKey: ['iocs', incidentId] })
+    socket.on('ioc:enriched', handler)
+    return () => { socket.off('ioc:enriched', handler) }
+  }, [incidentId, qc])
   const updateIOC = useUpdateIOC(incidentId)
   const deleteIOC = useDeleteIOC(incidentId)
   const bulkImport = useBulkImportIOCs(incidentId)
@@ -426,9 +405,13 @@ export function IOCPage({ incidentId }: IOCPageProps) {
     e.preventDefault()
     if (!newValue.trim()) return
     try {
-      await createIOC.mutateAsync({ ioc_type: newType, value: newValue.trim(), confidence: newConfidence })
+      const result = await createIOC.mutateAsync({ ioc_type: newType, value: newValue.trim(), confidence: newConfidence })
       setNewValue('')
-      addToast('IOC added', 'success')
+      if (result.enrichment_queued) {
+        addToast('IOC added — enrichment queued', 'success')
+      } else {
+        addToast('IOC added — no TI integrations enabled, enrichment skipped', 'info')
+      }
     } catch {
       addToast('Failed to add IOC', 'error')
     }
@@ -437,11 +420,15 @@ export function IOCPage({ incidentId }: IOCPageProps) {
   async function handleBulkAdd() {
     const toAdd = detectedIOCs.filter((_, i) => selectedIOCs.has(i))
     try {
-      await bulkImport.mutateAsync(detectText)
-      addToast(`Added ${toAdd.length} IOCs`, 'success')
+      const result = await bulkImport.mutateAsync(detectText)
       setShowDetectModal(false)
       setDetectedIOCs([])
       setDetectText('')
+      if (result.enrichment_queued) {
+        addToast(`Added ${toAdd.length} IOCs — enrichment queued`, 'success')
+      } else {
+        addToast(`Added ${toAdd.length} IOCs — no TI integrations enabled, enrichment skipped`, 'info')
+      }
     } catch {
       addToast('Bulk import failed', 'error')
     }

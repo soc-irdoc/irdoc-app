@@ -57,9 +57,9 @@ export default function ReportTemplateListPage() {
     <div style={{ padding: '32px 36px', maxWidth: '920px', margin: '0 auto', overflowY: 'auto', flex: 1 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif', marginBottom: '4px' }}>
             Report Templates
-          </h1>
+          </div>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
             Build custom templates or clone the system defaults to customise.
           </p>

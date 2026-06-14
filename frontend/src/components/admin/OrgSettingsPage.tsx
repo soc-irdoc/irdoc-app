@@ -295,9 +295,9 @@ export function OrgSettingsPage() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}>
-        ⚙️ Organisation Settings
-      </h2>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif', marginBottom: 24 }}>
+        Organisation Settings
+      </div>
 
       <div style={{ maxWidth: 1020 }}>
 

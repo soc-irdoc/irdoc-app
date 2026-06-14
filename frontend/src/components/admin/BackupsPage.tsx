@@ -178,11 +178,9 @@ export function BackupsPage() {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-      <h2
-        style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 24 }}
-      >
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Syne, sans-serif', marginBottom: 24 }}>
         Backups
-      </h2>
+      </div>
 
       <div style={{ maxWidth: 640 }}>
         {/* Card 1 — Configuration */}

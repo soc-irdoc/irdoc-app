@@ -29,10 +29,12 @@ async def create_ioc(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     ioc = await ioc_service.create_ioc(db, incident_id, data, str(current_user.id))
+    from app.services.enrichment_service import trigger_enrichment_for_new_ioc
     from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
+    enrichment_queued = await trigger_enrichment_for_new_ioc(str(ioc.id), str(current_user.org_id), db)
     await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
     await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
-    return {"data": IOCOut.model_validate(ioc), "error": None}
+    return {"data": IOCOut.model_validate(ioc), "meta": {"enrichment_queued": enrichment_queued}, "error": None}
 
 
 @router.post("/incidents/{incident_id}/iocs/bulk", status_code=201)
@@ -44,10 +46,18 @@ async def bulk_import_iocs(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     iocs = await ioc_service.bulk_import(db, incident_id, data.text, str(current_user.id))
+    from app.services.integration_service import get_enabled_plugins_for_org
     from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
+    plugins = await get_enabled_plugins_for_org(str(current_user.org_id), "ti", db)
+    enrichment_queued = False
+    if plugins:
+        from app.workers.tasks import enrich_ioc as enrich_task
+        for ioc in iocs:
+            enrich_task.delay(str(ioc.id))
+        enrichment_queued = True
     await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
     await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
-    return {"data": [IOCOut.model_validate(i) for i in iocs], "error": None}
+    return {"data": [IOCOut.model_validate(i) for i in iocs], "meta": {"enrichment_queued": enrichment_queued}, "error": None}
 
 
 @router.post("/incidents/{incident_id}/iocs/detect", response_model=list[IOCDetected])
@@ -93,10 +103,14 @@ async def enrich_ioc(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("iocs.create")),
 ):
-    """Manually trigger re-enrichment for an IOC. Enqueues Celery task."""
+    """Manually trigger re-enrichment for an IOC. Only queues Celery task if TI plugins are enabled."""
+    from app.services.integration_service import get_enabled_plugins_for_org
+    plugins = await get_enabled_plugins_for_org(str(current_user.org_id), "ti", db)
+    if not plugins:
+        return {"data": {"ioc_id": ioc_id, "enrichment_queued": False}, "meta": {}, "error": None}
     from app.workers.tasks import enrich_ioc as enrich_task
     enrich_task.delay(ioc_id)
-    return {"data": {"ioc_id": ioc_id, "status": "enrichment_queued"}, "meta": {}, "error": None}
+    return {"data": {"ioc_id": ioc_id, "enrichment_queued": True}, "meta": {}, "error": None}
 
 
 @router.post("/iocs/{ioc_id}/ai/narrative", status_code=202)
