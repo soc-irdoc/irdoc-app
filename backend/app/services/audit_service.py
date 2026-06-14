@@ -19,6 +19,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.audit import AuditLog
 
 
+CATEGORY_ENTITY_TYPES: dict[str, list[str]] = {
+    "incidents": ["incident"],
+    "users": ["user", "user_invite"],
+    "auth": ["auth"],
+    "settings": ["organization", "storage_config", "sso_config"],
+    "integrations": ["integration", "device"],
+    "api_keys": ["api_key"],
+}
+
+
 async def log(
     db: AsyncSession,
     *,
@@ -26,11 +36,13 @@ async def log(
     action: str,
     entity_type: str | None = None,
     entity_id: str | None = None,
+    actor_label: str | None = None,
+    entity_label: str | None = None,
     user_id: str | None = None,
     api_key_id: str | None = None,
     diff: dict | None = None,
     request: Request | None = None,
-    risk_level: str = "normal",  # normal | high
+    risk_level: str = "normal",
 ) -> None:
     """Write a single audit log entry. Flushes but does not commit — caller owns the transaction."""
     ip = None
@@ -39,7 +51,6 @@ async def log(
         ip = request.client.host if request.client else None
         user_agent = request.headers.get("user-agent")
 
-    # Convert string UUIDs to uuid.UUID objects (or keep None)
     parsed_user_id: uuid.UUID | None = None
     if user_id:
         try:
@@ -78,6 +89,8 @@ async def log(
         action=action,
         entity_type=entity_type,
         entity_id=parsed_entity_id,
+        actor_label=actor_label,
+        entity_label=entity_label,
         diff=entry_diff,
         ip_address=ip,
         user_agent=user_agent,
@@ -98,6 +111,7 @@ async def get_audit_log(
     incident_id: str | None = None,
     from_dt: datetime | None = None,
     to_dt: datetime | None = None,
+    category: str | None = None,
 ) -> tuple[list[AuditLog], int]:
     """Return (items, total) with filters applied."""
     filters: list[Any] = []
@@ -131,6 +145,11 @@ async def get_audit_log(
     if to_dt:
         filters.append(AuditLog.created_at <= to_dt)
 
+    if category == "high_risk":
+        filters.append(AuditLog.diff["_risk_level"].as_string() == "high")
+    elif category and category in CATEGORY_ENTITY_TYPES:
+        filters.append(AuditLog.entity_type.in_(CATEGORY_ENTITY_TYPES[category]))
+
     # Total count
     count_q = select(func.count()).select_from(AuditLog)
     if filters:
@@ -163,52 +182,35 @@ async def export_csv(
     incident_id: str | None = None,
     from_dt: datetime | None = None,
     to_dt: datetime | None = None,
+    category: str | None = None,
 ) -> str:
     """Return a CSV string of filtered audit log rows (up to 10,000 rows)."""
     items, _ = await get_audit_log(
-        db,
-        org_id,
-        page=1,
-        per_page=10000,
-        user_id=user_id,
-        action=action,
-        entity_type=entity_type,
-        incident_id=incident_id,
-        from_dt=from_dt,
-        to_dt=to_dt,
+        db, org_id, page=1, per_page=10000,
+        user_id=user_id, action=action, entity_type=entity_type,
+        incident_id=incident_id, from_dt=from_dt, to_dt=to_dt,
+        category=category,
     )
-
     output = io.StringIO()
-    writer = csv.DictWriter(
-        output,
-        fieldnames=[
-            "id",
-            "created_at",
-            "action",
-            "entity_type",
-            "entity_id",
-            "user_id",
-            "api_key_id",
-            "ip_address",
-            "user_agent",
-            "diff",
-        ],
-    )
+    writer = csv.DictWriter(output, fieldnames=[
+        "id", "created_at", "action", "entity_type", "entity_id",
+        "actor_label", "entity_label",
+        "user_id", "api_key_id", "ip_address", "user_agent", "diff",
+    ])
     writer.writeheader()
     for item in items:
-        writer.writerow(
-            {
-                "id": str(item.id),
-                "created_at": item.created_at.isoformat() if item.created_at else "",
-                "action": item.action or "",
-                "entity_type": item.entity_type or "",
-                "entity_id": str(item.entity_id) if item.entity_id else "",
-                "user_id": str(item.user_id) if item.user_id else "",
-                "api_key_id": str(item.api_key_id) if item.api_key_id else "",
-                "ip_address": item.ip_address or "",
-                "user_agent": item.user_agent or "",
-                "diff": str(item.diff) if item.diff else "",
-            }
-        )
-
+        writer.writerow({
+            "id": str(item.id),
+            "created_at": item.created_at.isoformat() if item.created_at else "",
+            "action": item.action or "",
+            "entity_type": item.entity_type or "",
+            "entity_id": str(item.entity_id) if item.entity_id else "",
+            "actor_label": item.actor_label or "",
+            "entity_label": item.entity_label or "",
+            "user_id": str(item.user_id) if item.user_id else "",
+            "api_key_id": str(item.api_key_id) if item.api_key_id else "",
+            "ip_address": item.ip_address or "",
+            "user_agent": item.user_agent or "",
+            "diff": str(item.diff) if item.diff else "",
+        })
     return output.getvalue()
