@@ -22,6 +22,7 @@ function IntegrationConfigModal({
   const addToast = useUIStore((s) => s.addToast)
   const saveConfig = useSaveIntegrationConfig()
   const testConn = useTestIntegration()
+  const toggle = useToggleIntegration()
   const [values, setValues] = useState<Record<string, string>>(() => {
     const defaults: Record<string, string> = {}
     for (const [key, field] of Object.entries(integration.config_schema)) {
@@ -42,6 +43,9 @@ function IntegrationConfigModal({
     }
     try {
       await saveConfig.mutateAsync({ pluginName: integration.name, config: values })
+      if (!integration.is_enabled) {
+        await toggle.mutateAsync({ pluginName: integration.name, enabled: true })
+      }
       addToast('Configuration saved', 'success')
       onClose()
     } catch {
