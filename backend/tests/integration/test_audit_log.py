@@ -1,5 +1,4 @@
 import pytest
-from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -45,6 +44,10 @@ async def test_category_filter_incidents(db_session: AsyncSession, admin_user):
 
 @pytest.mark.asyncio
 async def test_category_filter_high_risk(db_session: AsyncSession, admin_user):
+    import os
+    if "sqlite" in os.getenv("TEST_DATABASE_URL", "sqlite"):
+        pytest.skip("high_risk filter requires PostgreSQL JSONB path queries")
+
     user, org = admin_user
     await audit_service.log(db_session, org_id=str(org.id), action="incident.deleted",
         entity_type="incident", risk_level="high")
@@ -52,9 +55,8 @@ async def test_category_filter_high_risk(db_session: AsyncSession, admin_user):
         entity_type="incident")
     await db_session.commit()
 
-    # Fetch all and filter in Python — SQLite JSON path queries are not compatible
-    # with the PostgreSQL JSONB path syntax used in the production SQL filter.
-    all_items, _ = await audit_service.get_audit_log(db_session, str(org.id))
-    items = [i for i in all_items if (i.diff or {}).get("_risk_level") == "high"]
-    assert len(items) == 1
+    items, total = await audit_service.get_audit_log(
+        db_session, str(org.id), category="high_risk"
+    )
+    assert total == 1
     assert items[0].action == "incident.deleted"
