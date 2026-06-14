@@ -211,6 +211,7 @@ export function useUpdateSSOConfig() {
 
 export interface AuditLogFilters {
   action?: string
+  category?: string
   from?: string
   to?: string
   page?: number
