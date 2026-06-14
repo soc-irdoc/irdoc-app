@@ -252,3 +252,28 @@ async def test_reactivate_user_writes_audit(client: AsyncClient, auth_headers, d
     assert entry is not None
     assert entry.actor_label == "admin@test.com"
     assert entry.entity_label == "second@test.com"
+
+
+@pytest.mark.asyncio
+async def test_create_timeline_entry_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    create_resp = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Timeline Test", "severity": "sev3"},
+        headers=auth_headers,
+    )
+    assert create_resp.status_code == 201
+    incident_id = create_resp.json()["data"]["id"]
+
+    comment_resp = await client.post(
+        f"/api/v1/incidents/{incident_id}/timeline",
+        json={"entry_type": "note", "description": "Investigated the alert", "occurred_at": "2026-06-14T10:00:00Z"},
+        headers=auth_headers,
+    )
+    assert comment_resp.status_code == 201
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "incident.comment_added")
+    )
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.actor_label == "admin@test.com"

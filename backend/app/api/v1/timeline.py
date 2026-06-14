@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,7 +6,7 @@ from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.schemas.common import Meta
 from app.schemas.timeline import TimelineEntryCreate, TimelineEntryOut, TimelineEntryUpdate
-from app.services import incident_service, timeline_service
+from app.services import audit_service, incident_service, timeline_service
 from app.sio import publish_ws
 from app.workers import tasks as worker_tasks
 import io
@@ -40,16 +40,32 @@ async def list_timeline(
 
 @router.post("/incidents/{incident_id}/timeline", status_code=201)
 async def create_timeline_entry(
+    request: Request,
     incident_id: str,
     data: TimelineEntryCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("timeline.create")),
 ):
-    await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+    incident = await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     entry = await timeline_service.create_entry(db, incident_id, data, str(current_user.id))
 
     # Async: scan for IOC suggestions
-    worker_tasks.auto_detect_iocs_from_entry.delay(str(entry.id))
+    try:
+        worker_tasks.auto_detect_iocs_from_entry.delay(str(entry.id))
+    except Exception:
+        pass
+
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="incident.comment_added",
+        entity_type="incident",
+        entity_id=str(incident_id),
+        actor_label=current_user.email,
+        entity_label=f"{incident.incident_ref} — {incident.title}",
+        user_id=str(current_user.id),
+        request=request,
+    )
 
     out = TimelineEntryOut.model_validate(entry)
     await publish_ws(incident_id, "timeline:entry:added", out.model_dump(mode="json"))
