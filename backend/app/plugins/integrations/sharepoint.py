@@ -91,18 +91,35 @@ class SharePointPlugin:
             return r.json()["id"]
 
     async def _resolve_drive_id(self, site_id: str, library_name: str, token: str) -> str:
-        async with httpx.AsyncClient(timeout=15) as client:
+        headers = {"Authorization": f"Bearer {token}"}
+        async with httpx.AsyncClient(timeout=30) as client:
             r = await client.get(
                 f"{_GRAPH_BASE}/sites/{site_id}/drives",
-                headers={"Authorization": f"Bearer {token}"},
+                headers=headers,
             )
             r.raise_for_status()
             drives = r.json().get("value", [])
             for drive in drives:
                 if drive.get("name", "").lower() == library_name.lower():
                     return drive["id"]
-            # Fallback: default document library
+
+            # Library not found — create it
+            r = await client.post(
+                f"{_GRAPH_BASE}/sites/{site_id}/lists",
+                json={"displayName": library_name, "list": {"template": "documentLibrary"}},
+                headers={**headers, "Content-Type": "application/json"},
+            )
+            r.raise_for_status()
+
+            # Re-fetch drives to get the newly created library's drive ID
+            r = await client.get(
+                f"{_GRAPH_BASE}/sites/{site_id}/drives",
+                headers=headers,
+            )
+            r.raise_for_status()
+            drives = r.json().get("value", [])
             for drive in drives:
-                if drive.get("driveType") == "documentLibrary":
+                if drive.get("name", "").lower() == library_name.lower():
                     return drive["id"]
-            raise ValueError(f"Document library '{library_name}' not found in site")
+
+            raise ValueError(f"Document library '{library_name}' could not be created or found")
