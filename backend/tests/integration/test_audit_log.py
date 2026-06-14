@@ -145,3 +145,37 @@ async def test_logout_writes_audit(client: AsyncClient, auth_headers, db_session
     entry = result.scalar_one_or_none()
     assert entry is not None
     assert entry.actor_label == "admin@test.com"
+
+
+@pytest.mark.asyncio
+async def test_create_api_key_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    resp = await client.post(
+        "/api/v1/api-keys",
+        json={"name": "deploy-bot", "scopes": ["incidents:read"]},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201
+
+    result = await db_session.execute(select(AuditLog).where(AuditLog.action == "api_key.created"))
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.actor_label == "admin@test.com"
+    assert entry.entity_label == "deploy-bot"
+
+
+@pytest.mark.asyncio
+async def test_revoke_api_key_writes_high_risk_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    create_resp = await client.post(
+        "/api/v1/api-keys",
+        json={"name": "to-revoke", "scopes": ["incidents:read"]},
+        headers=auth_headers,
+    )
+    key_id = create_resp.json()["data"]["id"]
+
+    await client.delete(f"/api/v1/api-keys/{key_id}", headers=auth_headers)
+
+    result = await db_session.execute(select(AuditLog).where(AuditLog.action == "api_key.revoked"))
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.diff.get("_risk_level") == "high"
+    assert entry.entity_label == "to-revoke"

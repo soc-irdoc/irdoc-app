@@ -59,12 +59,17 @@ async def list_keys(db: AsyncSession, org_id: str) -> list[APIKey]:
     return list(result.scalars().all())
 
 
-async def revoke_key(db: AsyncSession, org_id: str, key_id: str) -> None:
+async def get_key(db: AsyncSession, org_id: str, key_id: str) -> APIKey:
     result = await db.execute(
         select(APIKey).where(APIKey.id == key_id, APIKey.org_id == org_id)
     )
     key = result.scalar_one_or_none()
     if not key:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")
+    return key
+
+
+async def revoke_key(db: AsyncSession, org_id: str, key_id: str) -> None:
+    key = await get_key(db, org_id, key_id)
     key.is_active = False
     await db.flush()
