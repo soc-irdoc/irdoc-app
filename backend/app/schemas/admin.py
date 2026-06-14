@@ -126,6 +126,9 @@ class AuditLogOut(BaseModel):
     action: str
     entity_type: str | None = None
     entity_id: str | None = None
+    actor_label: str | None = None
+    entity_label: str | None = None
+    diff: dict | None = None
     user_id: UUID | None = None
     api_key_id: UUID | None = None
     ip_address: str | None = None

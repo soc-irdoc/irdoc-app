@@ -35,6 +35,7 @@ async def get_audit_log(
     incident_id: str | None = Query(None),
     from_dt: datetime | None = Query(None),
     to_dt: datetime | None = Query(None),
+    category: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("audit_log.read")),
 ):
@@ -52,6 +53,7 @@ async def get_audit_log(
         incident_id=incident_id,
         from_dt=from_dt,
         to_dt=to_dt,
+        category=category,
     )
 
     return {
@@ -69,6 +71,7 @@ async def export_audit_log(
     incident_id: str | None = Query(None),
     from_dt: datetime | None = Query(None),
     to_dt: datetime | None = Query(None),
+    category: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("audit_log.read")),
 ):
@@ -84,6 +87,7 @@ async def export_audit_log(
         incident_id=incident_id,
         from_dt=from_dt,
         to_dt=to_dt,
+        category=category,
     )
 
     return StreamingResponse(
