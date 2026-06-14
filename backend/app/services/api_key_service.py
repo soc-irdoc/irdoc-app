@@ -61,7 +61,11 @@ async def list_keys(db: AsyncSession, org_id: str) -> list[APIKey]:
 
 async def get_key(db: AsyncSession, org_id: str, key_id: str) -> APIKey:
     result = await db.execute(
-        select(APIKey).where(APIKey.id == key_id, APIKey.org_id == org_id)
+        select(APIKey).where(
+            APIKey.id == key_id,
+            APIKey.org_id == org_id,
+            APIKey.is_active == True,  # noqa: E712
+        )
     )
     key = result.scalar_one_or_none()
     if not key:
@@ -69,7 +73,6 @@ async def get_key(db: AsyncSession, org_id: str, key_id: str) -> APIKey:
     return key
 
 
-async def revoke_key(db: AsyncSession, org_id: str, key_id: str) -> None:
-    key = await get_key(db, org_id, key_id)
+async def revoke_key(db: AsyncSession, key: APIKey) -> None:
     key.is_active = False
     await db.flush()

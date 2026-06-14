@@ -70,4 +70,4 @@ async def revoke_api_key(
         user_id=str(current_user.id),
         request=request,
     )
-    await api_key_service.revoke_key(db, str(current_user.org_id), key_id)
+    await api_key_service.revoke_key(db, key)

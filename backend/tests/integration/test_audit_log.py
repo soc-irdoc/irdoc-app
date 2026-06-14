@@ -172,7 +172,8 @@ async def test_revoke_api_key_writes_high_risk_audit(client: AsyncClient, auth_h
     )
     key_id = create_resp.json()["data"]["id"]
 
-    await client.delete(f"/api/v1/api-keys/{key_id}", headers=auth_headers)
+    delete_resp = await client.delete(f"/api/v1/api-keys/{key_id}", headers=auth_headers)
+    assert delete_resp.status_code == 204
 
     result = await db_session.execute(select(AuditLog).where(AuditLog.action == "api_key.revoked"))
     entry = result.scalar_one_or_none()
