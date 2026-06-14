@@ -64,10 +64,16 @@ curl -s -X POST https://your-irdoc-instance/api/v1/auth/login \
 Response:
 ```json
 {
-  "data": { "access_token": "eyJhbGciOiJIUzI1NiIsInR5..." },
-  "user": { "id": "...", "role": "analyst", "email": "analyst@example.com" }
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5...",
+    "user": { "id": "...", "role": "analyst", "email": "analyst@example.com" }
+  },
+  "meta": {},
+  "error": null
 }
 ```
+
+> **Note on MFA:** If your organisation enforces multi-factor authentication, the login response will contain `mfa_challenge_token` instead of `access_token`. In that case, complete the TOTP verification step via `POST /auth/mfa/verify` before making API calls. Scripts targeting MFA-enabled orgs should handle this case or use a dedicated service account with MFA disabled.
 
 **Step 2 — Use the token in subsequent requests:**
 ```
@@ -573,7 +579,7 @@ Reports are generated asynchronously. The workflow is: enqueue → poll for read
 
 #### Enqueue Report Generation
 `POST /incidents/{incident_id}/reports` → `202 Accepted`
-**Auth:** JWT, any role
+**Auth:** JWT, minimum role: `viewer`
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -596,7 +602,7 @@ Response includes a report `id` and `status: "pending"`.
 
 #### Check Report Status
 `GET /reports/{report_id}`
-**Auth:** JWT, any role
+**Auth:** JWT, minimum role: `viewer`
 
 ```bash
 curl -s "https://your-irdoc-instance/api/v1/reports/REPORT_UUID" \
@@ -610,7 +616,7 @@ Poll every few seconds until `status == "ready"`.
 
 #### Download Report
 `GET /reports/{report_id}/download`
-**Auth:** JWT, any role
+**Auth:** JWT, minimum role: `viewer`
 
 Returns the PDF as a binary stream.
 
@@ -624,13 +630,13 @@ curl -s "https://your-irdoc-instance/api/v1/reports/REPORT_UUID/download" \
 
 #### List Reports for an Incident
 `GET /incidents/{incident_id}/reports`
-**Auth:** JWT, any role
+**Auth:** JWT, minimum role: `viewer`
 
 ---
 
 #### Delete Report
 `DELETE /reports/{report_id}` → `204 No Content`
-**Auth:** JWT, any role
+**Auth:** JWT, minimum role: `viewer`
 
 ---
 
@@ -682,7 +688,7 @@ Soft-deletes the key (sets `is_active = false`). The key immediately stops worki
 
 #### List Users
 `GET /users`
-**Auth:** JWT, any role
+**Auth:** JWT, minimum role: `viewer`
 
 Returns all active users in your organisation.
 
