@@ -1,16 +1,81 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useAuditLog, useExportAuditLog } from '@/hooks/useAdmin'
 
 const HIGH_RISK_ACTIONS = [
-  'host.contain',
-  'sessions.revoke',
-  'incident.delete',
-  'user.deactivate',
-  'storage.switch',
+  'crowdstrike.contain_host',
+  'azuread.revoke_sessions',
+  'azuread.reset_password',
+  'incident.deleted',
+  'user.deactivated',
+  'storage.backend_switched',
+  'api_key.revoked',
 ]
 
+const ACTION_LABELS: Record<string, string> = {
+  'incident.created': 'Incident Created',
+  'incident.status_changed': 'Status Changed',
+  'incident.severity_changed': 'Severity Changed',
+  'incident.assignee_changed': 'Assignee Changed',
+  'incident.deleted': 'Incident Deleted',
+  'incident.comment_added': 'Comment Added',
+  'user.login': 'User Login',
+  'user.logout': 'User Logout',
+  'user.created': 'User Created',
+  'user.invited': 'User Invited',
+  'user.role_changed': 'Role Changed',
+  'user.deactivated': 'User Deactivated',
+  'user.reactivated': 'User Reactivated',
+  'api_key.created': 'API Key Created',
+  'api_key.revoked': 'API Key Revoked',
+  'org.settings_updated': 'Settings Updated',
+  'storage.config_updated': 'Storage Config Updated',
+  'storage.backend_switched': 'Storage Backend Switched',
+  'sso.config_updated': 'SSO Config Updated',
+  'integration.config_saved': 'Integration Configured',
+  'integration.enabled': 'Integration Enabled',
+  'integration.disabled': 'Integration Disabled',
+  'integration.tested': 'Connection Tested',
+  'crowdstrike.contain_host': 'Host Contained',
+  'azuread.revoke_sessions': 'Sessions Revoked',
+  'azuread.reset_password': 'Password Reset',
+}
+
+const CATEGORIES = [
+  { key: undefined as string | undefined, label: 'All' },
+  { key: 'incidents', label: 'Incidents' },
+  { key: 'users', label: 'Users' },
+  { key: 'auth', label: 'Auth' },
+  { key: 'settings', label: 'Settings' },
+  { key: 'integrations', label: 'Integrations' },
+  { key: 'api_keys', label: 'API Keys' },
+  { key: 'high_risk', label: '⚠ High Risk' },
+] as const
+
 function isHighRisk(action: string) {
-  return HIGH_RISK_ACTIONS.some((a) => action.toLowerCase().includes(a.split('.')[0]))
+  return HIGH_RISK_ACTIONS.includes(action)
+}
+
+function renderDiff(diff: Record<string, unknown> | null | undefined): React.ReactNode {
+  if (!diff) return null
+  const visibleEntries = Object.entries(diff).filter(([k]) => !k.startsWith('_'))
+  if (visibleEntries.length === 0) return null
+  const hasFromTo = 'from' in diff && 'to' in diff
+  return (
+    <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 16px', fontSize: 11, color: 'var(--text-primary)' }}>
+      {hasFromTo && (
+        <>
+          <dt style={{ color: 'var(--text-muted)' }}>Changed</dt>
+          <dd>{String(diff.from ?? '—')} → {String(diff.to ?? '—')}</dd>
+        </>
+      )}
+      {visibleEntries.filter(([k]) => k !== 'from' && k !== 'to').map(([key, val]) => (
+        <React.Fragment key={key}>
+          <dt style={{ color: 'var(--text-muted)', textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</dt>
+          <dd>{String(val)}</dd>
+        </React.Fragment>
+      ))}
+    </dl>
+  )
 }
 
 export function AuditLogPage() {
@@ -19,10 +84,13 @@ export function AuditLogPage() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [page, setPage] = useState(1)
+  const [category, setCategory] = useState<string | undefined>(undefined)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const perPage = 50
 
   const filters = {
     action: actionFilter || undefined,
+    category,
     from: fromDate || undefined,
     to: toDate || undefined,
     page,
@@ -56,6 +124,19 @@ export function AuditLogPage() {
 
   const inner = (
     <>
+      {/* Category pills */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={String(cat.key ?? 'all')}
+            onClick={() => { setCategory(cat.key); setPage(1) }}
+            className={category === cat.key ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
       {/* Filter bar */}
       <div
         style={{
@@ -140,81 +221,100 @@ export function AuditLogPage() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => {
-                  const highRisk = isHighRisk(entry.action)
+                {entries.map((item) => {
+                  const highRisk = isHighRisk(item.action)
                   return (
-                    <tr
-                      key={entry.id}
-                      style={{
-                        background: highRisk ? 'var(--yellow-dim)' : 'transparent',
-                      }}
-                    >
-                      <td
+                    <React.Fragment key={item.id}>
+                      <tr
                         style={{
-                          ...tableCellStyle,
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: 11,
-                          whiteSpace: 'nowrap',
-                          color: 'var(--text-muted)',
+                          background: highRisk ? 'var(--yellow-dim)' : 'transparent',
+                          cursor: 'pointer',
                         }}
+                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                       >
-                        {new Date(entry.created_at).toLocaleString()}
-                      </td>
-                      <td
-                        style={{
-                          ...tableCellStyle,
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: 11,
-                          color: 'var(--text-muted)',
-                        }}
-                      >
-                        {entry.user_id
-                          ? `user:${entry.user_id.slice(0, 8)}…`
-                          : entry.api_key_id
-                          ? `key:${entry.api_key_id.slice(0, 8)}…`
-                          : '—'}
-                      </td>
-                      <td style={tableCellStyle}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span
-                            className="chip chip-muted"
-                            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}
-                          >
-                            {entry.action}
-                          </span>
-                          {highRisk && (
-                            <span
-                              className="chip chip-yellow"
-                              style={{ fontSize: 10 }}
-                              title="High risk action"
-                            >
-                              ⚠️ HIGH RISK
-                            </span>
+                        <td
+                          style={{
+                            ...tableCellStyle,
+                            fontFamily: 'JetBrains Mono, monospace',
+                            fontSize: 11,
+                            whiteSpace: 'nowrap',
+                            color: 'var(--text-muted)',
+                          }}
+                        >
+                          {new Date(item.created_at).toLocaleString()}
+                        </td>
+                        <td
+                          style={{
+                            ...tableCellStyle,
+                            fontFamily: 'JetBrains Mono, monospace',
+                            fontSize: 11,
+                            color: 'var(--text-muted)',
+                          }}
+                        >
+                          {item.actor_label ?? (item.user_id
+                            ? `user:${String(item.user_id).slice(0, 8)}…`
+                            : item.api_key_id
+                            ? `key:${String(item.api_key_id).slice(0, 8)}…`
+                            : '—'
                           )}
-                        </div>
-                      </td>
-                      <td
-                        style={{
-                          ...tableCellStyle,
-                          color: 'var(--text-muted)',
-                          fontSize: 11,
-                        }}
-                      >
-                        {entry.entity_type
-                          ? `${entry.entity_type}${entry.entity_id ? `:${entry.entity_id.slice(0, 8)}…` : ''}`
-                          : '—'}
-                      </td>
-                      <td
-                        style={{
-                          ...tableCellStyle,
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: 11,
-                          color: 'var(--text-muted)',
-                        }}
-                      >
-                        {entry.ip_address ?? '—'}
-                      </td>
-                    </tr>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span
+                              className="chip chip-muted"
+                              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}
+                            >
+                              {ACTION_LABELS[item.action] ?? item.action}
+                            </span>
+                            {highRisk && (
+                              <span
+                                className="chip chip-yellow"
+                                style={{ fontSize: 10 }}
+                                title="High risk action"
+                              >
+                                ⚠️ HIGH RISK
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            ...tableCellStyle,
+                            color: 'var(--text-muted)',
+                            fontSize: 11,
+                          }}
+                        >
+                          {item.entity_label ?? (item.entity_type && item.entity_id
+                            ? `${item.entity_type}:${String(item.entity_id).slice(0, 8)}…`
+                            : '—'
+                          )}
+                        </td>
+                        <td
+                          style={{
+                            ...tableCellStyle,
+                            fontFamily: 'JetBrains Mono, monospace',
+                            fontSize: 11,
+                            color: 'var(--text-muted)',
+                          }}
+                        >
+                          {item.ip_address ?? '—'}
+                        </td>
+                      </tr>
+                      {expandedId === item.id && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            style={{
+                              padding: '10px 14px',
+                              background: 'var(--bg-elevated)',
+                              borderBottom: '1px solid var(--border)',
+                            }}
+                          >
+                            {renderDiff(item.diff)}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   )
                 })}
               </tbody>
