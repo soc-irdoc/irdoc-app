@@ -221,3 +221,34 @@ async def test_toggle_integration_writes_audit(client: AsyncClient, auth_headers
     entry = result.scalar_one_or_none()
     assert entry is not None
     assert entry.actor_label == "admin@test.com"
+
+
+@pytest.mark.asyncio
+async def test_reactivate_user_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession, admin_user):
+    from app.core.security import hash_password
+    from app.models.user import User
+
+    user_main, org = admin_user
+    second = User(
+        org_id=org.id, email="second@test.com", full_name="Second",
+        role="admin", password_hash=hash_password("TestPass123!"), avatar_initials="S",
+        is_active=True,
+    )
+    db_session.add(second)
+    await db_session.flush()
+
+    # Deactivate second user
+    deact_resp = await client.put(f"/api/v1/users/{second.id}/deactivate", headers=auth_headers)
+    assert deact_resp.status_code == 200
+
+    # Reactivate
+    resp = await client.put(f"/api/v1/users/{second.id}/reactivate", headers=auth_headers)
+    assert resp.status_code == 200
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "user.reactivated")
+    )
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.actor_label == "admin@test.com"
+    assert entry.entity_label == "second@test.com"

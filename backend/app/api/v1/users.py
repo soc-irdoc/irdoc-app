@@ -1,7 +1,7 @@
 """
 User management + invite endpoints.
 """
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -108,6 +108,7 @@ async def update_user_role(
 
 @router.put("/{user_id}/deactivate")
 async def deactivate_user(
+    request: Request,
     user_id: str,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("users.manage")),
@@ -158,7 +159,52 @@ async def deactivate_user(
         action="user.deactivated",
         entity_type="user",
         entity_id=user_id,
+        actor_label=current_user.email,
+        entity_label=user.email,
         risk_level="high",
+        request=request,
+    )
+    await db.commit()
+
+    return {"data": {"ok": True}, "error": None}
+
+
+@router.put("/{user_id}/reactivate")
+async def reactivate_user(
+    request: Request,
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("users.manage")),
+):
+    """Reactivate a previously deactivated user account."""
+    import uuid
+
+    result = await db.execute(
+        select(User).where(
+            User.id == uuid.UUID(user_id),
+            User.org_id == current_user.org_id,
+        )
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.is_active:
+        raise HTTPException(status_code=400, detail="User is already active")
+
+    user.is_active = True
+    await db.flush()
+    await db.commit()
+
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="user.reactivated",
+        entity_type="user",
+        entity_id=user_id,
+        actor_label=current_user.email,
+        entity_label=user.email,
+        user_id=str(current_user.id),
+        request=request,
     )
     await db.commit()
 
