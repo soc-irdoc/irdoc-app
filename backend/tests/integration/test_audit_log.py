@@ -277,3 +277,4 @@ async def test_create_timeline_entry_writes_audit(client: AsyncClient, auth_head
     entry = result.scalar_one_or_none()
     assert entry is not None
     assert entry.actor_label == "admin@test.com"
+    assert "Timeline Test" in (entry.entity_label or "")

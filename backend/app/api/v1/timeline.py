@@ -52,8 +52,10 @@ async def create_timeline_entry(
     # Async: scan for IOC suggestions
     try:
         worker_tasks.auto_detect_iocs_from_entry.delay(str(entry.id))
-    except Exception:
-        pass
+    except Exception as exc:
+        # Celery broker unavailable (e.g., Redis not running in test env) — best-effort dispatch
+        import logging
+        logging.getLogger(__name__).debug("Failed to dispatch IOC detection task: %s", exc)
 
     await audit_service.log(
         db,
