@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -19,7 +19,7 @@ from app.schemas.auth import (
     UpdateProfileRequest,
     UserOut,
 )
-from app.services import auth_service
+from app.services import audit_service, auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -71,7 +71,7 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
 
 
 @router.post("/login")
-async def login(data: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+async def login(data: LoginRequest, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     from app.models.organization import Organization
 
     user = await auth_service.authenticate(db, data.email, data.password)
@@ -107,6 +107,18 @@ async def login(data: LoginRequest, response: Response, db: AsyncSession = Depen
 
     access, refresh = auth_service.issue_tokens(user)
     response.set_cookie(REFRESH_COOKIE_NAME, refresh, **COOKIE_SETTINGS)
+    await audit_service.log(
+        db,
+        org_id=str(user.org_id),
+        action="user.login",
+        entity_type="auth",
+        entity_id=str(user.id),
+        actor_label=user.email,
+        entity_label=user.email,
+        user_id=str(user.id),
+        request=request,
+    )
+    await db.commit()
     return {
         "data": LoginResponse(
             access_token=access,
@@ -128,8 +140,25 @@ async def refresh_token(
 
 
 @router.post("/logout")
-async def logout(response: Response, current_user=Depends(get_current_user)):
+async def logout(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     response.delete_cookie(REFRESH_COOKIE_NAME)
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="user.logout",
+        entity_type="auth",
+        entity_id=str(current_user.id),
+        actor_label=current_user.email,
+        entity_label=current_user.email,
+        user_id=str(current_user.id),
+        request=request,
+    )
+    await db.commit()
     return {"data": {"ok": True}}
 
 

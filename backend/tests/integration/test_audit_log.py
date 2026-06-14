@@ -119,3 +119,29 @@ async def test_delete_incident_writes_high_risk_audit(client: AsyncClient, auth_
     entry = result.scalar_one_or_none()
     assert entry is not None
     assert entry.diff.get("_risk_level") == "high"
+
+
+@pytest.mark.asyncio
+async def test_login_writes_audit(client: AsyncClient, admin_user, db_session: AsyncSession):
+    user, org = admin_user
+    resp = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@test.com", "password": "TestPass123!"},
+    )
+    assert resp.status_code == 200
+
+    result = await db_session.execute(select(AuditLog).where(AuditLog.action == "user.login"))
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.actor_label == "admin@test.com"
+
+
+@pytest.mark.asyncio
+async def test_logout_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    resp = await client.post("/api/v1/auth/logout", headers=auth_headers)
+    assert resp.status_code == 200
+
+    result = await db_session.execute(select(AuditLog).where(AuditLog.action == "user.logout"))
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.actor_label == "admin@test.com"
