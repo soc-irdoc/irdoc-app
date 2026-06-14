@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -14,6 +14,7 @@ from app.schemas.incident import (
     IncidentUpdate,
 )
 from app.services import incident_service
+from app.services import audit_service
 from app.sio import publish_ws
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -47,12 +48,25 @@ async def list_incidents(
 
 @router.post("", status_code=201)
 async def create_incident(
+    request: Request,
     data: IncidentCreate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("incidents.create")),
 ):
     incident = await incident_service.create_incident(
         db, str(current_user.org_id), data, created_by=str(current_user.id)
+    )
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="incident.created",
+        entity_type="incident",
+        entity_id=str(incident.id),
+        actor_label=current_user.email,
+        entity_label=f"{incident.incident_ref} — {incident.title}",
+        diff={"title": incident.title, "severity": incident.severity},
+        user_id=str(current_user.id),
+        request=request,
     )
     return {"data": IncidentOut.model_validate(incident), "error": None}
 
@@ -69,13 +83,51 @@ async def get_incident(
 
 @router.put("/{incident_id}")
 async def update_incident(
+    request: Request,
     incident_id: str,
     data: IncidentUpdate,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("incidents.update")),
 ):
     incident = await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+
+    # Capture significant field values before the service modifies them
+    old_status = incident.status
+    old_severity = incident.severity
+    old_assigned_to = incident.assigned_to
+
     updated = await incident_service.update_incident(db, incident, data)
+
+    entity_label = f"{updated.incident_ref} — {updated.title}"
+    audit_kwargs = dict(
+        db=db,
+        org_id=str(current_user.org_id),
+        entity_type="incident",
+        entity_id=str(updated.id),
+        actor_label=current_user.email,
+        entity_label=entity_label,
+        user_id=str(current_user.id),
+        request=request,
+    )
+
+    if data.status is not None and data.status != old_status:
+        await audit_service.log(action="incident.status_changed",
+            diff={"from": old_status, "to": data.status}, **audit_kwargs)
+
+    if data.severity is not None and data.severity != old_severity:
+        await audit_service.log(action="incident.severity_changed",
+            diff={"from": old_severity, "to": data.severity}, **audit_kwargs)
+
+    if data.assigned_to is not None and str(data.assigned_to) != str(old_assigned_to or ""):
+        from app.models.user import User
+        new_user = await db.get(User, data.assigned_to)
+        old_user = await db.get(User, old_assigned_to) if old_assigned_to else None
+        await audit_service.log(action="incident.assignee_changed",
+            diff={
+                "from": old_user.email if old_user else None,
+                "to": new_user.email if new_user else None,
+            }, **audit_kwargs)
+
     out = IncidentOut.model_validate(updated)
     await publish_ws(incident_id, "incident:updated", out.model_dump(mode="json"))
 
@@ -88,11 +140,24 @@ async def update_incident(
 
 @router.delete("/{incident_id}", status_code=204)
 async def delete_incident(
+    request: Request,
     incident_id: str,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("incidents.delete")),
 ):
     incident = await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="incident.deleted",
+        entity_type="incident",
+        entity_id=str(incident.id),
+        actor_label=current_user.email,
+        entity_label=f"{incident.incident_ref} — {incident.title}",
+        risk_level="high",
+        user_id=str(current_user.id),
+        request=request,
+    )
     await incident_service.delete_incident(db, incident)
 
 

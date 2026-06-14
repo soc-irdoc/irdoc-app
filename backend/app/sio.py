@@ -141,11 +141,16 @@ async def _get_presence(incident_id: str) -> list[dict]:
 # ── Emission helpers ──────────────────────────────────────────────────────────
 
 async def publish_ws(incident_id: str, event: str, data: dict) -> None:
-    """Publish a WebSocket event via Redis. Use from FastAPI route handlers."""
+    """Publish a WebSocket event via Redis. Use from FastAPI route handlers.
+    Connection errors are swallowed — WebSocket delivery is best-effort."""
+    import redis.exceptions as _redis_exc
     from app.core.debounce import get_redis
-    redis = get_redis()
-    payload = json.dumps({"incident_id": incident_id, "event": event, "data": data})
-    await redis.publish(f"irp:ws:{incident_id}", payload)
+    try:
+        redis = get_redis()
+        payload = json.dumps({"incident_id": incident_id, "event": event, "data": data})
+        await redis.publish(f"irp:ws:{incident_id}", payload)
+    except (_redis_exc.ConnectionError, _redis_exc.TimeoutError):
+        pass
 
 
 # ── Redis pub/sub bridge ──────────────────────────────────────────────────────

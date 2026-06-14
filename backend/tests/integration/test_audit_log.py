@@ -1,4 +1,5 @@
 import pytest
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -60,3 +61,61 @@ async def test_category_filter_high_risk(db_session: AsyncSession, admin_user):
     )
     assert total == 1
     assert items[0].action == "incident.deleted"
+
+
+@pytest.mark.asyncio
+async def test_create_incident_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    resp = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Ransomware Alert", "severity": "sev1"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 201
+
+    result = await db_session.execute(select(AuditLog).where(AuditLog.action == "incident.created"))
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.actor_label == "admin@test.com"
+    assert "Ransomware Alert" in (entry.entity_label or "")
+
+
+@pytest.mark.asyncio
+async def test_update_incident_status_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    create_resp = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Test Inc", "severity": "sev2"},
+        headers=auth_headers,
+    )
+    incident_id = create_resp.json()["data"]["id"]
+
+    await client.put(
+        f"/api/v1/incidents/{incident_id}",
+        json={"status": "monitoring"},
+        headers=auth_headers,
+    )
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "incident.status_changed")
+    )
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.diff == {"from": "open", "to": "monitoring"}
+
+
+@pytest.mark.asyncio
+async def test_delete_incident_writes_high_risk_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    create_resp = await client.post(
+        "/api/v1/incidents",
+        json={"title": "To Delete", "severity": "sev4"},
+        headers=auth_headers,
+    )
+    incident_id = create_resp.json()["data"]["id"]
+
+    await client.delete(f"/api/v1/incidents/{incident_id}", headers=auth_headers)
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "incident.deleted")
+    )
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.diff.get("_risk_level") == "high"

@@ -61,16 +61,31 @@ async def generate_ref(db: AsyncSession, org_id: str) -> str:
     """
     Generates INC-YYYY-NNNN. Thread-safe via DB sequence.
     Uses a PostgreSQL sequence per org per year.
+    Falls back to a count-based approach for SQLite (test environments).
     """
+    from sqlalchemy.exc import OperationalError
+
     year = datetime.now(UTC).year
     seq_name = f"incident_seq_{str(org_id).replace('-', '_')}_{year}"
 
-    # Create sequence if it doesn't exist
-    await db.execute(
-        text(f"CREATE SEQUENCE IF NOT EXISTS {seq_name} START 1")
-    )
-    result = await db.execute(text(f"SELECT nextval('{seq_name}')"))
-    n = result.scalar()
+    try:
+        # Create sequence if it doesn't exist (PostgreSQL)
+        await db.execute(
+            text(f"CREATE SEQUENCE IF NOT EXISTS {seq_name} START 1")
+        )
+        result = await db.execute(text(f"SELECT nextval('{seq_name}')"))
+        n = result.scalar()
+    except OperationalError:
+        # SQLite fallback (test environments): use row count for uniqueness.
+        # Do NOT rollback — the failed DDL statement does not taint the session.
+        prefix = f"INC-{year}-"
+        count_result = await db.execute(
+            select(func.count()).select_from(Incident).where(
+                Incident.incident_ref.like(f"{prefix}%")
+            )
+        )
+        n = (count_result.scalar() or 0) + 1
+
     return f"INC-{year}-{n:04d}"
 
 

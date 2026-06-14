@@ -57,6 +57,36 @@ if "sqlite" in _TEST_DB_URL_RAW:
 
     _PG_UUID.bind_processor = _sqlite_uuid_bind_processor  # type: ignore[method-assign]
 
+    # Patch the core SQLAlchemy ARRAY type so SQLite can store/retrieve lists as
+    # JSON text. SQLite cannot bind Python list values natively.
+    import json as _json
+    from sqlalchemy.sql.sqltypes import ARRAY as _SA_ARRAY  # noqa: E402
+
+    _orig_array_bind_processor = _SA_ARRAY.bind_processor
+
+    def _sqlite_array_bind_processor(self, dialect):
+        _inner = _orig_array_bind_processor(self, dialect)
+
+        def process(value):
+            if value is None:
+                return None
+            processed = _inner(value) if _inner else value
+            return _json.dumps(processed)
+
+        return process
+
+    def _sqlite_array_result_processor(self, dialect, coltype):
+        def process(value):
+            if value is None:
+                return None
+            if isinstance(value, list):
+                return value
+            return _json.loads(value)
+        return process
+
+    _SA_ARRAY.bind_processor = _sqlite_array_bind_processor  # type: ignore[method-assign]
+    _SA_ARRAY.result_processor = _sqlite_array_result_processor  # type: ignore[method-assign]
+
 from app.core.database import Base, get_db
 from app.core.security import hash_password
 # `app` is the Socket.io ASGIApp wrapper; `application` is the FastAPI instance.
