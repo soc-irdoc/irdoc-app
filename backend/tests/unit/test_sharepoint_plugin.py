@@ -88,12 +88,11 @@ async def test_push_report_uploads_into_incident_folder():
     drives_resp = _mock_json_response({"value": [{"id": "drv-1", "name": "IR Reports"}]})
     upload_resp = _mock_json_response({"webUrl": "https://sp.example/INC-2026-0021/report.pdf"})
 
-    client = AsyncMock()
-    client.__aenter__ = AsyncMock(return_value=client)
-    client.__aexit__ = AsyncMock(return_value=None)
-    client.post = AsyncMock(return_value=token_resp)
-    client.get = AsyncMock(side_effect=[site_resp, drives_resp])
-    client.put = AsyncMock(return_value=upload_resp)
+    client = _make_client(
+        get_side_effects=[site_resp, drives_resp],
+        post_return=token_resp,
+        put_return=upload_resp,
+    )
 
     config = {
         "tenant_id": "t1", "client_id": "c1", "client_secret": "s1",
@@ -120,12 +119,11 @@ async def test_push_report_falls_back_to_root_without_incident_ref():
     drives_resp = _mock_json_response({"value": [{"id": "drv-1", "name": "IR Reports"}]})
     upload_resp = _mock_json_response({"webUrl": "https://sp.example/report.pdf"})
 
-    client = AsyncMock()
-    client.__aenter__ = AsyncMock(return_value=client)
-    client.__aexit__ = AsyncMock(return_value=None)
-    client.post = AsyncMock(return_value=token_resp)
-    client.get = AsyncMock(side_effect=[site_resp, drives_resp])
-    client.put = AsyncMock(return_value=upload_resp)
+    client = _make_client(
+        get_side_effects=[site_resp, drives_resp],
+        post_return=token_resp,
+        put_return=upload_resp,
+    )
 
     config = {
         "tenant_id": "t1", "client_id": "c1", "client_secret": "s1",
