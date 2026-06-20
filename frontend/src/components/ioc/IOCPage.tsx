@@ -366,10 +366,19 @@ export function IOCPage({ incidentId }: IOCPageProps) {
   const { data: iocs = [], isLoading } = useIOCs(incidentId)
   const createIOC = useCreateIOC(incidentId)
 
-  // Listen for enrichment results and refresh IOC list without a page reload
+  // Listen for enrichment results and update cache directly from the event payload
   useEffect(() => {
     const socket = getSocket()
-    const handler = () => qc.invalidateQueries({ queryKey: ['iocs', incidentId] })
+    const handler = (data: { ioc_id: string; enrichment: Record<string, unknown>; confidence: number }) => {
+      qc.setQueryData(['iocs', incidentId], (old: IOC[] | undefined) =>
+        old?.map((ioc) =>
+          ioc.id === data.ioc_id
+            ? { ...ioc, enrichment: data.enrichment, confidence: data.confidence }
+            : ioc
+        )
+      )
+      qc.invalidateQueries({ queryKey: ['iocs', incidentId] })
+    }
     socket.on('ioc:enriched', handler)
     return () => { socket.off('ioc:enriched', handler) }
   }, [incidentId, qc])
