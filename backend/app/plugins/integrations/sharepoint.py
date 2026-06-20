@@ -114,15 +114,11 @@ class SharePointPlugin:
             )
             r.raise_for_status()
 
-            # Re-fetch drives to get the newly created library's drive ID
+            # Fetch the new library's drive directly by list ID — avoids Graph propagation delay
+            created_list_id = r.json()["id"]
             r = await client.get(
-                f"{_GRAPH_BASE}/sites/{site_id}/drives",
+                f"{_GRAPH_BASE}/sites/{site_id}/lists/{created_list_id}/drive",
                 headers=headers,
             )
             r.raise_for_status()
-            drives = r.json().get("value", [])
-            for drive in drives:
-                if drive.get("name", "").lower() == library_name.lower():
-                    return drive["id"]
-
-            raise ValueError(f"Document library '{library_name}' could not be created or found")
+            return r.json()["id"]

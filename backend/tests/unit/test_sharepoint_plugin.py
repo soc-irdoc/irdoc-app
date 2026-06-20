@@ -44,10 +44,10 @@ async def test_resolve_drive_id_creates_library_when_missing():
     """Creates the document library via Graph when it is not found, then returns the new drive ID."""
     plugin = SharePointPlugin()
     empty_drives = _mock_json_response({"value": []})
-    create_resp = _mock_json_response({})
-    new_drives = _mock_json_response({"value": [{"id": "drv-new", "name": "IR Reports"}]})
+    create_resp = _mock_json_response({"id": "list-123"})
+    new_drive = _mock_json_response({"id": "drv-new"})
     client = _make_client(
-        get_side_effects=[empty_drives, new_drives],
+        get_side_effects=[empty_drives, new_drive],
         post_return=create_resp,
     )
 
@@ -62,19 +62,27 @@ async def test_resolve_drive_id_creates_library_when_missing():
 
 
 @pytest.mark.asyncio
-async def test_resolve_drive_id_raises_if_creation_fails():
-    """Raises ValueError when library creation succeeds but drive still not found."""
+async def test_resolve_drive_id_raises_on_drive_fetch_failure():
+    """Raises HTTPStatusError when fetching the new library's drive fails."""
+    import httpx as _httpx
+
     plugin = SharePointPlugin()
     empty_drives = _mock_json_response({"value": []})
-    create_resp = _mock_json_response({})
-    still_empty = _mock_json_response({"value": []})
+    create_resp = _mock_json_response({"id": "list-123"})
+
+    # Second GET (drive fetch) raises
+    failing_drive_resp = MagicMock()
+    failing_drive_resp.raise_for_status.side_effect = _httpx.HTTPStatusError(
+        "404", request=MagicMock(), response=MagicMock()
+    )
+
     client = _make_client(
-        get_side_effects=[empty_drives, still_empty],
+        get_side_effects=[empty_drives, failing_drive_resp],
         post_return=create_resp,
     )
 
     with patch("app.plugins.integrations.sharepoint.httpx.AsyncClient", return_value=client):
-        with pytest.raises(ValueError, match="could not be created or found"):
+        with pytest.raises(_httpx.HTTPStatusError):
             await plugin._resolve_drive_id("site-1", "IR Reports", "tok")
 
 
@@ -83,16 +91,19 @@ async def test_push_report_uploads_into_incident_folder():
     """Upload URL includes {incident_ref}/{filename} when _incident_ref is in config."""
     plugin = SharePointPlugin()
 
-    token_resp = _mock_json_response({"access_token": "tok"})
-    site_resp = _mock_json_response({"id": "site-1"})
-    drives_resp = _mock_json_response({"value": [{"id": "drv-1", "name": "IR Reports"}]})
-    upload_resp = _mock_json_response({"webUrl": "https://sp.example/INC-2026-0021/report.pdf"})
-
-    client = _make_client(
-        get_side_effects=[site_resp, drives_resp],
-        post_return=token_resp,
-        put_return=upload_resp,
+    # _get_token: POST → token
+    token_client = _make_client(get_side_effects=[], post_return=_mock_json_response({"access_token": "tok"}))
+    # _resolve_site_id: GET → site
+    site_client = _make_client(get_side_effects=[_mock_json_response({"id": "site-1"})])
+    # _resolve_drive_id: GET (found) → no POST needed
+    drive_client = _make_client(get_side_effects=[_mock_json_response({"value": [{"id": "drv-1", "name": "IR Reports"}]})])
+    # upload PUT
+    upload_client = _make_client(
+        get_side_effects=[],
+        put_return=_mock_json_response({"webUrl": "https://sp.example/INC-2026-0021/report.pdf"}),
     )
+
+    clients = iter([token_client, site_client, drive_client, upload_client])
 
     config = {
         "tenant_id": "t1", "client_id": "c1", "client_secret": "s1",
@@ -101,11 +112,11 @@ async def test_push_report_uploads_into_incident_folder():
         "_incident_ref": "INC-2026-0021",
     }
 
-    with patch("app.plugins.integrations.sharepoint.httpx.AsyncClient", return_value=client):
+    with patch("app.plugins.integrations.sharepoint.httpx.AsyncClient", side_effect=clients):
         url = await plugin.push_report(b"pdf", "INC-2026-0021 - Executive Summary.pdf", config)
 
     assert url == "https://sp.example/INC-2026-0021/report.pdf"
-    put_url = client.put.call_args[0][0]
+    put_url = upload_client.put.call_args[0][0]
     assert "INC-2026-0021/INC-2026-0021 - Executive Summary.pdf" in put_url
 
 
@@ -114,16 +125,15 @@ async def test_push_report_falls_back_to_root_without_incident_ref():
     """Upload URL does NOT include a folder prefix when _incident_ref is absent."""
     plugin = SharePointPlugin()
 
-    token_resp = _mock_json_response({"access_token": "tok"})
-    site_resp = _mock_json_response({"id": "site-1"})
-    drives_resp = _mock_json_response({"value": [{"id": "drv-1", "name": "IR Reports"}]})
-    upload_resp = _mock_json_response({"webUrl": "https://sp.example/report.pdf"})
-
-    client = _make_client(
-        get_side_effects=[site_resp, drives_resp],
-        post_return=token_resp,
-        put_return=upload_resp,
+    token_client = _make_client(get_side_effects=[], post_return=_mock_json_response({"access_token": "tok"}))
+    site_client = _make_client(get_side_effects=[_mock_json_response({"id": "site-1"})])
+    drive_client = _make_client(get_side_effects=[_mock_json_response({"value": [{"id": "drv-1", "name": "IR Reports"}]})])
+    upload_client = _make_client(
+        get_side_effects=[],
+        put_return=_mock_json_response({"webUrl": "https://sp.example/report.pdf"}),
     )
+
+    clients = iter([token_client, site_client, drive_client, upload_client])
 
     config = {
         "tenant_id": "t1", "client_id": "c1", "client_secret": "s1",
@@ -131,8 +141,8 @@ async def test_push_report_falls_back_to_root_without_incident_ref():
         "library": "IR Reports",
     }
 
-    with patch("app.plugins.integrations.sharepoint.httpx.AsyncClient", return_value=client):
+    with patch("app.plugins.integrations.sharepoint.httpx.AsyncClient", side_effect=clients):
         await plugin.push_report(b"pdf", "report.pdf", config)
 
-    put_url = client.put.call_args[0][0]
+    put_url = upload_client.put.call_args[0][0]
     assert put_url.endswith("/root:/report.pdf:/content")
