@@ -514,6 +514,7 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
             if not sp_plugin:
                 raise RuntimeError("SharePoint plugin not loaded")
 
+            # payload.incident is guaranteed non-None — build_report_payload raises on missing incident
             sharepoint_url = await sp_plugin().push_report(
                 report_bytes, filename, {**config, "_incident_ref": payload.incident.incident_ref}
             )
@@ -633,6 +634,8 @@ def push_report_to_sharepoint(self, report_id: str, org_id: str):
             if not sp_plugin:
                 raise RuntimeError("SharePoint plugin not loaded")
 
+            if incident is None:
+                logger.warning("push_report_to_sharepoint: incident not found for report=%s, uploading to library root", report_id)
             incident_ref = incident.incident_ref if incident else ""
             sharepoint_url = await sp_plugin().push_report(
                 file_bytes, filename, {**config, "_incident_ref": incident_ref}
