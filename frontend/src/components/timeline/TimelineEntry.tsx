@@ -33,7 +33,6 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
   const deleteEntry = useDeleteTimelineEntry(incidentId)
   const pinEntry = usePinTimelineEntry(incidentId)
   const [hovered, setHovered] = useState(false)
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const config = ENTRY_TYPE_CONFIG[entry.entry_type]
   const dotStyle = DOT_STYLES[entry.entry_type] ?? DOT_STYLES.note
@@ -212,7 +211,7 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
             {entry.attachments && entry.attachments.length > 0 && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
                 {entry.attachments.map((att) => (
-                  <button
+                  <div
                     key={att.id}
                     className="tl-attach-item"
                     style={{
@@ -225,29 +224,12 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s',
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
-                    onClick={() => {
-                      if (isImageMime(att.mime_type) && att.url) {
-                        setLightboxUrl(att.url)
-                      } else if (att.url) {
-                        window.open(att.url, '_blank')
-                      }
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--blue)'
-                      e.currentTarget.style.color = 'var(--blue)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border)'
-                      e.currentTarget.style.color = 'var(--text-secondary)'
-                    }}
                   >
-                    <span>{isImageMime(att.mime_type) ? '🖼' : '📎'}</span>
-                    {att.original_filename}
-                  </button>
+                    <span>{att.mime_type && isImageMime(att.mime_type) ? '🖼' : '📎'}</span>
+                    {att.original_name}
+                  </div>
                 ))}
               </div>
             )}
@@ -260,28 +242,6 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
         </div>
       </div>
 
-      {/* Lightbox */}
-      {lightboxUrl && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 200,
-            background: 'rgba(0,0,0,0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-          }}
-          onClick={() => setLightboxUrl(null)}
-        >
-          <img
-            src={lightboxUrl}
-            alt="Attachment"
-            style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8 }}
-          />
-        </div>
-      )}
     </>
   )
 }

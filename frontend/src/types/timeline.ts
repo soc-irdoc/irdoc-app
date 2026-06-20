@@ -2,16 +2,10 @@ export type EntryType = 'detection' | 'analysis' | 'containment' | 'evidence' | 
 
 export interface Attachment {
   id: string
-  incident_id: string
-  timeline_entry_id: string | null
+  original_name: string
+  mime_type: string | null
+  file_size: number | null
   sha256: string
-  stored_path: string
-  mime_type: string
-  original_filename: string
-  file_size: number
-  storage_backend: string
-  created_at: string
-  url?: string
 }
 
 export interface TimelineEntry {
