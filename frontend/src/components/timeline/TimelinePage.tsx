@@ -53,7 +53,7 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
   }, [])
 
   async function handleExportCSV() {
-    const res = await apiClient.get(`/incidents/${incidentId}/timeline/export`, {
+    const res = await apiClient.get(`/incidents/${incidentId}/timeline/export/csv`, {
       responseType: 'blob',
     })
     const url = URL.createObjectURL(res.data)
