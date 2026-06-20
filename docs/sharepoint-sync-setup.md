@@ -130,12 +130,22 @@ Copy the full URL — including the `/sites/...` path. This is what you'll paste
 
 ### Document library name
 
-The **Document Library** field must exactly match the library's name as shown in SharePoint (case-insensitive). The default is `IR Reports`. If the library doesn't exist, IRDoc falls back to the site's default document library.
+The **Document Library** field must exactly match the library's name as shown in SharePoint (case-insensitive). The default is `IR Reports`. If the library doesn't exist, IRDoc creates it automatically using the Microsoft Graph API — no manual setup required.
 
-To create a dedicated library:
-1. Browse to your SharePoint site
-2. Click **+ New → Document library**
-3. Name it `IR Reports` (or whatever you put in the IRDoc field)
+### Folder structure
+
+Inside the document library, IRDoc organises reports into per-incident subfolders. The folder is named after the incident reference and is created automatically on the first sync:
+
+```
+IR Reports/
+├── INC-2026-0021/
+│   ├── INC-2026-0021 - Executive Summary.pdf
+│   └── INC-2026-0021 - Technical Report.pdf
+└── INC-2026-0022/
+    └── INC-2026-0022 - Management Brief.pdf
+```
+
+The filename inside each folder follows the configured **Filename Pattern** unchanged.
 
 ### Filename pattern tokens
 
@@ -186,7 +196,7 @@ The app doesn't have permission to the SharePoint site. Check that:
 The SharePoint Site URL is incorrect. Make sure it includes the full path, e.g. `https://company.sharepoint.com/sites/SOC`, not just the domain.
 
 **Files appear in the wrong library**
-The Document Library name is case-insensitive but must match exactly. Check the library name in SharePoint. IRDoc falls back to the default document library if the named one isn't found.
+The Document Library name is case-insensitive but must match exactly. If the named library is not found, IRDoc creates it automatically — so if creation is failing, verify that `Sites.ReadWrite.All` admin consent is granted in the Azure portal (required for library creation as well as uploads).
 
 **Sync doesn't trigger after report generation**
 Make sure the SharePoint integration toggle is **On** in Integrations. Also check that the Celery worker is running — SharePoint uploads happen in the background task queue.
