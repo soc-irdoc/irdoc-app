@@ -43,12 +43,15 @@ class SharePointPlugin:
             return False
 
     async def push_report(self, report_bytes: bytes, filename: str, config: dict) -> str:
-        """Upload bytes to SharePoint. Overwrites if file exists. Returns webUrl."""
+        """Upload bytes to SharePoint into an incident subfolder. Returns webUrl."""
         token = await self._get_token(config)
         site_id = await self._resolve_site_id(config["site_url"], token)
         drive_id = await self._resolve_drive_id(site_id, config.get("library", "IR Reports"), token)
 
-        upload_url = f"{_GRAPH_BASE}/drives/{drive_id}/root:/{filename}:/content"
+        incident_ref = config.get("_incident_ref", "")
+        upload_path = f"{incident_ref}/{filename}" if incident_ref else filename
+
+        upload_url = f"{_GRAPH_BASE}/drives/{drive_id}/root:/{upload_path}:/content"
         async with httpx.AsyncClient(timeout=120) as client:
             r = await client.put(
                 upload_url,
