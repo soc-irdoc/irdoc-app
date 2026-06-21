@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useDeleteTimelineEntry, usePinTimelineEntry } from '@/hooks/useTimeline'
 import { ENTRY_TYPE_CONFIG } from '@/types/timeline'
-import type { TimelineEntry as TEntry } from '@/types/timeline'
+import type { TimelineEntry as TEntry, Attachment } from '@/types/timeline'
 import { formatDateTime, formatRelative, isImageMime } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
+import apiClient from '@/lib/apiClient'
+import { Modal } from '@/components/common/Modal'
 
 interface TimelineEntryProps {
   entry: TEntry
@@ -33,6 +35,9 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
   const deleteEntry = useDeleteTimelineEntry(incidentId)
   const pinEntry = usePinTimelineEntry(incidentId)
   const [hovered, setHovered] = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
+  const [loadingAttachmentId, setLoadingAttachmentId] = useState<string | null>(null)
 
   const config = ENTRY_TYPE_CONFIG[entry.entry_type]
   const dotStyle = DOT_STYLES[entry.entry_type] ?? DOT_STYLES.note
@@ -53,6 +58,33 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
       await pinEntry.mutateAsync({ entryId: entry.id, pinned: !entry.is_pinned })
     } catch {
       addToast('Failed to pin entry', 'error')
+    }
+  }
+
+  async function handleAttachmentClick(att: Attachment) {
+    if (loadingAttachmentId) return
+    setLoadingAttachmentId(att.id)
+    try {
+      const res = await apiClient.get<{ data: { url: string } }>(
+        `/incidents/${incidentId}/attachments/${att.id}/url`
+      )
+      const url = res.data.data.url
+      if (att.mime_type && isImageMime(att.mime_type)) {
+        setLightboxUrl(url)
+      } else if (att.mime_type === 'application/pdf') {
+        setPdfPreviewUrl(url)
+      } else {
+        const a = document.createElement('a')
+        a.href = url
+        a.download = att.original_name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      }
+    } catch {
+      addToast('Failed to load attachment', 'error')
+    } finally {
+      setLoadingAttachmentId(null)
     }
   }
 
@@ -211,7 +243,7 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
             {entry.attachments && entry.attachments.length > 0 && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
                 {entry.attachments.map((att) => (
-                  <div
+                  <button
                     key={att.id}
                     className="tl-attach-item"
                     style={{
@@ -220,16 +252,30 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
                       borderRadius: 8,
                       padding: '6px 10px',
                       fontSize: 11,
-                      color: 'var(--text-secondary)',
+                      color: loadingAttachmentId === att.id ? 'var(--text-muted)' : 'var(--text-secondary)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
+                      cursor: loadingAttachmentId === att.id ? 'wait' : 'pointer',
+                      transition: 'all 0.15s',
                       fontFamily: 'JetBrains Mono, monospace',
+                      opacity: loadingAttachmentId === att.id ? 0.6 : 1,
+                    }}
+                    onClick={() => handleAttachmentClick(att)}
+                    disabled={loadingAttachmentId === att.id}
+                    onMouseEnter={(e) => {
+                      if (loadingAttachmentId === att.id) return
+                      e.currentTarget.style.borderColor = 'var(--blue)'
+                      e.currentTarget.style.color = 'var(--blue)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border)'
+                      e.currentTarget.style.color = 'var(--text-secondary)'
                     }}
                   >
                     <span>{att.mime_type && isImageMime(att.mime_type) ? '🖼' : '📎'}</span>
                     {att.original_name}
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -241,6 +287,41 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
           </div>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      {lightboxUrl && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'zoom-out',
+          }}
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img
+            src={lightboxUrl}
+            alt="Attachment preview"
+            style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain' }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* PDF Preview Modal */}
+      {pdfPreviewUrl && (
+        <Modal open={!!pdfPreviewUrl} onClose={() => setPdfPreviewUrl(null)} title="Document Preview" size="lg">
+          <iframe
+            src={pdfPreviewUrl}
+            style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 4 }}
+            title="PDF preview"
+          />
+        </Modal>
+      )}
 
     </>
   )
