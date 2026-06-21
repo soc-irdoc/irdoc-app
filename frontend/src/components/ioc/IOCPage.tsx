@@ -377,7 +377,6 @@ export function IOCPage({ incidentId }: IOCPageProps) {
             : ioc
         )
       )
-      qc.invalidateQueries({ queryKey: ['iocs', incidentId] })
     }
     socket.on('ioc:enriched', handler)
     return () => { socket.off('ioc:enriched', handler) }

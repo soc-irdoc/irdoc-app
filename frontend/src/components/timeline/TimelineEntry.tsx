@@ -302,6 +302,10 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
       {/* Image Lightbox */}
       {lightboxUrl && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image preview"
+          tabIndex={0}
           style={{
             position: 'fixed',
             inset: 0,
@@ -313,6 +317,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
             cursor: 'zoom-out',
           }}
           onClick={() => setLightboxUrl(null)}
+          onKeyDown={(e) => { if (e.key === 'Escape') setLightboxUrl(null) }}
         >
           <img
             src={lightboxUrl}

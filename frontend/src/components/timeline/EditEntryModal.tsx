@@ -117,7 +117,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
     e.preventDefault()
     if (!entry || !description.trim()) return
 
-    const occurred_at = `${date}T${time}`
+    const occurred_at = new Date(`${date}T${time}`).toISOString()
     const payload: UpdateTimelineEntryPayload = {
       entry_type: entryType,
       occurred_at,
@@ -278,6 +278,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
                   <button
                     key={asset.id}
                     type="button"
+                    aria-pressed={linked}
                     onClick={() => handleToggleAsset(asset.id)}
                     style={{
                       padding: '4px 10px',
