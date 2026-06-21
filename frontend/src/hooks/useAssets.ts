@@ -149,6 +149,21 @@ export function useLinkAssetsToEntry(incidentId: string) {
   })
 }
 
+export function useUnlinkAssetFromEntry(incidentId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ assetId, entryId }: { assetId: string; entryId: string }) => {
+      await apiClient.delete(
+        `/incidents/${incidentId}/assets/${assetId}/timeline-links/${entryId}`
+      )
+    },
+    onSuccess: (_, { entryId }) => {
+      qc.invalidateQueries({ queryKey: ['entry-assets', incidentId, entryId] })
+      qc.invalidateQueries({ queryKey: ['graph', incidentId] })
+    },
+  })
+}
+
 export function useEntryAssets(incidentId: string, entryId: string) {
   return useQuery({
     queryKey: ['entry-assets', incidentId, entryId],

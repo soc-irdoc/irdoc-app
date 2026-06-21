@@ -30,6 +30,13 @@ export interface CreateTimelineEntryPayload {
   source?: string
 }
 
+export interface UpdateTimelineEntryPayload {
+  entry_type?: EntryType
+  occurred_at?: string
+  description?: string
+  source?: string
+}
+
 export const ENTRY_TYPE_CONFIG: Record<EntryType, {
   label: string
   dotClass: string

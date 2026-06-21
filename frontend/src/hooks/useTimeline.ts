@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
-import type { TimelineEntry, CreateTimelineEntryPayload, EntryType } from '@/types/timeline'
+import type { TimelineEntry, CreateTimelineEntryPayload, UpdateTimelineEntryPayload, EntryType } from '@/types/timeline'
 import type { ApiResponse } from '@/types/api'
 
 export function useTimeline(incidentId: string, filters?: { entry_type?: EntryType }) {
@@ -30,6 +30,22 @@ export function useCreateTimelineEntry(incidentId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
       qc.invalidateQueries({ queryKey: ['incident-stats', incidentId] })
+    },
+  })
+}
+
+export function useUpdateTimelineEntry(incidentId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ entryId, payload }: { entryId: string; payload: UpdateTimelineEntryPayload }) => {
+      const res = await apiClient.put<ApiResponse<TimelineEntry>>(
+        `/incidents/${incidentId}/timeline/${entryId}`,
+        payload
+      )
+      return res.data.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
     },
   })
 }
