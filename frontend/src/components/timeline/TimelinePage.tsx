@@ -3,12 +3,13 @@ import { useTimeline } from '@/hooks/useTimeline'
 import { AddEntryForm } from './AddEntryForm'
 import { TimelineEntryCard } from './TimelineEntry'
 import { TimelineFilters } from './TimelineFilters'
+import { EditEntryModal } from './EditEntryModal'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
 import { getSocket } from '@/lib/websocket'
 import { useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
-import type { EntryType } from '@/types/timeline'
+import type { EntryType, TimelineEntry } from '@/types/timeline'
 
 interface TimelinePageProps {
   incidentId: string
@@ -17,6 +18,7 @@ interface TimelinePageProps {
 export function TimelinePage({ incidentId }: TimelinePageProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [typeFilter, setTypeFilter] = useState<EntryType | 'all'>('all')
+  const [editEntry, setEditEntry] = useState<TimelineEntry | null>(null)
   const qc = useQueryClient()
 
   const { data: entries = [], isLoading } = useTimeline(
@@ -137,11 +139,17 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
                 key={entry.id}
                 entry={entry}
                 incidentId={incidentId}
+                onEditRequest={(e) => setEditEntry(e)}
               />
             ))}
           </div>
         )}
       </div>
+      <EditEntryModal
+        entry={editEntry}
+        incidentId={incidentId}
+        onClose={() => setEditEntry(null)}
+      />
     </div>
   )
 }

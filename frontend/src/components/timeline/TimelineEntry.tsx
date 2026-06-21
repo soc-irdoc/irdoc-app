@@ -10,6 +10,7 @@ import { Modal } from '@/components/common/Modal'
 interface TimelineEntryProps {
   entry: TEntry
   incidentId: string
+  onEditRequest?: (entry: TEntry) => void
 }
 
 const DOT_STYLES: Record<string, { bg: string; border: string }> = {
@@ -30,7 +31,7 @@ const BADGE_STYLES: Record<string, { bg: string; color: string }> = {
   note:        { bg: 'var(--bg-elevated)', color: 'var(--text-muted)' },
 }
 
-export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
+export function TimelineEntryCard({ entry, incidentId, onEditRequest }: TimelineEntryProps) {
   const addToast = useUIStore((s) => s.addToast)
   const deleteEntry = useDeleteTimelineEntry(incidentId)
   const pinEntry = usePinTimelineEntry(incidentId)
@@ -206,6 +207,16 @@ export function TimelineEntryCard({ entry, incidentId }: TimelineEntryProps) {
                   transition: 'opacity 0.15s',
                 }}
               >
+                {onEditRequest && (
+                  <button
+                    className="icon-btn"
+                    onClick={() => onEditRequest(entry)}
+                    aria-label="Edit entry"
+                    title="Edit"
+                  >
+                    ✏️
+                  </button>
+                )}
                 <button
                   className="icon-btn"
                   onClick={handlePin}

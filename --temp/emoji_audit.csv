@@ -1,0 +1,225 @@
+﻿Emoji,Name,FilePath,Line,ElementDescription,RecommendedSizePx,AssetFile
+🔍,Magnifying Glass,frontend/src/types/timeline.ts,49,Timeline entry type icon — detection (used across timeline components),18,magnifying_glass_tilted_left_color.svg
+🔬,Microscope,frontend/src/types/timeline.ts,55,Timeline entry type icon — analysis,18,microscope_color.svg
+🛡️,Shield,frontend/src/types/timeline.ts,61,Timeline entry type icon — containment,18,shield_color.svg
+📎,Paperclip,frontend/src/types/timeline.ts,67,Timeline entry type icon — evidence,18,paperclip_color.svg
+💬,Speech Balloon,frontend/src/types/timeline.ts,73,Timeline entry type icon — comms,18,speech_balloon_color.svg
+📝,Memo,frontend/src/types/timeline.ts,79,Timeline entry type icon — note,18,memo_color.svg
+📄,Page Facing Up,frontend/src/types/report.ts,112,Report block library icon — Cover Page,20,page_facing_up_color.svg
+📊,Bar Chart,frontend/src/types/report.ts,122,Report block library icon — Stat Row,20,bar_chart_color.svg
+📝,Memo,frontend/src/types/report.ts,129,Report block library icon — Section,20,memo_color.svg
+🕐,One O'Clock,frontend/src/types/report.ts,136,Report block library icon — Timeline,20,one_oclock_color.svg
+🎯,Bullseye,frontend/src/types/report.ts,143,Report block library icon — IOC Table,20,bullseye_color.svg
+✅,Check Mark Button,frontend/src/types/report.ts,150,Report block library icon — Task List,20,check_mark_button_color.svg
+📎,Paperclip,frontend/src/types/report.ts,157,Report block library icon — Evidence Register,20,paperclip_color.svg
+📋,Clipboard,frontend/src/types/report.ts,164,Report block library icon — Text Block,20,clipboard_color.svg
+🏷,Label,frontend/src/types/report.ts,179,Report block library icon — Tag List,20,label_color.svg
+🤖,Robot,frontend/src/types/report.ts,199,Report block library icon — AI Strategy Summary,20,robot_color.svg
+🕸️,Spider Web,frontend/src/types/report.ts,206,Report block library icon — Graph Snapshot,20,spider_web_color.svg
+📧,E-Mail,frontend/src/types/ioc.ts,40,IOC type icon — email,16,e-mail_color.svg
+🌐,Globe with Meridians,frontend/src/types/ioc.ts,41,IOC type icon — domain,16,globe_with_meridians_color.svg
+🔌,Electric Plug,frontend/src/types/ioc.ts,42,IOC type icon — IP address,16,electric_plug_color.svg
+🔗,Link,frontend/src/types/ioc.ts,43,IOC type icon — URL,16,link_color.svg
+📄,Page Facing Up,frontend/src/types/ioc.ts,45,IOC type icon — file,16,page_facing_up_color.svg
+👤,Bust in Silhouette,frontend/src/types/ioc.ts,46,IOC type icon — username,16,bust_in_silhouette_color.svg
+🔢,Input Numbers,frontend/src/types/graph.ts,75,Graph node icon — ioc_ip,22,input_numbers_color.svg
+🌐,Globe with Meridians,frontend/src/types/graph.ts,76,Graph node icon — ioc_domain,22,globe_with_meridians_color.svg
+📧,E-Mail,frontend/src/types/graph.ts,77,Graph node icon — ioc_email,22,e-mail_color.svg
+🔗,Link,frontend/src/types/graph.ts,78,Graph node icon — ioc_url,22,link_color.svg
+📄,Page Facing Up,frontend/src/types/graph.ts,80,Graph node icon — ioc_file,22,page_facing_up_color.svg
+👤,Bust in Silhouette,frontend/src/types/graph.ts,81,Graph node icon — ioc_username,22,bust_in_silhouette_color.svg
+📌,Pushpin,frontend/src/types/graph.ts,82,Graph node icon — event node,22,pushpin_color.svg
+📎,Paperclip,frontend/src/types/graph.ts,83,Graph node icon — evidence node,22,paperclip_color.svg
+🖥️,Desktop Computer,frontend/src/types/graph.ts,84,Graph node icon — asset_host,22,desktop_computer_color.svg
+🗄️,File Cabinet,frontend/src/types/graph.ts,85,Graph node icon — asset_server,22,file_cabinet_color.svg
+💻,Laptop,frontend/src/types/graph.ts,86,Graph node icon — asset_workstation,22,laptop_color.svg
+💻,Laptop,frontend/src/types/graph.ts,87,Graph node icon — asset_laptop,22,laptop_color.svg
+📱,Mobile Phone,frontend/src/types/graph.ts,88,Graph node icon — asset_mobile,22,mobile_phone_color.svg
+🌐,Globe with Meridians,frontend/src/types/graph.ts,89,Graph node icon — asset_network_device,22,globe_with_meridians_color.svg
+👤,Bust in Silhouette,frontend/src/types/graph.ts,90,Graph node icon — asset_account,22,bust_in_silhouette_color.svg
+🤖,Robot,frontend/src/types/graph.ts,91,Graph node icon — asset_service_account,22,robot_color.svg
+📄,Page Facing Up,frontend/src/types/graph.ts,92,Graph node icon — asset_file,22,page_facing_up_color.svg
+📁,File Folder,frontend/src/types/graph.ts,93,Graph node icon — asset_directory,22,file_folder_color.svg
+🔗,Link,frontend/src/types/graph.ts,94,Graph node icon — asset_url,22,link_color.svg
+📧,E-Mail,frontend/src/types/graph.ts,95,Graph node icon — asset_email_address,22,e-mail_color.svg
+🗃️,Card File Box,frontend/src/types/graph.ts,96,Graph node icon — asset_database,22,card_file_box_color.svg
+⚙️,Gear,frontend/src/types/graph.ts,97,Graph node icon — asset_application,22,gear_color.svg
+☁️,Cloud,frontend/src/types/graph.ts,98,Graph node icon — asset_cloud_resource,22,cloud_color.svg
+📦,Package,frontend/src/types/graph.ts,99,Graph node icon — asset_other (default fallback),22,package_color.svg
+🖥️,Desktop Computer,frontend/src/types/asset.ts,63,Asset type icon — host,16,desktop_computer_color.svg
+🗄️,File Cabinet,frontend/src/types/asset.ts,64,Asset type icon — server,16,file_cabinet_color.svg
+💻,Laptop,frontend/src/types/asset.ts,65,Asset type icon — workstation,16,laptop_color.svg
+💻,Laptop,frontend/src/types/asset.ts,66,Asset type icon — laptop,16,laptop_color.svg
+📱,Mobile Phone,frontend/src/types/asset.ts,67,Asset type icon — mobile device,16,mobile_phone_color.svg
+🌐,Globe with Meridians,frontend/src/types/asset.ts,68,Asset type icon — network_device,16,globe_with_meridians_color.svg
+👤,Bust in Silhouette,frontend/src/types/asset.ts,69,Asset type icon — user account,16,bust_in_silhouette_color.svg
+🤖,Robot,frontend/src/types/asset.ts,70,Asset type icon — service_account,16,robot_color.svg
+📄,Page Facing Up,frontend/src/types/asset.ts,71,Asset type icon — file,16,page_facing_up_color.svg
+📁,File Folder,frontend/src/types/asset.ts,72,Asset type icon — directory,16,file_folder_color.svg
+🔗,Link,frontend/src/types/asset.ts,73,Asset type icon — url,16,link_color.svg
+📧,E-Mail,frontend/src/types/asset.ts,74,Asset type icon — email_address,16,e-mail_color.svg
+🗃️,Card File Box,frontend/src/types/asset.ts,75,Asset type icon — database,16,card_file_box_color.svg
+⚙️,Gear,frontend/src/types/asset.ts,76,Asset type icon — application,16,gear_color.svg
+☁️,Cloud,frontend/src/types/asset.ts,77,Asset type icon — cloud_resource,16,cloud_color.svg
+📦,Package,frontend/src/types/asset.ts,78,Asset type icon — other (default fallback),16,package_color.svg
+⚡,Lightning Bolt,frontend/src/components/layout/LeftNav.tsx,18,Left nav item icon — Incidents,20,high_voltage_color.svg
+⚙,Gear,frontend/src/components/layout/LeftNav.tsx,19,Left nav item icon — Settings,20,gear_color.svg
+⚙️,Gear,frontend/src/components/layout/LeftNav.tsx,23,Left nav item icon (admin) — Org Settings,20,gear_color.svg
+🗄️,File Cabinet,frontend/src/components/layout/LeftNav.tsx,24,Left nav item icon (admin) — Storage,20,file_cabinet_color.svg
+💾,Floppy Disk,frontend/src/components/layout/LeftNav.tsx,25,Left nav item icon (admin) — Backups,20,floppy_disk_color.svg
+📋,Clipboard,frontend/src/components/layout/LeftNav.tsx,26,Left nav item icon (admin) — Incident Templates,20,clipboard_color.svg
+📄,Page Facing Up,frontend/src/components/layout/LeftNav.tsx,27,Left nav item icon (admin) — Report Templates,20,page_facing_up_color.svg
+🔗,Link,frontend/src/components/layout/LeftNav.tsx,28,Left nav item icon (admin) — Integrations,20,link_color.svg
+📜,Scroll,frontend/src/components/layout/LeftNav.tsx,29,Left nav item icon (admin) — Audit Log,20,scroll_color.svg
+☰,Trigram for Heaven (Hamburger Menu),frontend/src/components/layout/LeftNav.tsx,182,Nav collapse toggle icon (collapsed state — show menu),18,Remains as is
+◀,Reverse Button,frontend/src/components/layout/LeftNav.tsx,182,Nav collapse toggle icon (expanded state — collapse),18,Remains as is
+⏱,Stopwatch,frontend/src/components/layout/TopBar.tsx,22,Incident tab icon — Timeline,18,stopwatch_color.svg
+🔍,Magnifying Glass,frontend/src/components/layout/TopBar.tsx,23,Incident tab icon — IOCs,18,magnifying_glass_tilted_left_color.svg
+🖥️,Desktop Computer,frontend/src/components/layout/TopBar.tsx,24,Incident tab icon — Assets,18,desktop_computer_color.svg
+📊,Bar Chart,frontend/src/components/layout/TopBar.tsx,25,Incident tab icon — Summary,18,bar_chart_color.svg
+📄,Page Facing Up,frontend/src/components/layout/TopBar.tsx,26,Incident tab icon — Reports,18,page_facing_up_color.svg
+🕸,Spider Web,frontend/src/components/layout/TopBar.tsx,27,Incident tab icon — Graph,18,spider_web_color.svg
+⚠,Warning Sign,frontend/src/components/layout/AppShell.tsx,48,Inline warning banner icon,14,Remains as is
+✓,Check Mark,frontend/src/components/layout/TasksPanel.tsx,146,Task completion status indicator,14,Remains as is
+👥,Busts in Silhouette,frontend/src/components/admin/AdminShell.tsx,19,Admin sidebar item — Team,18,busts_in_silhouette_color.svg
+⚙️,Gear,frontend/src/components/admin/AdminShell.tsx,20,Admin sidebar item — Org Settings,18,gear_color.svg
+🗄️,File Cabinet,frontend/src/components/admin/AdminShell.tsx,21,Admin sidebar item — Storage,18,file_cabinet_color.svg
+📋,Clipboard,frontend/src/components/admin/AdminShell.tsx,22,Admin sidebar item — Incident Templates,18,clipboard_color.svg
+📄,Page Facing Up,frontend/src/components/admin/AdminShell.tsx,23,Admin sidebar item — Report Templates,18,page_facing_up_color.svg
+🔗,Link,frontend/src/components/admin/AdminShell.tsx,24,Admin sidebar item — Integrations,18,link_color.svg
+📜,Scroll,frontend/src/components/admin/AdminShell.tsx,25,Admin sidebar item — Audit Log,18,scroll_color.svg
+🔐,Locked with Key,frontend/src/components/admin/AdminShell.tsx,26,Admin sidebar item — SSO,18,locked_with_key_color.svg
+🛡️,Shield,frontend/src/components/admin/AdminShell.tsx,81,Admin panel header branding icon,16,shield_color.svg
+⚠,Warning Sign,frontend/src/components/admin/AuditLogPage.tsx,51,Category filter chip label — High Risk,14,Remains as is
+⚠️,Warning Sign,frontend/src/components/admin/AuditLogPage.tsx,275,Risk level badge — HIGH RISK inline indicator,14,warning_color.svg
+👥,Busts in Silhouette,frontend/src/components/admin/TeamPage.tsx,219,Page section header — Team Members,24,busts_in_silhouette_color.svg
+🗂,Card Index Dividers,frontend/src/components/admin/ReportsAdminPage.tsx,29,Section heading — Your Templates,20,card_index_dividers_color.svg
+📋,Clipboard,frontend/src/components/admin/ReportsAdminPage.tsx,82,Report template list item icon,16,clipboard_color.svg
+🔑,Key,frontend/src/components/admin/OrgSettingsPage.tsx,291,Auth provider tab icon — Local Users,18,key_color.svg
+☁️,Cloud,frontend/src/components/admin/OrgSettingsPage.tsx,292,Auth provider tab icon — Azure,18,cloud_color.svg
+🏢,Office Building,frontend/src/components/admin/OrgSettingsPage.tsx,293,Auth provider tab icon — On-premises LDAP,18,office_building_color.svg
+✓,Check Mark,frontend/src/components/admin/StoragePage.tsx,380,Connection test result — success inline text,14,Remains as is
+✕,Multiplication X,frontend/src/components/admin/IncidentTemplatesPage.tsx,202,Close/remove button icon,14,multiply_color.svg
+✕,Multiplication X,frontend/src/components/admin/IncidentTemplatesPage.tsx,320,Close/remove button icon,14,multiply_color.svg
+🛡,Shield,frontend/src/pages/LoginPage.tsx,125,Login page branding decorative icon,40,shield_color.svg
+🔗,Link,frontend/src/pages/InviteAcceptPage.tsx,138,Invite accept page decorative/hero icon,32,link_color.svg
+🔐,Locked with Key,frontend/src/components/auth/MFAVerifyModal.tsx,69,MFA verification modal header icon,28,locked_with_key_color.svg
+📱,Mobile Phone,frontend/src/components/auth/MFASetupWizard.tsx,107,MFA setup step icon — authenticator app,32,mobile_phone_color.svg
+🛡,Shield,frontend/src/components/auth/MFASetupWizard.tsx,287,MFA setup completion icon,32,shield_color.svg
+✓,Check Mark,frontend/src/components/common/Toast.tsx,25,Toast notification icon — success type,16,Remains as is
+✕,Multiplication X,frontend/src/components/common/Toast.tsx,25,Toast notification icon — error type,16,multiply_color.svg
+ℹ,Information,frontend/src/components/common/Toast.tsx,25,Toast notification icon — info type,16,information_color.svg
+✕,Multiplication X,frontend/src/components/common/Toast.tsx,38,Toast dismiss (close) button,14,multiply_color.svg
+✕,Multiplication X,frontend/src/components/common/Modal.tsx,58,Modal close button,14,multiply_color.svg
+📭,Open Mailbox with Lowered Flag,frontend/src/components/common/EmptyState.tsx,8,Default empty state icon (generic fallback),48,open_mailbox_with_lowered_flag_color.svg
+☑,Ballot Box with Check,frontend/src/components/common/RichTextEditor.tsx,198,Rich text editor toolbar — Task item button,16,ballot_box_with_ballot_color.svg
+📌,Pushpin,frontend/src/components/timeline/TimelineEntry.tsx,145,Pinned entry status indicator (small inline badge),12,pushpin_color.svg
+📌,Pushpin,frontend/src/components/timeline/TimelineEntry.tsx,184,Pin/unpin action button icon,16,pushpin_color.svg
+🗑,Wastebasket,frontend/src/components/timeline/TimelineEntry.tsx,193,Delete entry action button icon,16,wastebasket_color.svg
+🖼,Frame with Picture,frontend/src/components/timeline/TimelineEntry.tsx,276,Attachment chip icon — image file,16,framed_picture_color.svg
+📎,Paperclip,frontend/src/components/timeline/TimelineEntry.tsx,276,Attachment chip icon — non-image file,16,paperclip_color.svg
+📎,Paperclip,frontend/src/components/timeline/AttachmentZone.tsx,63,File drop zone decorative icon,22,paperclip_color.svg
+📄,Page Facing Up,frontend/src/components/timeline/AttachmentZone.tsx,115,File preview chip icon,20,page_facing_up_color.svg
+✕,Multiplication X,frontend/src/components/timeline/AttachmentZone.tsx,141,Remove queued file button,14,multiply_color.svg
+🖥️,Desktop Computer,frontend/src/components/timeline/AddEntryForm.tsx,277,Link Assets button inline icon,16,desktop_computer_color.svg
+📦,Package,frontend/src/components/timeline/AddEntryForm.tsx,319,Asset picker default fallback icon,16,package_color.svg
+📊,Bar Chart,frontend/src/components/summary/SummaryPage.tsx,226,Page h2 header icon — Incident Summary,24,bar_chart_color.svg
+📋,Clipboard,frontend/src/components/summary/SummaryPage.tsx,263,Section h3 header icon — Incident Details,20,clipboard_color.svg
+📝,Memo,frontend/src/components/summary/SummaryPage.tsx,306,RichTextSection title — Executive Summary,20,memo_color.svg
+🗒️,Spiral Notepad,frontend/src/components/summary/SummaryPage.tsx,315,RichTextSection title — Notes,20,spiral_notepad_color.svg
+💡,Light Bulb,frontend/src/components/summary/SummaryPage.tsx,324,RichTextSection title — Lessons Learned,20,light_bulb_color.svg
+✅,Check Mark Button,frontend/src/components/summary/SummaryPage.tsx,333,RichTextSection title — Actions To Do,20,check_mark_button_color.svg
+🔐,Locked with Key,frontend/src/components/settings/SettingsPage.tsx,152,Settings section header icon — Two-Factor Authentication,20,locked_with_key_color.svg
+✓,Check Mark,frontend/src/components/settings/SettingsPage.tsx,156,MFA enabled chip badge text,14,Remains as is
+👤,Bust in Silhouette,frontend/src/components/settings/SettingsPage.tsx,183,Settings section header icon — Profile,20,bust_in_silhouette_color.svg
+🎨,Artist Palette,frontend/src/components/settings/SettingsPage.tsx,269,Settings section header icon — Appearance,20,artist_palette_color.svg
+🌙,Crescent Moon,frontend/src/components/settings/SettingsPage.tsx,276,Theme label — dark mode,14,crescent_moon_color.svg
+☀️,Sun,frontend/src/components/settings/SettingsPage.tsx,276,Theme label — light mode,14,sun_color.svg
+ℹ,Information,frontend/src/components/settings/SettingsPage.tsx,291,Settings section header icon — About,20,information_color.svg
+⚠,Warning Sign,frontend/src/components/settings/SettingsPage.tsx,335,Warning inline message — backup codes invalidated,14,Remains as is
+🔑,Key,frontend/src/components/settings/APIKeysSection.tsx,68,Section heading icon — API Keys,20,key_color.svg
+⚠️,Warning Sign,frontend/src/components/settings/APIKeysSection.tsx,289,Warning alert — API key shown only once,14,warning_color.svg
+🤖,Robot,frontend/src/components/reports/ReportPage.tsx,35,AI banner status icon — idle/default state,16,robot_color.svg
+⏳,Hourglass Not Done,frontend/src/components/reports/ReportPage.tsx,41,AI banner status icon — generating,16,Remains as is
+✓,Check Mark,frontend/src/components/reports/ReportPage.tsx,46,AI banner status icon — report ready,16,Remains as is
+⚠,Warning Sign,frontend/src/components/reports/ReportPage.tsx,58,AI banner status icon — generation failed,16,Remains as is
+📂,Open File Folder,frontend/src/components/reports/ReportPage.tsx,109,SharePoint banner icon — not yet synced,16,open_file_folder_color.svg
+🔄,Counterclockwise Arrows,frontend/src/components/reports/ReportPage.tsx,121,SharePoint banner icon — pending changes,16,Remains as is
+✓,Check Mark,frontend/src/components/reports/ReportPage.tsx,133,SharePoint banner icon — fully synced,16,Remains as is
+📄,Page Facing Up,frontend/src/components/reports/ReportPage.tsx,257,Report template card icon — Base Template,24,page_facing_up_color.svg
+📋,Clipboard,frontend/src/components/reports/ReportPage.tsx,297,Report template card icon — custom template (no logo),24,clipboard_color.svg
+⏳,Hourglass Not Done,frontend/src/components/reports/ReportPage.tsx,398,Report list status indicator — generating,14,Remains as is
+🔗,Link,frontend/src/components/reports/ReportPage.tsx,414,Report row action link — Access Report (SharePoint),14,link_color.svg
+⬇,Down Arrow,frontend/src/components/reports/ReportPage.tsx,423,Report row action button — Download,14,Remains as is
+⚠,Warning Sign,frontend/src/components/reports/ReportPage.tsx,431,Report row error inline indicator,14,Remains as is
+✕,Multiplication X,frontend/src/components/reports/ReportTemplateBuilder.tsx,125,Template builder close button,14,multiply_color.svg
+👁,Eye,frontend/src/components/reports/ReportTemplateBuilder.tsx,304,Preview button inline icon,16,eyes_color.svg
+📤,Outbox Tray,frontend/src/components/reports/SyncPolicySection.tsx,82,Sync policy destination label prefix icon,16,outbox_tray_color.svg
+📊,Bar Chart,frontend/src/pages/ReportTemplateListPage.tsx,21,Template destination icon — management,20,bar_chart_color.svg
+🔬,Microscope,frontend/src/pages/ReportTemplateListPage.tsx,22,Template destination icon — analyst,20,microscope_color.svg
+⚖️,Balance Scale,frontend/src/pages/ReportTemplateListPage.tsx,23,Template destination icon — legal,20,balance_scale_color.svg
+✏️,Pencil,frontend/src/pages/ReportTemplateListPage.tsx,24,Template destination icon — custom,20,pencil_color.svg
+📋,Clipboard,frontend/src/pages/ReportTemplateListPage.tsx,96,Default template icon (fallback),20,clipboard_color.svg
+🖼,Frame with Picture,frontend/src/pages/ReportTemplateEditorPage.tsx,196,Logo upload button inline icon,16,framed_picture_color.svg
+🗑,Wastebasket,frontend/src/pages/IncidentListPage.tsx,172,Delete incident action button,16,wastebasket_color.svg
+⚡,Lightning Bolt,frontend/src/pages/IncidentListPage.tsx,320,Empty state icon — no incidents,48,high_voltage_color.svg
+📊,Bar Chart,frontend/src/pages/OverviewPage.tsx,504,Overview section icon,24,bar_chart_color.svg
+🦠,Microbe,frontend/src/components/ioc/IOCPage.tsx,101,IOC enrichment section label — VirusTotal,14,microbe_color.svg
+🚫,Prohibited,frontend/src/components/ioc/IOCPage.tsx,147,IOC enrichment section label — AbuseIPDB,14,prohibited_color.svg
+📡,Satellite Antenna,frontend/src/components/ioc/IOCPage.tsx,185,IOC enrichment section label — Shodan,14,satellite_antenna_color.svg
+🗑,Wastebasket,frontend/src/components/ioc/IOCPage.tsx,336,Delete IOC action button,16,wastebasket_color.svg
+🔍,Magnifying Glass,frontend/src/components/ioc/IOCPage.tsx,459,Page header icon — IOCs,24,magnifying_glass_tilted_left_color.svg
+🔍,Magnifying Glass,frontend/src/components/ioc/IOCPage.tsx,542,Empty state icon — no IOCs,48,magnifying_glass_tilted_left_color.svg
+📦,Package,frontend/src/components/assets/AssetsPage.tsx,52,Asset list item type icon (via ASSET_TYPE_ICONS — fallback shown),16,package_color.svg
+✏️,Pencil,frontend/src/components/assets/AssetsPage.tsx,97,Edit asset action button icon,16,pencil_color.svg
+🗑️,Wastebasket,frontend/src/components/assets/AssetsPage.tsx,103,Delete asset action button icon,16,wastebasket_color.svg
+🗑️,Wastebasket,frontend/src/components/assets/AssetsPage.tsx,152,Delete asset link action button icon,16,wastebasket_color.svg
+🖥️,Desktop Computer,frontend/src/components/assets/AssetsPage.tsx,412,Empty state icon — no assets,48,desktop_computer_color.svg
+🔗,Link,frontend/src/components/assets/AssetsPage.tsx,536,Empty state icon — no asset links,48,link_color.svg
+📌,Pushpin,frontend/src/components/graph/NodeTypes.tsx,117,Graph node icon — pinned event node,22,pushpin_color.svg
+📦,Package,frontend/src/components/graph/NodeTypes.tsx,141,Graph node default icon (fallback),22,package_color.svg
+✕,Multiplication X,frontend/src/components/graph/InvestigationGraph.tsx,65,Close side panel button,14,multiply_color.svg
+🔗,Link,frontend/src/components/graph/InvestigationGraph.tsx,266,Empty state icon — investigation graph,48,link_color.svg
+✓,Check Mark,frontend/src/components/integrations/IntegrationsPage.tsx,74,Toast message text — connection successful,14,Remains as is
+✓,Check Mark,frontend/src/components/integrations/IntegrationsPage.tsx,115,Integration test result text — success,14,Remains as is
+✓,Check Mark,frontend/src/components/integrations/IntegrationsPage.tsx,170,Integration card connected status chip,14,Remains as is
+🔐,Locked with Key,frontend/src/components/integrations/IntegrationsPage.tsx,380,Integration category header icon — SSO,18,locked_with_key_color.svg
+✕,Multiplication X,frontend/src/components/integrations/IntegrationsPage.tsx,504,Remove integration button icon,14,multiply_color.svg
+✉️,Envelope,frontend/src/components/integrations/SmtpSection.tsx,215,SMTP section header icon,20,envelope_color.svg
+📤,Outbox Tray,frontend/src/components/integrations/SmtpSection.tsx,314,Send test email button inline icon,16,outbox_tray_color.svg
+✓,Check Mark,frontend/src/components/integrations/SmtpSection.tsx,326,Test email result — success inline text,14,Remains as is
+🤖,Robot,frontend/src/components/integrations/AiSection.tsx,129,AI integration section header icon,20,robot_color.svg
+🔌,Electric Plug,frontend/src/components/integrations/AiSection.tsx,200,Test connection button inline icon,16,electric_plug_color.svg
+✓,Check Mark,frontend/src/components/integrations/AiSection.tsx,215,AI connection test result — success,14,Remains as is
+✗,Ballot X,frontend/src/components/integrations/AiSection.tsx,216,AI connection test result — error,14,Remains like is
+🔌,Electric Plug,backend/app/plugins/registry.py,32,Default plugin icon — fallback for unspecified plugins,20,electric_plug_color.svg
+🔴,Red Circle,backend/app/plugins/integrations/slack.py,11,Slack notification message — incident.created event,16,red_circle_color.svg
+📋,Clipboard,backend/app/plugins/integrations/slack.py,12,Slack notification message — timeline.entry.added event,16,clipboard_color.svg
+✅,Check Mark Button,backend/app/plugins/integrations/slack.py,13,Slack notification message — task.completed event,16,check_mark_button_color.svg
+📄,Page Facing Up,backend/app/plugins/integrations/slack.py,14,Slack notification message — report.ready event,16,page_facing_up_color.svg
+📤,Outbox Tray,backend/app/plugins/integrations/slack.py,15,Slack notification message — sync.complete event,16,outbox_tray_color.svg
+🎯,Bullseye,backend/app/plugins/integrations/slack.py,16,Slack notification message — ioc.added event,16,bullseye_color.svg
+🟢,Green Circle,backend/app/plugins/integrations/slack.py,17,Slack notification message — incident.closed event,16,green_circle_color.svg
+🟡,Yellow Circle,backend/app/plugins/integrations/slack.py,18,Slack notification message — incident.contained event,16,yellow_circle_color.svg
+💬,Speech Balloon,backend/app/plugins/integrations/slack.py,28,Plugin display icon — Slack,20,speech_balloon_color.svg
+🟣,Purple Circle,backend/app/plugins/integrations/teams.py,24,Plugin display icon — Microsoft Teams,20,purple_circle_color.svg
+🔴,Red Circle,backend/app/plugins/integrations/teams.py,59,Teams notification title — incident.created event,16,red_circle_color.svg
+📋,Clipboard,backend/app/plugins/integrations/teams.py,60,Teams notification title — timeline.entry.added event,16,clipboard_color.svg
+✅,Check Mark Button,backend/app/plugins/integrations/teams.py,61,Teams notification title — task.completed event,16,check_mark_button_color.svg
+📄,Page Facing Up,backend/app/plugins/integrations/teams.py,62,Teams notification title — report.ready event,16,page_facing_up_color.svg
+📤,Outbox Tray,backend/app/plugins/integrations/teams.py,63,Teams notification title — SharePoint sync event,16,outbox_tray_color.svg
+🎯,Bullseye,backend/app/plugins/integrations/teams.py,64,Teams notification title — ioc.added event,16,bullseye_color.svg
+🟢,Green Circle,backend/app/plugins/integrations/teams.py,65,Teams notification title — incident.closed event,16,green_circle_color.svg
+🦠,Microbe,backend/app/plugins/integrations/virustotal.py,20,Plugin display icon — VirusTotal,20,microbe_color.svg
+🚫,Prohibited,backend/app/plugins/integrations/abuseipdb.py,17,Plugin display icon — AbuseIPDB,20,prohibited_color.svg
+📡,Satellite Antenna,backend/app/plugins/integrations/shodan.py,17,Plugin display icon — Shodan,20,satellite_antenna_color.svg
+🦅,Eagle,backend/app/plugins/integrations/crowdstrike.py,17,Plugin display icon — CrowdStrike Falcon,20,eagle_color.svg
+📂,Open File Folder,backend/app/plugins/integrations/sharepoint.py,20,Plugin display icon — SharePoint / OneDrive,20,open_file_folder_color.svg
+🔷,Large Blue Diamond,backend/app/plugins/integrations/azuread.py,20,Plugin display icon — Azure AD / Entra ID,20,large_blue_diamond_color.svg
+🔵,Blue Circle,backend/app/plugins/integrations/sentinel.py,21,Plugin display icon — Microsoft Sentinel,20,blue_circle_color.svg
+📧,E-Mail,backend/app/plugins/integrations/proofpoint.py,18,Plugin display icon — Proofpoint,20,e-mail_color.svg
+📌,Pushpin,backend/templates/reports/blocks/timeline.html,34,PDF report — pinned timeline entry inline indicator,12,pushpin_color.svg
+✓,Check Mark,backend/templates/reports/blocks/task_list.html,36,PDF report — task completion checkmark in task list,14,Remains as is
+🖥️,Desktop Computer,frontend/src/components/timeline/EditEntryModal.tsx,273,Linked Assets section label icon,16,desktop_computer_color.svg
+📦,Package,frontend/src/components/timeline/EditEntryModal.tsx,295,Asset picker default fallback icon,16,package_color.svg
+✏️,Pencil,frontend/src/components/timeline/TimelineEntry.tsx,217,Edit entry action button icon,16,pencil_color.svg
