@@ -14,11 +14,11 @@ interface TimelineEntryProps {
 }
 
 const DOT_STYLES: Record<string, { bg: string; border: string }> = {
-  detection:   { bg: 'var(--red-dim)',    border: 'var(--red)' },
-  analysis:    { bg: 'var(--blue-dim)',   border: 'var(--blue)' },
-  containment: { bg: 'var(--yellow-dim)', border: 'var(--yellow)' },
-  evidence:    { bg: 'rgba(188,140,255,0.45)', border: 'var(--purple)' },
-  comms:       { bg: 'var(--green-dim)', border: 'var(--green)' },
+  detection:   { bg: 'var(--bg-elevated)', border: 'var(--red)' },
+  analysis:    { bg: 'var(--bg-elevated)', border: 'var(--blue)' },
+  containment: { bg: 'var(--bg-elevated)', border: 'var(--yellow)' },
+  evidence:    { bg: 'var(--bg-elevated)', border: 'var(--purple)' },
+  comms:       { bg: 'var(--bg-elevated)', border: 'var(--green)' },
   note:        { bg: 'var(--bg-elevated)', border: 'var(--border)' },
 }
 

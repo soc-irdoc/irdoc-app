@@ -55,7 +55,7 @@ async def list_entries(
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar() or 0
 
-    query = query.order_by(TimelineEntry.occurred_at.asc()).offset((page - 1) * per_page).limit(per_page)
+    query = query.order_by(TimelineEntry.is_pinned.desc(), TimelineEntry.occurred_at.asc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     return list(result.scalars().all()), total
 
@@ -83,6 +83,7 @@ async def update_entry(
         else:
             setattr(entry, key, value)
     await db.flush()
+    await db.refresh(entry, attribute_names=["updated_at"])
     return entry
 
 
@@ -94,6 +95,7 @@ async def delete_entry(db: AsyncSession, entry: TimelineEntry) -> None:
 async def pin_entry(db: AsyncSession, entry: TimelineEntry, pinned: bool) -> TimelineEntry:
     entry.is_pinned = pinned
     await db.flush()
+    await db.refresh(entry, attribute_names=["updated_at"])
     return entry
 
 
