@@ -14,7 +14,7 @@ class ShodanPlugin:
     display_name = "Shodan"
     category = "ti"
     is_premium = True
-    icon = "📡"
+    icon = "satellite_antenna_color.svg"
     description = "Enrich IP addresses and domains with Shodan port/host data."
 
     config_schema = {

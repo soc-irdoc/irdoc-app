@@ -49,7 +49,10 @@ function BaseNode({
       <Handle type="target" position={Position.Top} style={{ background: color }} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 18 }}>{icon}</span>
+        {icon === '#'
+          ? <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace', flexShrink: 0 }}>#</span>
+          : <img src={`/icons/${icon}`} width={22} height={22} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+        }
         <div style={{ flex: 1, overflow: 'hidden' }}>
           <p
             style={{
@@ -114,7 +117,7 @@ export function IOCUsernameNode(props: NodeProps) { return <IOCNodeBase {...prop
 export function EventNode({ data, selected }: NodeProps) {
   const d = data as unknown as GraphNodeData
   const color = ENTRY_TYPE_COLORS[d.entry_type ?? ''] ?? 'var(--text-muted)'
-  const icon = d.is_pinned ? '📌' : NODE_TYPE_ICONS['event']
+  const icon = NODE_TYPE_ICONS['event']
   const subtitle = d.entry_type ? `[${d.entry_type}]` : undefined
   return <BaseNode icon={icon} label={d.label} color={color} subtitle={subtitle} selected={selected} />
 }
@@ -138,7 +141,7 @@ export function EvidenceNode({ data, selected }: NodeProps) {
 
 function AssetNodeBase({ data, selected, nodeType }: NodeProps & { nodeType: string }) {
   const d = data as unknown as GraphNodeData
-  const icon = NODE_TYPE_ICONS[nodeType] ?? '📦'
+  const icon = NODE_TYPE_ICONS[nodeType] ?? 'package_color.svg'
   const color = ASSET_STATUS_COLORS[d.status ?? 'suspected'] ?? '#f97316'
   const badge = d.criticality as string | undefined
 

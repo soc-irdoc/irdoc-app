@@ -78,8 +78,8 @@ export default function SyncPolicySection({ incidentId }: Props) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      📤 {p.destination.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <img src="/icons/outbox_tray_color.svg" width={14} height={14} alt="" aria-hidden="true" />{p.destination.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                     </span>
                     <span
                       className={`chip ${p.is_active ? 'chip-green' : 'chip-muted'}`}

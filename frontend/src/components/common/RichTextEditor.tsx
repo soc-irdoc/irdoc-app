@@ -195,7 +195,7 @@ export function RichTextEditor({
               onClick={() => editor.chain().toggleTaskList().run()}
               title="Insert task item"
             >
-              ☑ Task
+              <img src="/icons/ballot_box_with_ballot_color.svg" width={16} height={16} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> Task
             </button>
           ) : (
             <select

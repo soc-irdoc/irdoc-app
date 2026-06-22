@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,6 +30,7 @@ class User(Base):
     totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # Fernet-encrypted
     backup_codes: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     mfa_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_otp_counter: Mapped[int | None] = mapped_column(BigInteger, nullable=True)  # replay protection
     auth_provider: Mapped[str] = mapped_column(String(20), server_default="local", default="local", nullable=False)
 
     # Relationships

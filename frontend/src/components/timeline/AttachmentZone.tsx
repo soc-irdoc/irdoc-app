@@ -60,7 +60,7 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
           addFiles(e.dataTransfer.files)
         }}
       >
-        <span style={{ fontSize: 22 }}>📎</span>
+        <img src="/icons/paperclip_color.svg" width={22} height={22} alt="" aria-hidden="true" />
         <div>
           <p>Drop files here, click to browse, or paste a screenshot</p>
           <p style={{ fontSize: 11, marginTop: 2, color: 'var(--text-muted)' }}>
@@ -112,7 +112,7 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
                     padding: 4,
                   }}
                 >
-                  <span style={{ fontSize: 20 }}>📄</span>
+                  <img src="/icons/page_facing_up_color.svg" width={20} height={20} alt="" aria-hidden="true" />
                   <span style={{ fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', wordBreak: 'break-all' }}>
                     {fileSize(file.size)}
                   </span>
@@ -131,14 +131,14 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
                   borderRadius: '50%',
                   width: 16,
                   height: 16,
-                  fontSize: 9,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  padding: 0,
                 }}
               >
-                ✕
+                <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
               </button>
             </div>
           ))}

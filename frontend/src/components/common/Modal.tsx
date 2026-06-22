@@ -55,7 +55,7 @@ export function Modal({ open = true, onClose, title, children, size = 'md', maxW
             onClick={onClose}
             aria-label="Close modal"
           >
-            ✕
+            <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
           </button>
         </div>
         {/* Body */}

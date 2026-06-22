@@ -29,6 +29,6 @@ def list_plugins() -> list[dict]:
             "is_premium": getattr(cls, "is_premium", False),
             "config_schema": getattr(cls, "config_schema", {}),
             "description": getattr(cls, "description", ""),
-            "icon": getattr(cls, "icon", "🔌"),
+            "icon": getattr(cls, "icon", "electric_plug_color.svg"),
         })
     return sorted(result, key=lambda x: (x["category"], x["display_name"]))

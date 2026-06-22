@@ -117,12 +117,11 @@ export function LoginPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 26,
               margin: '0 auto 16px',
               boxShadow: '0 0 24px rgba(249,115,22,0.25)',
             }}
           >
-            🛡
+            <img src="/icons/shield_color.svg" width={40} height={40} alt="" aria-hidden="true" />
           </div>
           <h1
             style={{

@@ -17,7 +17,7 @@ class VirusTotalPlugin:
     display_name = "VirusTotal"
     category = "ti"
     is_premium = False
-    icon = "🦠"
+    icon = "microbe_color.svg"
     description = "Enrich IOCs (IP, domain, URL, hash) via VirusTotal."
 
     config_schema = {

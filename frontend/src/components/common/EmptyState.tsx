@@ -5,7 +5,7 @@ interface EmptyStateProps {
   action?: React.ReactNode
 }
 
-export function EmptyState({ icon = '📭', title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon = 'open_mailbox_with_lowered_flag_color.svg', title, description, action }: EmptyStateProps) {
   return (
     <div className="animate-fade-in flex flex-col items-center justify-center py-16 gap-5 text-center">
       <div style={{
@@ -17,9 +17,11 @@ export function EmptyState({ icon = '📭', title, description, action }: EmptyS
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 32,
       }}>
-        {icon}
+        {icon.endsWith('.svg')
+          ? <img src={`/icons/${icon}`} width={48} height={48} alt="" aria-hidden="true" />
+          : <span style={{ fontSize: 32 }}>{icon}</span>
+        }
       </div>
       <div>
         <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{title}</p>

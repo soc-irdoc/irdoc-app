@@ -15,18 +15,18 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { icon: '◈',  label: 'Overview',  path: '/overview' },
-  { icon: '⚡', label: 'Incidents', path: '/incidents' },
-  { icon: '⚙',  label: 'Settings', path: '/settings' },
+  { icon: 'high_voltage_color.svg', label: 'Incidents', path: '/incidents' },
+  { icon: 'gear_color.svg',  label: 'Settings', path: '/settings' },
 ]
 
 const MANAGEMENT_ITEMS: NavItem[] = [
-  { icon: '⚙️', label: 'Org Settings', path: '/admin/org' },
-  { icon: '🗄️', label: 'Storage', path: '/admin/storage' },
-  { icon: '💾', label: 'Backups', path: '/admin/backups' },
-  { icon: '📋', label: 'Incident Templates', path: '/admin/templates' },
-  { icon: '📄', label: 'Report Templates', path: '/report-templates' },
-  { icon: '🔗', label: 'Integrations', path: '/admin/integrations' },
-  { icon: '📜', label: 'Audit Log', path: '/admin/audit' },
+  { icon: 'gear_color.svg', label: 'Org Settings', path: '/admin/org' },
+  { icon: 'file_cabinet_color.svg', label: 'Storage', path: '/admin/storage' },
+  { icon: 'floppy_disk_color.svg', label: 'Backups', path: '/admin/backups' },
+  { icon: 'clipboard_color.svg', label: 'Incident Templates', path: '/admin/templates' },
+  { icon: 'page_facing_up_color.svg', label: 'Report Templates', path: '/report-templates' },
+  { icon: 'link_color.svg', label: 'Integrations', path: '/admin/integrations' },
+  { icon: 'scroll_color.svg', label: 'Audit Log', path: '/admin/audit' },
 ]
 
 function NavButton({
@@ -69,7 +69,10 @@ function NavButton({
         boxShadow: active && !collapsed ? 'inset 2px 0 0 var(--accent)' : 'none',
       }}
     >
-      <span style={{ flexShrink: 0, lineHeight: 1 }}>{icon}</span>
+      {icon.endsWith('.svg')
+        ? <img src={`/icons/${icon}`} width={20} height={20} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+        : <span style={{ flexShrink: 0, lineHeight: 1 }}>{icon}</span>
+      }
       <span style={{
         fontSize: 13,
         fontFamily: 'Syne, sans-serif',

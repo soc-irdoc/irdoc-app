@@ -60,22 +60,22 @@ export interface AssetLink {
 // ── Display helpers ───────────────────────────────────────────────────────────
 
 export const ASSET_TYPE_ICONS: Record<AssetType, string> = {
-  host: '🖥️',
-  server: '🗄️',
-  workstation: '💻',
-  laptop: '💻',
-  mobile: '📱',
-  network_device: '🌐',
-  account: '👤',
-  service_account: '🤖',
-  file: '📄',
-  directory: '📁',
-  url: '🔗',
-  email_address: '📧',
-  database: '🗃️',
-  application: '⚙️',
-  cloud_resource: '☁️',
-  other: '📦',
+  host: 'desktop_computer_color.svg',
+  server: 'file_cabinet_color.svg',
+  workstation: 'laptop_color.svg',
+  laptop: 'laptop_color.svg',
+  mobile: 'mobile_phone_color.svg',
+  network_device: 'globe_with_meridians_color.svg',
+  account: 'bust_in_silhouette_color.svg',
+  service_account: 'robot_color.svg',
+  file: 'page_facing_up_color.svg',
+  directory: 'file_folder_color.svg',
+  url: 'link_color.svg',
+  email_address: 'e-mail_color.svg',
+  database: 'card_file_box_color.svg',
+  application: 'gear_color.svg',
+  cloud_resource: 'cloud_color.svg',
+  other: 'package_color.svg',
 }
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {

@@ -110,7 +110,7 @@ type RichTextFieldKey = keyof Pick<
 >
 
 interface RichTextSectionProps {
-  title: string
+  title: React.ReactNode
   fieldKey: RichTextFieldKey
   content: string
   incidentId: string
@@ -158,7 +158,7 @@ function RichTextSection({
           savedTimerRef.current = setTimeout(() => setSaveState('idle'), 3000)
         }
       } catch {
-        addToast(`Failed to save ${title}`, 'error')
+        addToast('Failed to save changes', 'error')
         if (saveGenRef.current === gen) setSaveState('error')
       }
     }, 2500)
@@ -223,7 +223,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
           gap: 10,
         }}
       >
-        📊 Incident Summary
+        <img src="/icons/bar_chart_color.svg" width={24} height={24} alt="" aria-hidden="true" /> Incident Summary
       </h2>
 
       {/* Severity + Status */}
@@ -260,7 +260,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
             gap: 8,
           }}
         >
-          📋 Incident Details
+          <img src="/icons/clipboard_color.svg" width={20} height={20} alt="" aria-hidden="true" /> Incident Details
         </h3>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <tbody>
@@ -303,7 +303,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Executive Summary */}
       <RichTextSection
-        title="📝 Executive Summary"
+        title={<><img src="/icons/memo_color.svg" width={20} height={20} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />Executive Summary</>}
         fieldKey="executive_summary"
         content={incident.executive_summary ?? ''}
         incidentId={incidentId}
@@ -312,7 +312,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Notes */}
       <RichTextSection
-        title="🗒️ Notes"
+        title={<><img src="/icons/spiral_notepad_color.svg" width={20} height={20} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />Notes</>}
         fieldKey="notes"
         content={incident.notes ?? ''}
         incidentId={incidentId}
@@ -321,7 +321,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Lessons Learned */}
       <RichTextSection
-        title="💡 Lessons Learned"
+        title={<><img src="/icons/light_bulb_color.svg" width={20} height={20} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />Lessons Learned</>}
         fieldKey="lessons_learned"
         content={incident.lessons_learned ?? ''}
         incidentId={incidentId}
@@ -330,7 +330,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Actions To Do */}
       <RichTextSection
-        title="✅ Actions To Do"
+        title={<><img src="/icons/check_mark_button_color.svg" width={20} height={20} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />Actions To Do</>}
         fieldKey="actions_todo"
         content={incident.actions_todo ?? ''}
         incidentId={incidentId}

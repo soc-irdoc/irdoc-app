@@ -25,7 +25,7 @@ class SlackPlugin:
     display_name = "Slack"
     category = "comms"
     is_premium = False
-    icon = "💬"
+    icon = "speech_balloon_color.svg"
     description = "Send incident notifications to a Slack channel via incoming webhook."
 
     config_schema = {

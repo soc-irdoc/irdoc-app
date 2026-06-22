@@ -98,7 +98,7 @@ function EnrichmentPanel({
           {vt && (
             <div style={{ flex: 1, minWidth: 180 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
-                🦠 VirusTotal
+                <img src="/icons/microbe_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />VirusTotal
               </p>
               {vt.found === false ? (
                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Not found</span>
@@ -144,7 +144,7 @@ function EnrichmentPanel({
           {abuse && iocType === 'ip' && (
             <div style={{ flex: 1, minWidth: 160 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
-                🚫 AbuseIPDB
+                <img src="/icons/prohibited_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />AbuseIPDB
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -182,7 +182,7 @@ function EnrichmentPanel({
           {shodan && (
             <div style={{ flex: 1, minWidth: 160 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
-                📡 Shodan
+                <img src="/icons/satellite_antenna_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Shodan
               </p>
               {shodan.found === false ? (
                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Not found</span>
@@ -249,7 +249,7 @@ function IOCRow({
         {/* Type */}
         <td style={{ padding: '10px 14px', borderBottom: expanded ? 'none' : '1px solid var(--border-subtle)' }}>
           <span className="chip chip-muted" style={{ fontSize: 11 }}>
-            {IOC_TYPE_ICONS[ioc.ioc_type]} {ioc.ioc_type}
+            {IOC_TYPE_ICONS[ioc.ioc_type] !== '#' && <img src={`/icons/${IOC_TYPE_ICONS[ioc.ioc_type]}`} width={16} height={16} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />}{ioc.ioc_type}
           </span>
         </td>
 
@@ -333,7 +333,7 @@ function IOCRow({
               aria-label="Delete IOC"
               style={{ color: 'var(--red)' }}
             >
-              🗑
+              <img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" />
             </button>
           </div>
         </td>
@@ -464,7 +464,7 @@ export function IOCPage({ incidentId }: IOCPageProps) {
       <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
         {/* Header */}
         <h2 style={{ fontSize: 18, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)', marginBottom: 20 }}>
-          🔍 IOCs{' '}
+          <img src="/icons/magnifying_glass_tilted_left_color.svg" width={24} height={24} alt="" aria-hidden="true" /> IOCs{' '}
           <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>
             {iocs.length} indicators
           </span>
@@ -491,7 +491,7 @@ export function IOCPage({ incidentId }: IOCPageProps) {
                 style={{ fontFamily: 'Syne, sans-serif' }}
               >
                 {IOC_TYPES.map((t) => (
-                  <option key={t} value={t}>{IOC_TYPE_ICONS[t]} {t}</option>
+                  <option key={t} value={t}>{t}</option>
                 ))}
               </select>
             </div>
@@ -547,7 +547,7 @@ export function IOCPage({ incidentId }: IOCPageProps) {
         {isLoading ? (
           <div className="flex justify-center py-12"><LoadingSpinner /></div>
         ) : iocs.length === 0 ? (
-          <EmptyState icon="🔍" title="No IOCs yet" description="Add indicators above or paste multi-line text for auto-detection." />
+          <EmptyState icon="magnifying_glass_tilted_left_color.svg" title="No IOCs yet" description="Add indicators above or paste multi-line text for auto-detection." />
         ) : (
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
@@ -605,7 +605,7 @@ export function IOCPage({ incidentId }: IOCPageProps) {
                   setSelectedIOCs(next)
                 }}
               />
-              <span className="chip chip-muted" style={{ fontSize: 10 }}>{IOC_TYPE_ICONS[ioc.ioc_type]} {ioc.ioc_type}</span>
+              <span className="chip chip-muted" style={{ fontSize: 10, display: 'inline-flex', alignItems: 'center', gap: 3 }}>{IOC_TYPE_ICONS[ioc.ioc_type] !== '#' && <img src={`/icons/${IOC_TYPE_ICONS[ioc.ioc_type]}`} width={10} height={10} alt="" aria-hidden="true" />}{ioc.ioc_type}</span>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ioc.value}
               </span>

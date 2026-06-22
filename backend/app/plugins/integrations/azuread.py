@@ -17,7 +17,7 @@ class AzureADPlugin:
     display_name = "Azure AD / Entra ID"
     category = "iam"
     is_premium = True
-    icon = "🔷"
+    icon = "large_blue_diamond_color.svg"
     description = "Fetch sign-in logs, revoke sessions, and reset passwords via Microsoft Graph."
 
     config_schema = {

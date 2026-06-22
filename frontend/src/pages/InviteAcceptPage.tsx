@@ -135,7 +135,7 @@ export default function InviteAcceptPage() {
             </div>
           ) : invalid ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🔗</div>
+              <div style={{ marginBottom: 12 }}><img src="/icons/link_color.svg" width={32} height={32} alt="" aria-hidden="true" /></div>
               <h2
                 style={{
                   fontSize: 16,

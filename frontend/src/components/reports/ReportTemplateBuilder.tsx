@@ -103,7 +103,10 @@ function SortableBlockCard({
             ≡
           </div>
 
-          <span style={{ fontSize: '16px', marginRight: '8px' }}>{libEntry?.icon}</span>
+          {libEntry?.icon && (libEntry.icon.endsWith('.svg')
+            ? <img src={`/icons/${libEntry.icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ marginRight: '8px', flexShrink: 0 }} />
+            : <span style={{ fontSize: '14px', marginRight: '8px', flexShrink: 0, lineHeight: 1 }}>{libEntry.icon}</span>
+          )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -122,7 +125,7 @@ function SortableBlockCard({
             onClick={(e) => { e.stopPropagation(); onRemove() }}
             aria-label="Remove block"
           >
-            ✕
+            <img src="/icons/multiply_color.svg" width={12} height={12} alt="" aria-hidden="true" />
           </button>
         </div>
 
@@ -174,7 +177,10 @@ function BlockLibraryItem({
       onClick={onAdd}
       title={description}
     >
-      <span style={{ fontSize: '16px', width: '22px', textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+      {icon.endsWith('.svg')
+        ? <img src={`/icons/${icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+        : <span style={{ fontSize: '14px', width: '22px', textAlign: 'center', flexShrink: 0, lineHeight: 1 }}>{icon}</span>
+      }
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
           {label}
@@ -289,8 +295,7 @@ export default function ReportTemplateBuilder({ blocks, onChange, onPreview }: P
                   color: 'var(--text-primary)',
                 }}
               >
-                {BLOCK_LIBRARY.find((b) => b.type === activeBlock.type)?.icon}{' '}
-                {BLOCK_LIBRARY.find((b) => b.type === activeBlock.type)?.label}
+                {(() => { const e = BLOCK_LIBRARY.find((b) => b.type === activeBlock.type); if (!e) return null; return <>{e.icon.endsWith('.svg') ? <img src={`/icons/${e.icon}`} width={14} height={14} alt="" aria-hidden="true" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6, flexShrink: 0 }} /> : <span style={{ marginRight: 6 }}>{e.icon}</span>}{e.label}</> })()}
               </div>
             )}
           </DragOverlay>
@@ -301,7 +306,7 @@ export default function ReportTemplateBuilder({ blocks, onChange, onPreview }: P
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
             {onPreview && (
               <button className="btn btn-ghost btn-sm" onClick={onPreview}>
-                👁 Preview
+                <img src="/icons/eyes_color.svg" width={16} height={16} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Preview
               </button>
             )}
           </div>

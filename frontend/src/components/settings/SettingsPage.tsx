@@ -41,7 +41,7 @@ function SettingsSection({
           gap: 8,
         }}
       >
-        {icon} {title}
+        <img src={`/icons/${icon}`} width={20} height={20} alt="" aria-hidden="true" /> {title}
       </div>
       {children}
     </div>
@@ -149,7 +149,7 @@ export function SettingsPage() {
         Settings
       </div>
       {/* Security */}
-      <SettingsSection icon="🔐" title="Two-Factor Authentication">
+      <SettingsSection icon="locked_with_key_color.svg" title="Two-Factor Authentication">
         {user?.mfa_enabled ? (
           <>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -180,7 +180,7 @@ export function SettingsPage() {
       </SettingsSection>
 
       {/* Profile */}
-      <SettingsSection icon="👤" title="Profile">
+      <SettingsSection icon="bust_in_silhouette_color.svg" title="Profile">
         <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 20 }}>
           <div
             style={{
@@ -266,14 +266,17 @@ export function SettingsPage() {
       </SettingsSection>
 
       {/* Appearance */}
-      <SettingsSection icon="🎨" title="Appearance">
+      <SettingsSection icon="artist_palette_color.svg" title="Appearance">
         <SettingsRow
           title="Theme"
           description="Switch between dark and light mode"
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+              {theme === 'dark'
+                ? <><img src="/icons/crescent_moon_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Dark</>
+                : <><img src="/icons/sun_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Light</>
+              }
             </span>
             <ToggleSwitch
               checked={theme === 'light'}
@@ -288,7 +291,7 @@ export function SettingsPage() {
       {user?.role === 'admin' && <APIKeysSection />}
 
       {/* About */}
-      <SettingsSection icon="ℹ" title="About IRDoc">
+      <SettingsSection icon="information_color.svg" title="About IRDoc">
         <div style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-muted)' }}>
           <p>
             <strong style={{ color: 'var(--text-primary)' }}>IRDoc</strong> — Open-Core Incident

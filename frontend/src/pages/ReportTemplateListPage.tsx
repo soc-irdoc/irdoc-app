@@ -18,10 +18,10 @@ import { Modal } from '@/components/common/Modal'
 import { AppShell } from '@/components/layout/AppShell'
 
 const TEMPLATE_ICONS: Record<string, string> = {
-  management: '📊',
-  analyst: '🔬',
-  legal: '⚖️',
-  custom: '✏️',
+  management: 'bar_chart_color.svg',
+  analyst: 'microscope_color.svg',
+  legal: 'balance_scale_color.svg',
+  custom: 'pencil_color.svg',
 }
 
 export default function ReportTemplateListPage() {
@@ -93,7 +93,7 @@ export default function ReportTemplateListPage() {
                   gap: '14px',
                 }}
               >
-                <span style={{ fontSize: '22px' }}>{TEMPLATE_ICONS[t.destination] ?? '📋'}</span>
+                <img src={`/icons/${TEMPLATE_ICONS[t.destination] ?? 'clipboard_color.svg'}`} width={22} height={22} alt="" aria-hidden="true" />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {t.name}
@@ -154,7 +154,7 @@ export default function ReportTemplateListPage() {
                   gap: '14px',
                 }}
               >
-                <span style={{ fontSize: '22px' }}>{TEMPLATE_ICONS[t.destination] ?? '📋'}</span>
+                <img src={`/icons/${TEMPLATE_ICONS[t.destination] ?? 'clipboard_color.svg'}`} width={22} height={22} alt="" aria-hidden="true" />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {t.name}

@@ -167,9 +167,9 @@ function IncidentCard({
           className="btn btn-ghost btn-sm"
           onClick={(e) => { e.stopPropagation(); onDeleteRequest(incident) }}
           title="Delete incident"
-          style={{ flexShrink: 0, fontSize: 14, padding: '2px 6px' }}
+          style={{ flexShrink: 0, padding: '2px 6px' }}
         >
-          🗑
+          <img src="/icons/wastebasket_color.svg" width={14} height={14} alt="" aria-hidden="true" />
         </button>
       )}
     </div>
@@ -317,7 +317,7 @@ export function IncidentListPage() {
             </div>
           ) : incidents.length === 0 ? (
             <EmptyState
-              icon="⚡"
+              icon="high_voltage_color.svg"
               title="No incidents"
               description="Create your first incident to get started."
               action={

@@ -56,10 +56,11 @@ export function scheduleTokenRefresh(token: string) {
   }
 }
 
-// Inject access token on every request
+// Inject access token on every request, but never override an explicitly-set
+// Authorization header (e.g. mfa_challenge or mfa_setup tokens passed directly).
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken
-  if (token) {
+  if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config

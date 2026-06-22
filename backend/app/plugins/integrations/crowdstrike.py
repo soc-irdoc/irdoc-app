@@ -14,7 +14,7 @@ class CrowdStrikePlugin:
     display_name = "CrowdStrike Falcon"
     category = "edr"
     is_premium = True
-    icon = "🦅"
+    icon = "eagle_color.svg"
     description = "Import detections and contain hosts via CrowdStrike Falcon."
 
     config_schema = {

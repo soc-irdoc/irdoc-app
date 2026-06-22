@@ -216,7 +216,7 @@ export function TeamPage() {
         <h2
           style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}
         >
-          👥 Team Members
+          <img src="/icons/busts_in_silhouette_color.svg" width={24} height={24} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 8 }} />Team Members
         </h2>
         <button className="btn btn-accent btn-sm" onClick={() => setShowInviteModal(true)}>
           + Invite User

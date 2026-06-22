@@ -26,7 +26,7 @@ export function ReportsAdminPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-            🗂 Your Templates
+            <img src="/icons/card_index_dividers_color.svg" width={20} height={20} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />Your Templates
           </h3>
           <button
             className="btn btn-accent btn-sm"
@@ -79,7 +79,7 @@ export function ReportsAdminPage() {
                     style={{ height: '24px', width: 'auto', objectFit: 'contain', flexShrink: 0 }}
                   />
                 ) : (
-                  <span style={{ fontSize: 16, flexShrink: 0 }}>📋</span>
+                  <img src="/icons/clipboard_color.svg" width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

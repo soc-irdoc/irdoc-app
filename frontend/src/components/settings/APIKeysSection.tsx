@@ -65,7 +65,7 @@ export function APIKeysSection() {
         }}
       >
         <div>
-          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>🔑 API Keys</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}><img src="/icons/key_color.svg" width={20} height={20} alt="" aria-hidden="true" /> API Keys</p>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
             Used by external tools to create cases in IRDoc.
           </p>
@@ -286,7 +286,7 @@ export function APIKeysSection() {
             color: 'var(--yellow)',
           }}
         >
-          ⚠️ This key will not be shown again. Copy it now.
+          <img src="/icons/warning_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />This key will not be shown again. Copy it now.
         </div>
         <div
           style={{

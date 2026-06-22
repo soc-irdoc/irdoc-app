@@ -37,13 +37,13 @@ export interface DetectedIOC {
 }
 
 export const IOC_TYPE_ICONS: Record<IOCType, string> = {
-  email:    '📧',
-  domain:   '🌐',
-  ip:       '🔌',
-  url:      '🔗',
+  email:    'e-mail_color.svg',
+  domain:   'globe_with_meridians_color.svg',
+  ip:       'electric_plug_color.svg',
+  url:      'link_color.svg',
   hash:     '#',
-  file:     '📄',
-  username: '👤',
+  file:     'page_facing_up_color.svg',
+  username: 'bust_in_silhouette_color.svg',
 }
 
 export const IOC_STATUS_COLORS: Record<IOCStatus, string> = {

@@ -19,12 +19,12 @@ interface TopBarProps {
 }
 
 const SECTIONS = [
-  { key: 'timeline', label: 'Timeline', icon: '⏱' },
-  { key: 'iocs',     label: 'IOCs',     icon: '🔍' },
-  { key: 'assets',   label: 'Assets',   icon: '🖥️' },
-  { key: 'summary',  label: 'Summary',  icon: '📊' },
-  { key: 'reports',  label: 'Reports',  icon: '📄' },
-  { key: 'graph',    label: 'Graph',    icon: '🕸' },
+  { key: 'timeline', label: 'Timeline', icon: 'stopwatch_color.svg' },
+  { key: 'iocs',     label: 'IOCs',     icon: 'magnifying_glass_tilted_left_color.svg' },
+  { key: 'assets',   label: 'Assets',   icon: 'desktop_computer_color.svg' },
+  { key: 'summary',  label: 'Summary',  icon: 'bar_chart_color.svg' },
+  { key: 'reports',  label: 'Reports',  icon: 'page_facing_up_color.svg' },
+  { key: 'graph',    label: 'Graph',    icon: 'spider_web_color.svg' },
 ]
 
 function PresenceAvatars({ incidentId }: { incidentId: string }) {
@@ -279,9 +279,9 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
               className="btn btn-ghost btn-sm"
               onClick={() => setShowDeleteModal(true)}
               title="Delete incident"
-              style={{ fontSize: 14, padding: '4px 8px' }}
+              style={{ padding: '4px 8px' }}
             >
-              🗑
+              <img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -317,7 +317,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
               fontFamily: 'Syne, sans-serif',
             }}
           >
-            {sec.icon} {sec.label}
+            <img src={`/icons/${sec.icon}`} width={18} height={18} alt="" aria-hidden="true" style={{ flexShrink: 0 }} /> {sec.label}
           </button>
         ))}
       </div>

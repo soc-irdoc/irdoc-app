@@ -134,9 +134,9 @@ class AuditLogOut(BaseModel):
     ip_address: str | None = None
     created_at: datetime
 
-    @field_validator("entity_id", mode="before")
+    @field_validator("entity_id", "ip_address", mode="before")
     @classmethod
-    def coerce_entity_id(cls, v: object) -> str | None:
+    def coerce_to_str(cls, v: object) -> str | None:
         if v is None:
             return None
         return str(v)

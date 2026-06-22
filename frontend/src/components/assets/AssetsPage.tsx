@@ -48,8 +48,8 @@ function AssetRow({
 }) {
   return (
     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-      <td style={{ padding: '10px 12px', width: 28 }}>
-        <span style={{ fontSize: 16 }}>{ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? '📦'}</span>
+      <td style={{ padding: '10px 12px', width: 40 }}>
+        <img src={`/icons/${ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? 'package_color.svg'}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
       </td>
       <td style={{ padding: '10px 12px' }}>
         <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>
@@ -93,14 +93,12 @@ function AssetRow({
             onClick={() => onEdit(asset)}
             className="icon-btn"
             title="Edit asset"
-            style={{ fontSize: 13 }}
-          >✏️</button>
+          ><img src="/icons/pencil_color.svg" width={16} height={16} alt="" aria-hidden="true" /></button>
           <button
             onClick={() => onDelete(asset)}
             className="icon-btn"
             title="Delete asset"
-            style={{ fontSize: 13 }}
-          >🗑️</button>
+          ><img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" /></button>
         </div>
       </td>
     </tr>
@@ -125,7 +123,7 @@ function RelationshipRow({
   return (
     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
       <td style={{ padding: '10px 12px' }}>
-        <span style={{ fontSize: 14 }}>{ASSET_TYPE_ICONS[source.asset_type as AssetType]}</span>
+        <img src={`/icons/${ASSET_TYPE_ICONS[source.asset_type as AssetType] ?? 'package_color.svg'}`} width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle' }} />
         {' '}
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
           {source.name}
@@ -137,7 +135,7 @@ function RelationshipRow({
         </span>
       </td>
       <td style={{ padding: '10px 12px' }}>
-        <span style={{ fontSize: 14 }}>{ASSET_TYPE_ICONS[target.asset_type as AssetType]}</span>
+        <img src={`/icons/${ASSET_TYPE_ICONS[target.asset_type as AssetType] ?? 'package_color.svg'}`} width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle' }} />
         {' '}
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
           {target.name}
@@ -148,8 +146,7 @@ function RelationshipRow({
           onClick={() => onDelete(link.id)}
           className="icon-btn"
           title="Remove relationship"
-          style={{ fontSize: 13 }}
-        >🗑️</button>
+        ><img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" /></button>
       </td>
     </tr>
   )
@@ -347,7 +344,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
                   >
                     {ASSET_TYPES_LIST.map(t => (
                       <option key={t} value={t}>
-                        {ASSET_TYPE_ICONS[t]} {ASSET_TYPE_LABELS[t]}
+                        {ASSET_TYPE_LABELS[t]}
                       </option>
                     ))}
                   </select>
@@ -409,7 +406,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
             {/* Asset table */}
             {assets.length === 0 ? (
               <EmptyState
-                icon="🖥️"
+                icon="desktop_computer_color.svg"
                 title="No assets yet"
                 description="Add hosts, accounts, files, and other assets involved in this incident."
               />
@@ -474,7 +471,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
                     <option value="">Source asset…</option>
                     {assets.map(a => (
                       <option key={a.id} value={a.id}>
-                        {ASSET_TYPE_ICONS[a.asset_type as AssetType]} {a.name}
+                        {a.name}
                       </option>
                     ))}
                   </select>
@@ -501,7 +498,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
                     <option value="">Target asset…</option>
                     {assets.filter(a => a.id !== linkSource).map(a => (
                       <option key={a.id} value={a.id}>
-                        {ASSET_TYPE_ICONS[a.asset_type as AssetType]} {a.name}
+                        {a.name}
                       </option>
                     ))}
                   </select>
@@ -533,7 +530,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
             {/* Relationships table */}
             {assetLinks.length === 0 ? (
               <EmptyState
-                icon="🔗"
+                icon="link_color.svg"
                 title="No relationships yet"
                 description="Link assets together to map how they're connected — e.g. account → workstation → file."
               />

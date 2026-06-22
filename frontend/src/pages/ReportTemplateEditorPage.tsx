@@ -193,7 +193,7 @@ export default function ReportTemplateEditorPage() {
                     disabled={uploadLogo.isPending}
                     title="Upload logo"
                   >
-                    {uploadLogo.isPending ? 'Uploading…' : '🖼 Logo'}
+                    {uploadLogo.isPending ? 'Uploading…' : <><img src="/icons/framed_picture_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Logo</>}
                   </button>
                 )}
                 <input

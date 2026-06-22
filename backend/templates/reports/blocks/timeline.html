@@ -31,7 +31,7 @@
       <div class="entry-header">
         <span class="entry-badge badge-{{ e.entry_type }}">{{ e.entry_type }}</span>
         <span class="entry-time">{{ e.occurred_at | format_dt }}</span>
-        {% if e.is_pinned %}<span style="color:#f97316; font-size:9pt;">📌 Pinned</span>{% endif %}
+        {% if e.is_pinned %}<span style="color:#f97316; font-size:9pt;"><img src="{{ icon_data_uri('pushpin_color.svg') }}" width="12" height="12" alt="" style="vertical-align:middle;margin-right:2px;"> Pinned</span>{% endif %}
       </div>
       <div class="entry-desc">{{ e.description }}</div>
       {% if e.source %}

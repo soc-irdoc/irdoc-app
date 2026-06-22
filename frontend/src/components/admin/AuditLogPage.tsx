@@ -272,7 +272,7 @@ export function AuditLogPage() {
                                 style={{ fontSize: 10 }}
                                 title="High risk action"
                               >
-                                ⚠️ HIGH RISK
+                                <img src="/icons/warning_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 3 }} />HIGH RISK
                               </span>
                             )}
                           </div>

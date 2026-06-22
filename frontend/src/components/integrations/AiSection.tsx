@@ -125,8 +125,8 @@ export function AiSection() {
       }}>
         {/* Header */}
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, background: 'var(--bg-elevated)', flexShrink: 0 }}>
-            🤖
+          <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexShrink: 0 }}>
+            <img src="/icons/robot_color.svg" width={20} height={20} alt="" aria-hidden="true" />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Local AI (Ollama)</p>
@@ -197,7 +197,7 @@ export function AiSection() {
                       disabled={testConfig.isPending || !form.ollamaBaseUrl}
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
-                      {testConfig.isPending ? 'Testing…' : '🔌 Test Connection'}
+                      {testConfig.isPending ? 'Testing…' : <><img src="/icons/electric_plug_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Test Connection</>}
                     </button>
 
                     {testResult && (

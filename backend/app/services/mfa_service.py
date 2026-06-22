@@ -1,6 +1,8 @@
 # backend/app/services/mfa_service.py
 import base64
+import hmac
 import secrets
+import time as _time
 
 import pyotp
 from argon2.exceptions import Argon2Error, VerifyMismatchError
@@ -26,10 +28,29 @@ def generate_totp_secret(email: str) -> tuple[str, str]:
     return secret, uri
 
 
-def verify_totp(encrypted_secret: str, code: str) -> bool:
-    """Verify a 6-digit TOTP code. Allows ±1 step (30s) clock skew."""
+def verify_totp(
+    encrypted_secret: str,
+    code: str,
+    last_counter: int | None = None,
+) -> tuple[bool, int | None]:
+    """Verify a 6-digit TOTP code with replay protection.
+
+    Allows ±1 step (30 s) clock skew. Returns (is_valid, counter_used).
+    Pass last_counter to reject a code whose time-step has already been used.
+    """
     secret = decrypt_secret(encrypted_secret)
-    return pyotp.TOTP(secret).verify(code, valid_window=1)
+    totp = pyotp.TOTP(secret)
+    now = _time.time()
+    base = int(now / 30)
+
+    for offset in (-1, 0, 1):
+        if hmac.compare_digest(totp.at(now, offset), str(code)):
+            candidate = base + offset
+            if last_counter is not None and candidate <= last_counter:
+                return False, None  # replay detected
+            return True, candidate
+
+    return False, None
 
 
 def generate_backup_codes() -> tuple[list[str], list[str]]:

@@ -32,7 +32,7 @@ function AiBanner({ reports }: { reports: Report[] }) {
 
   let bg = 'rgba(99,102,241,0.06)'
   let border = 'rgba(99,102,241,0.2)'
-  let icon = '🤖'
+  let icon = 'robot_color.svg'
   let text: React.ReactNode = null
 
   if (isGenerating) {
@@ -77,7 +77,10 @@ function AiBanner({ reports }: { reports: Report[] }) {
       gap: 12,
       fontSize: 13,
     }}>
-      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      {icon.endsWith('.svg')
+        ? <img src={`/icons/${icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+        : <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      }
       <div style={{ flex: 1 }}>
         <strong style={{ color: 'var(--text-primary)', fontSize: 12 }}>AI Report Assistant </strong>
         {text}
@@ -106,7 +109,7 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
 
   let bg = 'rgba(14,165,233,0.06)'
   let border = 'rgba(14,165,233,0.2)'
-  let icon = '📂'
+  let icon = 'open_file_folder_color.svg'
   let text: React.ReactNode
 
   if (!lastSynced) {
@@ -153,7 +156,10 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
       gap: 12,
       fontSize: 13,
     }}>
-      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      {icon.endsWith('.svg')
+        ? <img src={`/icons/${icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+        : <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+      }
       <div style={{ flex: 1 }}>
         <strong style={{ color: 'var(--text-primary)', fontSize: 12 }}>SharePoint Sync </strong>
         {text}
@@ -254,7 +260,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
               flexDirection: 'column',
               gap: '8px',
             }}>
-              <div style={{ fontSize: '24px' }}>📄</div>
+              <img src="/icons/page_facing_up_color.svg" width={24} height={24} alt="" aria-hidden="true" />
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
                   Base Template
@@ -294,7 +300,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                     style={{ height: '32px', width: 'auto', objectFit: 'contain', alignSelf: 'flex-start' }}
                   />
                 ) : (
-                  <div style={{ fontSize: '24px' }}>📋</div>
+                  <img src="/icons/clipboard_color.svg" width={24} height={24} alt="" aria-hidden="true" />
                 )}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -411,7 +417,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                             rel="noopener noreferrer"
                             className="btn btn-ghost btn-sm"
                           >
-                            🔗 Access Report
+                            <img src="/icons/link_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Access Report
                           </a>
                         )}
                         {r.status === 'ready' && !r.sharepoint_url && (

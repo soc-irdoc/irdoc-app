@@ -211,8 +211,8 @@ export function SmtpSection() {
       }}>
         {/* Header */}
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, background: 'var(--bg-elevated)', flexShrink: 0 }}>
-            ✉️
+          <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexShrink: 0 }}>
+            <img src="/icons/envelope_color.svg" width={20} height={20} alt="" aria-hidden="true" />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>SMTP Server</p>
@@ -311,7 +311,7 @@ export function SmtpSection() {
                       disabled={testSmtp.isPending || !form.host}
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
-                      {testSmtp.isPending ? 'Sending…' : '📤 Send Test Email'}
+                      {testSmtp.isPending ? 'Sending…' : <><img src="/icons/outbox_tray_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Send Test Email</>}
                     </button>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>sends to your account email</span>
                     {testResult && (

@@ -15,7 +15,7 @@ class ProofpointPlugin:
     display_name = "Proofpoint"
     category = "email"
     is_premium = True
-    icon = "📧"
+    icon = "e-mail_color.svg"
     description = "Search email messages and traces via Proofpoint TRAP / SIEM API."
 
     config_schema = {

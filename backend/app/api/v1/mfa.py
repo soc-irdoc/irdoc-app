@@ -151,7 +151,8 @@ async def complete_mfa_setup(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No pending MFA setup. Call GET /auth/mfa/setup first.",
         )
-    if not mfa_service.verify_totp(user.totp_secret, body.code):
+    is_valid, counter = mfa_service.verify_totp(user.totp_secret, body.code)
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid code. Check your authenticator app.",
@@ -161,6 +162,7 @@ async def complete_mfa_setup(
     user.mfa_enabled = True
     user.backup_codes = hashed_codes
     user.mfa_enrolled_at = datetime.now(timezone.utc)
+    user.last_otp_counter = counter
     await db.commit()
 
     access_token, refresh_token = auth_service.issue_tokens(user)
@@ -195,11 +197,16 @@ async def verify_mfa(
         await db.commit()  # persist the consumed code removal
     else:
         # TOTP path
-        if not mfa_service.verify_totp(user.totp_secret, body.code):
+        is_valid, counter = mfa_service.verify_totp(
+            user.totp_secret, body.code, user.last_otp_counter
+        )
+        if not is_valid:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid TOTP code",
+                detail="Invalid or already-used TOTP code",
             )
+        user.last_otp_counter = counter
+        await db.commit()
 
     access_token, refresh_token = auth_service.issue_tokens(user)
     response.set_cookie(REFRESH_COOKIE_NAME, refresh_token, **COOKIE_SETTINGS)

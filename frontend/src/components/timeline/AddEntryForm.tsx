@@ -274,7 +274,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
               padding: '4px 0',
             }}
           >
-            🖥️ Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
+            <img src="/icons/desktop_computer_color.svg" width={16} height={16} alt="" aria-hidden="true" /> Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
             {' '}
             <span style={{ fontSize: 10 }}>{assetPickerOpen ? '▲' : '▼'}</span>
           </button>
@@ -316,7 +316,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
                       gap: 5,
                     }}
                   >
-                    <span>{ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? '📦'}</span>
+                    <img src={`/icons/${ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? 'package_color.svg'}`} width={16} height={16} alt="" aria-hidden="true" />
                     <span>{asset.name}</span>
                     <span style={{ fontSize: 10, opacity: 0.6 }}>
                       {ASSET_TYPE_LABELS[asset.asset_type as AssetType]}

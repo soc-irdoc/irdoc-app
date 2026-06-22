@@ -288,9 +288,9 @@ export function OrgSettingsPage() {
   }
 
   const AUTH_OPTIONS: { id: AuthSource; icon: string; label: string; desc: string }[] = [
-    { id: 'local',  icon: '🔑', label: 'Local Users',        desc: 'Managed manually in the Team section' },
-    { id: 'azure',  icon: '☁️', label: 'Entra ID / Azure AD', desc: 'Import users from Azure Active Directory' },
-    { id: 'onprem', icon: '🏢', label: 'On-Premises AD',      desc: 'Sync with on-premises Active Directory' },
+    { id: 'local',  icon: 'key_color.svg', label: 'Local Users',        desc: 'Managed manually in the Team section' },
+    { id: 'azure',  icon: 'cloud_color.svg', label: 'Entra ID / Azure AD', desc: 'Import users from Azure Active Directory' },
+    { id: 'onprem', icon: 'office_building_color.svg', label: 'On-Premises AD',      desc: 'Sync with on-premises Active Directory' },
   ]
 
   return (
@@ -573,7 +573,7 @@ export function OrgSettingsPage() {
                       />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span>{opt.icon}</span>
+                          <img src={`/icons/${opt.icon}`} width={18} height={18} alt="" aria-hidden="true" />
                           <span>{opt.label}</span>
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{opt.desc}</div>

@@ -501,7 +501,7 @@ export function OverviewPage() {
         {!isLoading && data && (
           data.incidents.total === 0 && range !== 'all'
             ? <EmptyState
-                icon="📊"
+                icon="bar_chart_color.svg"
                 title="No incidents in this period"
                 description="Try expanding the time range or check back later."
                 action={

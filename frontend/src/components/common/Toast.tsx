@@ -21,9 +21,12 @@ export function ToastContainer() {
             boxShadow: 'var(--shadow)',
           }}
         >
-          <span style={{ fontSize: 16 }}>
-            {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}
-          </span>
+          {toast.type === 'success'
+            ? <span style={{ fontSize: 16 }}>✓</span>
+            : toast.type === 'error'
+            ? <img src="/icons/multiply_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+            : <img src="/icons/information_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+          }
           <p
             className="flex-1 text-sm font-medium"
             style={{ color: 'var(--text-primary)' }}
@@ -35,7 +38,7 @@ export function ToastContainer() {
             onClick={() => removeToast(toast.id)}
             aria-label="Dismiss"
           >
-            ✕
+            <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
           </button>
         </div>
       ))}

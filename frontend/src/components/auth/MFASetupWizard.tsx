@@ -104,7 +104,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
 
       {step === 1 && (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>📱</div>
+          <div style={{ marginBottom: 12 }}><img src="/icons/mobile_phone_color.svg" width={32} height={32} alt="" aria-hidden="true" /></div>
           <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: 'var(--text-primary)' }}>
             Install an authenticator app
           </div>
@@ -284,7 +284,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
             borderRadius: 10, margin: '0 auto 10px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 22,
-          }}>🛡</div>
+          }}><img src="/icons/shield_color.svg" width={32} height={32} alt="" aria-hidden="true" /></div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>IRDoc</div>
           <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>
             Two-factor authentication setup required

@@ -16,14 +16,14 @@ interface SidebarItem {
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: 'team', icon: '👥', label: 'Team' },
-  { id: 'org', icon: '⚙️', label: 'Org Settings' },
-  { id: 'storage', icon: '🗄️', label: 'Storage' },
-  { id: 'templates', icon: '📋', label: 'Incident Templates' },
-  { id: 'reports', icon: '📄', label: 'Report Templates' },
-  { id: 'integrations', icon: '🔗', label: 'Integrations' },
-  { id: 'audit', icon: '📜', label: 'Audit Log' },
-  { id: 'sso', icon: '🔐', label: 'SSO' },
+  { id: 'team', icon: 'busts_in_silhouette_color.svg', label: 'Team' },
+  { id: 'org', icon: 'gear_color.svg', label: 'Org Settings' },
+  { id: 'storage', icon: 'file_cabinet_color.svg', label: 'Storage' },
+  { id: 'templates', icon: 'clipboard_color.svg', label: 'Incident Templates' },
+  { id: 'reports', icon: 'page_facing_up_color.svg', label: 'Report Templates' },
+  { id: 'integrations', icon: 'link_color.svg', label: 'Integrations' },
+  { id: 'audit', icon: 'scroll_color.svg', label: 'Audit Log' },
+  { id: 'sso', icon: 'locked_with_key_color.svg', label: 'SSO' },
 ]
 
 export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps) {
@@ -78,7 +78,7 @@ export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps
             ← Back
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 16 }}>🛡️</span>
+            <img src="/icons/shield_color.svg" width={16} height={16} alt="" aria-hidden="true" />
             <span
               style={{
                 fontSize: 14,
@@ -120,7 +120,7 @@ export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps
                 }}
                 aria-label={item.label}
               >
-                <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
+                <img src={`/icons/${item.icon}`} width={18} height={18} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
                 <span style={{ flex: 1 }}>{item.label}</span>
               </button>
             )

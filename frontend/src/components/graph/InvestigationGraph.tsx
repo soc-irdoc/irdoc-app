@@ -62,7 +62,7 @@ function NodeDetailPanel({
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
           Node Details
         </h3>
-        <button className="icon-btn" onClick={onClose} aria-label="Close panel">✕</button>
+        <button className="icon-btn" onClick={onClose} aria-label="Close panel"><img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" /></button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -263,7 +263,7 @@ export default function InvestigationGraph({ incidentId }: InvestigationGraphPro
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <EmptyState
-          icon="🔗"
+          icon="link_color.svg"
           title="No graph data yet"
           description="Add IOCs and timeline entries to build the investigation graph."
         />

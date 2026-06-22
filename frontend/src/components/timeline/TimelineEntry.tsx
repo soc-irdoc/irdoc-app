@@ -114,7 +114,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
             zIndex: 1,
           }}
         >
-          {config.icon}
+          <img src={`/icons/${config.icon}`} width={18} height={18} alt="" aria-hidden="true" />
         </div>
 
         {/* Card */}
@@ -174,7 +174,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
 
                 {/* Pin indicator */}
                 {entry.is_pinned && (
-                  <span style={{ fontSize: 12 }} title="Pinned">📌</span>
+                  <img src="/icons/pushpin_color.svg" width={12} height={12} alt="" aria-hidden="true" title="Pinned" />
                 )}
 
                 {/* Author */}
@@ -214,7 +214,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                     aria-label="Edit entry"
                     title="Edit"
                   >
-                    ✏️
+                    <img src="/icons/pencil_color.svg" width={16} height={16} alt="" aria-hidden="true" />
                   </button>
                 )}
                 <button
@@ -223,7 +223,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                   aria-label={entry.is_pinned ? 'Unpin entry' : 'Pin entry'}
                   title={entry.is_pinned ? 'Unpin' : 'Pin'}
                 >
-                  📌
+                  <img src="/icons/pushpin_color.svg" width={16} height={16} alt="" aria-hidden="true" />
                 </button>
                 <button
                   className="icon-btn"
@@ -232,7 +232,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                   title="Delete"
                   style={{ color: 'var(--red)' }}
                 >
-                  🗑
+                  <img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -284,7 +284,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                       e.currentTarget.style.color = 'var(--text-secondary)'
                     }}
                   >
-                    <span>{att.mime_type && isImageMime(att.mime_type) ? '🖼' : '📎'}</span>
+                    <img src={att.mime_type && isImageMime(att.mime_type) ? '/icons/framed_picture_color.svg' : '/icons/paperclip_color.svg'} width={16} height={16} alt="" aria-hidden="true" />
                     {att.original_name}
                   </button>
                 ))}

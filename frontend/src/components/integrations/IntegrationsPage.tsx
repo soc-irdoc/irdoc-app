@@ -192,10 +192,10 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             style={{
               width: 40, height: 40, borderRadius: 10,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 20, background: 'var(--bg-elevated)', flexShrink: 0,
+              background: 'var(--bg-elevated)', flexShrink: 0,
             }}
           >
-            {integration.icon}
+            <img src={`/icons/${integration.icon}`} width={20} height={20} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -376,8 +376,8 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
       }}>
         {/* Card header */}
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, background: 'var(--bg-elevated)', flexShrink: 0 }}>
-            🔐
+          <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexShrink: 0 }}>
+            <img src="/icons/locked_with_key_color.svg" width={20} height={20} alt="" aria-hidden="true" />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Single Sign-On (SSO)</p>
@@ -501,7 +501,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                         style={{ color: 'var(--red)', flexShrink: 0 }}
                         onClick={() => setRoleMappings((prev) => prev.filter((_, idx) => idx !== i))}
                         aria-label="Remove mapping"
-                      >✕</button>
+                      ><img src="/icons/multiply_color.svg" width={12} height={12} alt="" aria-hidden="true" /></button>
                     </div>
                   ))}
                   <button
