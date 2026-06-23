@@ -17,7 +17,7 @@ from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -241,6 +241,74 @@ async def upload_pfx(
     state.cert_cn = cn
     state.cert_expiry = expiry
     return RedirectResponse("/core-config", status_code=302)
+
+
+@app.get("/core-config")
+async def core_config_page(request: Request):
+    if not state.db_password:
+        secrets = generate_secrets()
+        state.db_password = secrets["db_password"]
+        state.redis_password = secrets["redis_password"]
+        state.secret_key = secrets["secret_key"]
+    if not state.base_url:
+        prefix = "http" if state.https_mode == "behind_lb" else "https"
+        state.base_url = f"{prefix}://{socket.getfqdn()}"
+    return templates.TemplateResponse(request, "core_config.html", _template_context())
+
+
+@app.get("/api/generate-secrets")
+async def generate_secrets_api():
+    return JSONResponse(generate_secrets())
+
+
+@app.post("/core-config")
+async def save_core_config(
+    base_url: str = Form(...),
+    db_password: str = Form(...),
+    redis_password: str = Form(...),
+    secret_key: str = Form(...),
+    access_token_expire_minutes: int = Form(15),
+    refresh_token_expire_days: int = Form(30),
+    license_key: str = Form(""),
+):
+    state.base_url = base_url.rstrip("/")
+    state.db_password = db_password
+    state.redis_password = redis_password
+    state.secret_key = secret_key
+    state.access_token_expire_minutes = access_token_expire_minutes
+    state.refresh_token_expire_days = refresh_token_expire_days
+    state.license_key = license_key
+    return RedirectResponse("/admin-user", status_code=302)
+
+
+@app.get("/admin-user")
+async def admin_user_page(request: Request):
+    return templates.TemplateResponse(request, "admin_user.html", _template_context())
+
+
+@app.post("/admin-user")
+async def save_admin_user(
+    request: Request,
+    admin_name: str = Form(...),
+    admin_email: str = Form(...),
+    admin_password: str = Form(...),
+    admin_password_confirm: str = Form(...),
+):
+    errors = {}
+    if len(admin_password) < 12:
+        errors["admin_password"] = "Password must be at least 12 characters."
+    if admin_password != admin_password_confirm:
+        errors["admin_password_confirm"] = "Passwords do not match."
+    if errors:
+        return templates.TemplateResponse(
+            request, "admin_user.html",
+            _template_context(errors=errors, admin_name=admin_name, admin_email=admin_email),
+            status_code=422,
+        )
+    state.admin_name = admin_name
+    state.admin_email = admin_email
+    state.admin_password = admin_password
+    return RedirectResponse("/review", status_code=302)
 
 
 if __name__ == "__main__":

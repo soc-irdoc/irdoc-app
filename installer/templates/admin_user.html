@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block step4_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">First Admin Account</h1>
+<p class="page-subtitle">This account is created when the app starts. Use it to invite your team.</p>
+
+<form method="post" action="/admin-user" x-data="{
+  password: '',
+  strength() {
+    if (this.password.length === 0) return 0;
+    if (this.password.length < 8) return 1;
+    if (this.password.length < 12) return 2;
+    let s = 3;
+    if (/[A-Z]/.test(this.password)) s++;
+    if (/[0-9]/.test(this.password)) s++;
+    if (/[^A-Za-z0-9]/.test(this.password)) s++;
+    return Math.min(s, 5);
+  },
+  strengthColor() {
+    const colors = ['', '#ef4444', '#f59e0b', '#f59e0b', '#22c55e', '#16a34a'];
+    return colors[this.strength()] || '';
+  },
+  strengthLabel() {
+    return ['', 'Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][this.strength()] || '';
+  }
+}">
+
+  <label>Full Name</label>
+  <input type="text" name="admin_name" value="{{ admin_name or '' }}" maxlength="100" required>
+  {% if errors and errors.admin_name %}<p class="field-error">{{ errors.admin_name }}</p>{% endif %}
+
+  <label class="mt-4">Email Address</label>
+  <input type="email" name="admin_email" value="{{ admin_email or '' }}" required>
+  {% if errors and errors.admin_email %}<p class="field-error">{{ errors.admin_email }}</p>{% endif %}
+
+  <label class="mt-4">Password</label>
+  <input type="password" name="admin_password" x-model="password" minlength="12" required>
+  <div class="strength-bar mt-1">
+    <div class="strength-fill" :style="`width: ${strength() * 20}%; background: ${strengthColor()}`"></div>
+  </div>
+  <p class="field-hint" x-text="strengthLabel()"></p>
+  {% if errors and errors.admin_password %}<p class="field-error">{{ errors.admin_password }}</p>{% endif %}
+
+  <label class="mt-4">Confirm Password</label>
+  <input type="password" name="admin_password_confirm" required>
+  {% if errors and errors.admin_password_confirm %}<p class="field-error">{{ errors.admin_password_confirm }}</p>{% endif %}
+
+  <div class="mt-6">
+    <button type="submit" class="btn btn-primary">Continue &#x2192;</button>
+  </div>
+</form>
+{% endblock %}

@@ -42,3 +42,62 @@ async def test_upload_pfx_invalid_passphrase_returns_error(client, tmp_path):
     )
     assert resp.status_code == 200
     assert "passphrase" in resp.text.lower() or "invalid" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_core_config_page_loads(client):
+    resp = await client.get("/core-config")
+    assert resp.status_code == 200
+    assert "Base URL" in resp.text or "base_url" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_generate_secrets_returns_json(client):
+    resp = await client.get("/api/generate-secrets")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "db_password" in data
+    assert "redis_password" in data
+    assert "secret_key" in data
+
+
+@pytest.mark.asyncio
+async def test_core_config_post_saves_state(client):
+    resp = await client.post("/core-config", data={
+        "base_url": "https://irdoc.example.com",
+        "db_password": "dbpass123",
+        "redis_password": "redispass123",
+        "secret_key": "hexsecret" * 4,
+        "access_token_expire_minutes": "15",
+        "refresh_token_expire_days": "30",
+        "license_key": "",
+    }, follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    from installer.wizard import state
+    assert state.base_url == "https://irdoc.example.com"
+
+
+@pytest.mark.asyncio
+async def test_admin_user_page_loads(client):
+    resp = await client.get("/admin-user")
+    assert resp.status_code == 200
+    assert "email" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_admin_user_post_validates_password_length(client):
+    resp = await client.post("/admin-user", data={
+        "admin_name": "Admin", "admin_email": "admin@example.com",
+        "admin_password": "short", "admin_password_confirm": "short",
+    })
+    assert resp.status_code == 422 or "12" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_admin_user_post_redirects_on_success(client):
+    resp = await client.post("/admin-user", data={
+        "admin_name": "Admin User", "admin_email": "admin@example.com",
+        "admin_password": "StrongPass123!", "admin_password_confirm": "StrongPass123!",
+    }, follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    assert "/review" in resp.headers["location"]

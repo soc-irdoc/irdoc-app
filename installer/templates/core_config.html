@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block step3_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">Application URL &amp; Secrets</h1>
+<p class="page-subtitle">These values are written to <code>docker/.env</code>. Secrets are auto-generated — you don't need to change them.</p>
+
+<form method="post" action="/core-config" x-data="{
+  db_password: '{{ state.db_password }}',
+  redis_password: '{{ state.redis_password }}',
+  secret_key: '{{ state.secret_key }}',
+  show_db: false, show_redis: false, show_sk: false,
+  async regenerate() {
+    const r = await fetch('/api/generate-secrets');
+    const d = await r.json();
+    this.db_password = d.db_password;
+    this.redis_password = d.redis_password;
+    this.secret_key = d.secret_key;
+  }
+}">
+
+  <label>Base URL</label>
+  <input type="text" name="base_url" value="{{ state.base_url }}" required>
+  <p class="field-hint">The URL your users type in the browser. Include https:// — no trailing slash.</p>
+
+  <h3 class="mt-6" style="font-size:1rem;font-weight:600">Secrets</h3>
+  <p class="text-sm text-muted mt-1">Auto-generated. Click Regenerate to create new values.</p>
+
+  <div class="mt-4">
+    <label>Database Password</label>
+    <div class="flex gap-2">
+      <input :type="show_db ? 'text' : 'password'" name="db_password" x-model="db_password" class="font-mono" required>
+      <button type="button" class="btn btn-outline btn-sm" @click="show_db = !show_db">&#x1F441;</button>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <label>Redis Password</label>
+    <div class="flex gap-2">
+      <input :type="show_redis ? 'text' : 'password'" name="redis_password" x-model="redis_password" class="font-mono" required>
+      <button type="button" class="btn btn-outline btn-sm" @click="show_redis = !show_redis">&#x1F441;</button>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <label>Secret Key</label>
+    <div class="flex gap-2">
+      <input :type="show_sk ? 'text' : 'password'" name="secret_key" x-model="secret_key" class="font-mono" required>
+      <button type="button" class="btn btn-outline btn-sm" @click="show_sk = !show_sk">&#x1F441;</button>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <button type="button" class="btn btn-outline btn-sm" @click="regenerate()">&#x21BB; Regenerate All</button>
+  </div>
+
+  <details class="mt-6">
+    <summary class="text-sm" style="cursor:pointer">Advanced settings</summary>
+    <div class="card mt-2">
+      <label>Access Token Expiry (minutes)</label>
+      <input type="number" name="access_token_expire_minutes" value="{{ state.access_token_expire_minutes }}">
+
+      <label class="mt-4">Refresh Token Expiry (days)</label>
+      <input type="number" name="refresh_token_expire_days" value="{{ state.refresh_token_expire_days }}">
+
+      <label class="mt-4">License Key <span class="text-muted">(optional)</span></label>
+      <input type="text" name="license_key" value="{{ state.license_key }}" placeholder="Leave empty for AGPL core features">
+
+      <label class="mt-4">Allow Registration</label>
+      <input type="hidden" name="allow_registration" value="false">
+      <p class="field-hint">Locked to <strong>false</strong>. Invite users after install from the Admin panel.</p>
+    </div>
+  </details>
+
+  <div class="mt-6">
+    <button type="submit" class="btn btn-primary">Continue &#x2192;</button>
+  </div>
+</form>
+{% endblock %}
