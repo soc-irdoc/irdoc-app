@@ -71,7 +71,7 @@ def generate_self_signed(common_name: str, san_list: list[str], days: int = 825)
     return cert_pem, key_pem
 
 
-def generate_nginx_conf(mode: str, cert_pem_path: str | None = None) -> str:
+def generate_nginx_conf(mode: str) -> str:
     """Generate nginx.conf content for the given HTTPS mode."""
     upstream = "upstream backend {\n    server irdoc-backend:8000;\n}\n\n"
 

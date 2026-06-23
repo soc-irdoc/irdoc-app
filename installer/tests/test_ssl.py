@@ -1,6 +1,7 @@
 import datetime
 from pathlib import Path
 import pytest
+import platform
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -80,4 +81,6 @@ def test_write_certs_sets_permissions(tmp_path):
     key_file = tmp_path / "key.pem"
     assert cert_file.read_text() == "CERT"
     assert key_file.read_text() == "KEY"
-    assert stat.S_IMODE(os.stat(key_file).st_mode) == 0o600
+    if platform.system() != "Windows":
+        mode = stat.S_IMODE(os.stat(key_file).st_mode)
+        assert mode == 0o600
