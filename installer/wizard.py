@@ -9,19 +9,21 @@ if __name__ == "__main__":
     sys.path.insert(0, str(_Path(__file__).parent.parent))
 
 import os
+import socket
 import threading
 import webbrowser
 from pathlib import Path
 from typing import Optional
 
 import uvicorn
-from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from installer.core.config import read_existing_env
+from installer.core import ssl as ssl_core
+from installer.core.config import generate_secrets, read_existing_env
 from installer.core.docker import detect_mode, COMPOSE_FILE
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -85,9 +87,8 @@ app.mount("/static", StaticFiles(directory=str(_INSTALLER_DIR / "static")), name
 templates = Jinja2Templates(directory=str(_INSTALLER_DIR / "templates"))
 
 
-def _template_context(request: Request, **extra) -> dict:
+def _template_context(**extra) -> dict:
     return {
-        "request": request,
         "state": state,
         "version": repo_version(),
         **extra,
@@ -132,6 +133,114 @@ async def root():
     if state.mode in ("upgrade", ):
         return RedirectResponse("/upgrade/welcome")
     return RedirectResponse("/prerequisites")
+
+
+@app.get("/prerequisites")
+async def prerequisites(request: Request):
+    import subprocess, sys
+    checks = []
+
+    def chk(label, ok, level, fix=""):
+        checks.append({"label": label, "ok": ok, "level": level, "fix": fix})
+
+    chk("Python ≥ 3.10", sys.version_info >= (3, 10), "block",
+        "Install Python 3.10+ from https://python.org")
+
+    try:
+        r = subprocess.run(["docker", "--version"], capture_output=True, timeout=5)
+        chk("Docker Engine installed", r.returncode == 0, "block",
+            "Install Docker from https://docs.docker.com/engine/install/")
+    except FileNotFoundError:
+        chk("Docker Engine installed", False, "block",
+            "Install Docker from https://docs.docker.com/engine/install/")
+
+    try:
+        r = subprocess.run(["docker", "compose", "version"], capture_output=True, timeout=5)
+        chk("Docker Compose V2", r.returncode == 0, "block",
+            "Upgrade Docker to 24+ or install the compose plugin")
+    except FileNotFoundError:
+        chk("Docker Compose V2", False, "block", "Install Docker Compose V2 plugin")
+
+    try:
+        r = subprocess.run(["docker", "info"], capture_output=True, timeout=5)
+        chk("Docker daemon running", r.returncode == 0, "block",
+            "Run: sudo systemctl start docker")
+    except Exception:
+        chk("Docker daemon running", False, "block", "Run: sudo systemctl start docker")
+
+    chk("docker/ directory found", (DOCKER_DIR).exists(), "block",
+        "Run the wizard from the repo root: python3 installer/wizard.py")
+
+    # Port checks (warn only)
+    for port, label in [(443, "Port 443"), (80, "Port 80")]:
+        import socket as _socket
+        with _socket.socket() as s:
+            result = s.connect_ex(("127.0.0.1", port))
+            chk(f"{label} available", result != 0, "warn",
+                f"Something is using port {port}. Check with: sudo lsof -i :{port}")
+
+    hard_blocked = any(c["level"] == "block" and not c["ok"] for c in checks)
+    return templates.TemplateResponse(request, "prerequisites.html",
+        _template_context(checks=checks, hard_blocked=hard_blocked))
+
+
+@app.get("/https-mode")
+async def https_mode_page(request: Request):
+    hostname = socket.getfqdn()
+    return templates.TemplateResponse(request, "https_mode.html",
+        _template_context(hostname=hostname))
+
+
+@app.post("/https-mode/set")
+async def set_https_mode(mode: str = Form(...)):
+    state.https_mode = mode
+    if mode == "selfsigned":
+        return RedirectResponse("/https-mode/selfsigned", status_code=302)
+    # "behind_lb" — no cert needed, go straight to core config
+    return RedirectResponse("/core-config", status_code=302)
+
+
+@app.get("/https-mode/selfsigned")
+async def selfsigned_page(request: Request):
+    hostname = socket.getfqdn()
+    return templates.TemplateResponse(request, "https_mode.html",
+        _template_context(hostname=hostname, show_selfsigned=True))
+
+
+@app.post("/https-mode/generate-selfsigned")
+async def generate_selfsigned(
+    common_name: str = Form(...),
+    san: str = Form(""),
+):
+    san_list = [s.strip() for s in san.split(",") if s.strip()]
+    cert_pem, key_pem = ssl_core.generate_self_signed(common_name, san_list)
+    state.https_mode = "selfsigned"
+    state.cert_pem = cert_pem
+    state.key_pem = key_pem
+    state.cert_cn = common_name
+    state.san_list = san_list
+    return RedirectResponse("/core-config", status_code=302)
+
+
+@app.post("/https-mode/upload-pfx")
+async def upload_pfx(
+    request: Request,
+    pfx_file: UploadFile = File(...),
+    passphrase: str = Form(...),
+):
+    pfx_bytes = await pfx_file.read()
+    hostname = socket.getfqdn()
+    try:
+        cert_pem, key_pem, cn, expiry = ssl_core.parse_pfx(pfx_bytes, passphrase)
+    except ValueError as e:
+        return templates.TemplateResponse(request, "https_mode.html",
+            _template_context(hostname=hostname, pfx_error=str(e)))
+    state.https_mode = "import"
+    state.cert_pem = cert_pem
+    state.key_pem = key_pem
+    state.cert_cn = cn
+    state.cert_expiry = expiry
+    return RedirectResponse("/core-config", status_code=302)
 
 
 if __name__ == "__main__":

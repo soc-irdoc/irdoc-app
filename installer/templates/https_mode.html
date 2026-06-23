@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block step2_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">HTTPS Setup</h1>
+<p class="page-subtitle">Choose how IrDoc will serve HTTPS traffic.</p>
+
+{% if pfx_error %}
+<div class="card error mt-2">
+  <strong>Certificate error:</strong> {{ pfx_error }}
+</div>
+{% endif %}
+
+{% if not show_selfsigned %}
+<div x-data="{ selected: '' }">
+
+  <!-- Card A: Import PFX -->
+  <div class="card mt-4" :class="selected === 'import' ? 'selected' : ''" @click="selected = 'import'" style="cursor:pointer">
+    <strong>Import Certificate (PFX / P12)</strong>
+    <p class="text-sm text-muted mt-1">Upload a certificate from your organisation's CA (Windows AD CS, internal PKI).</p>
+  </div>
+
+  <!-- Card B: Self-signed -->
+  <div class="card" :class="selected === 'selfsigned' ? 'selected' : ''" @click="selected = 'selfsigned'" style="cursor:pointer">
+    <strong>Generate Self-Signed Certificate</strong>
+    <p class="text-sm text-muted mt-1">Browser will show a warning, but traffic is encrypted. Fine for internal use.</p>
+  </div>
+
+  <!-- Card C: Behind LB -->
+  <div class="card" :class="selected === 'behind_lb' ? 'selected' : ''" @click="selected = 'behind_lb'" style="cursor:pointer">
+    <strong>Behind Load Balancer (AVI / F5 / etc.)</strong>
+    <p class="text-sm text-muted mt-1">TLS is terminated at your load balancer. The app receives plain HTTP internally.</p>
+  </div>
+
+  <!-- Import PFX form (shown when import selected) -->
+  <div x-show="selected === 'import'" class="card mt-4">
+    <form method="post" action="/https-mode/upload-pfx" enctype="multipart/form-data">
+      <label>PFX / P12 file</label>
+      <input type="file" name="pfx_file" accept=".pfx,.p12" required>
+      <label class="mt-4">Passphrase</label>
+      <input type="password" name="passphrase" placeholder="Certificate passphrase" required>
+      <button type="submit" class="btn btn-primary mt-4">Upload &amp; Verify</button>
+    </form>
+  </div>
+
+  <!-- Self-signed: redirect to sub-form -->
+  <div x-show="selected === 'selfsigned'" class="mt-4">
+    <form method="post" action="/https-mode/set">
+      <input type="hidden" name="mode" value="selfsigned">
+      <button type="submit" class="btn btn-primary">Configure →</button>
+    </form>
+  </div>
+
+  <!-- Behind LB: submit directly -->
+  <div x-show="selected === 'behind_lb'" class="mt-4">
+    <div class="card warning">
+      <strong>Important:</strong> Your load balancer must forward
+      <code>X-Forwarded-Proto: https</code> and <code>X-Forwarded-For</code> headers to this server.
+    </div>
+    <form method="post" action="/https-mode/set" class="mt-2">
+      <input type="hidden" name="mode" value="behind_lb">
+      <button type="submit" class="btn btn-primary">Continue →</button>
+    </form>
+  </div>
+
+</div>
+
+{% else %}
+<!-- Self-signed configuration form -->
+<form method="post" action="/https-mode/generate-selfsigned">
+  <label>Common Name (hostname)</label>
+  <input type="text" name="common_name" value="{{ hostname }}" required>
+  <p class="field-hint">The primary hostname or IP users will access IrDoc at.</p>
+
+  <label class="mt-4">Subject Alternative Names <span class="text-muted">(optional)</span></label>
+  <input type="text" name="san" placeholder="192.168.1.10, irdoc.internal">
+  <p class="field-hint">Comma-separated additional IPs or hostnames.</p>
+
+  <button type="submit" class="btn btn-primary mt-6">Generate Certificate →</button>
+</form>
+{% endif %}
+{% endblock %}

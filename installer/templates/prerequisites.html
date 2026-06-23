@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block step1_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">Prerequisites</h1>
+<p class="page-subtitle">Checking your system before we begin.</p>
+
+{% for check in checks %}
+<div class="card {% if not check.ok %}{% if check.level == 'block' %}error{% else %}warning{% endif %}{% else %}success{% endif %}">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span>{% if check.ok %}✓{% elif check.level == 'block' %}✗{% else %}⚠{% endif %}</span>
+      <strong>{{ check.label }}</strong>
+    </div>
+    <span class="badge {% if check.ok %}badge-green{% elif check.level == 'block' %}badge-red{% else %}badge-amber{% endif %}">
+      {% if check.ok %}OK{% elif check.level == 'block' %}Required{% else %}Warning{% endif %}
+    </span>
+  </div>
+  {% if not check.ok and check.fix %}
+  <p class="text-sm text-muted mt-2"><code>{{ check.fix }}</code></p>
+  {% endif %}
+</div>
+{% endfor %}
+
+<div class="mt-6">
+  {% if hard_blocked %}
+  <p class="card error">Fix the issues above before continuing.</p>
+  {% else %}
+  <a href="/https-mode"><button class="btn btn-primary">Continue →</button></a>
+  {% endif %}
+</div>
+{% endblock %}
