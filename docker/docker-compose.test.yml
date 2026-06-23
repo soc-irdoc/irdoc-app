@@ -6,9 +6,12 @@ version: '3.9'
 #   TEST_DATABASE_URL=postgresql+asyncpg://irp:testpassword@localhost:5433/irp_test pytest
 #   docker compose -f docker/docker-compose.test.yml down
 
+name: irdoc-test
+
 services:
   db-test:
     image: postgres:16-alpine
+    container_name: irdoc-db-test
     environment:
       POSTGRES_DB: irp_test
       POSTGRES_USER: irp

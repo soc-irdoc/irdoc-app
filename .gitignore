@@ -39,6 +39,11 @@ backups/
 # Docker secrets
 docker/secrets/
 
+# SSL certificates
+docker/ssl/*.pem
+docker/ssl/*.key
+docker/ssl/*.crt
+
 # Logs
 *.log
 logs/
