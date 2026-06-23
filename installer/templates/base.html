@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IrDoc Setup Wizard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/alpine.js" defer></script>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">&#9889; IrDoc</div>
+    {% if state.mode in ("install", "reconfigure") %}
+    <div class="sidebar-step {% block step1_class %}{% endblock %}">
+      <span class="step-dot"></span> Prerequisites
+    </div>
+    <div class="sidebar-step {% block step2_class %}{% endblock %}">
+      <span class="step-dot"></span> HTTPS Setup
+    </div>
+    <div class="sidebar-step {% block step3_class %}{% endblock %}">
+      <span class="step-dot"></span> App URL &amp; Secrets
+    </div>
+    <div class="sidebar-step {% block step4_class %}{% endblock %}">
+      <span class="step-dot"></span> Admin Account
+    </div>
+    <div class="sidebar-step {% block step5_class %}{% endblock %}">
+      <span class="step-dot"></span> Deploy
+    </div>
+    {% else %}
+    <div class="sidebar-step {% block ustep1_class %}{% endblock %}">
+      <span class="step-dot"></span> Upgrade Info
+    </div>
+    <div class="sidebar-step {% block ustep2_class %}{% endblock %}">
+      <span class="step-dot"></span> Snapshot
+    </div>
+    <div class="sidebar-step {% block ustep3_class %}{% endblock %}">
+      <span class="step-dot"></span> Upgrade
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    {% if state.update_available %}
+    <div class="update-banner">
+      IrDoc {{ state.update_available }} is available.
+      Run <code>git pull && git checkout v{{ state.update_available }}</code> to get it.
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>
