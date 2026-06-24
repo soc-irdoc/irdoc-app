@@ -102,6 +102,7 @@ def generate_nginx_conf(mode: str) -> str:
     }"""
 
     security_headers = """
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';" always;
     add_header X-Frame-Options "DENY" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
@@ -111,6 +112,7 @@ def generate_nginx_conf(mode: str) -> str:
         return upstream + f"""server {{
     listen 80;
     server_name _;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 {security_headers}
 
     # Trust headers from upstream load balancer
@@ -151,5 +153,7 @@ def write_certs(ssl_dir: Path, cert_pem: str, key_pem: str) -> None:
     cert_path = ssl_dir / "cert.pem"
     key_path = ssl_dir / "key.pem"
     cert_path.write_text(cert_pem)
-    key_path.write_text(key_pem)
-    os.chmod(key_path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600 — private key
+    # Create key.pem with 0o600 atomically — never exists with loose permissions
+    fd = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(key_pem)

@@ -36,6 +36,7 @@ def assemble_env(state: dict) -> str:
         f"BASE_URL={state['base_url']}",
         "ALLOW_REGISTRATION=false",
         f"LICENSE_KEY={state.get('license_key', '')}",
+        f"VERSION={state.get('version', 'latest')}",
         "",
         "# ─── Storage ────────────────────────────────────────────────────────────────",
         "STORAGE_BACKEND=local",

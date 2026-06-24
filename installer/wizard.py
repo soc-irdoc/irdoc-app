@@ -181,8 +181,7 @@ async def prerequisites(request: Request):
 
     # Port checks (warn only)
     for port, label in [(443, "Port 443"), (80, "Port 80")]:
-        import socket as _socket
-        with _socket.socket() as s:
+        with socket.socket() as s:
             result = s.connect_ex(("127.0.0.1", port))
             chk(f"{label} available", result != 0, "warn",
                 f"Something is using port {port}. Check with: sudo lsof -i :{port}")
@@ -340,6 +339,7 @@ async def review_confirm():
         "access_token_expire_minutes": state.access_token_expire_minutes,
         "refresh_token_expire_days": state.refresh_token_expire_days,
         "license_key": state.license_key,
+        "version": state.version_to or repo_version(),
     })
     write_env(DOCKER_DIR / ".env", env_content)
 
@@ -369,9 +369,10 @@ async def deploy_stream():
         _deploy_success = False
 
         try:
+            version_env = {"VERSION": state.version_to or repo_version()}
             # Step: Pull images
             yield "data: __STEP__Pulling images\n\n"
-            async for line in run_compose(["pull"]):
+            async for line in run_compose(["pull"], env_override=version_env):
                 yield line
                 if "__EXIT__0" in line:
                     pass
@@ -382,7 +383,7 @@ async def deploy_stream():
 
             # Step: Start containers
             yield "data: __STEP__Starting containers\n\n"
-            async for line in run_compose(["up", "-d", "--remove-orphans"]):
+            async for line in run_compose(["up", "-d", "--remove-orphans"], env_override=version_env):
                 yield line
                 if "__EXIT__" in line and "__EXIT__0" not in line:
                     yield "data: __FAIL__Container start failed\n\n"
@@ -518,9 +519,10 @@ async def upgrade_progress_page(request: Request):
 async def upgrade_progress_stream():
     async def generator():
         try:
+            version_env = {"VERSION": state.version_to or repo_version()}
             # Step: Pull new images
             yield "data: __STEP__Pulling new images\n\n"
-            async for line in run_compose(["pull"]):
+            async for line in run_compose(["pull"], env_override=version_env):
                 yield line
                 if "__EXIT__" in line and "__EXIT__0" not in line:
                     yield "data: __FAIL__Image pull failed\n\n"
@@ -530,6 +532,9 @@ async def upgrade_progress_stream():
             yield "data: __STEP__Stopping containers\n\n"
             async for line in run_compose(["stop"]):
                 yield line
+                if "__EXIT__" in line and "__EXIT__0" not in line:
+                    yield "data: __FAIL__Failed to stop containers\n\n"
+                    return
 
             # Step: Run migrations
             yield "data: __STEP__Running database migrations\n\n"
@@ -544,7 +549,7 @@ async def upgrade_progress_stream():
 
             # Step: Start containers
             yield "data: __STEP__Starting containers\n\n"
-            async for line in run_compose(["up", "-d", "--remove-orphans"]):
+            async for line in run_compose(["up", "-d", "--remove-orphans"], env_override=version_env):
                 yield line
 
             # Step: Health check
@@ -608,6 +613,9 @@ async def rollback_stream():
             yield f"data: __STEP__{steps[0]}\n\n"
             async for line in run_compose(["stop"]):
                 yield line
+                if "__EXIT__" in line and "__EXIT__0" not in line:
+                    yield "data: __FAIL_ROLLBACK__Failed to stop containers\n\n"
+                    return
 
             yield f"data: __STEP__{steps[1]}\n\n"
             await restore_snapshot(snapshot_dir)

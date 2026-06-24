@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import stat
+import sys
 import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -104,10 +105,11 @@ async def restore_snapshot(snapshot_dir: Path) -> None:
     dump_path = snapshot_dir / "dump.sql"
     if dump_path.exists():
         # Remove existing postgres volume and recreate
-        await asyncio.create_subprocess_exec(
+        proc_rm = await asyncio.create_subprocess_exec(
             "docker", "volume", "rm", "-f", "irdoc-app_postgres_data",
             stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
         )
+        await proc_rm.wait()  # must complete before the volume is re-mounted below
         proc_wait = await asyncio.create_subprocess_exec(
             "docker", "run", "--rm",
             "-v", "irdoc-app_postgres_data:/var/lib/postgresql/data",
@@ -119,6 +121,7 @@ async def restore_snapshot(snapshot_dir: Path) -> None:
         # Give postgres a moment to initialise, then restore
         await asyncio.sleep(5)
         proc_wait.kill()
+        await proc_wait.wait()  # must exit before psql mounts the same volume
 
         restore_proc = await asyncio.create_subprocess_exec(
             "docker", "run", "--rm", "-i",
@@ -141,7 +144,10 @@ async def restore_snapshot(snapshot_dir: Path) -> None:
         if storage_dst.exists():
             shutil.rmtree(storage_dst)
         with tarfile.open(tar_path, "r:gz") as tar:
-            tar.extractall(_REPO_ROOT)
+            if sys.version_info >= (3, 12):
+                tar.extractall(_REPO_ROOT, filter="data")
+            else:
+                tar.extractall(_REPO_ROOT)
 
 
 def list_snapshots(backups_root: Path) -> list[dict]:

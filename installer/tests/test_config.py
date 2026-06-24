@@ -32,6 +32,7 @@ def test_assemble_env_contains_required_keys():
         "access_token_expire_minutes": 15,
         "refresh_token_expire_days": 30,
         "license_key": "",
+        "version": "1.2.0",
     }
     content = assemble_env(state)
     assert "DB_PASSWORD=dbpass" in content
@@ -41,6 +42,7 @@ def test_assemble_env_contains_required_keys():
     assert "DATABASE_URL=postgresql+asyncpg://irp:dbpass@irdoc-db/irp" in content
     assert "REDIS_URL=redis://:redispass@irdoc-redis:6379/0" in content
     assert "ALLOW_REGISTRATION=false" in content
+    assert "VERSION=1.2.0" in content
 
 
 def test_assemble_env_license_key_optional():

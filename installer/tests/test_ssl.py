@@ -60,6 +60,8 @@ def test_generate_nginx_conf_behind_lb_has_no_ssl():
     assert "ssl" not in conf.lower()
     assert "listen 80" in conf
     assert "X-Forwarded-Proto" in conf
+    assert "Strict-Transport-Security" in conf
+    assert "Content-Security-Policy" in conf
 
 
 def test_generate_nginx_conf_import_has_ssl_block():
@@ -67,6 +69,7 @@ def test_generate_nginx_conf_import_has_ssl_block():
     assert "listen 443 ssl" in conf
     assert "ssl_certificate" in conf
     assert "/etc/nginx/ssl/cert.pem" in conf
+    assert "Content-Security-Policy" in conf
 
 
 def test_generate_nginx_conf_selfsigned_same_as_import():
