@@ -42,11 +42,11 @@ async def authenticate(db: AsyncSession, email: str, password: str) -> User:
     return user
 
 
-def issue_tokens(user: User) -> tuple[str, str]:
+def issue_tokens(user: User, mfa_verified: bool = False) -> tuple[str, str]:
     """Returns (access_token, refresh_token)."""
     org_id = str(user.org_id) if user.org_id else ""
     access = create_access_token(str(user.id), org_id)
-    refresh = create_refresh_token(str(user.id), org_id)
+    refresh = create_refresh_token(str(user.id), org_id, mfa_verified=mfa_verified)
     return access, refresh
 
 

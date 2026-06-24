@@ -81,7 +81,14 @@ apiClient.interceptors.response.use(
     const original = error.config
 
     if (error.response?.status === 401 && !original._retry) {
-      // Avoid refresh loop on auth endpoints
+      // MFA action endpoints: 401 means wrong code, not an expired session.
+      // Let the calling component handle the error directly — no redirect or reload.
+      const mfaActionUrls = ['/auth/mfa/verify', '/auth/mfa/setup/complete']
+      if (mfaActionUrls.some((u) => original.url?.includes(u))) {
+        return Promise.reject(error)
+      }
+
+      // Avoid refresh loop on other auth endpoints
       if (original.url?.includes('/auth/')) {
         useAuthStore.getState().clearAuth()
         window.location.href = '/login'

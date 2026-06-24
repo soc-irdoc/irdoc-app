@@ -57,13 +57,12 @@ def create_access_token(subject: str, org_id: str) -> str:
     )
 
 
-def create_refresh_token(subject: str, org_id: str) -> str:
+def create_refresh_token(subject: str, org_id: str, mfa_verified: bool = False) -> str:
     expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    return jwt.encode(
-        {"sub": subject, "org": org_id, "exp": expire, "type": "refresh"},
-        settings.SECRET_KEY,
-        algorithm=ALGORITHM,
-    )
+    payload: dict = {"sub": subject, "org": org_id, "exp": expire, "type": "refresh"}
+    if mfa_verified:
+        payload["mfa_verified"] = True
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 
 def create_mfa_challenge_token(user_id: str, org_id: str) -> str:

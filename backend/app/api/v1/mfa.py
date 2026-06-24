@@ -165,7 +165,7 @@ async def complete_mfa_setup(
     user.last_otp_counter = counter
     await db.commit()
 
-    access_token, refresh_token = auth_service.issue_tokens(user)
+    access_token, refresh_token = auth_service.issue_tokens(user, mfa_verified=True)
     response.set_cookie(REFRESH_COOKIE_NAME, refresh_token, **COOKIE_SETTINGS)
 
     user_out = UserOut.model_validate(user)
@@ -208,7 +208,7 @@ async def verify_mfa(
         user.last_otp_counter = counter
         await db.commit()
 
-    access_token, refresh_token = auth_service.issue_tokens(user)
+    access_token, refresh_token = auth_service.issue_tokens(user, mfa_verified=True)
     response.set_cookie(REFRESH_COOKIE_NAME, refresh_token, **COOKIE_SETTINGS)
 
     user_out = UserOut.model_validate(user)

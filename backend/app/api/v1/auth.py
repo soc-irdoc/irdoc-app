@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -6,8 +6,8 @@ from app.core.database import get_db
 from app.core.security import (
     create_mfa_challenge_token,
     create_mfa_setup_token,
+    decode_token,
     get_current_user,
-    get_current_user_from_cookie,
 )
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -132,9 +132,28 @@ async def login(data: LoginRequest, request: Request, response: Response, db: As
 @router.post("/refresh")
 async def refresh_token(
     response: Response,
-    user=Depends(get_current_user_from_cookie),
+    db: AsyncSession = Depends(get_db),
+    raw_refresh: str | None = Cookie(default=None, alias="refresh_token"),
 ):
-    access, new_refresh = auth_service.issue_tokens(user)
+    from app.models.user import User
+
+    if not raw_refresh:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No refresh token")
+
+    payload = decode_token(raw_refresh, expected_type="refresh")
+    user = await db.get(User, payload["sub"])
+    if not user or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+
+    # Refresh tokens issued before MFA verification must not bypass it.
+    if user.mfa_enabled and not payload.get("mfa_verified"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="MFA verification required",
+        )
+
+    mfa_verified = bool(payload.get("mfa_verified", False))
+    access, new_refresh = auth_service.issue_tokens(user, mfa_verified=mfa_verified)
     response.set_cookie(REFRESH_COOKIE_NAME, new_refresh, **COOKIE_SETTINGS)
     return {"data": TokenResponse(access_token=access), "user": UserOut.model_validate(user)}
 
