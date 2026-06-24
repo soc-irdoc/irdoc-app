@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block ustep1_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">Upgrade IrDoc</h1>
+<p class="page-subtitle">Review the current state before we begin.</p>
+
+<div class="card">
+  <table style="width:100%;font-size:0.9rem;border-collapse:collapse">
+    <tr>
+      <td style="padding:0.5rem 0;color:#6b7280;width:40%">Installed version</td>
+      <td><strong>{{ state.version_from or "Unknown" }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding:0.5rem 0;color:#6b7280">Upgrading to</td>
+      <td><strong>{{ state.version_to }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding:0.5rem 0;color:#6b7280">Disk space free</td>
+      <td>{{ disk_free_gb }} GB</td>
+    </tr>
+    <tr>
+      <td style="padding:0.5rem 0;color:#6b7280">Storage directory size</td>
+      <td>{{ storage_size }}</td>
+    </tr>
+  </table>
+</div>
+
+{% if containers %}
+<h3 class="mt-6" style="font-size:1rem;font-weight:600">Container Status</h3>
+{% for c in containers %}
+<div class="card mt-2 {% if c.State != 'running' %}warning{% endif %}">
+  <div class="flex justify-between">
+    <span>{{ c.Name }}</span>
+    <span class="badge {% if c.State == 'running' %}badge-green{% else %}badge-amber{% endif %}">{{ c.State }}</span>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% set unhealthy = containers | selectattr("State", "ne", "running") | list %}
+{% if unhealthy %}
+<div class="card warning mt-4">
+  <strong>Warning:</strong> Some containers are not running. The snapshot may be incomplete.
+  <br><label style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+    <input type="checkbox" id="ack"> I understand and want to continue
+  </label>
+</div>
+{% endif %}
+
+<form method="post" action="/upgrade/start" class="mt-6">
+  <button type="submit" class="btn btn-primary"
+    {% if unhealthy %}id="upgrade-btn" disabled onclick="return false;"{% endif %}>
+    Continue to Snapshot &rarr;
+  </button>
+</form>
+
+{% if unhealthy %}
+<script>
+  document.getElementById('ack').addEventListener('change', function() {
+    document.getElementById('upgrade-btn').disabled = !this.checked;
+    document.getElementById('upgrade-btn').onclick = null;
+  });
+</script>
+{% endif %}
+{% endblock %}

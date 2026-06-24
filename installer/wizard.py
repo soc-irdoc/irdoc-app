@@ -11,10 +11,12 @@ if __name__ == "__main__":
 import asyncio
 import httpx
 import os
+import shutil
 import signal
 import socket
 import threading
 import webbrowser
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -29,6 +31,7 @@ from installer.core import ssl as ssl_core
 from installer.core.config import assemble_env, generate_secrets, read_existing_env, write_env
 from installer.core.docker import detect_mode, run_compose, COMPOSE_FILE
 from installer.core.health import wait_for_health
+from installer.core.snapshot import take_snapshot, list_snapshots
 from installer.core.ssl import write_certs, generate_nginx_conf
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -434,6 +437,76 @@ async def success_page(request: Request):
         os.kill(os.getpid(), signal.SIGTERM)
     threading.Thread(target=_exit, daemon=True).start()
     return templates.TemplateResponse(request, "success.html", _template_context())
+
+
+@app.get("/upgrade/welcome")
+async def upgrade_welcome(request: Request):
+    import subprocess, json
+    container_statuses = []
+    try:
+        r = subprocess.run(
+            ["docker", "compose", "-f", COMPOSE_FILE, "ps", "--format", "json"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            for line in r.stdout.strip().splitlines():
+                try:
+                    container_statuses.append(json.loads(line))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    disk = shutil.disk_usage(".")
+    disk_free_gb = disk.free / (1024 ** 3)
+
+    storage_dir = REPO_ROOT / "storage"
+    storage_size = "unknown"
+    if storage_dir.exists():
+        try:
+            r2 = subprocess.run(["du", "-sh", str(storage_dir)], capture_output=True, text=True)
+            storage_size = r2.stdout.split()[0] if r2.returncode == 0 else "unknown"
+        except Exception:
+            pass
+
+    return templates.TemplateResponse(request, "upgrade_welcome.html", _template_context(
+        containers=container_statuses,
+        disk_free_gb=round(disk_free_gb, 1),
+        storage_size=storage_size,
+    ))
+
+
+@app.post("/upgrade/start")
+async def upgrade_start():
+    return RedirectResponse("/upgrade/snapshot", status_code=302)
+
+
+@app.get("/upgrade/snapshot")
+async def upgrade_snapshot_page(request: Request):
+    return templates.TemplateResponse(request, "snapshot.html", _template_context())
+
+
+@app.get("/upgrade/snapshot/stream")
+async def upgrade_snapshot_stream():
+    async def generator():
+        try:
+            ts = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+            snapshot_dir = BACKUPS_DIR / f"pre-upgrade-{ts}"
+            yield "data: __TASK__Backing up configuration\n\n"
+            yield "data: __TASK__Backing up database\n\n"
+            yield "data: __TASK__Backing up storage files\n\n"
+            result_dir = await take_snapshot(
+                snapshot_dir,
+                version_from=state.version_from or "unknown",
+                version_to=state.version_to or "unknown",
+            )
+            state.snapshot_dir = str(result_dir)
+            yield "data: __TASK__Writing snapshot manifest\n\n"
+            yield "data: __DONE__\n\n"
+        except Exception as e:
+            yield f"data: __FAIL__{e}\n\n"
+
+    return StreamingResponse(generator(), media_type="text/event-stream")
 
 
 if __name__ == "__main__":

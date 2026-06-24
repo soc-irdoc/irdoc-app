@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block ustep2_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">Creating Snapshot</h1>
+<p class="page-subtitle">A full backup is required before upgrading. This cannot be skipped.</p>
+
+<div x-data="{
+  tasks: [
+    { label: 'Backing up configuration (.env, SSL)', status: 'pending' },
+    { label: 'Backing up database (pg_dump)', status: 'pending' },
+    { label: 'Backing up storage files', status: 'pending' },
+    { label: 'Writing snapshot manifest', status: 'pending' },
+  ],
+  taskIdx: -1,
+  failed: false,
+  failMsg: '',
+  done: false,
+
+  init() {
+    const es = new EventSource('/upgrade/snapshot/stream');
+    es.onmessage = (e) => {
+      const d = e.data;
+      if (d.startsWith('__TASK__')) {
+        if (this.taskIdx >= 0) this.tasks[this.taskIdx].status = 'done';
+        this.taskIdx++;
+        if (this.taskIdx < this.tasks.length) this.tasks[this.taskIdx].status = 'running';
+      } else if (d.startsWith('__FAIL__')) {
+        if (this.taskIdx >= 0) this.tasks[this.taskIdx].status = 'error';
+        this.failed = true; this.failMsg = d.replace('__FAIL__', '');
+        es.close();
+      } else if (d === '__DONE__') {
+        this.tasks.forEach(t => t.status = 'done');
+        this.done = true; es.close();
+        window.location.href = '/upgrade/progress';
+      }
+    };
+  }
+}" x-init="init()">
+
+  <div class="card mt-4">
+    <template x-for="task in tasks" :key="task.label">
+      <div class="progress-row">
+        <div class="progress-icon">
+          <span x-show="task.status === 'pending'" style="color:#94a3b8">&#9675;</span>
+          <span x-show="task.status === 'running'"><span class="spinner"></span></span>
+          <span x-show="task.status === 'done'" style="color:#22c55e">&#10003;</span>
+          <span x-show="task.status === 'error'" style="color:#ef4444">&#10007;</span>
+        </div>
+        <span x-text="task.label"></span>
+      </div>
+    </template>
+  </div>
+
+  <div x-show="failed" class="card error mt-4">
+    <strong>Snapshot failed:</strong> <span x-text="failMsg"></span>
+    <p class="text-sm text-muted mt-2">The upgrade has not started. No changes were made.</p>
+  </div>
+</div>
+{% endblock %}
