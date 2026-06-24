@@ -26,3 +26,21 @@ async def test_upgrade_snapshot_page_loads(client):
     resp = await client.get("/upgrade/snapshot")
     assert resp.status_code == 200
     assert "Snapshot" in resp.text or "snapshot" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_upgrade_progress_page_loads(client):
+    resp = await client.get("/upgrade/progress")
+    assert resp.status_code == 200
+    assert "Pull" in resp.text or "upgrade" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_upgrade_success_page_loads(client):
+    from installer.wizard import state
+    state.version_from = "1.1.0"
+    state.version_to = "1.2.0"
+    state.snapshot_dir = "/tmp/fake-snapshot"
+    resp = await client.get("/upgrade/success")
+    assert resp.status_code == 200
+    assert "1.2.0" in resp.text

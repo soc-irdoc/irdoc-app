@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block ustep3_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">Upgrading IrDoc</h1>
+<p class="page-subtitle">{{ state.version_from }} → {{ state.version_to }}</p>
+
+<div x-data="{
+  steps: [
+    { label: 'Pulling new images', status: 'pending' },
+    { label: 'Stopping containers', status: 'pending' },
+    { label: 'Running database migrations', status: 'pending' },
+    { label: 'Starting containers', status: 'pending' },
+    { label: 'Health check', status: 'pending' },
+  ],
+  currentStep: -1,
+  logs: [],
+  showLogs: false,
+  failed: false,
+  failMsg: '',
+
+  init() {
+    const es = new EventSource('/upgrade/progress/stream');
+    es.onmessage = (e) => {
+      const d = e.data;
+      if (d.startsWith('__STEP__')) {
+        if (this.currentStep >= 0) this.steps[this.currentStep].status = 'done';
+        this.currentStep++;
+        this.steps[this.currentStep].status = 'running';
+      } else if (d.startsWith('__FAIL__')) {
+        if (this.currentStep >= 0) this.steps[this.currentStep].status = 'error';
+        this.failed = true; this.failMsg = d.replace('__FAIL__', '');
+        es.close();
+      } else if (d === '__DONE__') {
+        this.steps[this.currentStep].status = 'done';
+        es.close();
+        window.location.href = '/upgrade/success';
+      } else if (!d.startsWith('__EXIT__')) {
+        this.logs.push(d);
+      }
+    };
+  }
+}" x-init="init()">
+
+  <div class="card mt-4">
+    <template x-for="step in steps" :key="step.label">
+      <div class="progress-row">
+        <div class="progress-icon">
+          <span x-show="step.status === 'pending'" style="color:#94a3b8">○</span>
+          <span x-show="step.status === 'running'"><span class="spinner"></span></span>
+          <span x-show="step.status === 'done'" style="color:#22c55e">✓</span>
+          <span x-show="step.status === 'error'" style="color:#ef4444">✗</span>
+        </div>
+        <span x-text="step.label"></span>
+      </div>
+    </template>
+  </div>
+
+  <div x-show="failed" class="card error mt-4">
+    <strong>Upgrade failed:</strong> <span x-text="failMsg"></span>
+    <div class="mt-4">
+      <a href="/upgrade/rollback"><button class="btn btn-danger">Roll Back Now</button></a>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <button class="btn btn-outline btn-sm" @click="showLogs = !showLogs">
+      <span x-text="showLogs ? 'Hide logs' : 'View full logs'"></span>
+    </button>
+    <div x-show="showLogs" class="log-box mt-2">
+      <template x-for="line in logs"><div x-text="line"></div></template>
+    </div>
+  </div>
+</div>
+{% endblock %}

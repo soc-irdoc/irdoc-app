@@ -509,6 +509,71 @@ async def upgrade_snapshot_stream():
     return StreamingResponse(generator(), media_type="text/event-stream")
 
 
+@app.get("/upgrade/progress")
+async def upgrade_progress_page(request: Request):
+    return templates.TemplateResponse(request, "upgrade_progress.html", _template_context())
+
+
+@app.get("/upgrade/progress/stream")
+async def upgrade_progress_stream():
+    async def generator():
+        try:
+            # Step: Pull new images
+            yield "data: __STEP__Pulling new images\n\n"
+            async for line in run_compose(["pull"]):
+                yield line
+                if "__EXIT__" in line and "__EXIT__0" not in line:
+                    yield "data: __FAIL__Image pull failed\n\n"
+                    return
+
+            # Step: Stop containers
+            yield "data: __STEP__Stopping containers\n\n"
+            async for line in run_compose(["stop"]):
+                yield line
+
+            # Step: Run migrations
+            yield "data: __STEP__Running database migrations\n\n"
+            async for line in run_compose(
+                ["run", "--rm", "irdoc-backend", "alembic", "upgrade", "head"]
+            ):
+                yield line
+                if "__EXIT__" in line and "__EXIT__0" not in line:
+                    state.upgrade_failed_at = "migration"
+                    yield "data: __FAIL__Migration failed\n\n"
+                    return
+
+            # Step: Start containers
+            yield "data: __STEP__Starting containers\n\n"
+            async for line in run_compose(["up", "-d", "--remove-orphans"]):
+                yield line
+
+            # Step: Health check
+            yield "data: __STEP__Health check\n\n"
+            base = state.base_url or "http://localhost"
+            healthy = await wait_for_health(base)
+            if not healthy:
+                state.upgrade_failed_at = "health"
+                yield "data: __FAIL__Health check timed out\n\n"
+                return
+
+            yield "data: __DONE__\n\n"
+
+        except Exception as e:
+            yield f"data: __FAIL__{e}\n\n"
+
+    return StreamingResponse(generator(), media_type="text/event-stream")
+
+
+@app.get("/upgrade/success")
+async def upgrade_success(request: Request):
+    def _exit():
+        import time
+        time.sleep(2.0)
+        os.kill(os.getpid(), signal.SIGTERM)
+    threading.Thread(target=_exit, daemon=True).start()
+    return templates.TemplateResponse(request, "upgrade_success.html", _template_context())
+
+
 if __name__ == "__main__":
     def _open_browser():
         import time

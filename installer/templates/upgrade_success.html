@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align:center;padding:3rem 0">
+  <div style="font-size:4rem">✓</div>
+  <h1 class="page-title" style="margin-top:1rem">Upgraded to IrDoc {{ state.version_to }}!</h1>
+  <p class="page-subtitle">The wizard will close in a moment.</p>
+
+  <a href="{{ state.base_url }}" target="_blank">
+    <button class="btn btn-primary mt-6" style="font-size:1rem;padding:0.75rem 2rem">Open IrDoc →</button>
+  </a>
+
+  <div class="card mt-6" style="text-align:left;max-width:480px;margin:2rem auto 0">
+    <strong>Pre-upgrade snapshot</strong>
+    <p class="text-sm text-muted mt-1">Saved at: <code>{{ state.snapshot_dir }}</code></p>
+    <p class="text-sm text-muted mt-1">Delete it once you've verified the upgrade is working correctly.</p>
+  </div>
+</div>
+{% endblock %}
