@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title">Roll Back Upgrade</h1>
+
+{% if not show_manual %}
+<p class="page-subtitle">This will restore IrDoc to version {{ state.version_from }} using the pre-upgrade snapshot.</p>
+
+{% if snapshot_info %}
+<div class="card mt-4">
+  <strong>Snapshot details</strong>
+  <table style="width:100%;font-size:0.875rem;margin-top:0.75rem;border-collapse:collapse">
+    <tr><td style="padding:0.3rem 0;color:#6b7280;width:40%">Version</td><td>{{ snapshot_info.version_from }}</td></tr>
+    <tr><td style="padding:0.3rem 0;color:#6b7280">Taken at</td><td>{{ snapshot_info.timestamp }}</td></tr>
+    <tr><td style="padding:0.3rem 0;color:#6b7280">Files</td><td>{{ snapshot_info.files | join(", ") }}</td></tr>
+  </table>
+</div>
+{% endif %}
+
+<div x-data="{
+  steps: [
+    'Stopping all containers',
+    'Restoring database',
+    'Restoring configuration',
+    'Restoring SSL certificates',
+    'Restoring storage files',
+    'Starting previous version',
+    'Health check',
+  ].map(l => ({ label: l, status: 'pending' })),
+  stepIdx: -1,
+  started: false,
+  failed: false,
+  failMsg: '',
+  done: false,
+
+  start() {
+    this.started = true;
+    const es = new EventSource('/upgrade/rollback/stream');
+    es.onmessage = (e) => {
+      const d = e.data;
+      if (d.startsWith('__STEP__')) {
+        if (this.stepIdx >= 0) this.steps[this.stepIdx].status = 'done';
+        this.stepIdx++;
+        if (this.stepIdx < this.steps.length) this.steps[this.stepIdx].status = 'running';
+      } else if (d.startsWith('__FAIL_ROLLBACK__')) {
+        if (this.stepIdx >= 0) this.steps[this.stepIdx].status = 'error';
+        this.failed = true; this.failMsg = d.replace('__FAIL_ROLLBACK__', '');
+        es.close();
+        window.location.href = '/upgrade/rollback/manual';
+      } else if (d === '__DONE__') {
+        this.steps.forEach(s => s.status = 'done');
+        this.done = true; es.close();
+      }
+    };
+  }
+}" x-init="">
+
+  <div x-show="!started" class="mt-6">
+    <button class="btn btn-danger" @click="start()">Roll Back Now</button>
+    <p class="text-sm text-muted mt-2">This will stop IrDoc and restore data from the snapshot.</p>
+  </div>
+
+  <div x-show="started" class="card mt-4">
+    <template x-for="step in steps" :key="step.label">
+      <div class="progress-row">
+        <div class="progress-icon">
+          <span x-show="step.status === 'pending'" style="color:#94a3b8">○</span>
+          <span x-show="step.status === 'running'"><span class="spinner"></span></span>
+          <span x-show="step.status === 'done'" style="color:#22c55e">✓</span>
+          <span x-show="step.status === 'error'" style="color:#ef4444">✗</span>
+        </div>
+        <span x-text="step.label"></span>
+      </div>
+    </template>
+  </div>
+
+  <div x-show="done" class="card success mt-4">
+    <strong>Rollback complete.</strong> IrDoc {{ state.version_from }} is running again.
+    <a href="{{ state.base_url }}" target="_blank" class="mt-2" style="display:block">Open IrDoc →</a>
+  </div>
+</div>
+
+{% else %}
+<!-- Manual recovery fallback -->
+<div class="card error mt-4">
+  <strong>Automated rollback failed.</strong> Follow these steps manually.
+</div>
+
+<div class="card mt-4">
+  <strong>Manual Recovery Steps</strong>
+  <p class="text-sm text-muted mt-1">Snapshot location: <code>{{ state.snapshot_dir }}</code></p>
+  <pre style="background:#f8fafc;padding:1rem;border-radius:0.5rem;font-size:0.8rem;margin-top:1rem;overflow-x:auto">
+# 1. Stop all containers
+docker compose -f docker/docker-compose.prod.yml stop
+
+# 2. Restore database
+docker volume rm irdoc-app_postgres_data
+cat {{ state.snapshot_dir }}/dump.sql | docker run --rm -i \
+  -v irdoc-app_postgres_data:/var/lib/postgresql/data \
+  -e PGPASSWORD=YOUR_DB_PASSWORD \
+  postgres:16-alpine psql -U irp -d irp
+
+# 3. Restore .env
+cp {{ state.snapshot_dir }}/env.bak docker/.env
+
+# 4. Restore SSL certs
+cp -r {{ state.snapshot_dir }}/ssl/ docker/ssl/
+
+# 5. Start previous version
+VERSION={{ state.version_from }} docker compose -f docker/docker-compose.prod.yml up -d
+  </pre>
+  <p class="text-sm mt-2">See also: <a href="/docs/installation/troubleshooting">Troubleshooting docs</a></p>
+</div>
+{% endif %}
+
+{% endblock %}

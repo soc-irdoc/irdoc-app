@@ -44,3 +44,23 @@ async def test_upgrade_success_page_loads(client):
     resp = await client.get("/upgrade/success")
     assert resp.status_code == 200
     assert "1.2.0" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_rollback_page_loads(client):
+    from installer.wizard import state
+    state.snapshot_dir = "/tmp/fake"
+    state.version_from = "1.1.0"
+    resp = await client.get("/upgrade/rollback")
+    assert resp.status_code == 200
+    assert "Roll Back" in resp.text or "rollback" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_rollback_manual_page_loads(client):
+    from installer.wizard import state
+    state.snapshot_dir = "/tmp/fake"
+    state.version_from = "1.1.0"
+    resp = await client.get("/upgrade/rollback/manual")
+    assert resp.status_code == 200
+    assert "manual" in resp.text.lower() or "Manual" in resp.text

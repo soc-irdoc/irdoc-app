@@ -31,7 +31,7 @@ from installer.core import ssl as ssl_core
 from installer.core.config import assemble_env, generate_secrets, read_existing_env, write_env
 from installer.core.docker import detect_mode, run_compose, COMPOSE_FILE
 from installer.core.health import wait_for_health
-from installer.core.snapshot import take_snapshot, list_snapshots
+from installer.core.snapshot import take_snapshot, list_snapshots, restore_snapshot
 from installer.core.ssl import write_certs, generate_nginx_conf
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -572,6 +572,76 @@ async def upgrade_success(request: Request):
         os.kill(os.getpid(), signal.SIGTERM)
     threading.Thread(target=_exit, daemon=True).start()
     return templates.TemplateResponse(request, "upgrade_success.html", _template_context())
+
+
+@app.get("/upgrade/rollback")
+async def rollback_page(request: Request):
+    snapshot_info = None
+    if state.snapshot_dir:
+        manifest_path = Path(state.snapshot_dir) / "snapshot.json"
+        if manifest_path.exists():
+            import json as _json
+            snapshot_info = _json.loads(manifest_path.read_text())
+    return templates.TemplateResponse(request, "rollback.html",
+        _template_context(snapshot_info=snapshot_info))
+
+
+@app.get("/upgrade/rollback/stream")
+async def rollback_stream():
+    async def generator():
+        steps = [
+            "Stopping all containers",
+            "Restoring database",
+            "Restoring configuration",
+            "Restoring SSL certificates",
+            "Restoring storage files",
+            "Starting previous version",
+            "Health check",
+        ]
+        try:
+            if not state.snapshot_dir:
+                yield "data: __FAIL__No snapshot found\n\n"
+                return
+
+            snapshot_dir = Path(state.snapshot_dir)
+
+            yield f"data: __STEP__{steps[0]}\n\n"
+            async for line in run_compose(["stop"]):
+                yield line
+
+            yield f"data: __STEP__{steps[1]}\n\n"
+            await restore_snapshot(snapshot_dir)
+            yield "data: Restore complete\n\n"
+
+            # Steps 2-4 are handled inside restore_snapshot; emit their labels for UI
+            yield f"data: __STEP__{steps[2]}\n\n"
+            yield f"data: __STEP__{steps[3]}\n\n"
+            yield f"data: __STEP__{steps[4]}\n\n"
+
+            yield f"data: __STEP__{steps[5]}\n\n"
+            env_override = {"VERSION": state.version_from or "latest"}
+            async for line in run_compose(["up", "-d"], env_override=env_override):
+                yield line
+
+            yield f"data: __STEP__{steps[6]}\n\n"
+            base = state.base_url or "http://localhost"
+            healthy = await wait_for_health(base, timeout=120)
+            if not healthy:
+                yield "data: __FAIL_ROLLBACK__Health check failed after rollback\n\n"
+                return
+
+            yield "data: __DONE__\n\n"
+
+        except Exception as e:
+            yield f"data: __FAIL_ROLLBACK__{e}\n\n"
+
+    return StreamingResponse(generator(), media_type="text/event-stream")
+
+
+@app.get("/upgrade/rollback/manual")
+async def rollback_manual(request: Request):
+    return templates.TemplateResponse(request, "rollback.html",
+        _template_context(show_manual=True))
 
 
 if __name__ == "__main__":
