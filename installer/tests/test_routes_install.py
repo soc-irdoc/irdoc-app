@@ -101,3 +101,35 @@ async def test_admin_user_post_redirects_on_success(client):
     }, follow_redirects=False)
     assert resp.status_code in (302, 307)
     assert "/review" in resp.headers["location"]
+
+
+@pytest.mark.asyncio
+async def test_review_page_loads(client):
+    from installer.wizard import state
+    state.base_url = "https://test.example.com"
+    state.db_password = "dbpass"
+    state.admin_email = "admin@example.com"
+    resp = await client.get("/review")
+    assert resp.status_code == 200
+    assert "test.example.com" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_review_confirm_writes_env_file(client, tmp_path, monkeypatch):
+    from installer import wizard as wiz
+    from installer.wizard import state
+    monkeypatch.setattr(wiz, "DOCKER_DIR", tmp_path)
+    (tmp_path / "nginx").mkdir()
+    (tmp_path / "ssl").mkdir()
+    state.https_mode = "behind_lb"
+    state.db_password = "dbpw"
+    state.redis_password = "rpw"
+    state.secret_key = "sk" * 16
+    state.base_url = "https://x.com"
+    state.access_token_expire_minutes = 15
+    state.refresh_token_expire_days = 30
+    state.license_key = ""
+    resp = await client.post("/review/confirm", follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    assert (tmp_path / ".env").exists()
+    assert (tmp_path / "nginx" / "nginx.conf").exists()

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block step5_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">Deploying IrDoc</h1>
+<p class="page-subtitle">This may take a few minutes while images are pulled.</p>
+
+<div x-data="{
+  steps: [
+    { label: 'Pulling images', status: 'pending' },
+    { label: 'Starting containers', status: 'pending' },
+    { label: 'Waiting for health check', status: 'pending' },
+    { label: 'Creating admin account', status: 'pending' },
+  ],
+  currentStep: -1,
+  logs: [],
+  showLogs: false,
+  failed: false,
+  failMsg: '',
+  done: false,
+
+  init() {
+    const es = new EventSource('/deploy/stream');
+    es.onmessage = (e) => {
+      const d = e.data;
+      if (d.startsWith('__STEP__')) {
+        this.currentStep++;
+        if (this.currentStep > 0) this.steps[this.currentStep - 1].status = 'done';
+        this.steps[this.currentStep].status = 'running';
+      } else if (d.startsWith('__FAIL__')) {
+        if (this.currentStep >= 0) this.steps[this.currentStep].status = 'error';
+        this.failed = true;
+        this.failMsg = d.replace('__FAIL__', '');
+        es.close();
+      } else if (d === '__DONE__') {
+        if (this.currentStep >= 0) this.steps[this.currentStep].status = 'done';
+        this.done = true;
+        es.close();
+        window.location.href = '/success';
+      } else if (!d.startsWith('__EXIT__')) {
+        this.logs.push(d);
+      }
+    };
+  }
+}" x-init="init()">
+
+  <div class="card mt-4">
+    <template x-for="(step, i) in steps" :key="i">
+      <div class="progress-row">
+        <div class="progress-icon">
+          <span x-show="step.status === 'pending'" style="color:#94a3b8">&#9675;</span>
+          <span x-show="step.status === 'running'"><span class="spinner"></span></span>
+          <span x-show="step.status === 'done'" style="color:#22c55e">&#10003;</span>
+          <span x-show="step.status === 'error'" style="color:#ef4444">&#10007;</span>
+        </div>
+        <span x-text="step.label"></span>
+      </div>
+    </template>
+  </div>
+
+  <div x-show="failed" class="card error mt-4">
+    <strong>Deployment failed:</strong> <span x-text="failMsg"></span>
+    <p class="text-sm text-muted mt-2">Your configuration has been saved. Fix the issue and <a href="/deploy">retry</a>.</p>
+  </div>
+
+  <div class="mt-4">
+    <button class="btn btn-outline btn-sm" @click="showLogs = !showLogs">
+      <span x-text="showLogs ? 'Hide logs' : 'View full logs'"></span>
+    </button>
+    <div x-show="showLogs" class="log-box mt-2" x-ref="logbox">
+      <template x-for="line in logs" :key="line">
+        <div x-text="line"></div>
+      </template>
+    </div>
+  </div>
+</div>
+{% endblock %}

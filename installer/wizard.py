@@ -8,7 +8,10 @@ from pathlib import Path as _Path
 if __name__ == "__main__":
     sys.path.insert(0, str(_Path(__file__).parent.parent))
 
+import asyncio
+import httpx
 import os
+import signal
 import socket
 import threading
 import webbrowser
@@ -17,14 +20,16 @@ from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from installer.core import ssl as ssl_core
-from installer.core.config import generate_secrets, read_existing_env
-from installer.core.docker import detect_mode, COMPOSE_FILE
+from installer.core.config import assemble_env, generate_secrets, read_existing_env, write_env
+from installer.core.docker import detect_mode, run_compose, COMPOSE_FILE
+from installer.core.health import wait_for_health
+from installer.core.ssl import write_certs, generate_nginx_conf
 
 REPO_ROOT = Path(__file__).parent.parent
 _INSTALLER_DIR = Path(__file__).parent
@@ -309,6 +314,126 @@ async def save_admin_user(
     state.admin_email = admin_email
     state.admin_password = admin_password
     return RedirectResponse("/review", status_code=302)
+
+
+_deploy_log: list[str] = []
+_deploy_done: bool = False
+_deploy_success: bool = False
+
+
+@app.get("/review")
+async def review_page(request: Request):
+    return templates.TemplateResponse(request, "review.html", _template_context())
+
+
+@app.post("/review/confirm")
+async def review_confirm():
+    # Write docker/.env
+    env_content = assemble_env({
+        "db_password": state.db_password,
+        "redis_password": state.redis_password,
+        "secret_key": state.secret_key,
+        "base_url": state.base_url,
+        "access_token_expire_minutes": state.access_token_expire_minutes,
+        "refresh_token_expire_days": state.refresh_token_expire_days,
+        "license_key": state.license_key,
+    })
+    write_env(DOCKER_DIR / ".env", env_content)
+
+    # Write nginx.conf
+    nginx_conf = generate_nginx_conf(state.https_mode or "behind_lb")
+    nginx_path = DOCKER_DIR / "nginx" / "nginx.conf"
+    nginx_path.write_text(nginx_conf)
+
+    # Write SSL certs if applicable
+    if state.cert_pem and state.key_pem:
+        write_certs(DOCKER_DIR / "ssl", state.cert_pem, state.key_pem)
+
+    return RedirectResponse("/deploy", status_code=302)
+
+
+@app.get("/deploy")
+async def deploy_page(request: Request):
+    return templates.TemplateResponse(request, "deploy.html", _template_context())
+
+
+@app.get("/deploy/stream")
+async def deploy_stream():
+    async def event_generator():
+        global _deploy_log, _deploy_done, _deploy_success
+        _deploy_log = []
+        _deploy_done = False
+        _deploy_success = False
+
+        try:
+            # Step: Pull images
+            yield "data: __STEP__Pulling images\n\n"
+            async for line in run_compose(["pull"]):
+                yield line
+                if "__EXIT__0" in line:
+                    pass
+                elif "__EXIT__" in line:
+                    yield "data: __FAIL__Image pull failed\n\n"
+                    _deploy_done = True
+                    return
+
+            # Step: Start containers
+            yield "data: __STEP__Starting containers\n\n"
+            async for line in run_compose(["up", "-d", "--remove-orphans"]):
+                yield line
+                if "__EXIT__" in line and "__EXIT__0" not in line:
+                    yield "data: __FAIL__Container start failed\n\n"
+                    _deploy_done = True
+                    return
+
+            # Step: Health check
+            yield "data: __STEP__Waiting for health check\n\n"
+            healthy = await wait_for_health(state.base_url or "http://localhost")
+            if not healthy:
+                yield "data: __FAIL__Health check timed out\n\n"
+                _deploy_done = True
+                return
+            yield "data: Health check passed\n\n"
+
+            # Step: Seed admin
+            yield "data: __STEP__Creating admin account\n\n"
+            # verify=False is intentional: the wizard may have just generated a
+            # self-signed cert; no CA bundle can validate it yet.
+            async with httpx.AsyncClient(verify=False, timeout=10.0) as client:  # noqa: S501
+                resp = await client.post(
+                    f"{state.base_url}/api/v1/auth/setup",
+                    json={
+                        "email": state.admin_email,
+                        "full_name": state.admin_name,
+                        "password": state.admin_password,
+                        "org_name": "Default Organization",
+                    },
+                )
+                if resp.status_code not in (200, 201, 409):
+                    yield f"data: __FAIL__Admin creation failed: {resp.status_code}\n\n"
+                    _deploy_done = True
+                    return
+            yield "data: Admin account ready\n\n"
+
+            yield "data: __DONE__\n\n"
+            _deploy_success = True
+
+        except Exception as e:
+            yield f"data: __FAIL__{e}\n\n"
+        finally:
+            _deploy_done = True
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@app.get("/success")
+async def success_page(request: Request):
+    def _exit():
+        import time
+        time.sleep(2.0)
+        os.kill(os.getpid(), signal.SIGTERM)
+    threading.Thread(target=_exit, daemon=True).start()
+    return templates.TemplateResponse(request, "success.html", _template_context())
 
 
 if __name__ == "__main__":

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block step4_class %}done{% endblock %}
+{% block step5_class %}active{% endblock %}
+{% block content %}
+<h1 class="page-title">Review &amp; Deploy</h1>
+<p class="page-subtitle">Check your configuration before deploying.</p>
+
+<div class="card" x-data="{ showSecrets: false }">
+  <div class="flex justify-between items-center">
+    <strong>Configuration Summary</strong>
+    <button class="btn btn-outline btn-sm" type="button" @click="showSecrets = !showSecrets">
+      <span x-text="showSecrets ? 'Hide secrets' : 'Show secrets'"></span>
+    </button>
+  </div>
+
+  <table style="width:100%;margin-top:1rem;font-size:0.875rem;border-collapse:collapse">
+    <tr><td style="padding:0.4rem 0;color:#6b7280;width:45%">Base URL</td><td>{{ state.base_url }}</td></tr>
+    <tr><td style="padding:0.4rem 0;color:#6b7280">HTTPS Mode</td><td>{{ state.https_mode or "—" }}</td></tr>
+    {% if state.cert_cn %}<tr><td style="padding:0.4rem 0;color:#6b7280">Certificate CN</td><td>{{ state.cert_cn }} (expires {{ state.cert_expiry }})</td></tr>{% endif %}
+    <tr><td style="padding:0.4rem 0;color:#6b7280">DB Password</td>
+      <td><span x-show="!showSecrets">••••••••</span><span x-show="showSecrets" class="font-mono">{{ state.db_password }}</span></td></tr>
+    <tr><td style="padding:0.4rem 0;color:#6b7280">Redis Password</td>
+      <td><span x-show="!showSecrets">••••••••</span><span x-show="showSecrets" class="font-mono">{{ state.redis_password }}</span></td></tr>
+    <tr><td style="padding:0.4rem 0;color:#6b7280">Admin Email</td><td>{{ state.admin_email }}</td></tr>
+    <tr><td style="padding:0.4rem 0;color:#6b7280">Admin Name</td><td>{{ state.admin_name }}</td></tr>
+  </table>
+</div>
+
+<form method="post" action="/review/confirm" class="mt-6">
+  <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:0.75rem 2rem">
+    Deploy IrDoc
+  </button>
+</form>
+{% endblock %}

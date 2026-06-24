@@ -61,5 +61,5 @@ def read_existing_env(path: Path) -> dict:
 
 
 def write_env(path: Path, content: str) -> None:
-    path.write_text(content)
+    path.write_text(content, encoding="utf-8")
     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600

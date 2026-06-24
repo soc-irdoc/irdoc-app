@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align:center;padding:3rem 0">
+  <div style="font-size:4rem">&#10003;</div>
+  <h1 class="page-title" style="margin-top:1rem">IrDoc {{ version }} is running!</h1>
+  <p class="page-subtitle">The wizard will close in a moment.</p>
+
+  <a href="{{ state.base_url }}" target="_blank">
+    <button class="btn btn-primary mt-6" style="font-size:1rem;padding:0.75rem 2rem">
+      Open IrDoc &#8594;
+    </button>
+  </a>
+
+  <div class="card mt-6" style="text-align:left;max-width:480px;margin:2rem auto 0">
+    <strong>Next steps</strong>
+    <ul style="margin-top:0.75rem;padding-left:1.25rem;font-size:0.875rem;line-height:2">
+      <li>Log in with your admin account</li>
+      <li>Go to <strong>Settings &#8594; Integrations</strong> to configure email, AI, SharePoint</li>
+      <li>Invite your team from <strong>Admin &#8594; Users</strong></li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
