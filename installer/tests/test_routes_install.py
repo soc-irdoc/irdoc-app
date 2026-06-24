@@ -133,3 +133,40 @@ async def test_review_confirm_writes_env_file(client, tmp_path, monkeypatch):
     assert resp.status_code in (302, 307)
     assert (tmp_path / ".env").exists()
     assert (tmp_path / "nginx" / "nginx.conf").exists()
+
+
+@pytest.mark.asyncio
+async def test_install_flow_state_accumulates(client):
+    """Walk through the full install flow, verifying state accumulates correctly."""
+    from installer.wizard import state
+    # Reset state
+    state.https_mode = None
+    state.db_password = ""
+    state.admin_email = None
+
+    # Step 2: set HTTPS mode
+    await client.post("/https-mode/set", data={"mode": "behind_lb"})
+    assert state.https_mode == "behind_lb"
+
+    # Step 3-4: configure secrets
+    await client.post("/core-config", data={
+        "base_url": "https://irdoc.test",
+        "db_password": "dbpass123456",
+        "redis_password": "redispass456",
+        "secret_key": "a" * 64,
+        "access_token_expire_minutes": "15",
+        "refresh_token_expire_days": "30",
+        "license_key": "",
+    })
+    assert state.base_url == "https://irdoc.test"
+    assert state.db_password == "dbpass123456"
+
+    # Step 5: admin user
+    await client.post("/admin-user", data={
+        "admin_name": "Test Admin",
+        "admin_email": "admin@irdoc.test",
+        "admin_password": "StrongPass123!",
+        "admin_password_confirm": "StrongPass123!",
+    })
+    assert state.admin_name == "Test Admin"
+    assert state.admin_email == "admin@irdoc.test"
