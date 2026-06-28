@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRDoc Documentation</title>
+  <meta name="description" content="IRDoc documentation — installation, user guide, admin guide, and API reference.">
+  <link rel="icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link id="hljs-theme" rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    integrity="sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH"
+    crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+    integrity="sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js"
+    integrity="sha384-YTBHtsL8yVTHcLakYNyrOfK3K+QQcXiECuaALJ+3j7Mo681Rtzadt8NR6WrZH+eQ"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"
+    integrity="sha384-PCSoOZTpbkikBEtd/+uV3WNdc676i9KUf01KOA8CnJotvlx8rRrETbDuwdjqTYvt"
+    crossorigin="anonymous"></script>
+  <style>
+/* ══ TOKENS — DARK (default) ══ */
+:root {
+  --bg:         #080b12;
+  --bg-2:       #0d1117;
+  --bg-3:       #10141c;
+  --bg-4:       #161b26;
+  --bg-5:       #1c2333;
+  --border:     #2a3344;
+  --border-hi:  #3d4f66;
+  --text:       #e6edf3;
+  --text-2:     #8b949e;
+  --text-3:     #484f58;
+  --accent:     #f97316;
+  --accent-2:   #fb923c;
+  --accent-dim: rgba(249,115,22,.12);
+  --accent-glow:rgba(249,115,22,.3);
+  --green:      #3fb950;
+  --yellow:     #e3b341;
+  --red:        #f85149;
+  --blue:       #58a6ff;
+  --purple:     #bc8cff;
+  --mono:       'JetBrains Mono', monospace;
+  --sans:       'Syne', sans-serif;
+  --nav-h:      60px;
+  --sidebar-w:  280px;
+  --toc-w:      220px;
+  --content-max:760px;
+  --radius:     8px;
+  --code-bg:    #161b26;
+  --callout-note-bg:    rgba(88,166,255,.08);
+  --callout-note-border:rgba(88,166,255,.5);
+  --callout-warn-bg:    rgba(227,179,65,.08);
+  --callout-warn-border:rgba(227,179,65,.5);
+  --callout-tip-bg:     rgba(63,185,80,.08);
+  --callout-tip-border: rgba(63,185,80,.5);
+}
+
+/* ══ LIGHT MODE ══ */
+body.light {
+  --bg:         #ffffff;
+  --bg-2:       #f6f8fa;
+  --bg-3:       #eaeef2;
+  --bg-4:       #e1e4e8;
+  --bg-5:       #d0d7de;
+  --border:     #d0d7de;
+  --border-hi:  #afb8c1;
+  --text:       #1f2328;
+  --text-2:     #636c76;
+  --text-3:     #8c959f;
+  --code-bg:    #f6f8fa;
+  --callout-note-bg:    rgba(9,105,218,.06);
+  --callout-note-border:rgba(9,105,218,.4);
+  --callout-warn-bg:    rgba(154,103,0,.06);
+  --callout-warn-border:rgba(154,103,0,.4);
+  --callout-tip-bg:     rgba(26,127,55,.06);
+  --callout-tip-border: rgba(26,127,55,.4);
+}
+
+/* ══ RESET ══ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans); background: var(--bg-2); color: var(--text);
+  line-height: 1.6; overflow-x: hidden;
+  transition: background .2s, color .2s;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ══ NAV ══ */
+#nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: var(--nav-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(8,11,18,.9); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  transition: background .2s;
+}
+body.light #nav { background: rgba(255,255,255,.92); }
+.nav-left  { display: flex; align-items: center; gap: 12px; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--sans); font-weight: 800; font-size: 17px;
+  color: var(--text); text-decoration: none;
+}
+.nav-logo:hover { text-decoration: none; }
+.nav-logo img { height: 36px; width: auto; }
+.logo-sep  { color: var(--border-hi); font-weight: 400; margin: 0 2px; }
+.logo-docs { color: var(--text-2); font-weight: 600; font-size: 15px; }
+.version-badge {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--accent); background: var(--accent-dim);
+  border: 1px solid rgba(249,115,22,.3);
+  border-radius: 100px; padding: 3px 10px;
+}
+.icon-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-2); border-radius: var(--radius);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  height: 36px; padding: 0 10px; gap: 6px;
+  font-size: 15px; font-family: var(--sans); font-weight: 600;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.icon-btn:hover { background: var(--bg-4); color: var(--text); border-color: var(--border-hi); }
+#cmd-k-btn { font-size: 13px; padding: 0 12px; }
+#cmd-k-btn kbd {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg-4); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px; color: var(--text-3);
+}
+.mobile-menu-btn { display: none; }
+
+/* ══ LAYOUT ══ */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr var(--toc-w);
+  grid-template-areas: "sidebar main toc";
+  margin-top: var(--nav-h);
+  min-height: calc(100vh - var(--nav-h));
+}
+  </style>
+</head>
+<body class="dark">
+
+<nav id="nav">
+  <div class="nav-left">
+    <button id="mobile-menu-btn" class="icon-btn mobile-menu-btn" aria-label="Open menu">☰</button>
+    <a href="https://irdoc.io" class="nav-logo">
+      <img src="irdoc_dark.svg" alt="IRDoc">
+      <span class="logo-sep">/</span>
+      <span class="logo-docs">Docs</span>
+    </a>
+  </div>
+  <div class="nav-right">
+    <span class="version-badge">v0.1-alpha</span>
+    <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">🌙</button>
+    <button id="cmd-k-btn" class="icon-btn" aria-label="Search docs">
+      <span>Search</span><kbd>⌘K</kbd>
+    </button>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- sidebar, main, toc added in Tasks 3–5 -->
+</div>
+
+<script>
+// ── Theme (runs immediately to avoid flash) ────────────
+(function () {
+  const saved = localStorage.getItem('irdoc-theme') || 'dark';
+  document.body.className = saved;
+  document.getElementById('theme-toggle').textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+  document.body.className = next;
+  localStorage.setItem('irdoc-theme', next);
+  document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+  const hljsEl = document.getElementById('hljs-theme');
+  if (hljsEl) {
+    if (next === 'dark') {
+      hljsEl.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
+      hljsEl.integrity = 'sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH';
+    } else {
+      hljsEl.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+      hljsEl.integrity = 'sha384-eFTL69TLRZTkNfYZOLM+G04821K1qZao/4QLJbet1pP4tcF+fdXq/9CdqAbWRl/L';
+    }
+  }
+});
+</script>
+
+</body>
+</html>
