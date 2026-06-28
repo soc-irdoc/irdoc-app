@@ -147,6 +147,64 @@ body.light #nav { background: rgba(255,255,255,.92); }
   margin-top: var(--nav-h);
   min-height: calc(100vh - var(--nav-h));
 }
+
+/* ══ SIDEBAR ══ */
+.sidebar {
+  grid-area: sidebar;
+  position: sticky; top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto; overflow-x: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  padding: 12px 0;
+  transition: background .2s;
+}
+.sidebar-search-wrap {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 12px 10px;
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 12px;
+  cursor: text; transition: border-color .15s;
+}
+.sidebar-search-wrap:focus-within { border-color: var(--border-hi); }
+.sidebar-search-icon { font-size: 13px; color: var(--text-3); flex-shrink: 0; }
+#sidebar-search {
+  background: none; border: none; outline: none;
+  font-family: var(--sans); font-size: 13px; color: var(--text);
+  width: 100%; cursor: pointer;
+}
+#sidebar-search::placeholder { color: var(--text-3); }
+.sidebar-nav { flex: 1; overflow-y: auto; }
+
+.nav-group { margin-bottom: 2px; }
+.nav-group-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; width: 100%; border: none; background: none;
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  letter-spacing: .8px; text-transform: uppercase;
+  color: var(--text-3); cursor: pointer; text-align: left;
+  transition: color .15s;
+}
+.nav-group-header:hover { color: var(--text-2); }
+.nav-group-toggle { font-size: 9px; transition: transform .2s; }
+.nav-group.open .nav-group-toggle { transform: rotate(90deg); }
+.nav-group-items { display: none; padding-bottom: 4px; }
+.nav-group.open .nav-group-items { display: block; }
+.nav-item {
+  display: block; padding: 7px 16px 7px 28px;
+  font-size: 13px; color: var(--text-2); text-decoration: none;
+  border-left: 2px solid transparent;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background .1s, color .1s, border-color .1s;
+}
+.nav-item:hover { background: var(--bg-3); color: var(--text); text-decoration: none; }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+mark { background: var(--accent-dim); color: var(--accent); border-radius: 2px; padding: 0 2px; }
+
+/* ══ MAIN + TOC placeholders ══ */
+.main { grid-area: main; min-width: 0; }
+.toc-aside { grid-area: toc; }
   </style>
 </head>
 <body class="dark">
@@ -170,8 +228,165 @@ body.light #nav { background: rgba(255,255,255,.92); }
 </nav>
 
 <div class="layout">
-  <!-- sidebar, main, toc added in Tasks 3–5 -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-search-wrap" id="sidebar-search-wrap">
+      <span class="sidebar-search-icon">🔍</span>
+      <input id="sidebar-search" type="text" placeholder="Search docs..." autocomplete="off" readonly>
+    </div>
+    <nav id="sidebar-nav" class="sidebar-nav"></nav>
+  </aside>
+
+  <main id="main" class="main">
+    <!-- content added in Task 4 -->
+  </main>
+
+  <aside id="toc-aside" class="toc-aside">
+    <!-- TOC added in Task 5 -->
+  </aside>
 </div>
+
+<script>
+// ── Manifest ───────────────────────────────────────────
+const MANIFEST = [
+  { id: 'Installation', items: [
+    { path: 'installation/wizard',                title: 'Installation & Upgrade Wizard' },
+    { path: 'installation/docker-compose',        title: 'Docker Compose Setup' },
+    { path: 'installation/environment-variables', title: 'Environment Variables' },
+    { path: 'installation/upgrading',             title: 'Upgrading' },
+    { path: 'installation/backup-restore',        title: 'Backup & Restore' },
+    { path: 'installation/troubleshooting',       title: 'Troubleshooting' },
+  ]},
+  { id: 'User Guide', items: [
+    { path: 'user-guide/creating-incidents',      title: 'Creating and Managing Incidents' },
+    { path: 'user-guide/dashboard',               title: 'Dashboard' },
+    { path: 'user-guide/timeline',                title: 'Timeline' },
+    { path: 'user-guide/ioc-management',          title: 'IOC Management' },
+    { path: 'user-guide/assets',                  title: 'Assets' },
+    { path: 'user-guide/tasks',                   title: 'Tasks' },
+    { path: 'user-guide/investigation-graph',     title: 'Investigation Graph' },
+    { path: 'user-guide/generating-reports',      title: 'Generating Reports' },
+    { path: 'user-guide/report-template-builder', title: 'Report Template Builder' },
+    { path: 'user-guide/sharepoint-sync',         title: 'SharePoint Sync' },
+    { path: 'ai/ai-report-generation',            title: 'AI Report Generation' },
+    { path: 'user-guide/keyboard-shortcuts',      title: 'Keyboard Shortcuts' },
+    { path: 'user-guide/mfa-setup',               title: 'Setting Up MFA' },
+  ]},
+  { id: 'Admin Guide', items: [
+    { path: 'admin-guide/org-settings',                    title: 'Organisation Settings' },
+    { path: 'admin-guide/user-management',                 title: 'User Management' },
+    { path: 'admin-guide/mfa-enforcement',                 title: 'MFA Enforcement' },
+    { path: 'admin-guide/sso-saml',                        title: 'SSO / OIDC (Entra ID)' },
+    { path: 'entra-id-sso-setup',                          title: 'Entra ID Setup Guide' },
+    { path: 'admin-guide/api-keys',                        title: 'API Keys' },
+    { path: 'admin-guide/storage-backends',                title: 'Storage Backends' },
+    { path: 'admin-guide/smtp',                            title: 'Email / SMTP' },
+    { path: 'admin-guide/backups',                         title: 'Backups' },
+    { path: 'admin-guide/audit-log',                       title: 'Audit Log' },
+    { path: 'admin-guide/ai-configuration',                title: 'AI Configuration' },
+    { path: 'admin-guide/integrations/virustotal',         title: 'VirusTotal' },
+    { path: 'admin-guide/integrations/abuseipdb',          title: 'AbuseIPDB' },
+    { path: 'admin-guide/integrations/microsoft-sentinel', title: 'Microsoft Sentinel' },
+    { path: 'admin-guide/integrations/crowdstrike',        title: 'CrowdStrike Falcon' },
+    { path: 'admin-guide/integrations/slack',              title: 'Slack' },
+    { path: 'admin-guide/integrations/microsoft-teams',    title: 'Microsoft Teams' },
+    { path: 'admin-guide/integrations/servicedesk-plus',   title: 'ServiceDesk Plus' },
+  ]},
+  { id: 'Developers', items: [
+    { path: 'api/developer-guide',               title: 'API Developer Guide' },
+    { path: 'api/reference',                     title: 'REST API Reference' },
+    { path: 'contributing/development-setup',    title: 'Development Setup' },
+    { path: 'contributing/architecture',         title: 'Architecture Overview' },
+    { path: 'contributing/adding-integrations',  title: 'Adding Integrations' },
+  ]},
+  { id: 'Changelog', items: [
+    { path: 'changelog', title: 'Changelog' },
+  ]},
+];
+
+const FLAT = MANIFEST.flatMap(s => s.items.map(i => ({ ...i, section: s.id })));
+
+// ── Sidebar state ──────────────────────────────────────
+let activeDocPath = null;
+
+function getActiveGroupId() {
+  if (!activeDocPath) return MANIFEST[0].id;
+  return (MANIFEST.find(g => g.items.some(i => i.path === activeDocPath)) || MANIFEST[0]).id;
+}
+
+function renderSidebar(filter) {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = '';
+  const q = (filter || '').toLowerCase().trim();
+
+  for (const group of MANIFEST) {
+    const matchingItems = q
+      ? group.items.filter(i => i.title.toLowerCase().includes(q))
+      : group.items;
+    if (matchingItems.length === 0) continue;
+
+    const isOpen = q ? true : group.id === getActiveGroupId();
+    const div = document.createElement('div');
+    div.className = 'nav-group' + (isOpen ? ' open' : '');
+
+    const header = document.createElement('button');
+    header.className = 'nav-group-header';
+    header.innerHTML = `${group.id} <span class="nav-group-toggle">&#9654;</span>`;
+    header.addEventListener('click', () => div.classList.toggle('open'));
+
+    const items = document.createElement('div');
+    items.className = 'nav-group-items';
+
+    for (const item of matchingItems) {
+      const a = document.createElement('a');
+      a.className = 'nav-item' + (item.path === activeDocPath ? ' active' : '');
+      a.href = '#' + item.path;
+      if (q) {
+        const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        a.innerHTML = item.title.replace(re, '<mark>$1</mark>');
+      } else {
+        a.textContent = item.title;
+      }
+      a.addEventListener('click', () => closeMobileDrawer());
+      items.appendChild(a);
+    }
+
+    div.appendChild(header);
+    div.appendChild(items);
+    nav.appendChild(div);
+  }
+}
+
+function setActiveDoc(path) {
+  activeDocPath = path;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('href') === '#' + path);
+  });
+  // Ensure the group containing this doc is open
+  const group = MANIFEST.find(g => g.items.some(i => i.path === path));
+  if (group) {
+    document.querySelectorAll('.nav-group').forEach(el => {
+      const h = el.querySelector('.nav-group-header');
+      if (h && h.textContent.trim().startsWith(group.id)) el.classList.add('open');
+    });
+  }
+  const activeEl = document.querySelector('.nav-item.active');
+  if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+}
+
+// Stubs — replaced in Tasks 4, 5, 6, 7
+function loadDoc(path) {}
+function buildTOC() {}
+function buildSearchIndex() {}
+function openSearchModal() {}
+function closeMobileDrawer() {}
+
+// Sidebar search input — opens search modal (live filter added in Task 6)
+document.getElementById('sidebar-search').addEventListener('click', () => openSearchModal());
+document.getElementById('sidebar-search-wrap').addEventListener('click', () => openSearchModal());
+
+// Initial sidebar render
+renderSidebar();
+</script>
 
 <script>
 // ── Theme (runs immediately to avoid flash) ────────────
