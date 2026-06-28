@@ -16,11 +16,13 @@ import logging
 
 import socketio
 
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*",
+    cors_allowed_origins=settings.get_cors_origins(),
     logger=False,
     engineio_logger=False,
 )

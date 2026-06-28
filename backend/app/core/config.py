@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "CHANGE_ME_generate_with_openssl_rand_hex_32"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    COOKIE_SECURE: bool = False
 
     # Storage
     STORAGE_BACKEND: Literal["local", "s3", "azure_blob", "gcs"] = "local"
@@ -47,6 +48,16 @@ class Settings(BaseSettings):
 
     # CORS — defaults to BASE_URL; override for multi-origin setups
     CORS_ORIGINS: list[str] = []
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def require_real_secret(cls, v: str) -> str:
+        if v == "CHANGE_ME_generate_with_openssl_rand_hex_32" or len(v) < 32:
+            raise ValueError(
+                "SECRET_KEY must be set to a cryptographically random value "
+                "(openssl rand -hex 32). Refusing to start with the default."
+            )
+        return v
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

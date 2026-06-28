@@ -18,10 +18,17 @@ logger = logging.getLogger(__name__)
 
 
 def _fernet() -> Fernet:
-    # Derive a 32-byte Fernet key from SECRET_KEY (pad/truncate to 32 bytes, then base64url)
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
     import base64
-    raw = settings.SECRET_KEY.encode()[:32].ljust(32, b"\x00")
-    return Fernet(base64.urlsafe_b64encode(raw))
+    hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=b"irdoc-integration-v1",
+        info=b"integration-credential-key",
+    )
+    key = hkdf.derive(settings.SECRET_KEY.encode())
+    return Fernet(base64.urlsafe_b64encode(key))
 
 
 def encrypt_config(config: dict) -> dict:

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useIncident, useUpdateIncident } from '@/hooks/useIncident'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { RichTextEditor } from '@/components/common/RichTextEditor'
 import { useUIStore } from '@/stores/uiStore'
 import { SEVERITY_LABELS, STATUS_LABELS, type UpdateIncidentPayload } from '@/types/incident'
 import { formatDateTime, formatRelative } from '@/lib/utils'
+import apiClient from '@/lib/apiClient'
+import { getSocket } from '@/lib/websocket'
 
 interface SummaryPageProps {
   incidentId: string
@@ -197,6 +200,103 @@ function RichTextSection({
   )
 }
 
+// ── AI Section ───────────────────────────────────────────────
+interface AISectionProps {
+  incidentId: string
+  label: string
+  content: string | null | undefined
+  endpoint: string
+  wsEvent: string
+}
+
+function AISection({ incidentId, label, content, endpoint, wsEvent }: AISectionProps) {
+  const addToast = useUIStore((s) => s.addToast)
+  const qc = useQueryClient()
+  const [generating, setGenerating] = useState(false)
+
+  useEffect(() => {
+    const socket = getSocket()
+    const handler = () => qc.invalidateQueries({ queryKey: ['incident', incidentId] })
+    socket.on(wsEvent, handler)
+    return () => {
+      socket.off(wsEvent, handler)
+    }
+  }, [incidentId, qc, wsEvent])
+
+  async function handleGenerate() {
+    setGenerating(true)
+    try {
+      await apiClient.post(endpoint)
+      addToast(`${label} generation started`, 'success')
+    } catch {
+      addToast(`Failed to start ${label.toLowerCase()} generation`, 'error')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
+        marginBottom: 16,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          borderBottom: content ? '1px solid var(--border)' : undefined,
+        }}
+      >
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{label}</h3>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={generating}
+          style={{
+            fontSize: 12,
+            padding: '4px 12px',
+            borderRadius: 6,
+            border: '1px solid var(--accent)',
+            background: 'transparent',
+            color: 'var(--accent)',
+            cursor: generating ? 'not-allowed' : 'pointer',
+            opacity: generating ? 0.6 : 1,
+          }}
+        >
+          {generating ? 'Queued…' : content ? 'Regenerate' : 'Generate'}
+        </button>
+      </div>
+      {content ? (
+        <pre
+          style={{
+            padding: '12px 16px',
+            fontSize: 13,
+            color: 'var(--text-primary)',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            fontFamily: 'inherit',
+            margin: 0,
+          }}
+        >
+          {content}
+        </pre>
+      ) : (
+        <p style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-muted)' }}>
+          No {label.toLowerCase()} yet. Click Generate to create one using AI.
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────
 export function SummaryPage({ incidentId }: SummaryPageProps) {
   const { data: incident, isLoading } = useIncident(incidentId)
@@ -336,6 +436,24 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
         incidentId={incidentId}
         placeholder="Click ☑ Task to add a follow-up action item…"
         enableTaskList
+      />
+
+      {/* AI Summary */}
+      <AISection
+        incidentId={incidentId}
+        label="AI Summary"
+        content={incident.ai_summary}
+        endpoint={`/incidents/${incidentId}/ai/summary`}
+        wsEvent="ai:summary_ready"
+      />
+
+      {/* AI Recommendations */}
+      <AISection
+        incidentId={incidentId}
+        label="AI Recommendations"
+        content={incident.ai_recommendations}
+        endpoint={`/incidents/${incidentId}/ai/recommendations`}
+        wsEvent="ai:recommendations_ready"
       />
     </div>
   )

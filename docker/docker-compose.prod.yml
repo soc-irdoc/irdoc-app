@@ -48,6 +48,8 @@ services:
       redis-server
       --requirepass ${REDIS_PASSWORD}
       --notify-keyspace-events Ex
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
       --save 60 1
       --appendonly yes
     volumes:
@@ -101,18 +103,32 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping --timeout 5 2>/dev/null | grep -q pong"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 20s
 
   beat:
     image: soc-irdoc/irdoc-backend:${VERSION:-latest}
     container_name: irdoc-beat
     restart: unless-stopped
-    command: celery -A app.workers.celery_app beat --loglevel=warning
+    command: celery -A app.workers.celery_app beat --loglevel=warning --schedule /app/backups/celerybeat-schedule
     environment: *backend-env
+    volumes:
+      - ./backups:/app/backups
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery.*beat' > /dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
     image: soc-irdoc/irdoc-frontend:${VERSION:-latest}

@@ -14,8 +14,11 @@ Usage:
 """
 from __future__ import annotations
 
+import ipaddress
 import logging
+import socket
 from typing import Protocol, runtime_checkable, TYPE_CHECKING
+from urllib.parse import urlparse
 
 from app.core.config import settings
 
@@ -23,6 +26,39 @@ if TYPE_CHECKING:
     from app.models.ai_config import AiConfig
 
 logger = logging.getLogger(__name__)
+
+
+def validate_ollama_url(url: str) -> None:
+    """Validate Ollama base URL to prevent SSRF.
+
+    Blocks loopback, private, link-local, multicast, and unspecified addresses
+    by resolving the hostname to IPs and checking each one.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("Ollama URL must use http or https scheme")
+    host = (parsed.hostname or "").rstrip(".").lower()
+    if not host:
+        raise ValueError("Ollama URL must have a host")
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    try:
+        infos = socket.getaddrinfo(host, port)
+    except socket.gaierror:
+        raise ValueError("Ollama host does not resolve")
+    for _fam, _type, _proto, _canon, sockaddr in infos:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if (
+            ip.is_loopback
+            or ip.is_private
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_unspecified
+            or ip.is_reserved
+        ):
+            raise ValueError(
+                f"Ollama URL resolves to a disallowed address ({ip}). "
+                "Only publicly routable addresses are permitted."
+            )
 
 
 @runtime_checkable
@@ -36,7 +72,7 @@ class AnthropicProvider:
     async def complete(self, system: str, user: str, max_tokens: int = 400) -> str:
         import anthropic
 
-        client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+        client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY, timeout=120.0)
         response = await client.messages.create(
             model=settings.AI_MODEL,
             max_tokens=max_tokens,
@@ -50,7 +86,7 @@ class OpenAIProvider:
     async def complete(self, system: str, user: str, max_tokens: int = 400) -> str:
         from openai import AsyncOpenAI
 
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY, timeout=120.0)
         response = await client.chat.completions.create(
             model=settings.AI_MODEL,
             max_tokens=max_tokens,

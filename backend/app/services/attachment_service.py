@@ -23,10 +23,28 @@ ALLOWED_MIME_PREFIXES = [
     "application/msword",
 ]
 
+# Map detected MIME types to safe file extensions
+_MIME_TO_EXT: dict[str, str] = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "application/pdf": ".pdf",
+    "application/zip": ".zip",
+    "application/x-zip-compressed": ".zip",
+    "application/vnd.ms-excel": ".xls",
+    "application/msword": ".doc",
+}
 
-def _validate_mime(mime_type: str | None) -> None:
-    if mime_type is None:
-        return
+
+def _get_actual_mime(data: bytes) -> str:
+    """Detect MIME type from actual file bytes (first 2048 bytes)."""
+    import filetype
+    kind = filetype.guess(data[:2048])
+    return kind.mime if kind else "application/octet-stream"
+
+
+def _validate_mime(mime_type: str) -> None:
     allowed = any(mime_type.startswith(prefix) for prefix in ALLOWED_MIME_PREFIXES)
     if not allowed:
         raise HTTPException(
@@ -43,8 +61,6 @@ async def upload_attachment(
     timeline_entry_id: str | None = None,
     uploaded_by: str | None = None,
 ) -> Attachment:
-    _validate_mime(file.content_type)
-
     # Stream and compute SHA-256 simultaneously
     hasher = hashlib.sha256()
     chunks = []
@@ -63,10 +79,18 @@ async def upload_attachment(
     data = b"".join(chunks)
     sha256 = hasher.hexdigest()
 
+    # Detect MIME from actual file bytes — reject content-type spoofing
+    actual_mime = _get_actual_mime(data)
+    _validate_mime(actual_mime)
+
+    # Use a safe extension derived from detected MIME, not the original filename
+    safe_ext = _MIME_TO_EXT.get(actual_mime, "")
+    if not safe_ext and actual_mime.startswith("text/"):
+        safe_ext = ".txt"
+
     # Store via backend — UUID-based path, outside web root
     file_uuid = str(uuid.uuid4())
-    ext = PurePosixPath(file.filename or "upload").suffix
-    stored_path = f"attachments/{incident_id}/{file_uuid}{ext}"
+    stored_path = f"attachments/{incident_id}/{file_uuid}{safe_ext}"
 
     backend = get_storage_backend()
     await backend.store(data, stored_path)
@@ -78,11 +102,11 @@ async def upload_attachment(
         uploaded_by=uploaded_by,
         original_name=file.filename or "upload",
         stored_path=stored_path,
-        mime_type=file.content_type,
+        mime_type=actual_mime,
         file_size=total_size,
         sha256=sha256,
         storage_backend=backend.backend_name,
-        is_screenshot="image/" in (file.content_type or ""),
+        is_screenshot=actual_mime.startswith("image/"),
     )
     db.add(attachment)
     await db.flush()

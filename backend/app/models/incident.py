@@ -35,6 +35,8 @@ class Incident(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     lessons_learned: Mapped[str | None] = mapped_column(Text, nullable=True)
     actions_todo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_recommendations: Mapped[str | None] = mapped_column(Text, nullable=True)
     attack_vector: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     affected_users: Mapped[int] = mapped_column(Integer, default=0)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)

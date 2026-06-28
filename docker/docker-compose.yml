@@ -27,6 +27,8 @@ services:
       redis-server
       --requirepass ${REDIS_PASSWORD}
       --notify-keyspace-events Ex
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -55,14 +57,14 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
     volumes:
       - ../storage:/app/storage
-      - ../backups:/app/backups
+      - ./backups:/app/backups
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
   ollama:
     image: ollama/ollama:latest
@@ -94,12 +96,18 @@ services:
       BASE_URL: ${BASE_URL:-http://localhost:3000}
     volumes:
       - ../storage:/app/storage
-      - ../backups:/app/backups
+      - ./backups:/app/backups
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping --timeout 5 2>/dev/null | grep -q pong"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 20s
 
   beat:
     build:
@@ -107,17 +115,25 @@ services:
       dockerfile: Dockerfile
     container_name: irdoc-beat
     restart: unless-stopped
-    command: celery -A app.workers.celery_app beat --loglevel=info --schedule /tmp/celerybeat-schedule
+    command: celery -A app.workers.celery_app beat --loglevel=info --schedule /app/backups/celerybeat-schedule
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       SECRET_KEY: ${SECRET_KEY}
+    volumes:
+      - ./backups:/app/backups
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery.*beat' > /dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
     build:

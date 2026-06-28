@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useUIStore } from '@/stores/uiStore'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { Extension } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
@@ -69,6 +70,7 @@ export function RichTextEditor({
   // Force toolbar re-render on cursor/selection changes so active states update
   const [, forceUpdate] = useState({})
   const [editorHeight, setEditorHeight] = useState<number | null>(null)
+  const [hasRemoteChange, setHasRemoteChange] = useState(false)
 
   function handleResizeMouseDown(e: React.MouseEvent) {
     e.preventDefault()
@@ -110,6 +112,14 @@ export function RichTextEditor({
         if (!imageItem) return false
         const file = imageItem.getAsFile()
         if (!file) return false
+        const MAX_INLINE_IMAGE_BYTES = 512 * 1024 // 512 KB
+        if (file.size > MAX_INLINE_IMAGE_BYTES) {
+          useUIStore.getState().addToast(
+            'Image is too large to paste inline (max 512 KB). Use the attachment upload instead.',
+            'warning',
+          )
+          return true // consume the event
+        }
         const reader = new FileReader()
         reader.onload = () => {
           const src = reader.result as string
@@ -143,6 +153,22 @@ export function RichTextEditor({
       editor.commands.setContent(content ?? '', { emitUpdate: false })
     }
   }, [editor, content, isDirty])
+
+  // Detect remote changes while the user is editing
+  useEffect(() => {
+    if (!editor || !isDirty) {
+      setHasRemoteChange(false)
+      return
+    }
+    if (normalizeHtml(editor.getHTML()) !== (content ?? '')) {
+      setHasRemoteChange(true)
+    }
+  }, [content]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset conflict banner when the user saves (isDirty → false)
+  useEffect(() => {
+    if (!isDirty) setHasRemoteChange(false)
+  }, [isDirty])
 
   if (!editor) return null
 
@@ -184,6 +210,20 @@ export function RichTextEditor({
 
   return (
     <div className="tiptap-editor">
+      {hasRemoteChange && (
+        <div
+          style={{
+            background: 'var(--color-warning, #f59e0b)',
+            color: '#000',
+            padding: '4px 12px',
+            fontSize: '12px',
+            borderRadius: '4px',
+            marginBottom: '4px',
+          }}
+        >
+          This field was updated by another user while you were editing. Your save will overwrite their changes.
+        </div>
+      )}
       {!readOnly && (
         <div className="tiptap-toolbar">
           {enableTaskList ? (

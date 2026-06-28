@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import AnyHttpUrl, BaseModel, field_validator
 import re
 
 
@@ -74,7 +74,7 @@ class OrgSettingsUpdate(BaseModel):
     allow_registration: bool | None = None
     invite_only: bool | None = None
     mfa_required: bool | None = None
-    logo_url: str | None = None
+    logo_url: AnyHttpUrl | None = None
     accent_color: str | None = None
 
 

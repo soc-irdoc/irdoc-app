@@ -69,6 +69,8 @@ class IncidentOut(BaseModel):
     notes: str | None
     lessons_learned: str | None
     actions_todo: str | None
+    ai_summary: str | None = None
+    ai_recommendations: str | None = None
     attack_vector: list[str]
     affected_users: int
     metadata: dict

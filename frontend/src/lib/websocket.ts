@@ -73,7 +73,13 @@ export function joinIncident(incidentId: string) {
       }
     : null
 
-  getSocket().emit('join:incident', { incident_id: incidentId, user: presenceUser })
+  const s = getSocket()
+  const emit = () => s.emit('join:incident', { incident_id: incidentId, user: presenceUser })
+  if (s.connected) {
+    emit()
+  } else {
+    s.once('connect', emit)
+  }
 }
 
 export function leaveIncident(incidentId: string) {

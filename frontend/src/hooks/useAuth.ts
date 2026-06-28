@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
-import apiClient from '@/lib/apiClient'
+import apiClient, { cancelTokenTimers } from '@/lib/apiClient'
 import { useAuthStore } from '@/stores/authStore'
+import { disconnectSocket } from '@/lib/websocket'
 import type { User } from '@/types/user'
 
 interface LoginPayload {
@@ -36,12 +37,16 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
+      cancelTokenTimers()
+      disconnectSocket()
       await apiClient.post('/auth/logout')
     },
     onSuccess: () => {
       clearAuth()
     },
     onError: () => {
+      cancelTokenTimers()
+      disconnectSocket()
       clearAuth()
     },
   })

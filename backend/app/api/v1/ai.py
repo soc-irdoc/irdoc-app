@@ -22,6 +22,9 @@ async def generate_summary(
     if not check_feature("ai_summaries"):
         raise HTTPException(status_code=402, detail="AI summaries require a premium license")
 
+    from app.services import incident_service
+    await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+
     from app.workers.tasks import generate_ai_summary
     task = generate_ai_summary.delay(incident_id)
     return {
@@ -38,6 +41,9 @@ async def generate_recommendations(
 ):
     if not check_feature("ai_summaries"):
         raise HTTPException(status_code=402, detail="AI summaries require a premium license")
+
+    from app.services import incident_service
+    await incident_service.get_incident(db, incident_id, str(current_user.org_id))
 
     from app.workers.tasks import generate_ai_recommendations
     task = generate_ai_recommendations.delay(incident_id)

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useIncident } from '@/hooks/useIncident'
 import { joinIncident, leaveIncident } from '@/lib/websocket'
@@ -22,7 +22,7 @@ const VALID_SECTIONS: Section[] = ['timeline', 'iocs', 'assets', 'summary', 'rep
 export function IncidentWorkspacePage() {
   const { id, section } = useParams<{ id: string; section?: string }>()
   const navigate = useNavigate()
-  const { data: incident, isLoading } = useIncident(id!)
+  const { data: incident, isLoading } = useIncident(id ?? '')
 
   useEffect(() => {
     if (!id) return
@@ -30,18 +30,35 @@ export function IncidentWorkspacePage() {
     return () => leaveIncident(id)
   }, [id])
 
-  // Initialize from URL section param, fall back to timeline
-  const [activeSection, setActiveSection] = useState<Section>(() => {
+  // Derive active section from URL param — keeps URL as single source of truth
+  const activeSection: Section = useMemo(() => {
     const s = section as Section
     return VALID_SECTIONS.includes(s) ? s : 'timeline'
-  })
+  }, [section])
 
-  function handleSectionChange(section: string) {
-    setActiveSection(section as Section)
-    navigate(`/incidents/${id}/${section}`, { replace: true })
+  function handleSectionChange(newSection: string) {
+    if (!id) return
+    navigate(`/incidents/${id}/${newSection}`, { replace: true })
   }
 
   if (isLoading) return <PageLoader />
+  if (!id) {
+    return (
+      <AppShell>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-muted)',
+          }}
+        >
+          Incident not found.
+        </div>
+      </AppShell>
+    )
+  }
   if (!incident) {
     return (
       <AppShell>

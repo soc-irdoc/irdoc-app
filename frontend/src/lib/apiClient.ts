@@ -20,6 +20,11 @@ function getTokenExpiry(token: string): number | null {
 let expiryWarningTimer: ReturnType<typeof setTimeout> | null = null
 let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null
 
+export function cancelTokenTimers() {
+  if (expiryWarningTimer) { clearTimeout(expiryWarningTimer); expiryWarningTimer = null }
+  if (proactiveRefreshTimer) { clearTimeout(proactiveRefreshTimer); proactiveRefreshTimer = null }
+}
+
 // Schedule a warning toast 2 min before expiry and a silent proactive refresh at 1 min before.
 // Called every time we receive a new access token.
 export function scheduleTokenRefresh(token: string) {
@@ -46,6 +51,11 @@ export function scheduleTokenRefresh(token: string) {
     proactiveRefreshTimer = setTimeout(async () => {
       try {
         const res = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
+        // Cancel the expiry warning — refresh succeeded, no warning needed
+        if (expiryWarningTimer) {
+          clearTimeout(expiryWarningTimer)
+          expiryWarningTimer = null
+        }
         const newToken = res.data.data.access_token
         useAuthStore.getState().setToken(newToken)
         scheduleTokenRefresh(newToken)
@@ -67,10 +77,15 @@ apiClient.interceptors.request.use((config) => {
 })
 
 let isRefreshing = false
-let refreshQueue: Array<(token: string) => void> = []
+let refreshQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
 
 function processQueue(token: string) {
-  refreshQueue.forEach((cb) => cb(token))
+  refreshQueue.forEach(({ resolve }) => resolve(token))
+  refreshQueue = []
+}
+
+function rejectQueue(err: unknown) {
+  refreshQueue.forEach(({ reject }) => reject(err))
   refreshQueue = []
 }
 
@@ -96,10 +111,13 @@ apiClient.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          refreshQueue.push((token: string) => {
-            original.headers.Authorization = `Bearer ${token}`
-            resolve(apiClient(original))
+        return new Promise((resolve, reject) => {
+          refreshQueue.push({
+            resolve: (token) => {
+              original.headers.Authorization = `Bearer ${token}`
+              resolve(apiClient(original))
+            },
+            reject,
           })
         })
       }
@@ -115,7 +133,8 @@ apiClient.interceptors.response.use(
         processQueue(newToken)
         original.headers.Authorization = `Bearer ${newToken}`
         return apiClient(original)
-      } catch {
+      } catch (err) {
+        rejectQueue(err)
         useAuthStore.getState().clearAuth()
         window.location.href = '/login?reason=session_expired'
         return Promise.reject(error)

@@ -37,6 +37,12 @@ _RICH_TEXT_ATTRS: dict[str, list[str]] = {
 }
 _RICH_TEXT_FIELDS = {"executive_summary", "notes", "lessons_learned", "actions_todo"}
 
+_MUTABLE_FIELDS = {
+    "title", "status", "severity", "assigned_to",
+    "executive_summary", "notes", "lessons_learned", "actions_todo",
+    "affected_users", "attack_vector", "timeline_start", "timeline_end",
+}
+
 # Only image MIME types are safe as data: URIs in img src.
 # data:text/html and data:application/javascript must be rejected.
 _IMG_DATA_URI_RE = re.compile(
@@ -66,7 +72,8 @@ async def generate_ref(db: AsyncSession, org_id: str) -> str:
     from sqlalchemy.exc import OperationalError
 
     year = datetime.now(UTC).year
-    seq_name = f"incident_seq_{str(org_id).replace('-', '_')}_{year}"
+    safe_org = re.sub(r'[^a-zA-Z0-9_]', '_', str(org_id))
+    seq_name = f"incident_seq_{safe_org}_{year}"
 
     try:
         # Create sequence if it doesn't exist (PostgreSQL)
@@ -191,8 +198,9 @@ async def update_incident(
             incident.metadata_ = value
         elif key in _RICH_TEXT_FIELDS and isinstance(value, str):
             setattr(incident, key, _sanitize_html(value))
-        else:
+        elif key in _MUTABLE_FIELDS:
             setattr(incident, key, value)
+        # else: silently skip unknown/immutable fields
 
     # Set timestamps for status transitions
     now = datetime.now(UTC)

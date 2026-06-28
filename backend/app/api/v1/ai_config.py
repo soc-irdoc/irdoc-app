@@ -63,6 +63,13 @@ async def save_ai_config(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("users.manage")),
 ):
+    from fastapi import HTTPException as _HTTPException
+    from app.services.ai_service import validate_ollama_url
+    if payload.ollama_base_url is not None:
+        try:
+            validate_ollama_url(payload.ollama_base_url)
+        except ValueError as exc:
+            raise _HTTPException(status_code=422, detail=str(exc))
     data = payload.model_dump(exclude_none=True)
     config = await ai_config_service.upsert_ai_config(db, str(current_user.org_id), data)
     return {"data": _config_to_dict(config), "error": None}
@@ -74,6 +81,12 @@ async def test_ai_connection(
     current_user=Depends(require_permission("users.manage")),
 ):
     """Test connectivity to Ollama and verify the configured model is available."""
+    from fastapi import HTTPException as _HTTPException
+    from app.services.ai_service import validate_ollama_url
+    try:
+        validate_ollama_url(payload.ollama_base_url)
+    except ValueError as exc:
+        raise _HTTPException(status_code=422, detail=str(exc))
     result = await ai_config_service.test_ollama_connection(
         payload.ollama_base_url, payload.model_name
     )

@@ -16,6 +16,7 @@ from jose.exceptions import JWTError as _JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.limiter import limiter
 from app.core.security import decode_token
@@ -37,7 +38,7 @@ REFRESH_COOKIE_NAME = "refresh_token"
 COOKIE_SETTINGS = {
     "httponly": True,
     "samesite": "strict",
-    "secure": False,
+    "secure": settings.COOKIE_SECURE,
     "max_age": 60 * 60 * 24 * 30,
 }
 
@@ -235,10 +236,11 @@ async def regenerate_backup_codes(
 
 @router.delete("/disable")
 async def disable_mfa(
+    body: MFAVerifyRequest,
     user=Depends(_get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Disable MFA for the current user. Blocked if the org mandates MFA."""
+    """Disable MFA for the current user. Requires current TOTP code. Blocked if the org mandates MFA."""
     from app.models.organization import Organization
 
     org = await db.get(Organization, user.org_id)
@@ -247,6 +249,10 @@ async def disable_mfa(
             status_code=status.HTTP_409_CONFLICT,
             detail="MFA cannot be disabled: your organisation requires it.",
         )
+
+    is_valid, _ = mfa_service.verify_totp(user.totp_secret, body.code)
+    if not is_valid:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code")
 
     user.mfa_enabled = False
     user.totp_secret = None

@@ -37,6 +37,8 @@ export interface Incident {
   contained_at: string | null
   closed_at: string | null
   external_refs: IncidentExternalRef[]
+  ai_summary?: string | null
+  ai_recommendations?: string | null
 }
 
 export interface IncidentStats {

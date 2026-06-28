@@ -17,9 +17,9 @@ def run_async(coro):
     """Run an async coroutine from a sync Celery task.
 
     asyncio.run() creates a fresh event loop, runs the coroutine, and waits for
-    all pending callbacks before closing the loop.  The engine pool is disposed
-    *inside* the coroutine (while the loop is still active) so asyncpg can
-    properly close connections — calling dispose() outside the loop left stale
+    all pending callbacks before closing the loop.  The worker engine pool is
+    disposed *inside* the coroutine (while the loop is still active) so asyncpg
+    can properly close connections — calling dispose() outside the loop left stale
     connections attached to the old loop, causing the next task to fail with
     "Future attached to a different loop".
     """
@@ -27,8 +27,8 @@ def run_async(coro):
         try:
             return await coro
         finally:
-            from app.core.database import engine
-            await engine.dispose()
+            from app.workers.db import dispose_worker_engine
+            await dispose_worker_engine()
 
     return asyncio.run(_with_pool_cleanup())
 
@@ -40,7 +40,7 @@ def verify_file_hash(self, attachment_id: str):
     Logs and flags any mismatch as a security event.
     """
     async def _run():
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.models.attachment import Attachment
         from app.services.storage.resolver import get_storage_backend
         from sqlalchemy import select
@@ -79,7 +79,7 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
     Logs detections — surface to UI in a future iteration.
     """
     async def _run():
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.models.timeline import TimelineEntry
         from app.services.ioc_service import auto_detect
         from sqlalchemy import select
@@ -106,7 +106,7 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
 def generate_report(self, report_id: str, include_ai: bool = False, org_id: str | None = None, trigger_sharepoint: bool = False):
     async def _run():
         from datetime import datetime, timezone
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.models.report import Report
         from app.models.pdf_template import PdfTemplate
         from app.models.template import ReportTemplate
@@ -290,7 +290,7 @@ def generate_ai_report(self, incident_id: str, org_id: str):
     - Creates one pending Report per activated template and delegates to generate_report
     """
     async def _run():
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.models.report import Report
         from app.models.template import ReportTemplate
         from app.services.ai_config_service import get_ai_config
@@ -353,30 +353,30 @@ def generate_ai_report(self, incident_id: str, org_id: str):
     run_async(_run())
 
 
-@celery_app.task(bind=True, max_retries=2)
+@celery_app.task(bind=True, max_retries=2, soft_time_limit=300, time_limit=360)
 def generate_ai_summary(self, incident_id: str) -> str | None:
     """Generate AI executive summary for an incident (standalone, not tied to a report)."""
     async def _run():
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.core.feature_flags import check_feature
         from app.models.incident import Incident
         from app.models.user import User
         from app.services.report_renderer.payload import build_report_payload
         from app.services.ai_service import get_ai_provider, build_executive_summary_prompt
-        from sqlalchemy import select
+        from sqlalchemy import select as _select
 
         if not check_feature("ai_summaries"):
             logger.warning("generate_ai_summary: ai_summaries feature not enabled")
             return None
 
         async with AsyncSessionLocal() as db:
-            result = await db.execute(select(Incident).where(Incident.id == incident_id))
+            result = await db.execute(_select(Incident).where(Incident.id == incident_id))
             incident = result.scalar_one_or_none()
             if not incident:
                 return None
 
             # Use system user / first admin
-            result = await db.execute(select(User).where(User.role == "admin").limit(1))
+            result = await db.execute(_select(User).where(User.role == "admin").limit(1))
             analyst = result.scalar_one_or_none()
             if not analyst:
                 return None
@@ -388,27 +388,40 @@ def generate_ai_summary(self, incident_id: str) -> str | None:
             sys_p, usr_p = build_executive_summary_prompt(payload)
             summary = await provider.complete(sys_p, usr_p, 400)
             logger.info("generate_ai_summary: completed for incident %s", incident_id)
+
+            # Save to incident
+            result2 = await db.execute(_select(Incident).where(Incident.id == incident_id))
+            incident = result2.scalar_one_or_none()
+            if incident:
+                incident.ai_summary = summary
+                await db.commit()
+                try:
+                    _emit_ws(incident_id, "ai:summary_ready", {"incident_id": incident_id, "summary": summary})
+                except Exception as ws_err:
+                    logger.warning("generate_ai_summary: WS emit failed: %s", ws_err)
+
             return summary
 
     return run_async(_run())
 
 
-@celery_app.task(bind=True, max_retries=2)
+@celery_app.task(bind=True, max_retries=2, soft_time_limit=300, time_limit=360)
 def generate_ai_recommendations(self, incident_id: str) -> str | None:
     """Generate AI recommendations for an incident."""
     async def _run():
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.core.feature_flags import check_feature
+        from app.models.incident import Incident
         from app.models.user import User
         from app.services.report_renderer.payload import build_report_payload
         from app.services.ai_service import get_ai_provider, build_recommendations_prompt
-        from sqlalchemy import select
+        from sqlalchemy import select as _select
 
         if not check_feature("ai_summaries"):
             return None
 
         async with AsyncSessionLocal() as db:
-            result = await db.execute(select(User).where(User.role == "admin").limit(1))
+            result = await db.execute(_select(User).where(User.role == "admin").limit(1))
             analyst = result.scalar_one_or_none()
             if not analyst:
                 return None
@@ -420,6 +433,18 @@ def generate_ai_recommendations(self, incident_id: str) -> str | None:
             sys_p, usr_p = build_recommendations_prompt(payload)
             recs = await provider.complete(sys_p, usr_p, 600)
             logger.info("generate_ai_recommendations: completed for incident %s", incident_id)
+
+            # Save to incident
+            result2 = await db.execute(_select(Incident).where(Incident.id == incident_id))
+            incident = result2.scalar_one_or_none()
+            if incident:
+                incident.ai_recommendations = recs
+                await db.commit()
+                try:
+                    _emit_ws(incident_id, "ai:recommendations_ready", {"incident_id": incident_id, "recommendations": recs})
+                except Exception as ws_err:
+                    logger.warning("generate_ai_recommendations: WS emit failed: %s", ws_err)
+
             return recs
 
     return run_async(_run())
@@ -436,7 +461,7 @@ def enrich_ioc(self, ioc_id: str):
         # Ensure all plugins are loaded
         import app.plugins  # noqa: F401 — triggers auto-registration
 
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.services.enrichment_service import enrich_ioc as do_enrich
 
         async with AsyncSessionLocal() as db:
@@ -473,7 +498,7 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
     async def _run():
         import app.plugins  # noqa: F401 — loads SharePointPlugin
 
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.models.report import SyncPolicy
         from app.services.report_renderer import render_incident_pdf, build_report_payload
         from app.services.integration_service import decrypt_config
@@ -543,7 +568,7 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
         logger.exception("sync_to_sharepoint: failed incident=%s policy=%s: %s", incident_id, policy_id, exc)
 
         async def _mark_failed():
-            from app.core.database import AsyncSessionLocal
+            from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
             from app.models.report import SyncPolicy
             from sqlalchemy import select
             async with AsyncSessionLocal() as db:
@@ -565,7 +590,7 @@ def send_notification(self, org_id: str, event: str, payload: dict):
     async def _run():
         import app.plugins  # noqa: F401
 
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.services.integration_service import get_enabled_plugins_for_org
 
         async with AsyncSessionLocal() as db:
@@ -585,7 +610,7 @@ def push_report_to_sharepoint(self, report_id: str, org_id: str):
     """Push an already-generated report PDF to SharePoint and store the returned webUrl."""
     async def _run():
         import app.plugins  # noqa: F401 — loads SharePointPlugin
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.models.report import Report
         from app.models.template import ReportTemplate
         from app.models.incident import Incident
@@ -672,7 +697,7 @@ def auto_generate_for_sharepoint(self, incident_id: str, org_id: str):
     Base scaffold reports (report_template_id=NULL) are excluded.
     """
     async def _run():
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.models.report import Report
         from app.models.template import ReportTemplate
         from sqlalchemy import select
@@ -783,7 +808,7 @@ def process_expired_sync_locks():
 def generate_ai_ioc_narrative(self, ioc_id: str):
     """Generate a plain-English enrichment narrative for an IOC (premium)."""
     async def _run():
-        from app.core.database import AsyncSessionLocal
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.core.feature_flags import check_feature
         from app.models.ioc import IOC
         from app.services.ai_service import get_ai_provider

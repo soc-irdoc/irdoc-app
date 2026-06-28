@@ -19,6 +19,7 @@ from app.schemas.auth import (
     UpdateProfileRequest,
     UserOut,
 )
+from app.core.limiter import limiter
 from app.services import audit_service, auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -27,7 +28,7 @@ REFRESH_COOKIE_NAME = "refresh_token"
 COOKIE_SETTINGS = {
     "httponly": True,
     "samesite": "strict",
-    "secure": False,  # set True in prod behind HTTPS
+    "secure": settings.COOKIE_SECURE,
     "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
 }
 
@@ -71,6 +72,7 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
 
 
 @router.post("/login")
+@limiter.limit("10/minute")
 async def login(data: LoginRequest, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     from app.models.organization import Organization
 
@@ -192,8 +194,10 @@ async def update_me(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    PROFILE_SAFE_FIELDS = {"full_name", "timezone", "theme"}
     for key, value in data.model_dump(exclude_none=True).items():
-        setattr(current_user, key, value)
+        if key in PROFILE_SAFE_FIELDS:
+            setattr(current_user, key, value)
     await db.flush()
     return current_user
 

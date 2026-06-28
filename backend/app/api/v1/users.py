@@ -26,7 +26,7 @@ REFRESH_COOKIE_NAME = "refresh_token"
 COOKIE_SETTINGS = {
     "httponly": True,
     "samesite": "strict",
-    "secure": False,
+    "secure": settings.COOKIE_SECURE,
     "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
 }
 
@@ -372,18 +372,19 @@ async def list_invites(
     """List pending invites for the org."""
     invites = await invite_service.list_invites(db, str(current_user.org_id))
 
+    # Batch fetch all inviters in a single query to avoid N+1
+    inviter_ids = {inv.invited_by for inv in invites if inv.invited_by}
+    if inviter_ids:
+        inviters_result = await db.execute(
+            select(User).where(User.id.in_(list(inviter_ids)))
+        )
+        inviter_map = {str(u.id): u.full_name for u in inviters_result.scalars()}
+    else:
+        inviter_map = {}
+
     out = []
     for inv in invites:
-        # Try to load inviter name
-        inviter_name = None
-        if inv.invited_by:
-            import uuid
-            res = await db.execute(
-                select(User).where(User.id == uuid.UUID(str(inv.invited_by)))
-            )
-            inviter = res.scalar_one_or_none()
-            inviter_name = inviter.full_name if inviter else None
-
+        inviter_name = inviter_map.get(str(inv.invited_by)) if inv.invited_by else None
         out.append(InviteOut(
             id=str(inv.id),
             email=inv.email,

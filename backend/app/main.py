@@ -60,6 +60,21 @@ application.add_middleware(
 )
 
 
+# ─── Webhook Payload Size Middleware ────────────────────────────────────────────
+@application.middleware("http")
+async def limit_webhook_body_size(request: Request, call_next):
+    if request.url.path.startswith("/api/v1/external/"):
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                cl_int = int(content_length)
+            except ValueError:
+                return JSONResponse(status_code=400, content={"error": "Invalid Content-Length header"})
+            if cl_int > settings.WEBHOOK_MAX_PAYLOAD_BYTES:
+                return JSONResponse(status_code=413, content={"error": "Payload too large"})
+    return await call_next(request)
+
+
 # ─── Security Headers Middleware ────────────────────────────────────────────────
 @application.middleware("http")
 async def add_security_headers(request: Request, call_next):
@@ -67,6 +82,17 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "connect-src 'self' ws: wss:; "
+        "frame-ancestors 'none';"
+    )
+    if settings.COOKIE_SECURE:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     return response
 
 
