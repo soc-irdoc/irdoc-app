@@ -487,8 +487,15 @@ window.addEventListener('hashchange', routeFromHash);
 function loadDoc(path) {
   const doc = DOCS[path];
   if (!doc) {
-    document.getElementById('doc-body').innerHTML =
-      `<p style="color:var(--text-2);margin-top:40px">Page not found: <code>${path}</code></p>`;
+    const body = document.getElementById('doc-body');
+    body.textContent = '';
+    const p = document.createElement('p');
+    p.style.cssText = 'color:var(--text-2);margin-top:40px';
+    p.append('Page not found: ');
+    const code = document.createElement('code');
+    code.textContent = path;
+    p.appendChild(code);
+    body.appendChild(p);
     return;
   }
   const body = document.getElementById('doc-body');
