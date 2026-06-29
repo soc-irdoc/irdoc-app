@@ -202,8 +202,86 @@ body.light #nav { background: rgba(255,255,255,.92); }
 .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
 mark { background: var(--accent-dim); color: var(--accent); border-radius: 2px; padding: 0 2px; }
 
-/* ══ MAIN + TOC placeholders ══ */
-.main { grid-area: main; min-width: 0; }
+/* ══ MAIN CONTENT ══ */
+.main { grid-area: main; min-width: 0; padding: 48px 40px 80px; }
+.doc-body { max-width: var(--content-max); margin: 0 auto; }
+
+/* Typography */
+.doc-body h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 16px; letter-spacing: -.5px; }
+.doc-body h2 { font-size: 1.35rem; font-weight: 700; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.doc-body h3 { font-size: 1.1rem; font-weight: 700; margin: 28px 0 8px; }
+.doc-body h4 { font-size: 1rem; font-weight: 700; margin: 20px 0 6px; color: var(--text-2); }
+.doc-body p  { margin-bottom: 16px; font-size: 15px; line-height: 1.8; }
+.doc-body ul, .doc-body ol { margin: 0 0 16px 24px; }
+.doc-body li { margin-bottom: 6px; font-size: 15px; line-height: 1.7; }
+.doc-body hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+.doc-body strong { font-weight: 700; }
+.doc-body em { font-style: italic; }
+.doc-body a { color: var(--accent); }
+.doc-body a:hover { text-decoration: underline; }
+
+/* Code */
+.doc-body code {
+  font-family: var(--mono); font-size: 13px;
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 2px 6px;
+}
+.doc-body pre {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin: 0 0 20px;
+  overflow-x: auto; position: relative;
+}
+.doc-body pre code { background: none; border: none; padding: 0; font-size: 13px; line-height: 1.7; }
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  background: var(--bg-4); border: 1px solid var(--border);
+  color: var(--text-2); border-radius: 6px;
+  font-family: var(--mono); font-size: 11px; padding: 4px 10px;
+  cursor: pointer; opacity: 0; transition: opacity .15s;
+}
+.doc-body pre:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { background: var(--bg-5); color: var(--text); }
+
+/* Tables */
+.doc-body table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+.doc-body th { background: var(--bg-3); font-weight: 700; text-align: left; padding: 10px 14px; border: 1px solid var(--border); }
+.doc-body td { padding: 9px 14px; border: 1px solid var(--border); vertical-align: top; }
+.doc-body tr:hover td { background: var(--bg-3); }
+
+/* Callout boxes */
+.doc-body blockquote {
+  border-left: 3px solid var(--border-hi); background: var(--bg-3);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 18px; margin: 0 0 20px; color: var(--text-2); font-size: 14px;
+}
+.callout-note { border-left-color: var(--blue) !important; background: var(--callout-note-bg) !important; color: var(--text) !important; }
+.callout-warn { border-left-color: var(--yellow) !important; background: var(--callout-warn-bg) !important; color: var(--text) !important; }
+.callout-tip  { border-left-color: var(--green) !important; background: var(--callout-tip-bg) !important; color: var(--text) !important; }
+
+/* Heading anchors */
+.heading-anchor { margin-left: 8px; color: var(--text-3); font-weight: 400; font-size: .85em; opacity: 0; transition: opacity .15s; text-decoration: none; }
+h2:hover .heading-anchor, h3:hover .heading-anchor { opacity: 1; }
+
+/* Prev / Next nav */
+.doc-nav {
+  max-width: var(--content-max); margin: 48px auto 0;
+  display: flex; justify-content: space-between; gap: 16px;
+  padding-top: 24px; border-top: 1px solid var(--border);
+}
+.doc-nav-link {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 18px; border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text-2); text-decoration: none;
+  font-size: 13px; flex: 1; max-width: 48%;
+  transition: border-color .15s, background .15s;
+}
+.doc-nav-link:hover { border-color: var(--accent); background: var(--accent-dim); text-decoration: none; }
+.doc-nav-link.prev { align-items: flex-start; }
+.doc-nav-link.next { align-items: flex-end; text-align: right; }
+.doc-nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); font-weight: 700; }
+.doc-nav-title { font-weight: 700; color: var(--text); font-size: 14px; }
+
+/* TOC placeholder */
 .toc-aside { grid-area: toc; }
   </style>
 </head>
@@ -237,7 +315,8 @@ mark { background: var(--accent-dim); color: var(--accent); border-radius: 2px; 
   </aside>
 
   <main id="main" class="main">
-    <!-- content added in Task 4 -->
+    <div class="doc-body" id="doc-body"></div>
+    <div class="doc-nav" id="doc-nav"></div>
   </main>
 
   <aside id="toc-aside" class="toc-aside">
@@ -373,8 +452,7 @@ function setActiveDoc(path) {
   if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
 }
 
-// Stubs — replaced in Tasks 4, 5, 6, 7
-function loadDoc(path) {}
+// Stubs — replaced in Tasks 5, 6, 7
 function buildTOC() {}
 function buildSearchIndex() {}
 function openSearchModal() {}
@@ -386,6 +464,105 @@ document.getElementById('sidebar-search-wrap').addEventListener('click', () => o
 
 // Initial sidebar render
 renderSidebar();
+</script>
+
+<script>
+// ── Docs data ──────────────────────────────────────────
+let DOCS = {};
+
+async function initDocs() {
+  const res = await fetch('docs-content.json');
+  const data = await res.json();
+  DOCS = data.docs;
+  buildSearchIndex();
+  routeFromHash();
+}
+
+function routeFromHash() {
+  const path = location.hash.slice(1) || 'installation/wizard';
+  loadDoc(path);
+}
+window.addEventListener('hashchange', routeFromHash);
+
+function loadDoc(path) {
+  const doc = DOCS[path];
+  if (!doc) {
+    document.getElementById('doc-body').innerHTML =
+      `<p style="color:var(--text-2);margin-top:40px">Page not found: <code>${path}</code></p>`;
+    return;
+  }
+  const body = document.getElementById('doc-body');
+  body.innerHTML = postProcess(marked.parse(doc.content));
+  document.title = doc.title + ' — IRDoc Docs';
+  setActiveDoc(path);
+  updateDocNav(path);
+  buildTOC();
+  body.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+  window.scrollTo(0, 0);
+  document.getElementById('main').scrollTo(0, 0);
+}
+
+function postProcess(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  // Heading anchors
+  div.querySelectorAll('h2, h3').forEach(h => {
+    const id = h.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    h.id = id;
+    const a = document.createElement('a');
+    a.className = 'heading-anchor'; a.href = '#' + id; a.textContent = '#';
+    h.appendChild(a);
+  });
+
+  // Copy buttons
+  div.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn'; btn.textContent = 'Copy';
+    btn.addEventListener('click', () => {
+      const code = pre.querySelector('code');
+      navigator.clipboard.writeText(code ? code.textContent : pre.textContent);
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+    pre.appendChild(btn);
+  });
+
+  // Callout boxes
+  div.querySelectorAll('blockquote').forEach(bq => {
+    const t = bq.textContent.trim().toLowerCase();
+    if (t.startsWith('note') || t.includes('**note:**'))    bq.classList.add('callout-note');
+    else if (t.startsWith('warning') || t.includes('**warning:**')) bq.classList.add('callout-warn');
+    else if (t.startsWith('tip') || t.includes('**tip:**'))     bq.classList.add('callout-tip');
+  });
+
+  return div.innerHTML;
+}
+
+function updateDocNav(path) {
+  const idx = FLAT.findIndex(i => i.path === path);
+  const prev = idx > 0 ? FLAT[idx - 1] : null;
+  const next = idx < FLAT.length - 1 ? FLAT[idx + 1] : null;
+  const nav = document.getElementById('doc-nav');
+  nav.innerHTML = '';
+
+  if (prev) {
+    const a = document.createElement('a');
+    a.className = 'doc-nav-link prev'; a.href = '#' + prev.path;
+    a.innerHTML = `<span class="doc-nav-label">← Previous</span><span class="doc-nav-title">${prev.title}</span>`;
+    nav.appendChild(a);
+  } else {
+    nav.appendChild(document.createElement('div'));
+  }
+  if (next) {
+    const a = document.createElement('a');
+    a.className = 'doc-nav-link next'; a.href = '#' + next.path;
+    a.innerHTML = `<span class="doc-nav-label">Next →</span><span class="doc-nav-title">${next.title}</span>`;
+    nav.appendChild(a);
+  }
+}
+
+initDocs();
 </script>
 
 <script>
