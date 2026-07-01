@@ -303,6 +303,80 @@ h2:hover .heading-anchor, h3:hover .heading-anchor { opacity: 1; }
 .toc-item:hover { color: var(--text); text-decoration: none; }
 .toc-item.active { color: var(--accent); border-left-color: var(--accent); }
 .toc-item.toc-h3 { padding-left: 22px; font-size: 11px; }
+
+/* ══ SEARCH MODAL ══ */
+.search-modal {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 80px;
+  visibility: hidden; opacity: 0;
+  transition: opacity .15s, visibility .15s;
+}
+.search-modal.open { visibility: visible; opacity: 1; }
+.search-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+}
+.search-dialog {
+  position: relative; z-index: 1;
+  background: var(--bg-3); border: 1px solid var(--border-hi);
+  border-radius: 16px; width: 100%; max-width: 600px;
+  overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,.5);
+  transform: scale(.96) translateY(-8px);
+  transition: transform .15s;
+}
+.search-modal.open .search-dialog { transform: scale(1) translateY(0); }
+.search-input-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.search-icon-glyph { font-size: 16px; color: var(--text-3); flex-shrink: 0; }
+#modal-search-input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: var(--sans); font-size: 16px; color: var(--text);
+}
+#modal-search-input::placeholder { color: var(--text-3); }
+.search-esc-hint {
+  font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  background: var(--bg-4); border: 1px solid var(--border);
+  border-radius: 4px; padding: 3px 7px; flex-shrink: 0;
+}
+.search-results { max-height: 420px; overflow-y: auto; padding: 8px 0; }
+.search-results-empty {
+  text-align: center; color: var(--text-3); padding: 32px; font-size: 14px;
+}
+.search-group-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--text-3); padding: 10px 20px 4px;
+}
+.search-result {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 10px 20px; cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background .1s, border-color .1s;
+}
+.search-result:hover, .search-result.focused {
+  background: var(--bg-4); border-left-color: var(--accent);
+}
+.search-result-title   { font-size: 14px; font-weight: 700; color: var(--text); }
+.search-result-excerpt { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.search-result-excerpt mark { background: none; color: var(--accent); font-weight: 700; }
+.search-footer {
+  display: flex; gap: 20px; padding: 10px 20px;
+  border-top: 1px solid var(--border); font-size: 11px; color: var(--text-3);
+}
+.search-footer kbd {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg-4); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px; margin-right: 4px;
+}
+
+/* ══ MOBILE SIDEBAR BACKDROP ══ */
+.sidebar-back-overlay {
+  display: none; position: fixed; inset: 0; z-index: 140;
+  background: rgba(0,0,0,.5);
+}
+.sidebar-back-overlay.visible { display: block; }
   </style>
 </head>
 <body class="dark">
@@ -346,6 +420,24 @@ h2:hover .heading-anchor, h3:hover .heading-anchor { opacity: 1; }
     </div>
   </aside>
 </div>
+
+<div id="search-modal" class="search-modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="search-backdrop" id="search-backdrop"></div>
+  <div class="search-dialog">
+    <div class="search-input-row">
+      <span class="search-icon-glyph">🔍</span>
+      <input id="modal-search-input" type="text" placeholder="Search documentation..." autocomplete="off" spellcheck="false">
+      <kbd class="search-esc-hint">Esc</kbd>
+    </div>
+    <div id="search-results" class="search-results"></div>
+    <div class="search-footer">
+      <span><kbd>↑↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> open</span>
+      <span><kbd>Esc</kbd> close</span>
+    </div>
+  </div>
+</div>
+<div id="sidebar-backdrop" class="sidebar-back-overlay"></div>
 
 <script>
 // ── Manifest ───────────────────────────────────────────
@@ -532,8 +624,117 @@ function buildSearchIndex() {
   });
 }
 
-function openSearchModal() {}
-function closeMobileDrawer() {}
+// ── ⌘K Search Modal ────────────────────────────────────
+let modalResultPaths = [];
+let focusedIdx = -1;
+
+function openSearchModal() {
+  const modal = document.getElementById('search-modal');
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  const input = document.getElementById('modal-search-input');
+  input.value = '';
+  renderModalResults('');
+  setTimeout(() => input.focus(), 60);
+}
+
+function closeSearchModal() {
+  document.getElementById('search-modal').classList.remove('open');
+  document.getElementById('search-modal').setAttribute('aria-hidden', 'true');
+  focusedIdx = -1;
+}
+
+function renderModalResults(query) {
+  const container = document.getElementById('search-results');
+  container.innerHTML = '';
+  modalResultPaths = [];
+  focusedIdx = -1;
+
+  const q = query.trim();
+  let results;
+
+  if (!fuseIndex || q.length < 2) {
+    results = FLAT.slice(0, 8).map(i => ({ item: { ...i, content: '' }, matches: [] }));
+  } else {
+    results = fuseIndex.search(q, { limit: 12 });
+  }
+
+  if (results.length === 0) {
+    container.innerHTML = '<p class="search-results-empty">No results for "' + q + '"</p>';
+    return;
+  }
+
+  // Group by section
+  const grouped = {};
+  for (const r of results) {
+    const sec = r.item.section;
+    (grouped[sec] = grouped[sec] || []).push(r);
+  }
+
+  for (const [section, items] of Object.entries(grouped)) {
+    const label = document.createElement('div');
+    label.className = 'search-group-label';
+    label.textContent = section;
+    container.appendChild(label);
+
+    for (const r of items) {
+      const { path, title, content } = r.item;
+      const resultIdx = modalResultPaths.length;
+      modalResultPaths.push(path);
+
+      let excerpt = '';
+      if (q.length >= 2 && content) {
+        const lower = content.toLowerCase();
+        const pos   = lower.indexOf(q.toLowerCase());
+        if (pos !== -1) {
+          const start = Math.max(0, pos - 40);
+          const end   = Math.min(content.length, pos + 90);
+          const raw   = content.slice(start, end).trim();
+          const re    = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+          excerpt = (start > 0 ? '…' : '') + raw.replace(re, '<mark>$1</mark>') + (end < content.length ? '…' : '');
+        }
+      }
+
+      const div = document.createElement('div');
+      div.className = 'search-result';
+      div.innerHTML = `<span class="search-result-title">${title}</span>${excerpt ? `<span class="search-result-excerpt">${excerpt}</span>` : ''}`;
+      div.addEventListener('click', () => { location.hash = path; closeSearchModal(); });
+      div.addEventListener('mouseenter', () => { focusedIdx = resultIdx; updateModalFocus(); });
+      container.appendChild(div);
+    }
+  }
+}
+
+function updateModalFocus() {
+  document.querySelectorAll('.search-result').forEach((el, i) => {
+    el.classList.toggle('focused', i === focusedIdx);
+    if (i === focusedIdx) el.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+// Modal input events
+document.getElementById('modal-search-input').addEventListener('input', e => renderModalResults(e.target.value));
+document.getElementById('modal-search-input').addEventListener('keydown', e => {
+  const total = modalResultPaths.length;
+  if (e.key === 'ArrowDown') { e.preventDefault(); focusedIdx = Math.min(focusedIdx + 1, total - 1); updateModalFocus(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); focusedIdx = Math.max(focusedIdx - 1, 0); updateModalFocus(); }
+  else if (e.key === 'Enter' && focusedIdx >= 0) { location.hash = modalResultPaths[focusedIdx]; closeSearchModal(); }
+  else if (e.key === 'Escape') closeSearchModal();
+});
+document.getElementById('search-backdrop').addEventListener('click', closeSearchModal);
+
+// Global ⌘K / Ctrl+K
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search-modal').classList.contains('open') ? closeSearchModal() : openSearchModal(); }
+  if (e.key === 'Escape' && document.getElementById('search-modal').classList.contains('open')) closeSearchModal();
+});
+document.getElementById('cmd-k-btn').addEventListener('click', openSearchModal);
+
+// ── Mobile drawer ──────────────────────────────────────
+function closeMobileDrawer() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebar-backdrop').classList.remove('visible');
+}
 
 // Sidebar search input — live filter with Enter to navigate and Escape to clear
 const sidebarSearch = document.getElementById('sidebar-search');
