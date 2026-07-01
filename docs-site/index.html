@@ -329,7 +329,7 @@ h2:hover .heading-anchor, h3:hover .heading-anchor { opacity: 1; }
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-search-wrap" id="sidebar-search-wrap">
       <span class="sidebar-search-icon">🔍</span>
-      <input id="sidebar-search" type="text" placeholder="Search docs..." autocomplete="off" readonly>
+      <input id="sidebar-search" type="text" placeholder="Search docs..." autocomplete="off">
     </div>
     <nav id="sidebar-nav" class="sidebar-nav"></nav>
   </aside>
@@ -477,6 +477,7 @@ function setActiveDoc(path) {
 
 // Stubs — replaced in Tasks 5, 6, 7
 let tocObserver = null;
+let fuseIndex = null;
 
 function buildTOC() {
   const nav = document.getElementById('toc-nav');
@@ -508,13 +509,52 @@ function buildTOC() {
 
   headings.forEach(h => tocObserver.observe(h));
 }
-function buildSearchIndex() {}
+
+function buildSearchIndex() {
+  const items = Object.entries(DOCS).map(([path, doc]) => ({
+    path,
+    title:   doc.title,
+    section: doc.section,
+    content: doc.content
+      .replace(/#{1,6}\s+/g, '')
+      .replace(/[*_`\[\]()]/g, '')
+      .replace(/\n+/g, ' ')
+      .slice(0, 10000),
+  }));
+  fuseIndex = new Fuse(items, {
+    keys: [
+      { name: 'title',   weight: 0.6 },
+      { name: 'content', weight: 0.4 },
+    ],
+    threshold: 0.35,
+    includeMatches: true,
+    minMatchCharLength: 2,
+  });
+}
+
 function openSearchModal() {}
 function closeMobileDrawer() {}
 
-// Sidebar search input — opens search modal (live filter added in Task 6)
-document.getElementById('sidebar-search').addEventListener('click', () => openSearchModal());
-document.getElementById('sidebar-search-wrap').addEventListener('click', () => openSearchModal());
+// Sidebar search input — live filter with Enter to navigate and Escape to clear
+const sidebarSearch = document.getElementById('sidebar-search');
+sidebarSearch.addEventListener('input', () => {
+  const filter = sidebarSearch.value;
+  renderSidebar(filter);
+});
+sidebarSearch.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    sidebarSearch.value = '';
+    renderSidebar('');
+  } else if (e.key === 'Enter') {
+    // Navigate to the first search result
+    const firstLink = document.querySelector('.sidebar-nav .nav-item');
+    if (firstLink) {
+      location.hash = firstLink.getAttribute('href').slice(1);
+      sidebarSearch.value = '';
+      renderSidebar('');
+    }
+  }
+});
 
 // Initial sidebar render
 renderSidebar();
