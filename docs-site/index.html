@@ -660,7 +660,10 @@ function renderModalResults(query) {
   }
 
   if (results.length === 0) {
-    container.innerHTML = '<p class="search-results-empty">No results for "' + q + '"</p>';
+    const p = document.createElement('p');
+    p.className = 'search-results-empty';
+    p.textContent = `No results for "${q}"`;
+    container.appendChild(p);
     return;
   }
 
@@ -697,7 +700,16 @@ function renderModalResults(query) {
 
       const div = document.createElement('div');
       div.className = 'search-result';
-      div.innerHTML = `<span class="search-result-title">${title}</span>${excerpt ? `<span class="search-result-excerpt">${excerpt}</span>` : ''}`;
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'search-result-title';
+      titleSpan.textContent = title;
+      div.appendChild(titleSpan);
+      if (excerpt) {
+        const excerptSpan = document.createElement('span');
+        excerptSpan.className = 'search-result-excerpt';
+        excerptSpan.innerHTML = excerpt;
+        div.appendChild(excerptSpan);
+      }
       div.addEventListener('click', () => { location.hash = path; closeSearchModal(); });
       div.addEventListener('mouseenter', () => { focusedIdx = resultIdx; updateModalFocus(); });
       container.appendChild(div);
