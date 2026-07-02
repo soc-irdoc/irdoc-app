@@ -2,8 +2,6 @@
 
 The report template builder lets you compose custom report layouts by arranging blocks in a drag-and-drop canvas. Each block maps to a section of the generated document.
 
-> **Premium feature** — requires a commercial license key.
-
 ---
 
 ## Opening the Builder

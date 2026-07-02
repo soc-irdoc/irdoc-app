@@ -1,7 +1,5 @@
 # CrowdStrike Falcon
 
-> **Premium feature** — requires a commercial license key.
-
 > **Senior Analyst role or higher required** to trigger containment actions.
 
 Allows senior analysts to contain (isolate from the network) a CrowdStrike-managed endpoint directly from an IRDoc incident, without leaving the platform. Every containment action requires manual confirmation and is fully audited.

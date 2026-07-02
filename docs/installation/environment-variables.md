@@ -32,8 +32,7 @@ Copy `.env.example` to `.env` and edit before starting the stack.
 | Variable | Default | Description |
 |---|---|---|
 | `ALLOW_REGISTRATION` | `true` | Set to `false` in production — require admin invites instead. |
-| `LICENSE_KEY` | _(empty)_ | Commercial license key. Leave empty for AGPL core features only. |
-| `MSSP_MODE` | `false` | Enable MSSP multi-tenant mode (premium). |
+| `MSSP_MODE` | `false` | Enable MSSP multi-tenant mode. |
 
 ---
 
@@ -60,7 +59,7 @@ Copy `.env.example` to `.env` and edit before starting the stack.
 
 ---
 
-## AI (Premium)
+## AI
 
 | Variable | Default | Description |
 |---|---|---|

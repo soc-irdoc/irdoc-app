@@ -2,8 +2,6 @@
 
 IRDoc supports SAML 2.0 single sign-on with any compliant identity provider.
 
-> **Premium feature** — requires a commercial license key.
-
 ---
 
 ## Supported Identity Providers

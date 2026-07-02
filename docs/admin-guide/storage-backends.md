@@ -2,8 +2,6 @@
 
 IRDoc uses a pluggable storage backend for all file uploads (evidence attachments, generated reports). You can switch backends at runtime from the admin panel without redeployment.
 
-> **Cloud backends (S3, Azure Blob, GCS) require a premium license.**
-
 ---
 
 ## Backends
@@ -18,7 +16,7 @@ Files are stored on the container filesystem at `STORAGE_PATH` (`/app/storage` b
 
 ---
 
-### S3-Compatible (premium)
+### S3-Compatible
 
 Supports Amazon S3, MinIO, Cloudflare R2, Wasabi, and any S3-compatible provider.
 
@@ -38,7 +36,7 @@ File URLs are presigned S3 URLs (1-hour expiry, re-generated on each download re
 
 ---
 
-### Azure Blob Storage (premium)
+### Azure Blob Storage
 
 **Configuration (Admin → Storage → Azure Blob):**
 
@@ -52,7 +50,7 @@ File URLs are SAS (Shared Access Signature) URLs with 1-hour expiry.
 
 ---
 
-### Google Cloud Storage (premium)
+### Google Cloud Storage
 
 **Configuration (Admin → Storage → GCS):**
 

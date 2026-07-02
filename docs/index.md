@@ -64,16 +64,16 @@ Configuration and management for administrators.
 
 Configure third-party integrations from **Admin → Integrations**.
 
-| Integration | Category | Plan |
-|---|---|---|
-| [VirusTotal](admin-guide/integrations/virustotal.md) | Threat Intelligence | Core |
-| [AbuseIPDB](admin-guide/integrations/abuseipdb.md) | Threat Intelligence | Core |
-| [Microsoft Sentinel](admin-guide/integrations/microsoft-sentinel.md) | SIEM | Premium |
-| [CrowdStrike Falcon](admin-guide/integrations/crowdstrike.md) | EDR / Containment | Premium |
-| [Slack](admin-guide/integrations/slack.md) | Notifications | Core |
-| [Microsoft Teams](admin-guide/integrations/microsoft-teams.md) | Notifications | Core |
-| [ServiceDesk Plus](admin-guide/integrations/servicedesk-plus.md) | ITSM | Core |
-| SharePoint | Storage / Sync | Premium |
+| Integration | Category |
+|---|---|
+| [VirusTotal](admin-guide/integrations/virustotal.md) | Threat Intelligence |
+| [AbuseIPDB](admin-guide/integrations/abuseipdb.md) | Threat Intelligence |
+| [Microsoft Sentinel](admin-guide/integrations/microsoft-sentinel.md) | SIEM |
+| [CrowdStrike Falcon](admin-guide/integrations/crowdstrike.md) | EDR / Containment |
+| [Slack](admin-guide/integrations/slack.md) | Notifications |
+| [Microsoft Teams](admin-guide/integrations/microsoft-teams.md) | Notifications |
+| [ServiceDesk Plus](admin-guide/integrations/servicedesk-plus.md) | ITSM |
+| SharePoint | Storage / Sync |
 
 ---
 

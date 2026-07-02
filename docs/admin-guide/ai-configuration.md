@@ -1,7 +1,6 @@
 # AI Configuration
 
 > **Admin role required.**
-> **Premium feature** — requires a commercial license key.
 
 IRDoc can generate AI-powered executive summaries and remediation recommendations for incidents using a locally-run language model via Ollama. All AI processing happens on your own infrastructure — no data is sent to external AI APIs. Go to **Admin → AI**.
 

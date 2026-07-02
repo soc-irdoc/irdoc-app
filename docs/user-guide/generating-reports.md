@@ -7,9 +7,9 @@
 1. Open an incident and click the **Reports** tab (or click **Report** in the top bar)
 2. Click **Generate Report**
 3. Select a template (Management Brief, Technical Report, Legal/Compliance, or a custom org template)
-4. Select the export format: **Markdown** or **HTML** (core); **PDF** or **DOCX** (premium)
+4. Select the export format: **Markdown**, **HTML**, **PDF**, or **DOCX**
 5. Optionally set a classification label (e.g., TLP:AMBER, CONFIDENTIAL)
-6. Toggle **Include AI Summary** if you have an AI backend configured (premium)
+6. Toggle **Include AI Summary** if you have an AI backend configured
 7. Click **Generate**
 
 Report generation runs asynchronously. A progress indicator appears and the report is listed once ready. Large reports with many timeline entries typically complete in under 10 seconds.
@@ -42,7 +42,7 @@ See [Report Template Builder](report-template-builder.md) for building custom te
 
 ## SharePoint Auto-Sync
 
-Premium feature. Once a sync policy is configured (Reports tab → Sync Policies), IRDoc automatically re-uploads the report to SharePoint after every significant change to the incident, debounced to avoid flooding.
+Once a sync policy is configured (Reports tab → Sync Policies), IRDoc automatically re-uploads the report to SharePoint after every significant change to the incident, debounced to avoid flooding.
 
 See [SharePoint Sync](sharepoint-sync.md).
 
@@ -52,7 +52,7 @@ See [SharePoint Sync](sharepoint-sync.md).
 
 | Format | Notes |
 |---|---|
-| **Markdown** | Plain text, renderable in GitHub, Confluence, etc. Core feature. |
-| **HTML** | Inline-styled, suitable for email or web view. Core feature. |
-| **PDF** | Print-ready, WeasyPrint-rendered. Premium. |
-| **DOCX** | Microsoft Word format. Premium. |
+| **Markdown** | Plain text, renderable in GitHub, Confluence, etc. |
+| **HTML** | Inline-styled, suitable for email or web view. |
+| **PDF** | Print-ready, WeasyPrint-rendered. |
+| **DOCX** | Microsoft Word format. |

@@ -1,7 +1,6 @@
 # Backup Management
 
 > **Admin role required.**
-> **Premium feature** — requires a commercial license key.
 
 IRDoc has a built-in scheduled backup system accessible from the admin panel. Go to **Admin → Backups**.
 

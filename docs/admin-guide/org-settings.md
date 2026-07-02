@@ -40,19 +40,6 @@ Toggle between the two from this page. The change takes effect immediately.
 
 ---
 
-## Plan & license
-
-This section shows your current plan tier: **community** or **premium**.
-
-To activate or update a license:
-
-1. Paste your license key into the **License Key** field
-2. Click **Save**
-
-Premium features unlock immediately after a valid key is saved. If the key is invalid or expired, an error is shown and the tier does not change.
-
----
-
 ## Audit log
 
 All changes made in Org Settings — including name, branding, registration policy, and license key updates — are recorded in the audit log.

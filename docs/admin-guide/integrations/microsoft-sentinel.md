@@ -1,7 +1,5 @@
 # Microsoft Sentinel
 
-> **Premium feature** — requires a commercial license key.
-
 > **Admin role required** to configure. **Analyst role or higher** to use.
 
 Pulls security alerts from Microsoft Sentinel directly into an IRDoc incident as timeline entries, and allows running custom KQL queries against your Sentinel workspace from within the incident.

@@ -2,8 +2,6 @@
 
 IRDoc can automatically push a report to a SharePoint document library whenever the incident changes. Management always has a current document — no manual effort.
 
-> **Premium feature** — requires a commercial license key.
-
 ---
 
 ## How it works

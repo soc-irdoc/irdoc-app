@@ -20,7 +20,6 @@ class MyToolPlugin(BasePlugin):
     name = "my_tool"                    # unique slug, used in the DB
     display_name = "My Tool"            # shown in the integrations UI
     category = "ti"                     # ti | siem | edr | iam | comms | storage_sync
-    is_premium = True                   # show PremiumGate in UI if True
     config_schema = {
         "api_key": {
             "type": "string",

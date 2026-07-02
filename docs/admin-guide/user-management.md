@@ -54,7 +54,7 @@ To reactivate, contact the database administrator (there is no UI for reactivati
 
 ## SSO / SAML
 
-Premium feature. See [SSO / SAML](sso-saml.md) for setup.
+See [SSO / SAML](sso-saml.md) for setup.
 
 When SSO is enabled, users can sign in via your IdP. IRDoc auto-provisions accounts on first SSO login based on the role mappings you configure.
 

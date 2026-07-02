@@ -586,7 +586,7 @@ Reports are generated asynchronously. The workflow is: enqueue → poll for read
 | `report_template_id` | UUID | No | Custom report template; omit for default |
 | `pdf_template_id` | UUID | No | PDF layout template |
 | `classification` | string | No | Default `"confidential"` |
-| `include_ai` | bool | No | Include AI-generated summary (requires premium) |
+| `include_ai` | bool | No | Include AI-generated summary |
 
 ```bash
 curl -s -X POST \

@@ -66,7 +66,7 @@ Traffic Light Protocol levels for sharing sensitivity:
 
 ---
 
-## Enrichment (Premium)
+## Enrichment
 
 If VirusTotal, AbuseIPDB, or Shodan integrations are enabled (Admin → Integrations), IOCs are automatically enriched when added.
 

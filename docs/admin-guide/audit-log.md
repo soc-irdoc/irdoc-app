@@ -1,7 +1,6 @@
 # Audit Log
 
 > **Admin role required.**
-> **Premium feature** — requires a commercial license key.
 
 The audit log is an append-only record of every significant action taken in IRDoc: who did what, when, and to which resource. Go to **Admin → Audit Log**.
 
