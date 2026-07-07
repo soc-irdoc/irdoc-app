@@ -183,4 +183,11 @@ export const mfaApi = {
     apiClient.delete('/auth/mfa/disable'),
 }
 
+export const versionApi = {
+  get: () =>
+    apiClient.get<{
+      data: { version: string; latest_version: string | null; update_available: boolean }
+    }>('/version'),
+}
+
 export default apiClient
