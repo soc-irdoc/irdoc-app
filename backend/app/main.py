@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
 application = FastAPI(
     title="IRDoc API",
     description="Incident Response Documentation Platform",
-    version="1.0.0",
+    version=settings.VERSION,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",

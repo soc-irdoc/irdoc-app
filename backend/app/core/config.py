@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "IRDoc"
     BASE_URL: AnyHttpUrl = "http://localhost:3000"  # type: ignore[assignment]
     ALLOW_REGISTRATION: bool = True
+    VERSION: str = "dev"
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://irp:changeme@db/irp"
