@@ -1,12 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import apiClient from '@/lib/apiClient'
+import { versionApi } from '@/lib/apiClient'
 import { useAuthStore } from '@/stores/authStore'
-
-interface VersionInfo {
-  version: string
-  latest_version: string | null
-  update_available: boolean
-}
 
 export function useVersion() {
   const user = useAuthStore((s) => s.user)
@@ -14,7 +8,7 @@ export function useVersion() {
   const query = useQuery({
     queryKey: ['version'],
     queryFn: async () => {
-      const res = await apiClient.get<{ data: VersionInfo }>('/version')
+      const res = await versionApi.get()
       return res.data.data
     },
     enabled: !!user,
