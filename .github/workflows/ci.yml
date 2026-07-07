@@ -131,6 +131,8 @@ jobs:
     needs: [test-backend, test-frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -141,11 +143,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
@@ -154,8 +157,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            soc-irdoc/irdoc-backend:latest
-            soc-irdoc/irdoc-backend:${{ github.sha }}
+            ghcr.io/soc-irdoc/irdoc-backend:latest
+            ghcr.io/soc-irdoc/irdoc-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -166,8 +169,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            soc-irdoc/irdoc-frontend:latest
-            soc-irdoc/irdoc-frontend:${{ github.sha }}
+            ghcr.io/soc-irdoc/irdoc-frontend:latest
+            ghcr.io/soc-irdoc/irdoc-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -177,6 +180,8 @@ jobs:
     needs: [build-and-push]
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -184,11 +189,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version from tag
         id: version
@@ -197,14 +203,14 @@ jobs:
       - name: Tag backend with version
         run: |
           docker buildx imagetools create \
-            --tag soc-irdoc/irdoc-backend:${{ steps.version.outputs.VERSION }} \
-            soc-irdoc/irdoc-backend:${{ github.sha }}
+            --tag ghcr.io/soc-irdoc/irdoc-backend:${{ steps.version.outputs.VERSION }} \
+            ghcr.io/soc-irdoc/irdoc-backend:${{ github.sha }}
 
       - name: Tag frontend with version
         run: |
           docker buildx imagetools create \
-            --tag soc-irdoc/irdoc-frontend:${{ steps.version.outputs.VERSION }} \
-            soc-irdoc/irdoc-frontend:${{ github.sha }}
+            --tag ghcr.io/soc-irdoc/irdoc-frontend:${{ steps.version.outputs.VERSION }} \
+            ghcr.io/soc-irdoc/irdoc-frontend:${{ github.sha }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
