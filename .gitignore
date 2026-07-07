@@ -25,7 +25,7 @@ frontend/build/
 *.local
 
 # Storage (never commit uploaded files)
-storage/
+/storage/
 
 # Backups
 backups/
@@ -57,5 +57,4 @@ logs/
 docs/superpowers/
 verify_screenshots/
 CLAUDE*.md
-landing/
 graphify-out/
