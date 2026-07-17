@@ -54,7 +54,6 @@ logs/
 # ignore temp folder
 --temp/
 .superpowers/
-docs/superpowers/
 verify_screenshots/
 CLAUDE*.md
 graphify-out/
