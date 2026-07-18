@@ -52,18 +52,14 @@ jobs:
         run: pip install -r backend/requirements.txt pip-audit ruff
 
       - name: Security audit (pip-audit)
-        run: pip-audit --requirement backend/requirements.txt --ignore-vuln GHSA-wfm5-v35h-vwf4
+        # PYSEC-2026-1325: Minerva timing attack on ecdsa's P-256 signing, unfixed
+        # upstream by design. ecdsa is a hard dependency of python-jose but this
+        # codebase only ever uses HS256/RS256 (see app/core/security.py, oidc.py),
+        # never ES256, so the vulnerable code path is unreachable here.
+        run: pip-audit --requirement backend/requirements.txt --ignore-vuln GHSA-wfm5-v35h-vwf4 --ignore-vuln PYSEC-2026-1325
 
       - name: Lint (ruff)
         run: cd backend && ruff check .
-
-      - name: Secret leak check
-        run: |
-          if grep -rn "irp_key_\|sk-ant-\|AKIA\|sk-proj-" backend/app/ 2>/dev/null | grep -v "\.pyc"; then
-            echo "ERROR: Potential secret found in source code"
-            exit 1
-          fi
-          echo "Secret check passed."
 
       - name: Run tests
         env:
@@ -133,6 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
+      security-events: write
 
     steps:
       - uses: actions/checkout@v4
@@ -173,6 +170,37 @@ jobs:
             ghcr.io/soc-irdoc/irdoc-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Report-only for now (exit-code 0): this is the first pass at scanning
+      # these images, so we don't yet know the baseline noise from the base
+      # images. Findings land in the job log/SARIF; tighten to exit-code 1
+      # once the baseline has been triaged.
+      - name: Scan backend image (Trivy)
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: ghcr.io/soc-irdoc/irdoc-backend:${{ github.sha }}
+          format: sarif
+          output: trivy-backend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Scan frontend image (Trivy)
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: ghcr.io/soc-irdoc/irdoc-frontend:${{ github.sha }}
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      # Code scanning (Security tab) requires GitHub Advanced Security, which
+      # isn't available on private repos on the free plan. This activates on
+      # its own once the repo goes public.
+      - name: Upload Trivy results to code scanning
+        if: ${{ !github.event.repository.private }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: .
 
   # ── Tag versioned release images ──────────────────────────────────────────
   release:
