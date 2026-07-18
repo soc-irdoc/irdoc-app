@@ -22,12 +22,15 @@ def test_generate_totp_secret_returns_valid_uri():
 def test_verify_totp_accepts_current_code():
     secret, _ = generate_totp_secret("analyst@acme.com")
     current_code = pyotp.TOTP(secret).now()
-    assert verify_totp(encrypt_secret(secret), current_code) is True
+    is_valid, _counter = verify_totp(encrypt_secret(secret), current_code)
+    assert is_valid is True
 
 
 def test_verify_totp_rejects_wrong_code():
     secret, _ = generate_totp_secret("analyst@acme.com")
-    assert verify_totp(encrypt_secret(secret), "000000") is False
+    is_valid, counter = verify_totp(encrypt_secret(secret), "000000")
+    assert is_valid is False
+    assert counter is None
 
 
 def test_generate_backup_codes_count_and_format():

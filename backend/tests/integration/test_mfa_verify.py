@@ -98,9 +98,14 @@ async def test_regenerate_backup_codes_returns_ten_new_codes(
 async def test_disable_mfa_clears_fields(
     client: AsyncClient, enrolled_user, db_session
 ):
-    user, _, _, pre_access_token = enrolled_user
+    user, secret, _, pre_access_token = enrolled_user
     headers = {"Authorization": f"Bearer {pre_access_token}"}
-    resp = await client.delete("/api/v1/auth/mfa/disable", headers=headers)
+    resp = await client.request(
+        "DELETE",
+        "/api/v1/auth/mfa/disable",
+        json={"code": pyotp.TOTP(secret).now()},
+        headers=headers,
+    )
     assert resp.status_code == 200
 
     await db_session.refresh(user)
@@ -113,7 +118,7 @@ async def test_disable_mfa_clears_fields(
 async def test_disable_mfa_blocked_when_org_requires_it(
     client: AsyncClient, enrolled_user, db_session
 ):
-    user, _, _, pre_access_token = enrolled_user
+    user, secret, _, pre_access_token = enrolled_user
     from app.models.organization import Organization
     org = await db_session.get(Organization, user.org_id)
     settings = org.settings or {}
@@ -122,5 +127,10 @@ async def test_disable_mfa_blocked_when_org_requires_it(
     await db_session.commit()
 
     headers = {"Authorization": f"Bearer {pre_access_token}"}
-    resp = await client.delete("/api/v1/auth/mfa/disable", headers=headers)
+    resp = await client.request(
+        "DELETE",
+        "/api/v1/auth/mfa/disable",
+        json={"code": pyotp.TOTP(secret).now()},
+        headers=headers,
+    )
     assert resp.status_code == 409

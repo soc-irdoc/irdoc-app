@@ -88,6 +88,7 @@ if "sqlite" in _TEST_DB_URL_RAW:
     _SA_ARRAY.result_processor = _sqlite_array_result_processor  # type: ignore[method-assign]
 
 from app.core.database import Base, get_db
+from app.core.limiter import limiter
 from app.core.security import hash_password
 # `app` is the Socket.io ASGIApp wrapper; `application` is the FastAPI instance.
 # dependency_overrides lives on the FastAPI instance.
@@ -98,6 +99,16 @@ TEST_DB_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
 test_engine = create_async_engine(TEST_DB_URL, echo=False)
 TestSessionLocal = async_sessionmaker(bind=test_engine, expire_on_commit=False, autoflush=False)
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    # slowapi's Limiter keeps its counters in a module-level singleton
+    # (app.core.limiter.limiter), so without a reset requests from earlier
+    # tests count towards later tests' limits (e.g. the 10/minute login
+    # limit gets exceeded partway through the suite).
+    limiter.reset()
+    yield
 
 
 @pytest_asyncio.fixture(autouse=True)

@@ -57,7 +57,7 @@ async def test_detect_iocs_without_saving(client: AsyncClient, auth_headers, inc
 
     # Verify nothing was saved
     iocs = await client.get(f"/api/v1/incidents/{incident_id}/iocs", headers=auth_headers)
-    assert iocs.json() == []
+    assert iocs.json()["data"] == []
 
 
 @pytest.mark.asyncio
