@@ -5,15 +5,13 @@ All notable changes to IRDoc are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 IRDoc uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+The current pre-release version is tracked in [`VERSION`](VERSION). Nothing
+below has been tagged as a release yet — it will move under a version
+heading here once it is.
+
 ---
 
 ## [Unreleased]
-
----
-
-## [1.0.0] — 2026-03-17
-
-Initial public release.
 
 ### Added
 
@@ -109,5 +107,4 @@ Initial public release.
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/soc-irdoc/irdoc-app/releases/tag/v1.0.0
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/commits/main
