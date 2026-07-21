@@ -1,5 +1,3 @@
-version: '3.9'
-
 # Production Docker Compose for IRDoc
 # Usage: python3 installer/wizard.py  (wizard writes docker/.env, then runs compose)
 # See docs/installation/docker-compose.md for full setup guide.
