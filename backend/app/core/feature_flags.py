@@ -21,17 +21,24 @@ FEATURE_MAP: dict[str, str] = {
     "local_storage": "core",
     "rest_api": "core",
 
-    # Premium — require commercial license
-    "report_template_builder": "pro",
-    "report_pdf_export": "pro",
-    "report_docx_export": "pro",
+    # Everything shipped so far is core — nothing currently written is
+    # premium. These stay mapped to "core" until a feature that actually
+    # requires a commercial license ships.
+    "report_template_builder": "core",
+    "report_pdf_export": "core",
+    "report_docx_export": "core",
     "ai_summaries": "core",  # Ollama is local/free — no license gate
-    "sharepoint_sync": "pro",
-    "cloud_storage": "pro",       # S3 / Azure / GCS backends
-    "advanced_integrations": "pro",  # VT, AbuseIPDB, Sentinel, CrowdStrike
+    "sharepoint_sync": "core",
+    "cloud_storage": "core",          # S3 / Azure / GCS backends
+    "advanced_integrations": "core",  # VT, AbuseIPDB, Sentinel, CrowdStrike
+    "integration_siem": "core",       # Sentinel
+    "integration_edr": "core",        # CrowdStrike
+    "integration_iam": "core",        # Azure AD
+    "sso_oidc": "core",
+    "audit_log": "core",
+
+    # Not yet implemented — safe to leave gated since no code path uses them.
     "multi_tenancy": "enterprise",
-    "sso_oidc": "enterprise",
-    "audit_log": "enterprise",
     "custom_branding": "enterprise",
     "mssp_mode": "enterprise",
     "rbac_advanced": "enterprise",

@@ -1,4 +1,4 @@
-"""Azure Active Directory / Entra ID integration (premium)."""
+"""Azure Active Directory / Entra ID integration."""
 import logging
 
 import httpx
@@ -16,7 +16,7 @@ class AzureADPlugin:
     name = "azuread"
     display_name = "Azure AD / Entra ID"
     category = "iam"
-    is_premium = True
+    is_premium = False
     icon = "large_blue_diamond_color.svg"
     description = "Fetch sign-in logs, revoke sessions, and reset passwords via Microsoft Graph."
 

@@ -1,4 +1,4 @@
-"""Proofpoint email security integration (premium)."""
+"""Proofpoint email security integration."""
 import logging
 from base64 import b64encode
 
@@ -14,7 +14,7 @@ class ProofpointPlugin:
     name = "proofpoint"
     display_name = "Proofpoint"
     category = "email"
-    is_premium = True
+    is_premium = False
     icon = "e-mail_color.svg"
     description = "Search email messages and traces via Proofpoint TRAP / SIEM API."
 

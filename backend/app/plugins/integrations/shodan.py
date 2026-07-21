@@ -1,4 +1,4 @@
-"""Shodan integration — IP and domain enrichment (premium)."""
+"""Shodan integration — IP and domain enrichment."""
 import logging
 
 import httpx
@@ -13,7 +13,7 @@ class ShodanPlugin:
     name = "shodan"
     display_name = "Shodan"
     category = "ti"
-    is_premium = True
+    is_premium = False
     icon = "satellite_antenna_color.svg"
     description = "Enrich IP addresses and domains with Shodan port/host data."
 

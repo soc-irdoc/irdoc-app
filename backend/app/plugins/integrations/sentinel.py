@@ -1,4 +1,4 @@
-"""Microsoft Sentinel integration — pull alerts, run KQL queries (premium)."""
+"""Microsoft Sentinel integration — pull alerts, run KQL queries."""
 import logging
 from datetime import datetime, timezone
 
@@ -17,7 +17,7 @@ class SentinelPlugin:
     name = "sentinel"
     display_name = "Microsoft Sentinel"
     category = "siem"
-    is_premium = True
+    is_premium = False
     icon = "blue_circle_color.svg"
     description = "Pull alerts and run KQL queries from Microsoft Sentinel."
 

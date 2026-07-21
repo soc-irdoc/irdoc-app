@@ -1,4 +1,4 @@
-"""SharePoint / OneDrive report delivery via Microsoft Graph API (premium)."""
+"""SharePoint / OneDrive report delivery via Microsoft Graph API."""
 import logging
 
 import httpx
@@ -16,7 +16,7 @@ class SharePointPlugin:
     name = "sharepoint"
     display_name = "SharePoint / OneDrive"
     category = "storage_sync"
-    is_premium = True
+    is_premium = False
     icon = "open_file_folder_color.svg"
     description = "Auto-sync incident reports to SharePoint on every update."
 

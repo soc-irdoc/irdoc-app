@@ -1,4 +1,4 @@
-"""CrowdStrike Falcon integration — detections + host containment (premium)."""
+"""CrowdStrike Falcon integration — detections + host containment."""
 import logging
 
 import httpx
@@ -13,7 +13,7 @@ class CrowdStrikePlugin:
     name = "crowdstrike"
     display_name = "CrowdStrike Falcon"
     category = "edr"
-    is_premium = True
+    is_premium = False
     icon = "eagle_color.svg"
     description = "Import detections and contain hosts via CrowdStrike Falcon."
 
