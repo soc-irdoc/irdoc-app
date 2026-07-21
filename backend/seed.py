@@ -1,6 +1,11 @@
 """
 Seed script — runs on first startup if DB is empty.
-Creates: default org, admin user, 4 system incident templates, 3 system report templates.
+Creates: 4 system incident templates, 3 system report templates.
+
+Does NOT create an org or admin user — that must only ever happen through
+the first-run setup flow (POST /auth/setup, driven by the installer wizard
+or the app's own setup screen), so there is never a known-default admin
+account listening on a fresh install.
 """
 import asyncio
 import logging
@@ -8,10 +13,7 @@ import logging
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
-from app.core.security import hash_password
-from app.models.organization import Organization
 from app.models.template import IncidentTemplate, ReportTemplate
-from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -153,32 +155,16 @@ REPORT_TEMPLATES = [
 async def seed() -> None:
     async with AsyncSessionLocal() as db:
         # Check if already seeded
-        result = await db.execute(select(Organization).where(Organization.slug == "default"))
+        result = await db.execute(
+            select(IncidentTemplate.id).where(IncidentTemplate.is_system.is_(True)).limit(1)
+        )
         if result.scalar_one_or_none():
             logger.info("Seed: already seeded, skipping.")
             return
 
         logger.info("Seed: seeding database...")
 
-        # 1. Default organization
-        org = Organization(name="Default Organization", slug="default", plan="core")
-        db.add(org)
-        await db.flush()
-
-        # 2. Admin user (force password reset on first login)
-        admin = User(
-            org_id=org.id,
-            email="admin@localhost",
-            full_name="IRDoc Admin",
-            role="admin",
-            password_hash=hash_password("ChangeMe123!"),
-            avatar_initials="IA",
-            must_reset_password=True,
-        )
-        db.add(admin)
-        await db.flush()
-
-        # 3. System incident templates
+        # 1. System incident templates
         for tmpl_data in INCIDENT_TEMPLATES:
             tmpl = IncidentTemplate(
                 org_id=None,  # system template
@@ -190,7 +176,7 @@ async def seed() -> None:
             )
             db.add(tmpl)
 
-        # 4. System report templates
+        # 2. System report templates
         for rt_data in REPORT_TEMPLATES:
             rt = ReportTemplate(
                 org_id=None,  # system template
@@ -204,9 +190,7 @@ async def seed() -> None:
             db.add(rt)
 
         await db.commit()
-        logger.info(
-            "Seed: done. Admin user: admin@localhost / ChangeMe123! (must change on first login)"
-        )
+        logger.info("Seed: done. No org or admin user created — run first-run setup to create one.")
 
 
 if __name__ == "__main__":
