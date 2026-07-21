@@ -66,7 +66,9 @@ export function MFAVerifyModal({ challengeToken, onSuccess }: Props) {
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ marginBottom: 8 }}><img src="/icons/locked_with_key_color.svg" width={28} height={28} alt="" aria-hidden="true" /></div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <img src="/icons/locked_with_key_color.svg" width={28} height={28} alt="" aria-hidden="true" />
+          </div>
           <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
             Two-Factor Authentication
           </div>

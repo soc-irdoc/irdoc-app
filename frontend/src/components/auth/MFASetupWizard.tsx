@@ -104,7 +104,9 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
 
       {step === 1 && (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ marginBottom: 12 }}><img src="/icons/mobile_phone_color.svg" width={32} height={32} alt="" aria-hidden="true" /></div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <img src="/icons/mobile_phone_color.svg" width={32} height={32} alt="" aria-hidden="true" />
+          </div>
           <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: 'var(--text-primary)' }}>
             Install an authenticator app
           </div>

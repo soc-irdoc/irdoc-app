@@ -274,10 +274,10 @@ export function SettingsPage() {
           description="Switch between dark and light mode"
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}>
               {theme === 'dark'
-                ? <><img src="/icons/crescent_moon_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Dark</>
-                : <><img src="/icons/sun_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Light</>
+                ? <><img src="/icons/crescent_moon_color.svg" width={14} height={14} alt="" aria-hidden="true" />Dark</>
+                : <><img src="/icons/sun_color.svg" width={14} height={14} alt="" aria-hidden="true" />Light</>
               }
             </span>
             <ToggleSwitch
