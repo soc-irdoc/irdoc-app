@@ -63,6 +63,7 @@ class WizardState(BaseModel):
 
     # Step 3 — URL
     base_url: str = ""
+    cors_origins: str = ""  # comma-separated; additional origins beyond base_url
 
     # Step 4 — Secrets
     db_password: str = ""
@@ -118,6 +119,7 @@ async def on_startup():
         state.redis_password = existing.get("REDIS_PASSWORD", "")
         state.secret_key = existing.get("SECRET_KEY", "")
         state.base_url = existing.get("BASE_URL", "")
+        state.cors_origins = existing.get("CORS_ORIGINS", "")
         state.license_key = existing.get("LICENSE_KEY", "")
 
     # Optional update check (skipped if IRDOC_NO_UPDATE_CHECK=1)
@@ -277,6 +279,7 @@ async def save_core_config(
     access_token_expire_minutes: int = Form(15),
     refresh_token_expire_days: int = Form(30),
     license_key: str = Form(""),
+    cors_origins: str = Form(""),
 ):
     state.base_url = base_url.rstrip("/")
     state.db_password = db_password
@@ -285,6 +288,7 @@ async def save_core_config(
     state.access_token_expire_minutes = access_token_expire_minutes
     state.refresh_token_expire_days = refresh_token_expire_days
     state.license_key = license_key
+    state.cors_origins = cors_origins.strip()
     return RedirectResponse("/admin-user", status_code=302)
 
 
@@ -336,6 +340,7 @@ async def review_confirm():
         "redis_password": state.redis_password,
         "secret_key": state.secret_key,
         "base_url": state.base_url,
+        "cors_origins": state.cors_origins,
         "access_token_expire_minutes": state.access_token_expire_minutes,
         "refresh_token_expire_days": state.refresh_token_expire_days,
         "license_key": state.license_key,

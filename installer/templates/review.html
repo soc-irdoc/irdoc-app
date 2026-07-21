@@ -16,6 +16,7 @@
   <table style="width:100%;margin-top:1rem;font-size:0.875rem;border-collapse:collapse">
     <tr><td style="padding:0.4rem 0;color:#6b7280;width:45%">Base URL</td><td>{{ state.base_url }}</td></tr>
     <tr><td style="padding:0.4rem 0;color:#6b7280">HTTPS Mode</td><td>{{ state.https_mode or "—" }}</td></tr>
+    <tr><td style="padding:0.4rem 0;color:#6b7280">Additional Origins</td><td>{{ state.cors_origins or "—" }}</td></tr>
     {% if state.cert_cn %}<tr><td style="padding:0.4rem 0;color:#6b7280">Certificate CN</td><td>{{ state.cert_cn }} (expires {{ state.cert_expiry }})</td></tr>{% endif %}
     <tr><td style="padding:0.4rem 0;color:#6b7280">DB Password</td>
       <td><span x-show="!showSecrets">••••••••</span><span x-show="showSecrets" class="font-mono">{{ state.db_password }}</span></td></tr>

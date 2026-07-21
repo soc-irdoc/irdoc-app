@@ -68,6 +68,15 @@
       <label class="mt-4">Allow Registration</label>
       <input type="hidden" name="allow_registration" value="false">
       <p class="field-hint">Locked to <strong>false</strong>. Invite users after install from the Admin panel.</p>
+
+      <label class="mt-4">Additional allowed origins <span class="text-muted">(optional)</span></label>
+      <input type="text" name="cors_origins" value="{{ state.cors_origins }}" placeholder="http://localhost:3000, http://192.168.1.50">
+      <p class="field-hint">
+        Real-time updates (live incident timelines, presence) require the browser's address bar to exactly
+        match an allowed origin — Base URL is always allowed. If analysts will also reach this instance by
+        <code>localhost</code>, a LAN IP, or another hostname, list them here (comma-separated) or live
+        updates will silently stop working for that address while everything else keeps working.
+      </p>
     </div>
   </details>
 

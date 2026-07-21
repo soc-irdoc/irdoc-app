@@ -78,6 +78,39 @@ async def test_core_config_post_saves_state(client):
 
 
 @pytest.mark.asyncio
+async def test_core_config_post_saves_cors_origins(client):
+    resp = await client.post("/core-config", data={
+        "base_url": "https://irdoc.example.com",
+        "db_password": "dbpass123",
+        "redis_password": "redispass123",
+        "secret_key": "hexsecret" * 4,
+        "access_token_expire_minutes": "15",
+        "refresh_token_expire_days": "30",
+        "license_key": "",
+        "cors_origins": "http://localhost:3000",
+    }, follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    from installer.wizard import state
+    assert state.cors_origins == "http://localhost:3000"
+
+
+@pytest.mark.asyncio
+async def test_core_config_post_cors_origins_defaults_empty(client):
+    resp = await client.post("/core-config", data={
+        "base_url": "https://irdoc.example.com",
+        "db_password": "dbpass123",
+        "redis_password": "redispass123",
+        "secret_key": "hexsecret" * 4,
+        "access_token_expire_minutes": "15",
+        "refresh_token_expire_days": "30",
+        "license_key": "",
+    }, follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    from installer.wizard import state
+    assert state.cors_origins == ""
+
+
+@pytest.mark.asyncio
 async def test_admin_user_page_loads(client):
     resp = await client.get("/admin-user")
     assert resp.status_code == 200
@@ -133,6 +166,28 @@ async def test_review_confirm_writes_env_file(client, tmp_path, monkeypatch):
     assert resp.status_code in (302, 307)
     assert (tmp_path / ".env").exists()
     assert (tmp_path / "nginx" / "nginx.conf").exists()
+
+
+@pytest.mark.asyncio
+async def test_review_confirm_writes_cors_origins_when_set(client, tmp_path, monkeypatch):
+    from installer import wizard as wiz
+    from installer.wizard import state
+    monkeypatch.setattr(wiz, "DOCKER_DIR", tmp_path)
+    (tmp_path / "nginx").mkdir()
+    (tmp_path / "ssl").mkdir()
+    state.https_mode = "behind_lb"
+    state.db_password = "dbpw"
+    state.redis_password = "rpw"
+    state.secret_key = "sk" * 16
+    state.base_url = "https://x.com"
+    state.access_token_expire_minutes = 15
+    state.refresh_token_expire_days = 30
+    state.license_key = ""
+    state.cors_origins = "http://localhost:3000"
+    resp = await client.post("/review/confirm", follow_redirects=False)
+    assert resp.status_code in (302, 307)
+    env_content = (tmp_path / ".env").read_text()
+    assert "CORS_ORIGINS=https://x.com,http://localhost:3000" in env_content
 
 
 @pytest.mark.asyncio

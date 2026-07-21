@@ -1,8 +1,9 @@
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
+from urllib.parse import urlparse
 
 from pydantic import AnyHttpUrl, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -47,8 +48,11 @@ class Settings(BaseSettings):
     # MSSP
     MSSP_MODE: bool = False
 
-    # CORS — defaults to BASE_URL; override for multi-origin setups
-    CORS_ORIGINS: list[str] = []
+    # CORS — defaults to BASE_URL; override for multi-origin setups.
+    # NoDecode: pydantic-settings otherwise tries to JSON-parse env values for
+    # list-typed fields before our comma-splitting validator below ever runs,
+    # which raises SettingsError on a plain "a,b" env var.
+    CORS_ORIGINS: Annotated[list[str], NoDecode] = []
 
     @field_validator("SECRET_KEY")
     @classmethod
@@ -70,7 +74,21 @@ class Settings(BaseSettings):
     def get_cors_origins(self) -> list[str]:
         if self.CORS_ORIGINS:
             return self.CORS_ORIGINS
-        return [str(self.BASE_URL).rstrip("/")]
+        # No explicit override: allow BASE_URL plus the same host reached via
+        # localhost/127.0.0.1 on the same port. Analysts routinely test a fresh
+        # install through localhost before BASE_URL's hostname/DNS is wired up —
+        # WebSocket handshakes always send Origin (unlike same-origin polling
+        # GETs), so without this the socket silently 403s while the rest of the
+        # app works fine.
+        base = str(self.BASE_URL).rstrip("/")
+        parsed = urlparse(base)
+        port_suffix = f":{parsed.port}" if parsed.port else ""
+        origins = [base]
+        for host in ("localhost", "127.0.0.1"):
+            candidate = f"{parsed.scheme}://{host}{port_suffix}"
+            if candidate not in origins:
+                origins.append(candidate)
+        return origins
 
 
 @lru_cache

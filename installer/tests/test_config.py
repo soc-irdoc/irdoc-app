@@ -64,6 +64,27 @@ def test_read_existing_env(tmp_path):
     assert "# comment" not in result
 
 
+def test_assemble_env_omits_cors_origins_when_not_set():
+    state = {
+        "db_password": "x", "redis_password": "y", "secret_key": "z",
+        "base_url": "https://x.com", "access_token_expire_minutes": 15,
+        "refresh_token_expire_days": 30, "license_key": "",
+    }
+    content = assemble_env(state)
+    assert "CORS_ORIGINS" not in content
+
+
+def test_assemble_env_includes_base_url_and_extra_cors_origins():
+    state = {
+        "db_password": "x", "redis_password": "y", "secret_key": "z",
+        "base_url": "https://irdoc.example.com", "access_token_expire_minutes": 15,
+        "refresh_token_expire_days": 30, "license_key": "",
+        "cors_origins": "http://localhost:3000, http://192.168.1.50",
+    }
+    content = assemble_env(state)
+    assert "CORS_ORIGINS=https://irdoc.example.com,http://localhost:3000, http://192.168.1.50" in content
+
+
 def test_write_env_creates_file_with_restricted_permissions(tmp_path):
     path = tmp_path / ".env"
     write_env(path, "KEY=value\n")

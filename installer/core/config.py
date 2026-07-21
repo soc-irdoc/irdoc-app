@@ -37,6 +37,15 @@ def assemble_env(state: dict) -> str:
         "ALLOW_REGISTRATION=false",
         f"LICENSE_KEY={state.get('license_key', '')}",
         f"VERSION={state.get('version', 'latest')}",
+    ]
+    cors_origins = state.get("cors_origins", "").strip()
+    if cors_origins:
+        # Additional origins besides base_url — e.g. when analysts reach this
+        # instance via localhost or a LAN IP during testing. The backend
+        # already allows base_url plus localhost variants by default; this is
+        # only needed for anything beyond that (custom domains, other hosts).
+        lines.append(f"CORS_ORIGINS={state['base_url']},{cors_origins}")
+    lines += [
         "",
         "# ─── Storage ────────────────────────────────────────────────────────────────",
         "STORAGE_BACKEND=local",
