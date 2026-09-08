@@ -12,23 +12,36 @@ class LocalStorageBackend:
     backend_name = "local"
 
     def __init__(self, base_path: str):
-        self.base_path = Path(base_path)
+        self.base_path = Path(base_path).resolve()
         self.base_path.mkdir(parents=True, exist_ok=True)
 
+    def _resolve(self, path: str) -> Path:
+        """Join `path` onto base_path and verify the result can't escape it.
+
+        Callers today only ever pass server-generated paths (UUID-based
+        attachment keys, validated backup filenames), but this is a shared
+        backend class reachable from several call sites — defend the sink
+        itself rather than relying on every caller staying disciplined.
+        """
+        full_path = (self.base_path / path).resolve()
+        if full_path != self.base_path and self.base_path not in full_path.parents:
+            raise ValueError(f"Path escapes storage root: {path!r}")
+        return full_path
+
     async def store(self, data: bytes, path: str) -> str:
-        full_path = self.base_path / path
+        full_path = self._resolve(path)
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_bytes(data)
         return path
 
     async def retrieve(self, path: str) -> bytes:
-        full_path = self.base_path / path
+        full_path = self._resolve(path)
         if not full_path.exists():
             raise FileNotFoundError(f"File not found: {path}")
         return full_path.read_bytes()
 
     async def delete(self, path: str) -> None:
-        full_path = self.base_path / path
+        full_path = self._resolve(path)
         if full_path.exists():
             full_path.unlink()
 
