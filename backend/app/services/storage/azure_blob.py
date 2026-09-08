@@ -1,7 +1,19 @@
 """Azure Blob Storage backend."""
 import asyncio
+import re
 from datetime import datetime, timedelta, timezone
 from functools import partial
+
+# Azure storage account names are 3-24 lowercase letters/digits — enforcing
+# this before interpolating into a hostname rules out SSRF via a crafted
+# account_name (e.g. "evil.com#") regardless of who can reach this config.
+_ACCOUNT_NAME_RE = re.compile(r"^[a-z0-9]{3,24}$")
+
+
+def _validate_account_name(account_name: str) -> str:
+    if not _ACCOUNT_NAME_RE.match(account_name):
+        raise ValueError(f"Invalid Azure storage account name: {account_name!r}")
+    return account_name
 
 
 class AzureBlobStorageBackend:
@@ -17,14 +29,15 @@ class AzureBlobStorageBackend:
             )
         else:
             account_url = (
-                f"https://{config['account_name']}.blob.core.windows.net"
+                f"https://{_validate_account_name(config['account_name'])}.blob.core.windows.net"
             )
             self.service_client = BlobServiceClient(
                 account_url=account_url,
                 credential=config["account_key"],
             )
         self.container = config["container"]
-        self._account_name: str = config.get("account_name", "")
+        account_name = config.get("account_name", "")
+        self._account_name: str = _validate_account_name(account_name) if account_name else account_name
         self._account_key: str = config.get("account_key", "")
 
     def _get_blob_client(self, path: str):
