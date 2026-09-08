@@ -2,7 +2,7 @@
  * Inline config panel that expands below a selected canvas block.
  * Shows different fields depending on the block type.
  */
-import { ReportBlock, BlockType } from '@/types/report'
+import { ReportBlock } from '@/types/report'
 
 interface Props {
   block: ReportBlock

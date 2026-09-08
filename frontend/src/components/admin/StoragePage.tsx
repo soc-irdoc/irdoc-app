@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   useStorageConfig,
-  useUpdateStorageConfig,
   useTestStorageConnection,
   useSwitchStorageBackend,
 } from '@/hooks/useAdmin'
@@ -67,7 +66,7 @@ interface BackendCardProps {
   children?: React.ReactNode
 }
 
-function BackendCard({ id, label, description, selected, onSelect, children }: BackendCardProps) {
+function BackendCard({ label, description, selected, onSelect, children }: BackendCardProps) {
   return (
     <div
       style={{

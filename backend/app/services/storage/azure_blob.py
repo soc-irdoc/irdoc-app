@@ -1,6 +1,6 @@
 """Azure Blob Storage backend."""
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import partial
 
 
@@ -52,7 +52,7 @@ class AzureBlobStorageBackend:
         await loop.run_in_executor(None, blob_client.delete_blob)
 
     async def get_url(self, path: str, expires_in: int = 3600) -> str:
-        from azure.storage.blob import generate_blob_sas, BlobSasPermissions
+        from azure.storage.blob import BlobSasPermissions, generate_blob_sas
 
         loop = asyncio.get_event_loop()
 

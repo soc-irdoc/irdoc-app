@@ -35,11 +35,9 @@ interface InvestigationGraphProps {
 function NodeDetailPanel({
   node,
   onClose,
-  onDeleteEdge,
 }: {
   node: Node
   onClose: () => void
-  onDeleteEdge?: (edgeId: string) => void
 }) {
   const d = node.data as unknown as GraphNodeData
 

@@ -1,8 +1,8 @@
 """
 SMTP configuration service — get/upsert per-org config with encrypted password.
 """
-import uuid
 import logging
+import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

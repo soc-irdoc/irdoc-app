@@ -1,4 +1,14 @@
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
+import { isAxiosError } from 'axios'
+
+/** Extract a backend-supplied error detail from a caught request error, falling back to a default message. */
+export function getErrorMessage(err: unknown, fallback: string): string {
+  if (isAxiosError(err)) {
+    const detail = err.response?.data?.detail
+    if (typeof detail === 'string') return detail
+  }
+  return fallback
+}
 
 export function formatDateTime(iso: string): string {
   return format(parseISO(iso), 'yyyy-MM-dd HH:mm:ss')

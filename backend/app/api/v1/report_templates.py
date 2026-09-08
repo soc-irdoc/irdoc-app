@@ -147,10 +147,14 @@ async def preview_report_template(
     current_user=Depends(require_permission("reports.generate")),
 ):
     """Render the template as HTML using a real incident's data."""
+    from sqlalchemy import select
+
     from app.models.user import User
     from app.services.report_renderer import build_report_payload
-    from app.services.report_renderer.fixed_report import render_fixed_report_html, render_from_schema
-    from sqlalchemy import select
+    from app.services.report_renderer.fixed_report import (
+        render_fixed_report_html,
+        render_from_schema,
+    )
 
     template = await template_service.get_report_template(db, template_id, str(current_user.org_id))
 

@@ -51,7 +51,6 @@ async def list_entries(
     if entry_type:
         query = query.where(TimelineEntry.entry_type == entry_type)
 
-    from sqlalchemy import func
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar() or 0
 

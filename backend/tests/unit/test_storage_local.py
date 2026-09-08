@@ -1,6 +1,4 @@
 """Unit tests for LocalStorageBackend."""
-import os
-import tempfile
 
 import pytest
 import pytest_asyncio

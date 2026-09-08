@@ -149,13 +149,11 @@ function SortableBlockCard({
 // ─── Block Library Panel ───────────────────────────────────────────────────────
 
 function BlockLibraryItem({
-  type,
   icon,
   label,
   description,
   onAdd,
 }: {
-  type: BlockType
   icon: string
   label: string
   description: string

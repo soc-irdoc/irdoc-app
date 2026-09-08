@@ -1,7 +1,6 @@
 """Unit tests for SHA-256 integrity and file token signing."""
 import hashlib
 
-import pytest
 from app.core.security import sign_file_token, verify_file_token
 
 

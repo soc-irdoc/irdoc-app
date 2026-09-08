@@ -17,7 +17,7 @@ from __future__ import annotations
 import ipaddress
 import logging
 import socket
-from typing import Protocol, runtime_checkable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from urllib.parse import urlparse
 
 from app.core.config import settings

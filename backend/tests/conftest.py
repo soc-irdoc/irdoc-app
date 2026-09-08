@@ -4,6 +4,7 @@ Uses an in-memory SQLite for unit tests and a real PostgreSQL for integration te
 Integration tests require: TEST_DATABASE_URL env var pointing to a test DB.
 """
 import os
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -44,6 +45,7 @@ if "sqlite" in _TEST_DB_URL_RAW:
     # Without this, WHERE clauses comparing UUID columns break under SQLite even
     # though the DDL compiler already maps UUID → VARCHAR(36).
     import uuid as _uuid_mod
+
     from sqlalchemy.dialects.postgresql import UUID as _PG_UUID  # noqa: E402
 
     def _sqlite_uuid_bind_processor(self, dialect):
@@ -60,6 +62,7 @@ if "sqlite" in _TEST_DB_URL_RAW:
     # Patch the core SQLAlchemy ARRAY type so SQLite can store/retrieve lists as
     # JSON text. SQLite cannot bind Python list values natively.
     import json as _json
+
     from sqlalchemy.sql.sqltypes import ARRAY as _SA_ARRAY  # noqa: E402
 
     _orig_array_bind_processor = _SA_ARRAY.bind_processor
@@ -87,12 +90,13 @@ if "sqlite" in _TEST_DB_URL_RAW:
     _SA_ARRAY.bind_processor = _sqlite_array_bind_processor  # type: ignore[method-assign]
     _SA_ARRAY.result_processor = _sqlite_array_result_processor  # type: ignore[method-assign]
 
-from app.core.database import Base, get_db
-from app.core.limiter import limiter
-from app.core.security import hash_password
+from app.core.database import Base, get_db  # noqa: E402
+from app.core.limiter import limiter  # noqa: E402
+from app.core.security import hash_password  # noqa: E402
+
 # `app` is the Socket.io ASGIApp wrapper; `application` is the FastAPI instance.
 # dependency_overrides lives on the FastAPI instance.
-from app.main import app, application
+from app.main import app, application  # noqa: E402
 
 # ─── In-memory SQLite engine for unit tests ────────────────────────────────────
 TEST_DB_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")

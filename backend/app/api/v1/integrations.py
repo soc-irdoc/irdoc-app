@@ -3,7 +3,7 @@ Integrations API — plugin list, config, test, toggle, and action endpoints.
 """
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 

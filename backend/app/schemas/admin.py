@@ -1,13 +1,12 @@
 """
 Pydantic v2 schemas for Phase 5 admin/enterprise endpoints.
 """
+import re
 from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import AnyHttpUrl, BaseModel, field_validator
-import re
-
 
 # ── User management ───────────────────────────────────────────────────────────
 

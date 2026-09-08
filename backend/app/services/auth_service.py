@@ -14,8 +14,8 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
-from app.models.user import User
 from app.models.organization import Organization
+from app.models.user import User
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:

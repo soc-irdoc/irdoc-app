@@ -36,7 +36,7 @@ function IntegrationConfigModal({
   async function handleSave() {
     const missingFields = Object.entries(integration.config_schema)
       .filter(([key, field]) => field.required && !values[key]?.trim())
-      .map(([_, field]) => field.label)
+      .map(([, field]) => field.label)
     if (missingFields.length > 0) {
       addToast(`Required fields missing: ${missingFields.join(', ')}`, 'error')
       return
@@ -56,7 +56,7 @@ function IntegrationConfigModal({
   async function handleTest() {
     const missingFields = Object.entries(integration.config_schema)
       .filter(([key, field]) => field.required && !values[key]?.trim())
-      .map(([_, field]) => field.label)
+      .map(([, field]) => field.label)
     if (missingFields.length > 0) {
       addToast(`Required fields missing: ${missingFields.join(', ')}`, 'error')
       return

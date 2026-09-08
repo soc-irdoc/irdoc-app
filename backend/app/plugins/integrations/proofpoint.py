@@ -1,6 +1,5 @@
 """Proofpoint email security integration."""
 import logging
-from base64 import b64encode
 
 import httpx
 

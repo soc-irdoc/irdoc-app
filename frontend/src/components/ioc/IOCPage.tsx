@@ -12,7 +12,6 @@ import apiClient from '@/lib/apiClient'
 import { getSocket } from '@/lib/websocket'
 import {
   IOC_TYPE_ICONS,
-  IOC_STATUS_COLORS,
   TLP_COLORS,
   type IOC,
   type IOCType,

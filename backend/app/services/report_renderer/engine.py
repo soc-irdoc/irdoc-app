@@ -70,6 +70,7 @@ def _build_jinja_env() -> jinja2.Environment:
             from markupsafe import Markup
             return Markup("")
         from markupsafe import Markup
+
         from app.services.incident_service import _sanitize_html
         return Markup(_sanitize_html(str(value)))
 
@@ -109,8 +110,10 @@ def render_incident_pdf_from_schema(
     classification: str = "CONFIDENTIAL",
 ) -> bytes:
     """Render a schema-driven incident report as PDF bytes."""
+    # noqa: N811 below — `WeasyHTML` disambiguates the class from the local `html` string
+    from weasyprint import HTML as WeasyHTML  # noqa: N811
+
     from app.services.report_renderer.fixed_report import render_from_schema
-    from weasyprint import HTML as WeasyHTML
 
     html = render_from_schema(
         payload=payload,
@@ -140,8 +143,10 @@ def render_incident_pdf(
 
     If pdf_template is provided, its prefix/suffix pages and @page CSS wrap the content.
     """
+    # noqa: N811 below — `WeasyHTML` disambiguates the class from the local `html` string
+    from weasyprint import HTML as WeasyHTML  # noqa: N811
+
     from app.services.report_renderer.fixed_report import render_fixed_report_html
-    from weasyprint import HTML as WeasyHTML
 
     prefix_html = (pdf_template.prefix_html or "") if pdf_template else ""
     suffix_html = (pdf_template.suffix_html or "") if pdf_template else ""

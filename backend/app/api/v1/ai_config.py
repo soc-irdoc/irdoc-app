@@ -64,6 +64,7 @@ async def save_ai_config(
     current_user=Depends(require_permission("users.manage")),
 ):
     from fastapi import HTTPException as _HTTPException
+
     from app.services.ai_service import validate_ollama_url
     if payload.ollama_base_url is not None:
         try:
@@ -82,6 +83,7 @@ async def test_ai_connection(
 ):
     """Test connectivity to Ollama and verify the configured model is available."""
     from fastapi import HTTPException as _HTTPException
+
     from app.services.ai_service import validate_ollama_url
     try:
         validate_ollama_url(payload.ollama_base_url)

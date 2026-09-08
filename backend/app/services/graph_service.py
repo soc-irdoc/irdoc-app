@@ -4,17 +4,16 @@ Builds a nodes + edges graph from incident data (IOCs, timeline entries, IOC-tim
 and computes a spring layout using networkx.
 """
 import logging
-import uuid
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.asset import Asset, AssetLink, AssetTimelineLink
-from app.models.ioc import IOC, IOCTimelineLink
-from app.models.timeline import TimelineEntry
 from app.models.attachment import Attachment
 from app.models.graph import GraphEdge
+from app.models.ioc import IOC, IOCTimelineLink
+from app.models.timeline import TimelineEntry
 
 logger = logging.getLogger(__name__)
 
@@ -253,14 +252,14 @@ def _apply_layout(nodes: list[dict], edges: list[dict]) -> list[dict]:
     try:
         import networkx as nx
 
-        G = nx.DiGraph()
+        graph = nx.DiGraph()
         for node in nodes:
-            G.add_node(node["id"])
+            graph.add_node(node["id"])
         for edge in edges:
-            if edge["source"] in G and edge["target"] in G:
-                G.add_edge(edge["source"], edge["target"])
+            if edge["source"] in graph and edge["target"] in graph:
+                graph.add_edge(edge["source"], edge["target"])
 
-        pos = nx.spring_layout(G, k=300, iterations=50, seed=42, scale=500)
+        pos = nx.spring_layout(graph, k=300, iterations=50, seed=42, scale=500)
 
         for node in nodes:
             if node["id"] in pos:

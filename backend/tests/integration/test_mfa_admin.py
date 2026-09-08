@@ -1,5 +1,5 @@
-import pytest
 import pyotp
+import pytest
 from httpx import AsyncClient
 
 from app.core.security import create_access_token
@@ -44,9 +44,10 @@ async def test_non_admin_cannot_reset_others_mfa(
     client: AsyncClient, admin_user, db_session
 ):
     """analyst role should get 403 when resetting another user's MFA."""
-    from app.models.user import User
-    from app.core.security import hash_password
     import uuid
+
+    from app.core.security import hash_password
+    from app.models.user import User
 
     target_user, org = admin_user
 
@@ -85,7 +86,6 @@ async def test_admin_can_set_org_mfa_required(
     )
     assert resp.status_code == 200
 
-    from app.models.organization import Organization
     await db_session.refresh(org)
     assert (org.settings or {}).get("mfa_required") is True
 

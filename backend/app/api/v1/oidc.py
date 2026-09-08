@@ -6,7 +6,6 @@ OAuth2 / OIDC Authorization Code Flow — Entra ID SSO endpoints.
 
 Enterprise feature — check_feature("sso_oidc") before any OIDC operation.
 """
-import base64
 import logging
 import secrets
 import time
@@ -14,7 +13,8 @@ import time
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
-from jose import JWTError, jwt as jose_jwt
+from jose import JWTError
+from jose import jwt as jose_jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

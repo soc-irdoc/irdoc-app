@@ -2,7 +2,6 @@
 Integration service — CRUD for org_integrations, credential encryption/decryption.
 All integration credentials are Fernet-encrypted at rest and NEVER returned via API.
 """
-import json
 import logging
 from datetime import datetime, timezone
 
@@ -18,9 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 def _fernet() -> Fernet:
+    import base64
+
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-    import base64
     hkdf = HKDF(
         algorithm=hashes.SHA256(),
         length=32,

@@ -94,7 +94,7 @@ function AiBanner({ reports }: { reports: Report[] }) {
 
 function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], incidentUpdatedAt?: string }) {
   const { data: integrations = [] } = useIntegrations()
-  const spEnabled = (integrations as any[]).find((i) => i.name === 'sharepoint')?.is_enabled ?? false
+  const spEnabled = integrations.find((i) => i.name === 'sharepoint')?.is_enabled ?? false
   if (!spEnabled) return null
 
   const syncedReports = reports.filter((r) => r.sharepoint_url)

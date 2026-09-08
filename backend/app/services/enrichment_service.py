@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.ioc import IOC
 from app.models.incident import Incident
+from app.models.ioc import IOC
 from app.services.integration_service import get_enabled_plugins_for_org
 
 logger = logging.getLogger(__name__)

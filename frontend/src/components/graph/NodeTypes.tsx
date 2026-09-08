@@ -175,7 +175,10 @@ export function AssetCloudResourceNode(props: NodeProps) { return <AssetNodeBase
 export function AssetOtherNode(props: NodeProps) { return <AssetNodeBase {...props} nodeType="asset_other" /> }
 
 // ── Node type map for React Flow ──────────────────────────────────────────────
-
+// Not a component export, so Fast Refresh can't isolate it — the whole module
+// remounts on edit here, same as any other non-component constant a React Flow
+// setup needs colocated with its node components.
+// eslint-disable-next-line react-refresh/only-export-components
 export const NODE_TYPES = {
   ioc_ip:                IOCIPNode,
   ioc_domain:            IOCDomainNode,

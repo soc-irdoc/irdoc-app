@@ -9,15 +9,14 @@ Usage in services:
 import csv
 import io
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from fastapi import Request
-from sqlalchemy import select, func, and_
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit import AuditLog
-
 
 CATEGORY_ENTITY_TYPES: dict[str, list[str]] = {
     "incidents": ["incident"],

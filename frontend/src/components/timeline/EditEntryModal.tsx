@@ -65,6 +65,10 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
     setSource(entry.source ?? '')
     setNewFiles([])
     setRemovedAttachmentIds(new Set())
+    // Deliberately keyed on entry?.id only: re-init the form when a *different*
+    // entry is opened, but not when `entry` is re-fetched with the same id (a
+    // background refetch/websocket update would otherwise wipe in-progress edits).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry?.id])
 
   // Sync local asset state when query loads

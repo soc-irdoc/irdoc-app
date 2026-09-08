@@ -8,12 +8,12 @@ POST   /auth/mfa/backup-codes/regenerate  — Regenerate backup codes (access to
 DELETE /auth/mfa/disable                  — Disable MFA (access token)
 """
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwt as _jose_jwt
 from jose.exceptions import JWTError as _JWTError
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -29,6 +29,9 @@ from app.schemas.auth import (
     UserOut,
 )
 from app.services import auth_service, mfa_service
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 router = APIRouter(prefix="/auth/mfa", tags=["mfa"])
 

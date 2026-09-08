@@ -20,7 +20,7 @@ from app.schemas.admin import (
     StorageConfigOut,
 )
 from app.services import audit_service, sso_service
-from app.services.integration_service import decrypt_config, encrypt_config
+from app.services.integration_service import encrypt_config
 from app.services.storage.resolver import (
     get_storage_backend,
     get_storage_backend_from_config,

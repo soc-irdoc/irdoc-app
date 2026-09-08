@@ -69,6 +69,7 @@ function InvitePreview({ fromName, subjectTemplate, accentColor, logoUrl, footer
         </div>
       )}
       <div style={{ borderTop: `3px solid ${color}`, paddingTop: 14, marginBottom: 10 }}>
+        <div style={{ color: '#999', fontSize: 11, marginBottom: 4 }}>From: {fromName || 'IRDoc Alerts'}</div>
         <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e', marginBottom: 6 }}>{subject}</div>
         <div style={{ color: '#555', marginBottom: 12 }}>
           Admin has invited you to join <strong>{orgName}</strong> on IRDoc — an Incident Response Documentation Platform.

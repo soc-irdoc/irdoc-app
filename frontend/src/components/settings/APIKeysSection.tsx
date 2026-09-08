@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { useUIStore } from '@/stores/uiStore'
 import { AVAILABLE_SCOPES } from '@/types/apiKey'
-import { formatRelative, formatDateTime } from '@/lib/utils'
+import { formatRelative } from '@/lib/utils'
 
 export function APIKeysSection() {
   const addToast = useUIStore((s) => s.addToast)
