@@ -15,7 +15,9 @@ class LocalStorageBackend:
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
-        self._base_path_str = os.path.abspath(str(self.base_path))
+        # realpath (not abspath) so a symlink placed inside base_path can't be
+        # used to slip the containment check in _resolve() below.
+        self._base_path_str = os.path.realpath(str(self.base_path))
 
     def _resolve(self, path: str) -> Path:
         """Join `path` onto base_path and verify the result can't escape it.
@@ -25,7 +27,7 @@ class LocalStorageBackend:
         backend class reachable from several call sites — defend the sink
         itself rather than relying on every caller staying disciplined.
         """
-        full_path = os.path.normpath(os.path.join(self._base_path_str, path))
+        full_path = os.path.realpath(os.path.join(self._base_path_str, path))
         if not (full_path == self._base_path_str or full_path.startswith(self._base_path_str + os.sep)):
             raise ValueError(f"Path escapes storage root: {path!r}")
         return Path(full_path)
