@@ -1,4 +1,4 @@
-# IRDoc — Incident Response Documentation Platform
+# IRDoc - Incident Response Documentation Platform
 
 > Timeline-first IR documentation with visual report builder, SharePoint auto-sync, and AI-assisted summaries.
 
@@ -14,19 +14,19 @@
 
 IRDoc is a **self-hostable, open-core incident response documentation platform** for SOC analysts, IR engineers, and MSSPs.
 
-It gives your team one structured workspace to document an incident from first detection to final report — instead of switching between a ticket system, a Word document, and a SharePoint folder.
+It gives your team one structured workspace to document an incident from first detection to final report - instead of switching between a ticket system, a Word document, and a SharePoint folder.
 
-**Core promise:** *Document incidents the way you actually investigate them — fast, structured, and reportable in one click.*
+**Core promise:** *Document incidents the way you actually investigate them - fast, structured, and reportable in one click.*
 
-- **Timeline-first workspace** — chronological event log across detection, analysis, containment, evidence, and comms
-- **IOC management** — track and auto-detect IPs, domains, hashes, emails, and URLs
-- **Evidence attachments** — drag-and-drop or paste screenshots straight into the timeline
-- **Task management** — phase-grouped tasks from incident templates
-- **Inbound webhook API** — create cases from ServiceDesk Plus, Jira, or anything that can POST JSON
-- **Investigation graph** — visual relationship map between IOCs, timeline entries, and evidence
-- **Self-hosted** — your incident data stays on your infrastructure
+- **Timeline-first workspace** - chronological event log across detection, analysis, containment, evidence, and comms
+- **IOC management** - track and auto-detect IPs, domains, hashes, emails, and URLs
+- **Evidence attachments** - drag-and-drop or paste screenshots straight into the timeline
+- **Task management** - phase-grouped tasks from incident templates
+- **Inbound webhook API** - create cases from ServiceDesk Plus, Jira, or anything that can POST JSON
+- **Investigation graph** - visual relationship map between IOCs, timeline entries, and evidence
+- **Self-hosted** - your incident data stays on your infrastructure
 
-The core above is AGPL-3.0 and free forever. A premium tier (PDF/DOCX reports, SSO, SIEM/EDR integrations, multi-tenancy, and more) is available for teams that need it — see [irdoc.io](https://irdoc.io) for details.
+The core above is AGPL-3.0 and free forever. See [irdoc.io](https://irdoc.io) for details.
 
 Full docs, quick start, and deployment guides: **[docs.irdoc.io](https://docs.irdoc.io)**
 
@@ -51,12 +51,10 @@ Contributions are welcome. See the [contributing guide](https://docs.irdoc.io/co
 
 ## Sponsorship
 
-IRDoc's core is free and will stay that way. If your organization relies on it and wants to support ongoing development, reach out via [irdoc.io](https://irdoc.io) — we don't have a formal sponsorship program set up yet, but we'd like to hear from you.
+IRDoc's core is free and will stay that way. If your organization relies on it and wants to support ongoing development, reach out via [irdoc.io](https://irdoc.io) - we don't have a formal sponsorship program set up yet, but we'd like to hear from you.
 
 ---
 
 ## License
 
 **Core** (this repository): [AGPL-3.0](LICENSE)
-
-Premium features require a separate commercial license — always visible in the UI with a lock overlay, never hidden. See [irdoc.io](https://irdoc.io) for pricing.
