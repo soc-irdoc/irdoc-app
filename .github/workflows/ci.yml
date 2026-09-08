@@ -179,7 +179,7 @@ jobs:
       # images. Findings land in the job log/SARIF; tighten to exit-code 1
       # once the baseline has been triaged.
       - name: Scan backend image (Trivy)
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # 0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ghcr.io/soc-irdoc/irdoc-backend:${{ github.sha }}
           format: sarif
@@ -188,7 +188,7 @@ jobs:
           exit-code: '0'
 
       - name: Scan frontend image (Trivy)
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # 0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ghcr.io/soc-irdoc/irdoc-frontend:${{ github.sha }}
           format: sarif
@@ -201,7 +201,7 @@ jobs:
       # its own once the repo goes public.
       - name: Upload Trivy results to code scanning
         if: ${{ !github.event.repository.private }}
-        uses: github/codeql-action/upload-sarif@fddeee1a7ece751b577e409a89057319e3172939 # v4
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         with:
           sarif_file: .
 
@@ -244,7 +244,7 @@ jobs:
             ghcr.io/soc-irdoc/irdoc-frontend:${{ github.sha }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@26994186c0ac3ef5cae75ac16aa32e8153525f77 # v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           body_path: CHANGELOG.md
           files: |
