@@ -311,11 +311,12 @@ def get_local_backup_path(filename: str) -> Path:
     """Resolve a local backup file path, guarding against directory traversal."""
     if not _FILENAME_RE.match(filename) or "/" in filename or "\\" in filename or ".." in filename:
         raise FileNotFoundError(f"Invalid backup filename: {filename}")
-    backup_dir = BACKUP_DIR.resolve()
-    path = (backup_dir / filename).resolve()
-    if path != backup_dir and backup_dir not in path.parents:
+    backup_dir = os.path.abspath(str(BACKUP_DIR))
+    full_path = os.path.normpath(os.path.join(backup_dir, filename))
+    if not (full_path == backup_dir or full_path.startswith(backup_dir + os.sep)):
         # Belt-and-suspenders on top of the regex check above.
         raise FileNotFoundError(f"Invalid backup filename: {filename}")
+    path = Path(full_path)
     if not path.is_file():
         raise FileNotFoundError(f"Backup not found: {filename}")
     return path

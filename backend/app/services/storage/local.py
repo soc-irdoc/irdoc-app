@@ -3,6 +3,7 @@ LocalStorageBackend — files stored on the container filesystem.
 Files are served via signed token endpoint, never directly from web root.
 """
 import os
+import os.path
 from pathlib import Path
 
 from app.core.security import sign_file_token
@@ -12,8 +13,9 @@ class LocalStorageBackend:
     backend_name = "local"
 
     def __init__(self, base_path: str):
-        self.base_path = Path(base_path).resolve()
+        self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
+        self._base_path_str = os.path.abspath(str(self.base_path))
 
     def _resolve(self, path: str) -> Path:
         """Join `path` onto base_path and verify the result can't escape it.
@@ -23,10 +25,10 @@ class LocalStorageBackend:
         backend class reachable from several call sites — defend the sink
         itself rather than relying on every caller staying disciplined.
         """
-        full_path = (self.base_path / path).resolve()
-        if full_path != self.base_path and self.base_path not in full_path.parents:
+        full_path = os.path.normpath(os.path.join(self._base_path_str, path))
+        if not (full_path == self._base_path_str or full_path.startswith(self._base_path_str + os.sep)):
             raise ValueError(f"Path escapes storage root: {path!r}")
-        return full_path
+        return Path(full_path)
 
     async def store(self, data: bytes, path: str) -> str:
         full_path = self._resolve(path)
