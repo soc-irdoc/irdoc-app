@@ -1,4 +1,3 @@
-import pytest
 import pyotp
 from httpx import AsyncClient
 

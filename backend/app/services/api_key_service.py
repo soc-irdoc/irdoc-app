@@ -2,7 +2,6 @@
 API key lifecycle: creation (argon2id hash), listing, revocation.
 Keys are shown exactly once at creation. Stored as hash only.
 """
-import uuid
 from datetime import datetime
 
 from fastapi import HTTPException, status

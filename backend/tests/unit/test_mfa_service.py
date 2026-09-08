@@ -1,13 +1,13 @@
 # backend/tests/unit/test_mfa_service.py
-import pytest
 import pyotp
+
 from app.services.mfa_service import (
-    generate_totp_secret,
-    verify_totp,
-    generate_backup_codes,
-    verify_backup_code,
-    encrypt_secret,
     decrypt_secret,
+    encrypt_secret,
+    generate_backup_codes,
+    generate_totp_secret,
+    verify_backup_code,
+    verify_totp,
 )
 
 

@@ -25,7 +25,7 @@ function hydrateBlocks(schemaJson: Omit<ReportBlock, 'id'>[]): ReportBlock[] {
 }
 
 function stripIds(blocks: ReportBlock[]): Omit<ReportBlock, 'id'>[] {
-  return blocks.map(({ id: _id, ...rest }) => rest)
+  return blocks.map(({ id, ...rest }) => rest)
 }
 
 export default function ReportTemplateEditorPage() {

@@ -1,6 +1,7 @@
 """Integration tests for timeline endpoints."""
-import pytest
 from datetime import UTC, datetime
+
+import pytest
 from httpx import AsyncClient
 
 

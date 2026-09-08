@@ -1,5 +1,4 @@
 """Unit tests for IOC auto-detection regex patterns."""
-import pytest
 from app.services.ioc_service import auto_detect
 
 

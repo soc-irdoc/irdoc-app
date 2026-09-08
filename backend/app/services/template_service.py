@@ -14,7 +14,6 @@ from app.schemas.template import (
     ReportTemplateUpdate,
 )
 
-
 # ─── Incident Templates ─────────────────────────────────────────────────────────
 
 async def list_incident_templates(db: AsyncSession, org_id: str) -> list[IncidentTemplate]:

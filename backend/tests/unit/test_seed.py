@@ -11,9 +11,9 @@ seed() must now only ever create org-agnostic system templates — never an
 org or a user — so that the first-run setup flow is the sole path that can
 create an admin account.
 """
-import seed as seed_module
 from sqlalchemy import select
 
+import seed as seed_module
 from app.models.organization import Organization
 from app.models.template import IncidentTemplate, ReportTemplate
 from app.models.user import User

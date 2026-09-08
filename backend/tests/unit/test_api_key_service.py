@@ -1,6 +1,5 @@
 """Unit tests for API key creation and verification."""
-import pytest
-from app.core.security import generate_api_key, verify_api_key_hash, API_KEY_PREFIX
+from app.core.security import API_KEY_PREFIX, generate_api_key, verify_api_key_hash
 
 
 def test_key_format():

@@ -1,3 +1,5 @@
+import io
+
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +11,6 @@ from app.schemas.timeline import TimelineEntryCreate, TimelineEntryOut, Timeline
 from app.services import audit_service, incident_service, timeline_service
 from app.sio import publish_ws
 from app.workers import tasks as worker_tasks
-import io
 
 router = APIRouter(tags=["timeline"])
 

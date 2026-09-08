@@ -1,6 +1,6 @@
 """Unit tests for fixed report section has_data() checks."""
-import pytest
 from unittest.mock import MagicMock
+
 from app.services.report_renderer.fixed_report import _FIXED_SECTIONS
 
 

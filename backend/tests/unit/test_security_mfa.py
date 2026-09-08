@@ -1,13 +1,14 @@
 # backend/tests/unit/test_security_mfa.py
 import time
+
 import pytest
 from fastapi import HTTPException
 
 from app.core.security import (
+    create_access_token,
     create_mfa_challenge_token,
     create_mfa_setup_token,
     decode_token,
-    create_access_token,
 )
 
 USER_ID = "00000000-0000-0000-0000-000000000001"
@@ -43,8 +44,9 @@ def test_access_token_rejected_as_mfa_challenge():
 
 def test_mfa_challenge_expires_in_5_minutes():
     token = create_mfa_challenge_token(USER_ID, ORG_ID)
-    from app.core.config import get_settings
     from jose import jwt as jose_jwt
+
+    from app.core.config import get_settings
     settings = get_settings()
     payload = jose_jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
     remaining = payload["exp"] - time.time()
@@ -53,8 +55,9 @@ def test_mfa_challenge_expires_in_5_minutes():
 
 def test_mfa_setup_expires_in_10_minutes():
     token = create_mfa_setup_token(USER_ID, ORG_ID)
-    from app.core.config import get_settings
     from jose import jwt as jose_jwt
+
+    from app.core.config import get_settings
     settings = get_settings()
     payload = jose_jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
     remaining = payload["exp"] - time.time()

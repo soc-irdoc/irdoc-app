@@ -1,8 +1,8 @@
-import pytest
 import pyotp
+import pytest
 from httpx import AsyncClient
 
-from app.core.security import create_mfa_challenge_token, create_access_token
+from app.core.security import create_access_token, create_mfa_challenge_token
 from app.services.mfa_service import encrypt_secret, generate_backup_codes
 
 

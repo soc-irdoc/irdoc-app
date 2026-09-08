@@ -3,9 +3,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.organization import Organization
-from app.models.api_key import APIKey
 from app.core.security import generate_api_key
+from app.models.api_key import APIKey
 
 
 @pytest.fixture

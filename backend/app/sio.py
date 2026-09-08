@@ -146,6 +146,7 @@ async def publish_ws(incident_id: str, event: str, data: dict) -> None:
     """Publish a WebSocket event via Redis. Use from FastAPI route handlers.
     Connection errors are swallowed — WebSocket delivery is best-effort."""
     import redis.exceptions as _redis_exc
+
     from app.core.debounce import get_redis
     try:
         redis = get_redis()
@@ -160,6 +161,7 @@ async def publish_ws(incident_id: str, event: str, data: dict) -> None:
 async def start_redis_subscriber() -> None:
     """Bridge Redis pub/sub (from Celery workers and route handlers) → Socket.io rooms."""
     import redis.asyncio as aioredis
+
     from app.core.config import settings
 
     r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)

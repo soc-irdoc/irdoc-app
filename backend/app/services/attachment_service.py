@@ -4,14 +4,13 @@ SHA-256 is stored unconditionally — forensic integrity guarantee.
 """
 import hashlib
 import uuid
-from pathlib import PurePosixPath
 
 from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attachment import Attachment
 from app.services.storage.resolver import get_storage_backend
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
 import { Report, ReportGenerateRequest } from '@/types/report'
 import { useUIStore } from '@/stores/uiStore'
+import { getErrorMessage } from '@/lib/utils'
 
 export function useReports(incidentId: string) {
   return useQuery<Report[]>({
@@ -35,9 +36,8 @@ export function useGenerateReport(incidentId: string) {
       qc.invalidateQueries({ queryKey: ['reports', incidentId] })
       addToast('Report generation started…', 'info')
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to start report generation'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to start report generation'), 'error')
     },
   })
 }

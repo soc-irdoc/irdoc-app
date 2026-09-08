@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
 import { SyncPolicy, SyncPolicyCreate } from '@/types/report'
 import { useUIStore } from '@/stores/uiStore'
+import { getErrorMessage } from '@/lib/utils'
 
 export function useSyncPolicies(incidentId: string) {
   return useQuery<SyncPolicy[]>({
@@ -27,9 +28,8 @@ export function useCreateSyncPolicy(incidentId: string) {
       qc.invalidateQueries({ queryKey: ['sync-policies', incidentId] })
       addToast('Sync policy created', 'success')
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to create sync policy'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to create sync policy'), 'error')
     },
   })
 }
@@ -46,9 +46,8 @@ export function useUpdateSyncPolicy(incidentId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sync-policies', incidentId] })
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to update sync policy'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to update sync policy'), 'error')
     },
   })
 }

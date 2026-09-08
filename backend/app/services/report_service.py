@@ -14,7 +14,7 @@ from app.models.report import Report
 from app.schemas.report import ReportGenerateRequest
 from app.services.pdf_template_service import get_template
 from app.services.storage.resolver import get_storage_backend
-from app.workers.tasks import generate_report, generate_ai_report
+from app.workers.tasks import generate_ai_report, generate_report
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,7 @@ async def enqueue_ai_report(incident_id: str, org_id: str, debounce_seconds: int
     per window, but always processes the latest incident state.
     """
     import redis as redis_sync
+
     from app.core.config import settings
 
     debounce_key = f"ai_report_debounce:{incident_id}"
@@ -105,7 +106,7 @@ async def maybe_trigger_sharepoint_sync(db: AsyncSession, incident_id: str, org_
     """Debounced SharePoint sync for non-AI orgs. No-op if AI is enabled (AI path handles push)."""
     try:
         from app.services.ai_config_service import get_ai_config
-        from app.services.integration_service import get_integration, decrypt_config
+        from app.services.integration_service import decrypt_config, get_integration
         ai_cfg = await get_ai_config(db, org_id)
         if ai_cfg and ai_cfg.is_enabled:
             return
@@ -114,6 +115,7 @@ async def maybe_trigger_sharepoint_sync(db: AsyncSession, incident_id: str, org_
             return
         debounce = int(decrypt_config(sp.config).get("debounce_seconds") or "120")
         import redis as redis_sync
+
         from app.core.config import settings
         r = redis_sync.from_url(settings.REDIS_URL)
         try:

@@ -39,13 +39,6 @@ interface IncidentTemplate {
   tasks_json: TemplateTask[]
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  critical: 'chip-red',
-  high: 'chip-yellow',
-  medium: 'chip-blue',
-  low: 'chip-muted',
-}
-
 // ── Hooks ──────────────────────────────────────────────────
 
 function useIncidentTemplatesList() {

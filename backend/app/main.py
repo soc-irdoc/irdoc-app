@@ -151,39 +151,39 @@ async def health():
 
 
 # ─── Routers ────────────────────────────────────────────────────────────────────
-from app.api.v1 import (  # noqa: E402
-    auth,
-    api_keys,
-    incidents,
-    timeline,
-    attachments,
-    iocs,
-    tasks,
-    templates,
-    external,
-    features,
-    reports,
-    report_templates,
-    sync_policies,
-    ai,
-    integrations,
-    graph,
-    assets,
-    users,
-    audit,
-    admin,
-    saml,
-    oidc,
-    pdf_templates,
-    mfa,
-    dashboard,
-    backup,
-    smtp,
-    ai_config,
-    version,
-)
 # Load all integration plugins on startup
 import app.plugins  # noqa: F401, E402
+from app.api.v1 import (  # noqa: E402
+    admin,
+    ai,
+    ai_config,
+    api_keys,
+    assets,
+    attachments,
+    audit,
+    auth,
+    backup,
+    dashboard,
+    external,
+    features,
+    graph,
+    incidents,
+    integrations,
+    iocs,
+    mfa,
+    oidc,
+    pdf_templates,
+    report_templates,
+    reports,
+    saml,
+    smtp,
+    sync_policies,
+    tasks,
+    templates,
+    timeline,
+    users,
+    version,
+)
 
 API_PREFIX = "/api/v1"
 
@@ -226,6 +226,7 @@ application.include_router(version.router, prefix=API_PREFIX)
 
 # ── Combined ASGI app (Socket.io + FastAPI) ─────────────────────────────────
 import socketio as _sio_lib  # noqa: E402
+
 from app.sio import sio  # noqa: E402
 
 app = _sio_lib.ASGIApp(sio, other_asgi_app=application)

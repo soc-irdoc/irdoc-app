@@ -4,8 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.schemas.api_key import APIKeyCreate, APIKeyCreated, APIKeyOut
-from app.services import api_key_service
-from app.services import audit_service
+from app.services import api_key_service, audit_service
 
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 

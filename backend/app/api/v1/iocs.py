@@ -120,8 +120,9 @@ async def ioc_ai_narrative(
     current_user=Depends(require_permission("iocs.create")),
 ):
     """Generate an AI plain-English enrichment narrative for an IOC (premium)."""
-    from app.core.feature_flags import check_feature
     from fastapi import HTTPException
+
+    from app.core.feature_flags import check_feature
     if not check_feature("ai_summaries"):
         raise HTTPException(status_code=403, detail="AI narratives require premium plan")
     from app.workers.tasks import generate_ai_ioc_narrative

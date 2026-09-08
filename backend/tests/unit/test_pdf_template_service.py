@@ -1,7 +1,7 @@
 """Unit tests for pdf_template_service parsing logic."""
 import pytest
-from app.services.pdf_template_service import _split_at_marker, _extract_page_css
 
+from app.services.pdf_template_service import _extract_page_css, _split_at_marker
 
 # ── _split_at_marker ──────────────────────────────────────────────────────────
 
@@ -39,6 +39,7 @@ def test_split_empty_suffix():
 def test_extract_page_css_returns_string():
     # Minimal valid DOCX bytes (we mock with an empty doc)
     import io
+
     from docx import Document
     doc = Document()
     buf = io.BytesIO()
@@ -50,6 +51,7 @@ def test_extract_page_css_returns_string():
 
 def test_extract_page_css_includes_page_numbers():
     import io
+
     from docx import Document
     doc = Document()
     buf = io.BytesIO()

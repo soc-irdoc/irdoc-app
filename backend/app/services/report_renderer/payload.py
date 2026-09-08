@@ -7,7 +7,7 @@ here so templates stay logic-free.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
@@ -103,6 +103,7 @@ async def build_report_payload(
     db,
 ) -> ReportPayload:
     from sqlalchemy import select
+
     from app.models.attachment import Attachment
     from app.models.incident import Incident, IncidentExternalRef
     from app.models.ioc import IOC

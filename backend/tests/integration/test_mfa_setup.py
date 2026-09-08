@@ -1,8 +1,7 @@
-import pytest
 import pyotp
 from httpx import AsyncClient
 
-from app.core.security import create_mfa_setup_token, create_access_token
+from app.core.security import create_mfa_setup_token
 from app.services.mfa_service import decrypt_secret
 
 

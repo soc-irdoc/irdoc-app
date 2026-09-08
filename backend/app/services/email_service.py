@@ -23,9 +23,10 @@ async def send_email_with_config(
     from_addr: str,
 ) -> None:
     """Low-level SMTP send using explicit credentials (used by the test endpoint)."""
-    import aiosmtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
+
+    import aiosmtplib
 
     message = MIMEMultipart("alternative")
     message["From"] = from_addr
@@ -59,7 +60,7 @@ async def send_email(
     """
     smtp_cfg = None
     if db is not None and org_id is not None:
-        from app.services.smtp_config_service import get_smtp_config, get_decrypted_password
+        from app.services.smtp_config_service import get_decrypted_password, get_smtp_config
         smtp_cfg = await get_smtp_config(db, org_id)
         if smtp_cfg and not smtp_cfg.is_enabled:
             smtp_cfg = None

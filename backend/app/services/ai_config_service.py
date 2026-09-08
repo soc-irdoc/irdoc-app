@@ -1,8 +1,8 @@
 """
 AI configuration service — get/upsert per-org Ollama config, test connectivity.
 """
-import uuid
 import logging
+import uuid
 
 import httpx
 from sqlalchemy import select

@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.permissions import require_permission
-from app.core.security import get_current_user
 from app.schemas.common import Meta
 from app.schemas.incident import (
     ExternalRefCreate,
@@ -13,8 +12,7 @@ from app.schemas.incident import (
     IncidentStats,
     IncidentUpdate,
 )
-from app.services import incident_service
-from app.services import audit_service
+from app.services import audit_service, incident_service
 from app.sio import publish_ws
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])

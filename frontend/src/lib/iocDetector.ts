@@ -2,7 +2,7 @@ import type { IOCType, DetectedIOC } from '@/types/ioc'
 
 // Mirrors backend ioc_service.py auto_detect() — keep patterns in sync
 const PATTERNS: Array<{ type: IOCType; regex: RegExp }> = [
-  { type: 'url',    regex: /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g },
+  { type: 'url',    regex: /https?:\/\/[^\s<>"{}|\\^`[\]]+/g },
   { type: 'email',  regex: /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g },
   { type: 'hash',   regex: /\b[a-fA-F0-9]{64}\b/g },  // SHA-256
   { type: 'hash',   regex: /\b[a-fA-F0-9]{40}\b/g },  // SHA-1

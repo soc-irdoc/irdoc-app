@@ -17,6 +17,7 @@ def _fernet():
     from cryptography.fernet import Fernet
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
     from app.core.config import settings
 
     key_material = settings.SECRET_KEY.encode()

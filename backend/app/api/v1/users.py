@@ -2,9 +2,10 @@
 User management + invite endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.core.security import hash_password
@@ -16,12 +17,11 @@ from app.schemas.admin import (
     UserOut,
     UserRoleUpdate,
 )
-from app.services import auth_service, invite_service, email_service, audit_service
+from app.services import audit_service, auth_service, email_service, invite_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 # Reuse the same cookie settings as auth.py
-from app.core.config import settings
 REFRESH_COOKIE_NAME = "refresh_token"
 COOKIE_SETTINGS = {
     "httponly": True,
@@ -240,8 +240,9 @@ async def create_invite(
     await db.commit()
 
     # Load org name for the email
-    from app.models.organization import Organization
     import uuid
+
+    from app.models.organization import Organization
     org_result = await db.execute(
         select(Organization).where(
             Organization.id == uuid.UUID(str(current_user.org_id))
@@ -299,8 +300,9 @@ async def validate_invite(token: str, db: AsyncSession = Depends(get_db)):
         )
 
     # Load org name
-    from app.models.organization import Organization
     import uuid
+
+    from app.models.organization import Organization
     org_result = await db.execute(
         select(Organization).where(
             Organization.id == uuid.UUID(str(invite.org_id))
@@ -356,7 +358,8 @@ async def accept_invite(
     )
     await db.commit()
 
-    from app.schemas.auth import TokenResponse, UserOut as AuthUserOut
+    from app.schemas.auth import TokenResponse
+    from app.schemas.auth import UserOut as AuthUserOut
     return {
         "data": TokenResponse(access_token=access),
         "user": AuthUserOut.model_validate(user),

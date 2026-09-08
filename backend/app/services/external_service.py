@@ -2,14 +2,15 @@
 External service: inbound webhook logic.
 Normalises external source names, creates incident + optional first entry.
 """
+from datetime import UTC, datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.incident import Incident
 from app.schemas.external import ExternalIncidentCreate
 from app.schemas.incident import IncidentCreate
-from app.services import incident_service, timeline_service
 from app.schemas.timeline import TimelineEntryCreate
-from datetime import UTC, datetime
+from app.services import incident_service, timeline_service
 
 SOURCE_DISPLAY: dict[str, str] = {
     "servicedesk_plus": "ServiceDesk Plus",
@@ -35,6 +36,7 @@ async def create_from_webhook(
     # Match template by slug if provided
     if payload.template and payload.template != "blank":
         from sqlalchemy import select
+
         from app.models.template import IncidentTemplate
         result = await db.execute(
             select(IncidentTemplate).where(IncidentTemplate.slug == payload.template)

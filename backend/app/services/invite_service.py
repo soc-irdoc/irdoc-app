@@ -1,13 +1,13 @@
 """User invite CRUD."""
 import secrets
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user_invite import UserInvite
 from app.models.user import User
+from app.models.user_invite import UserInvite
 
 
 async def create_invite(
@@ -52,7 +52,6 @@ async def accept_invite(
     Validate an invite token (not expired, not already accepted), create the user,
     and mark the invite as accepted. Returns the updated invite.
     """
-    import uuid as _uuid
 
     invite = await get_invite_by_token(db, token)
     if not invite:

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
 import { ReportTemplate } from '@/types/report'
 import { useUIStore } from '@/stores/uiStore'
+import { getErrorMessage } from '@/lib/utils'
 
 export function useUploadTemplateLogo(templateId: string) {
   const qc = useQueryClient()
@@ -21,9 +22,8 @@ export function useUploadTemplateLogo(templateId: string) {
       qc.setQueryData(['report-template', templateId], t)
       addToast('Logo uploaded', 'success')
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to upload logo'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to upload logo'), 'error')
     },
   })
 }
@@ -63,9 +63,8 @@ export function useCreateReportTemplate() {
       qc.invalidateQueries({ queryKey: ['report-templates'] })
       addToast(`Template "${t.name}" created`, 'success')
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to create template'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to create template'), 'error')
     },
   })
 }
@@ -84,9 +83,8 @@ export function useUpdateReportTemplate(templateId: string) {
       qc.invalidateQueries({ queryKey: ['report-template', templateId] })
       addToast(`Template "${t.name}" saved`, 'success')
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to save template'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to save template'), 'error')
     },
   })
 }
@@ -124,9 +122,8 @@ export function useToggleAiAutoGenerate() {
         'success',
       )
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to update template'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to update template'), 'error')
     },
   })
 }
@@ -144,9 +141,8 @@ export function useToggleHideReportTemplate() {
       qc.invalidateQueries({ queryKey: ['report-templates'] })
       addToast(t.is_hidden ? `"${t.name}" hidden from Reports tab` : `"${t.name}" restored`, 'success')
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to update template'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to update template'), 'error')
     },
   })
 }
@@ -164,9 +160,8 @@ export function useCloneReportTemplate() {
       qc.invalidateQueries({ queryKey: ['report-templates'] })
       addToast(`"${t.name}" created — ready to edit`, 'success')
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.detail || 'Failed to clone template'
-      addToast(msg, 'error')
+    onError: (err) => {
+      addToast(getErrorMessage(err, 'Failed to clone template'), 'error')
     },
   })
 }

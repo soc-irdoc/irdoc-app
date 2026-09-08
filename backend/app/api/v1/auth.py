@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.limiter import limiter
 from app.core.security import (
     create_mfa_challenge_token,
     create_mfa_setup_token,
@@ -19,7 +20,6 @@ from app.schemas.auth import (
     UpdateProfileRequest,
     UserOut,
 )
-from app.core.limiter import limiter
 from app.services import audit_service, auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -31,6 +31,8 @@ COOKIE_SETTINGS = {
     "secure": settings.COOKIE_SECURE,
     "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
 }
+
+PROFILE_SAFE_FIELDS = {"full_name", "timezone", "theme"}
 
 
 @router.get("/setup-status")
@@ -57,6 +59,7 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
             detail="Open registration is disabled. Contact your admin for an invite.",
         )
     from sqlalchemy import select
+
     from app.models.organization import Organization
     result = await db.execute(select(Organization).where(Organization.slug == "default"))
     org = result.scalar_one_or_none()
@@ -194,7 +197,6 @@ async def update_me(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    PROFILE_SAFE_FIELDS = {"full_name", "timezone", "theme"}
     for key, value in data.model_dump(exclude_none=True).items():
         if key in PROFILE_SAFE_FIELDS:
             setattr(current_user, key, value)

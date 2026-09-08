@@ -40,10 +40,11 @@ def verify_file_hash(self, attachment_id: str):
     Logs and flags any mismatch as a security event.
     """
     async def _run():
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from sqlalchemy import select
+
         from app.models.attachment import Attachment
         from app.services.storage.resolver import get_storage_backend
-        from sqlalchemy import select
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             result = await db.execute(select(Attachment).where(Attachment.id == attachment_id))
@@ -79,10 +80,11 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
     Logs detections — surface to UI in a future iteration.
     """
     async def _run():
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from sqlalchemy import select
+
         from app.models.timeline import TimelineEntry
         from app.services.ioc_service import auto_detect
-        from sqlalchemy import select
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             result = await db.execute(select(TimelineEntry).where(TimelineEntry.id == entry_id))
@@ -106,16 +108,23 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
 def generate_report(self, report_id: str, include_ai: bool = False, org_id: str | None = None, trigger_sharepoint: bool = False):
     async def _run():
         from datetime import datetime, timezone
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
-        from app.models.report import Report
+
+        from sqlalchemy import func as sqlfunc
+        from sqlalchemy import select
+
         from app.models.pdf_template import PdfTemplate
+        from app.models.report import Report
         from app.models.template import ReportTemplate
         from app.models.user import User
-        from app.services.report_renderer import render_incident_pdf, render_incident_pdf_from_schema, build_report_payload
-        from app.services.graph_service import build_graph
         from app.services.graph_renderer import render_graph_svg
+        from app.services.graph_service import build_graph
+        from app.services.report_renderer import (
+            build_report_payload,
+            render_incident_pdf,
+            render_incident_pdf_from_schema,
+        )
         from app.services.storage.resolver import get_storage_backend
-        from sqlalchemy import select, func as sqlfunc
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             result = await db.execute(select(Report).where(Report.id == report_id))
@@ -145,8 +154,11 @@ def generate_report(self, report_id: str, include_ai: bool = False, org_id: str 
                 if include_ai:
                     from app.core.feature_flags import check_feature
                     if check_feature("ai_summaries"):
-                        from app.services.ai_service import get_ai_provider, build_delta_report_prompt
                         from app.services.ai_config_service import get_ai_config
+                        from app.services.ai_service import (
+                            build_delta_report_prompt,
+                            get_ai_provider,
+                        )
 
                         ai_cfg = None
                         if org_id:
@@ -271,7 +283,9 @@ def generate_report(self, report_id: str, include_ai: bool = False, org_id: str 
 def _emit_ws(incident_id: str, event: str, data: dict):
     """Best-effort Socket.io event emission from worker context via Redis pub/sub."""
     import json
+
     import redis as redis_sync
+
     from app.core.config import settings
 
     r = redis_sync.from_url(settings.REDIS_URL)
@@ -290,11 +304,13 @@ def generate_ai_report(self, incident_id: str, org_id: str):
     - Creates one pending Report per activated template and delegates to generate_report
     """
     async def _run():
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from sqlalchemy import func as sqlfunc
+        from sqlalchemy import select
+
         from app.models.report import Report
         from app.models.template import ReportTemplate
         from app.services.ai_config_service import get_ai_config
-        from sqlalchemy import select, func as sqlfunc
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             ai_cfg = await get_ai_config(db, org_id)
@@ -357,13 +373,14 @@ def generate_ai_report(self, incident_id: str, org_id: str):
 def generate_ai_summary(self, incident_id: str) -> str | None:
     """Generate AI executive summary for an incident (standalone, not tied to a report)."""
     async def _run():
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from sqlalchemy import select as _select
+
         from app.core.feature_flags import check_feature
         from app.models.incident import Incident
         from app.models.user import User
+        from app.services.ai_service import build_executive_summary_prompt, get_ai_provider
         from app.services.report_renderer.payload import build_report_payload
-        from app.services.ai_service import get_ai_provider, build_executive_summary_prompt
-        from sqlalchemy import select as _select
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         if not check_feature("ai_summaries"):
             logger.warning("generate_ai_summary: ai_summaries feature not enabled")
@@ -409,13 +426,14 @@ def generate_ai_summary(self, incident_id: str) -> str | None:
 def generate_ai_recommendations(self, incident_id: str) -> str | None:
     """Generate AI recommendations for an incident."""
     async def _run():
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from sqlalchemy import select as _select
+
         from app.core.feature_flags import check_feature
         from app.models.incident import Incident
         from app.models.user import User
+        from app.services.ai_service import build_recommendations_prompt, get_ai_provider
         from app.services.report_renderer.payload import build_report_payload
-        from app.services.ai_service import get_ai_provider, build_recommendations_prompt
-        from sqlalchemy import select as _select
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         if not check_feature("ai_summaries"):
             return None
@@ -460,16 +478,16 @@ def enrich_ioc(self, ioc_id: str):
     async def _run():
         # Ensure all plugins are loaded
         import app.plugins  # noqa: F401 — triggers auto-registration
-
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.services.enrichment_service import enrich_ioc as do_enrich
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             enrichment = await do_enrich(ioc_id, db)
             if enrichment:
                 # Reload ioc for confidence value
-                from app.models.ioc import IOC
                 from sqlalchemy import select
+
+                from app.models.ioc import IOC
                 result = await db.execute(select(IOC).where(IOC.id == ioc_id))
                 ioc = result.scalar_one_or_none()
                 if ioc:
@@ -496,15 +514,16 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
     using the policy's linked report template and destination_config credentials.
     """
     async def _run():
-        import app.plugins  # noqa: F401 — loads SharePointPlugin
-
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
-        from app.models.report import SyncPolicy
-        from app.services.report_renderer import render_incident_pdf, build_report_payload
-        from app.services.integration_service import decrypt_config
-        from app.plugins.registry import PLUGINS
-        from sqlalchemy import select
         from datetime import datetime, timezone
+
+        from sqlalchemy import select
+
+        import app.plugins  # noqa: F401 — loads SharePointPlugin
+        from app.models.report import SyncPolicy
+        from app.plugins.registry import PLUGINS
+        from app.services.integration_service import decrypt_config
+        from app.services.report_renderer import build_report_payload, render_incident_pdf
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             result = await db.execute(select(SyncPolicy).where(SyncPolicy.id == policy_id))
@@ -566,17 +585,21 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
         run_async(_run())
     except Exception as exc:
         logger.exception("sync_to_sharepoint: failed incident=%s policy=%s: %s", incident_id, policy_id, exc)
+        # `except ... as exc` unbinds `exc` once this block exits, so capture the
+        # message now rather than referencing `exc` from the nested closure below.
+        error_message = str(exc)[:500]
 
         async def _mark_failed():
-            from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
-            from app.models.report import SyncPolicy
             from sqlalchemy import select
+
+            from app.models.report import SyncPolicy
+            from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
             async with AsyncSessionLocal() as db:
                 result = await db.execute(select(SyncPolicy).where(SyncPolicy.id == policy_id))
                 policy = result.scalar_one_or_none()
                 if policy:
                     policy.last_sync_status = "failed"
-                    policy.last_error = str(exc)[:500]
+                    policy.last_error = error_message
                     await db.commit()
         run_async(_mark_failed())
         raise self.retry(exc=exc)
@@ -589,9 +612,8 @@ def send_notification(self, org_id: str, event: str, payload: dict):
     """
     async def _run():
         import app.plugins  # noqa: F401
-
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
         from app.services.integration_service import get_enabled_plugins_for_org
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             plugins = await get_enabled_plugins_for_org(org_id, "comms", db)
@@ -609,15 +631,16 @@ def send_notification(self, org_id: str, event: str, payload: dict):
 def push_report_to_sharepoint(self, report_id: str, org_id: str):
     """Push an already-generated report PDF to SharePoint and store the returned webUrl."""
     async def _run():
+        from sqlalchemy import select
+
         import app.plugins  # noqa: F401 — loads SharePointPlugin
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from app.models.incident import Incident
         from app.models.report import Report
         from app.models.template import ReportTemplate
-        from app.models.incident import Incident
-        from app.services.integration_service import get_integration, decrypt_config
-        from app.services.storage.resolver import get_storage_backend
         from app.plugins.registry import PLUGINS
-        from sqlalchemy import select
+        from app.services.integration_service import decrypt_config, get_integration
+        from app.services.storage.resolver import get_storage_backend
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             report = (await db.execute(select(Report).where(Report.id == report_id))).scalar_one_or_none()
@@ -697,10 +720,11 @@ def auto_generate_for_sharepoint(self, incident_id: str, org_id: str):
     Base scaffold reports (report_template_id=NULL) are excluded.
     """
     async def _run():
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from sqlalchemy import select
+
         from app.models.report import Report
         from app.models.template import ReportTemplate
-        from sqlalchemy import select
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
             # Find distinct custom templates already used for this incident
@@ -766,6 +790,7 @@ def process_expired_sync_locks():
     for environments where keyspace notifications are not available.
     """
     import redis as redis_sync
+
     from app.core.config import settings
 
     r = redis_sync.from_url(settings.REDIS_URL)
@@ -808,11 +833,12 @@ def process_expired_sync_locks():
 def generate_ai_ioc_narrative(self, ioc_id: str):
     """Generate a plain-English enrichment narrative for an IOC (premium)."""
     async def _run():
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
+        from sqlalchemy import select
+
         from app.core.feature_flags import check_feature
         from app.models.ioc import IOC
         from app.services.ai_service import get_ai_provider
-        from sqlalchemy import select
+        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         if not check_feature("ai_summaries"):
             return
