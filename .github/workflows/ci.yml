@@ -54,7 +54,7 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r backend/requirements.txt pip-audit ruff
+        run: pip install --require-hashes -r backend/requirements.lock.txt && pip install pip-audit ruff
 
       - name: Security audit (pip-audit)
         # PYSEC-2026-1325: Minerva timing attack on ecdsa's P-256 signing, unfixed
