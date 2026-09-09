@@ -1,0 +1,28 @@
+# Runtime dependencies for backend/fuzz/report_html_fuzzer.py.
+#
+# This is deliberately a small subset of backend/requirements.txt, not the
+# full backend dependency set installed via `pip3 install -r
+# backend/requirements.txt`. The fuzz target (render_fixed_report_html and
+# the code it lazily pulls in for the sanitize_html filter) only ever
+# imports the packages listed below; everything else in the main
+# requirements.txt -- boto3, azure-storage-blob, google-cloud-storage,
+# python3-saml, celery/redis, weasyprint's PDF path, mammoth, python-docx,
+# etc. -- has nothing to do with the code path under fuzz. Installing the
+# full backend requirement set here would only add fragile, unrelated
+# native-dependency surface (e.g. python3-saml needs system xmlsec1/libxml2
+# headers that the ClusterFuzzLite build image has no reason to carry) to a
+# build that doesn't need any of it.
+#
+# Versions are pinned to match backend/requirements.txt exactly, so this
+# fuzz target keeps exercising the same dependency versions the app
+# actually ships. atheris itself is installed in .clusterfuzzlite/Dockerfile
+# instead of here (it's a fuzzing-engine/toolchain concern, not a project
+# dependency, and installing it in the Dockerfile layer means it isn't
+# reinstalled on every build.sh run).
+jinja2==3.1.6
+bleach==6.4.0
+sqlalchemy==2.0.52
+asyncpg==0.31.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+fastapi==0.141.1
