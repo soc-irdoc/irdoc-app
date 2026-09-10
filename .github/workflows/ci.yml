@@ -280,7 +280,14 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        # Release tags are named "vX.Y.Z" (or "vX.Y.Z-alpha"), but VERSION
+        # (the repo-root VERSION file, docker/.env, and docker-compose's
+        # ${VERSION:-latest}) is stored without the "v". Strip both the
+        # "refs/tags/" prefix and a leading "v" so the image tag this job
+        # creates actually matches what the app looks for.
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          echo "VERSION=${tag#v}" >> $GITHUB_OUTPUT
 
       - name: Tag backend with version
         run: |
