@@ -6,6 +6,7 @@
 [![CodeQL](https://github.com/soc-irdoc/irdoc-app/actions/workflows/codeql.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/codeql.yml)
 [![Secret Scan](https://github.com/soc-irdoc/irdoc-app/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/secret-scan.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/soc-irdoc/irdoc-app/badge)](https://scorecard.dev/viewer/?uri=github.com/soc-irdoc/irdoc-app)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14556/badge)](https://www.bestpractices.dev/projects/14556)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](LICENSE)
 
 ---
