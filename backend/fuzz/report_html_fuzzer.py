@@ -72,10 +72,6 @@ os.environ.setdefault(
 import atheris
 
 with atheris.instrument_imports():
-    from app.services.report_renderer.engine import _build_jinja_env
-    from app.services.report_renderer.fixed_report import render_fixed_report_html
-    from app.services.report_renderer.payload import ReportPayload
-
     # engine.py's sanitize_html Jinja filter imports _sanitize_html (and, via
     # bleach.clean(), the bleach package) LAZILY, inside the filter body --
     # it isn't reached until the first template render actually calls the
@@ -86,6 +82,9 @@ with atheris.instrument_imports():
     # as an opaque, uninstrumented dependency the fuzzer can't see coverage
     # feedback from.
     from app.services.incident_service import _sanitize_html  # noqa: F401  (instrument bleach)
+    from app.services.report_renderer.engine import _build_jinja_env
+    from app.services.report_renderer.fixed_report import render_fixed_report_html
+    from app.services.report_renderer.payload import ReportPayload
 
 
 _FIXED_DT = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
@@ -260,7 +259,7 @@ def render_one_case(
     )
 
 
-def TestOneInput(data: bytes) -> None:
+def TestOneInput(data: bytes) -> None:  # noqa: N802 (atheris requires this exact name)
     fdp = atheris.FuzzedDataProvider(data)
     render_one_case(
         title=fdp.ConsumeUnicodeNoSurrogates(300),

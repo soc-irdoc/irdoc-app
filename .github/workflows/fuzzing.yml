@@ -8,6 +8,10 @@ on:
       - '.github/workflows/fuzzing.yml'
   schedule:
     - cron: '0 5 * * *'
+  # Runs the Batch job on demand -- mainly to seed the coverage-report
+  # artifact that the PR job's "affected fuzz targets" filtering reads, so a
+  # first-ever PR doesn't hit an empty baseline and report zero targets.
+  workflow_dispatch:
 
 permissions: read-all
 
@@ -36,7 +40,7 @@ jobs:
           mode: 'code-change'
 
   Batch:
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     name: Batch fuzzing
     runs-on: ubuntu-latest
     steps:
