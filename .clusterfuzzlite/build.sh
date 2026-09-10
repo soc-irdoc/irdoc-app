@@ -39,6 +39,12 @@ for fuzzer in $(find "$BACKEND_DIR/fuzz" -name '*_fuzzer.py'); do
   # (see note above).
   cat > "$OUT/$fuzzer_basename" <<WRAPPER
 #!/bin/sh
+# LLVMFuzzerTestOneInput for fuzzer detection. ClusterFuzzLite's build-check
+# greps $OUT files for this exact literal string as a language-agnostic
+# heuristic to recognize a valid fuzz target (documented in the upstream
+# Python build.sh template even for non-PyInstaller, non-C targets like this
+# one) -- without it present verbatim, "Build check" reports "No fuzz
+# targets found" even though this wrapper is otherwise fully functional.
 export PYTHONPATH="$BACKEND_DIR:\${PYTHONPATH:-}"
 exec python3 "$fuzzer" "\$@"
 WRAPPER
