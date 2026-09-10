@@ -9,7 +9,7 @@ FROM gcr.io/oss-fuzz-base/base-builder-python
 # be present on base-builder-python, but install it explicitly rather than
 # depend on whatever happens to be baked into the base image at any given
 # time.
-RUN pip3 install atheris
+RUN pip3 install atheris==3.1.0
 
 # app.core.config.Settings raises at import time if SECRET_KEY is unset or
 # shorter than 32 chars (see backend/app/core/config.py's

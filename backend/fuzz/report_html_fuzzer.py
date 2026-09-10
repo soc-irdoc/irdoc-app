@@ -76,6 +76,17 @@ with atheris.instrument_imports():
     from app.services.report_renderer.fixed_report import render_fixed_report_html
     from app.services.report_renderer.payload import ReportPayload
 
+    # engine.py's sanitize_html Jinja filter imports _sanitize_html (and, via
+    # bleach.clean(), the bleach package) LAZILY, inside the filter body --
+    # it isn't reached until the first template render actually calls the
+    # filter, which happens after this instrument_imports() block has
+    # already closed. Since this harness's highest-value target IS that
+    # bleach.clean() call (see module docstring), import it here explicitly
+    # so atheris instruments bleach's bytecode too, instead of treating it
+    # as an opaque, uninstrumented dependency the fuzzer can't see coverage
+    # feedback from.
+    from app.services.incident_service import _sanitize_html  # noqa: F401  (instrument bleach)
+
 
 _FIXED_DT = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
 
