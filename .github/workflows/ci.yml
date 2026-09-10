@@ -252,9 +252,14 @@ jobs:
           category: trivy-frontend
 
   # ── Tag versioned release images ──────────────────────────────────────────
+  # No `needs: [build-and-push]` here on purpose: that job only runs on
+  # `push` (see its own `if:` above), so on a `release` event it is always
+  # skipped — and a job that needs a skipped job is skipped too, regardless
+  # of its own `if:`. This job instead retags the `:${{ github.sha }}` image
+  # that an earlier push-triggered build-and-push run already published for
+  # this same commit.
   release:
     name: Release — Tag Docker Images
-    needs: [build-and-push]
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
