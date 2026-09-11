@@ -4,7 +4,11 @@ FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145
 RUN groupadd -r irp && useradd -r -g irp irp
 
 # ── System deps for WeasyPrint + asyncpg + pg_dump ─────────────────────────────
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# `apt-get upgrade` picks up Debian point-release security patches (e.g.
+# libpcre2-8-0) that land in the archive between base-image rebuilds — the
+# pinned base digest above doesn't get those until Debian re-publishes it.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libcairo2 \
@@ -25,6 +29,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # ── Python dependencies ─────────────────────────────────────────────────────────
+# Base image ships an outdated pip with several known CVEs; upgrade before
+# the hash-pinned install (pip itself isn't in the lock file). Also strip the
+# fallback pip/setuptools wheels ensurepip bundles into the interpreter
+# distribution — dead weight we never invoke (no `ensurepip` calls at
+# runtime) that Trivy still flags at their old, unrelated CVE'd versions.
+RUN pip install --no-cache-dir --upgrade pip==26.2.0 \
+    && rm -rf /usr/local/lib/python3.12/ensurepip/_bundled
 COPY requirements.lock.txt .
 RUN pip install --no-cache-dir --require-hashes -r requirements.lock.txt
 
