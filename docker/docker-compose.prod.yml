@@ -21,6 +21,13 @@ x-backend-env: &backend-env
   REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
   MSSP_MODE: ${MSSP_MODE:-false}
   VERSION: ${VERSION:-latest}
+  # Demo-only — consumed by seed_demo.py, never read by the app itself. Leave
+  # unset on a real install; only demo.irdoc.io's docker/.env should set these.
+  DEMO_PASSWORD: ${DEMO_PASSWORD:-}
+  DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-}
+  DEMO_SENIOR_ANALYST_PASSWORD: ${DEMO_SENIOR_ANALYST_PASSWORD:-}
+  DEMO_ANALYST_PASSWORD: ${DEMO_ANALYST_PASSWORD:-}
+  DEMO_VIEWER_PASSWORD: ${DEMO_VIEWER_PASSWORD:-}
 
 services:
   db:
