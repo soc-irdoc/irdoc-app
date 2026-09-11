@@ -215,10 +215,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Report-only for now (exit-code 0): this is the first pass at scanning
-      # these images, so we don't yet know the baseline noise from the base
-      # images. Findings land in the job log/SARIF; tighten to exit-code 1
-      # once the baseline has been triaged.
+      # Baseline triaged (2026-09-11): the first pass surfaced 961 alerts,
+      # 98% of which had no fix available (unfixed upstream/distro CVEs with
+      # no actionable remediation) and don't belong in code scanning noise.
+      # `ignore-unfixed` drops those; `severity` still limits to Trivy's own
+      # CRITICAL/HIGH bucket. Report-only for now (exit-code 0) until we've
+      # watched a few clean runs.
       - name: Scan backend image (Trivy)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -226,6 +228,7 @@ jobs:
           format: sarif
           output: trivy-backend.sarif
           severity: CRITICAL,HIGH
+          ignore-unfixed: true
           exit-code: '0'
 
       - name: Scan frontend image (Trivy)
@@ -235,6 +238,7 @@ jobs:
           format: sarif
           output: trivy-frontend.sarif
           severity: CRITICAL,HIGH
+          ignore-unfixed: true
           exit-code: '0'
 
       - name: Upload backend Trivy results to code scanning
