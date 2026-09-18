@@ -12,8 +12,15 @@ x-backend-env: &backend-env
   STORAGE_PATH: /app/storage
   BASE_URL: ${BASE_URL}
   LICENSE_KEY: ${LICENSE_KEY:-}
-  AI_BACKEND: ${AI_BACKEND:-}
+  # Must name a real choice: the key is always injected, so `:-` would hand the
+  # backend an empty string and Settings' Literal rejects it at import time.
+  AI_BACKEND: ${AI_BACKEND:-anthropic}
   AI_MODEL: ${AI_MODEL:-claude-sonnet-4-6}
+  # Only the backend matching AI_BACKEND needs a real value; the others stay
+  # empty and unused. These are plain strings (not Literal), so `:-` is safe.
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
   ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
   WEBHOOK_RATE_LIMIT: ${WEBHOOK_RATE_LIMIT:-20}
   WEBHOOK_MAX_PAYLOAD_BYTES: ${WEBHOOK_MAX_PAYLOAD_BYTES:-65536}
