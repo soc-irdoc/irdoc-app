@@ -5,13 +5,39 @@ All notable changes to IRDoc are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 IRDoc uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The current pre-release version is tracked in [`VERSION`](VERSION). Nothing
-below has been tagged as a release yet — it will move under a version
-heading here once it is.
+The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
 ## [Unreleased]
+
+## [0.1.1-alpha] - 2026-09-18
+
+### Fixed
+
+- **Fresh Docker installs crash-looping on first run** — `docker-compose.prod.yml` set `AI_BACKEND` to an always-injected empty string by default; the backend's `Literal["anthropic","openai","ollama"]` setting rejects that at startup, crash-looping `backend`, `worker`, and `beat` together (they share one entrypoint that imports settings before starting anything). `AI_BACKEND` now defaults to `anthropic`, matching the app's own default.
+- **First-run setup screen not appearing** — `GET /auth/setup-status` returned a bare `{"setup_complete": ...}` instead of the `{"data": {...}}` envelope every other endpoint uses. The frontend's response parsing threw against the unexpected shape and failed silently, so a fresh install with zero users rendered a normal login form with no way to create the first admin account.
+- `docker-compose.prod.yml` now passes `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `OLLAMA_BASE_URL` through to the backend — setting these in `docker/.env` had no effect before this release.
+- Removed the misleading `EMAIL_BACKEND` line from `.env.example`; it isn't read by the app — SMTP is configured per-organization from the admin UI after login, not via environment variables.
+
+### Security
+
+- Patched fixable CVEs in base container images and tuned Trivy CI scanning (`ignore-unfixed`), cutting code-scanning noise from ~971 alerts down to the handful that are actually actionable.
+
+### Added
+
+- `demo.irdoc.io` seed data and a 6-hourly automated reset script for the public demo environment.
+
+### Changed
+
+- The frontend Docker image is no longer published for `linux/arm64` — a Vite/Rollup arm64 native dependency deadlocks installing under this project's CI QEMU emulation. The image is static, nginx-served content and runs fine on an arm64 host under its own amd64 emulation if needed. The backend image is unaffected and still ships both `linux/amd64` and `linux/arm64`.
+
+### Internal
+
+- Release image tagging now strips a leading `v` from the git tag, so `docker-compose.prod.yml`'s `VERSION` value actually matches the published image tag.
+- Added a 30-minute timeout to the Docker build-and-push CI job, so a hung build step fails within 30 minutes instead of silently running for up to GitHub's 6-hour default.
+
+## [0.1.0-alpha] - 2026-09-10
 
 ### Added
 
@@ -107,4 +133,6 @@ heading here once it is.
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/commits/main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.1-alpha...main
+[0.1.1-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.0-alpha...v0.1.1-alpha
+[0.1.0-alpha]: https://github.com/soc-irdoc/irdoc-app/releases/tag/v0.1.0-alpha
