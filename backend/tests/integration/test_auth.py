@@ -58,6 +58,28 @@ async def test_change_password(client: AsyncClient, auth_headers):
 
 
 @pytest.mark.asyncio
+async def test_setup_status_response_is_wrapped_in_data_envelope(client: AsyncClient):
+    """
+    Regression: this endpoint returned a bare {"setup_complete": ...} while
+    every other endpoint (and the frontend's apiClient) uses a {"data": ...}
+    envelope. LoginPage read res.data.data.setup_complete, which threw
+    (data.data is undefined) and was silently swallowed by a bare `.catch(() =>
+    {})` — so a fresh install with zero users rendered a plain login form with
+    no way to create the first admin account, instead of the setup form.
+    """
+    response = await client.get("/api/v1/auth/setup-status")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["data"]["setup_complete"] is False
+
+
+@pytest.mark.asyncio
+async def test_setup_status_true_after_first_user(client: AsyncClient, admin_user):
+    response = await client.get("/api/v1/auth/setup-status")
+    assert response.json()["data"]["setup_complete"] is True
+
+
+@pytest.mark.asyncio
 async def test_setup_blocked_after_first_user(client: AsyncClient, admin_user):
     response = await client.post(
         "/api/v1/auth/setup",

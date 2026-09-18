@@ -39,7 +39,7 @@ PROFILE_SAFE_FIELDS = {"full_name", "timezone", "theme"}
 async def setup_status(db: AsyncSession = Depends(get_db)):
     """Check if first-run setup is needed."""
     done = await auth_service.setup_complete(db)
-    return {"setup_complete": done}
+    return {"data": {"setup_complete": done}}
 
 
 @router.post("/setup", status_code=201)
