@@ -6,8 +6,9 @@
 [![CodeQL](https://github.com/soc-irdoc/irdoc-app/actions/workflows/codeql.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/codeql.yml)
 [![Secret Scan](https://github.com/soc-irdoc/irdoc-app/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/secret-scan.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/soc-irdoc/irdoc-app/badge)](https://scorecard.dev/viewer/?uri=github.com/soc-irdoc/irdoc-app)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14556/badge)](https://www.bestpractices.dev/projects/14556)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/petruspinu)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/petruspinu)
 
 ---
 
@@ -52,7 +53,7 @@ Contributions are welcome. See the [contributing guide](https://docs.irdoc.io/co
 
 ## Sponsorship
 
-IRDoc's core is free and will stay that way. If your organization relies on it and wants to support ongoing development, reach out via [irdoc.io](https://irdoc.io) - we don't have a formal sponsorship program set up yet, but we'd like to hear from you.
+IRDoc's core is free and will stay that way. If your organization relies on it and wants to support ongoing development, you can sponsor via [GitHub Sponsors](https://github.com/sponsors/petruspinu) or [Ko-fi](https://ko-fi.com/petruspinu).
 
 ---
 
