@@ -11,6 +11,11 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Incident tabs and left-nav frozen after the first click** — `react-router-dom` v7's `<BrowserRouter>` now wraps every location update in `React.startTransition()` by default. Under React 18, that transition-wrapped update to `<Routes>` could be starved by other synchronous re-renders in the tree (zustand/WebSocket-driven state on the incident workspace page) and never commit, even though `history.pushState`/`replaceState` had already changed the URL — so a tab or nav click changed the address bar but left the previous screen on-screen, and every navigation afterwards (any tab, any nav item) stayed stuck until a full page reload. Fixed by opting out with `useTransitions={false}`, restoring synchronous route updates.
+- **`beat` container always reporting unhealthy** — its healthcheck shells out to `pgrep`, which isn't part of the `python:3.12-slim-bookworm` base image (no `procps`); it has failed with `pgrep: not found` (exit 127) every 30s since the healthcheck was added, even though the `celery beat` process itself was running fine. Added `procps` to `backend/Dockerfile`.
+
 ## [0.1.1-alpha] - 2026-09-18
 
 ### Fixed
