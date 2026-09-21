@@ -7,6 +7,11 @@ RUN groupadd -r irp && useradd -r -g irp irp
 # `apt-get upgrade` picks up Debian point-release security patches (e.g.
 # libpcre2-8-0) that land in the archive between base-image rebuilds — the
 # pinned base digest above doesn't get those until Debian re-publishes it.
+# procps (pgrep/ps) isn't part of this slim base image; the celery-beat
+# container's healthcheck (docker-compose.prod.yml) shells out to `pgrep` and
+# has been failing with "pgrep: not found" (exit 127) since it was added —
+# beat itself runs fine, only the healthcheck was broken, so the container
+# always reported unhealthy.
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
@@ -18,6 +23,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     gcc \
     curl \
     gnupg \
+    procps \
     && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
        | gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
