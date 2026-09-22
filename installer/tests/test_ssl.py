@@ -72,6 +72,25 @@ def test_generate_nginx_conf_import_has_ssl_block():
     assert "Content-Security-Policy" in conf
 
 
+def test_generate_nginx_conf_csp_allows_what_the_spa_actually_needs():
+    """Regression: an over-strict CSP silently broke fonts, inline styles and
+    data:/blob: previews in the browser. Pin the directives the SPA depends on."""
+    conf = generate_nginx_conf("import")
+    csp = next(
+        line for line in conf.splitlines() if "Content-Security-Policy" in line
+    )
+    assert "style-src 'self' 'unsafe-inline'" in csp  # TipTap injects a <style> tag
+    assert "img-src 'self' data: blob:" in csp  # logo / attachment previews
+    assert "font-src 'self'" in csp  # fonts are self-hosted
+    # ...while the parts that actually matter stay locked down.
+    assert "script-src 'self';" in csp
+    assert "'unsafe-eval'" not in csp
+    assert "object-src 'none'" in csp
+    assert "frame-ancestors 'none'" in csp
+    # No third-party origins — installs are frequently air-gapped.
+    assert "http://" not in csp and "https://" not in csp
+
+
 def test_generate_nginx_conf_selfsigned_same_as_import():
     conf_import = generate_nginx_conf("import")
     conf_self = generate_nginx_conf("selfsigned")

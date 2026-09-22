@@ -1,4 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap');
+/* Self-hosted webfonts. Deliberately NOT loaded from fonts.googleapis.com:
+   IRDoc is deployed on-prem and frequently air-gapped, so an external font
+   host means fallback typography (and a user-IP leak) for those installs.
+   Self-hosting also keeps the CSP free of third-party style/font origins.
+   Each file declares every Google subset with unicode-range, so browsers
+   still download only the glyph ranges a page actually uses. */
+@import '@fontsource/syne/400.css';
+@import '@fontsource/syne/500.css';
+@import '@fontsource/syne/600.css';
+@import '@fontsource/syne/700.css';
+@import '@fontsource/syne/800.css';
+@import '@fontsource/jetbrains-mono/300.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
 
 @tailwind base;
 @tailwind components;

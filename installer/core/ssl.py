@@ -71,6 +71,19 @@ def generate_self_signed(common_name: str, san_list: list[str], days: int = 825)
     return cert_pem, key_pem
 
 
+CSP = (
+    "default-src 'self'; "
+    "script-src 'self'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob:; "
+    "font-src 'self'; "
+    "connect-src 'self'; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "frame-ancestors 'none';"
+)
+
+
 def generate_nginx_conf(mode: str) -> str:
     """Generate nginx.conf content for the given HTTPS mode."""
     upstream = "upstream backend {\n    server irdoc-backend:8000;\n}\n\n"
@@ -101,8 +114,15 @@ def generate_nginx_conf(mode: str) -> str:
         try_files $uri $uri/ /index.html;
     }"""
 
-    security_headers = """
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';" always;
+    security_headers = f"""
+    # CSP relaxations, all required by the SPA — each one was verified as needed:
+    #   style-src 'unsafe-inline' — TipTap/ProseMirror injects a <style> tag at
+    #     runtime, and the dashboard renders a <style> block for keyframes. A nonce
+    #     is not an option here: nginx serves index.html as a static file.
+    #   img-src data: — logo previews and pasted rich-text images are read client
+    #     side as base64 data URIs; blob: — attachment and export previews.
+    # Fonts are self-hosted, so no third-party style/font origin is allowed.
+    add_header Content-Security-Policy "{CSP}" always;
     add_header X-Frame-Options "DENY" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
