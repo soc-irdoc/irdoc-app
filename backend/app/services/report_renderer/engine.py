@@ -91,16 +91,24 @@ def _build_jinja_env() -> jinja2.Environment:
 _jinja_env = _build_jinja_env()
 
 
-def _safe_url_fetcher(url: str):
-    """WeasyPrint url_fetcher that only allows data: URIs.
+def _make_url_fetcher():
+    """Build a WeasyPrint url_fetcher that only allows data: URIs.
 
     Blocks file://, http://, and any other scheme to prevent SSRF and local
-    file disclosure during PDF rendering.
+    file disclosure during PDF rendering. Blocked URLs raise ValueError, which
+    WeasyPrint downgrades to a warning — a rogue reference degrades to a
+    missing image rather than failing the whole report.
+
+    Must be a ``URLFetcher`` instance, not a plain function: since WeasyPrint
+    70.0 the library reads ``url_fetcher._fail_on_errors`` whenever a fetch
+    raises, so a function fetcher blows up with ``AttributeError`` the moment
+    a document references any resource at all (e.g. a template logo). A fresh
+    instance is returned per render because ``URLFetcher`` carries per-request
+    state.
     """
-    if not url.startswith("data:"):
-        raise ValueError(f"URL scheme not permitted in PDF renderer: {url!r}")
-    from weasyprint.urls import default_url_fetcher
-    return default_url_fetcher(url)
+    from weasyprint.urls import URLFetcher
+
+    return URLFetcher(allowed_protocols=("data",))
 
 
 def render_incident_pdf_from_schema(
@@ -127,7 +135,7 @@ def render_incident_pdf_from_schema(
         return WeasyHTML(
             string=html,
             base_url=str(_TEMPLATE_DIR / "reports"),
-            url_fetcher=_safe_url_fetcher,
+            url_fetcher=_make_url_fetcher(),
         ).write_pdf()
     except Exception as exc:
         logger.error("WeasyPrint schema PDF render failed: %s", exc)
@@ -165,7 +173,7 @@ def render_incident_pdf(
         return WeasyHTML(
             string=html,
             base_url=str(_TEMPLATE_DIR / "reports"),
-            url_fetcher=_safe_url_fetcher,
+            url_fetcher=_make_url_fetcher(),
         ).write_pdf()
     except Exception as exc:
         logger.error("WeasyPrint PDF render failed: %s", exc)

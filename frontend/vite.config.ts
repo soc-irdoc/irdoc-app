@@ -24,6 +24,13 @@ export default defineConfig({
     },
   },
   build: {
+    // Never inline webfonts as data: URIs. Vite inlines assets under 4KB by
+    // default, which swept up the small @fontsource subsets (Greek, Cyrillic,
+    // Vietnamese) — that both trips `font-src 'self'` in our CSP and forces
+    // every visitor to download subsets they will never render, defeating the
+    // unicode-range lazy-loading those files exist for.
+    assetsInlineLimit: (filePath: string) =>
+      /\.(woff2?|ttf|otf|eot)$/i.test(filePath) ? false : undefined,
     rollupOptions: {
       output: {
         manualChunks: {
