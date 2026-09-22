@@ -21,7 +21,7 @@
 # reinstalled on every build.sh run).
 jinja2==3.1.6
 bleach==6.4.0
-sqlalchemy==2.0.52
+sqlalchemy==2.0.54
 asyncpg==0.31.0
 pydantic==2.13.5
 pydantic-settings==2.15.0
