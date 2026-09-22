@@ -56,7 +56,14 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
     e.preventDefault()
     if (!description.trim()) return
 
-    const occurred_at = `${date}T${time}`
+    // `${date}T${time}` has no timezone offset, so `new Date(...)` parses it
+    // as local wall-clock time (per spec, a date-time string with no offset is
+    // local) — .toISOString() then converts that to an absolute UTC instant.
+    // Sending the naive string as-is (as this used to) let the backend's
+    // timestamptz column silently treat local time as UTC, so entries came
+    // back shifted by the browser's UTC offset. Mirrors EditEntryModal, which
+    // already does this correctly.
+    const occurred_at = new Date(`${date}T${time}`).toISOString()
 
     try {
       const entry = await createEntry.mutateAsync({
