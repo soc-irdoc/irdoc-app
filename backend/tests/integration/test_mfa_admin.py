@@ -19,7 +19,7 @@ async def enrolled_admin(admin_user, db_session):
     return user, org
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_admin_can_reset_user_mfa(
     client: AsyncClient, enrolled_admin, db_session
 ):
@@ -39,7 +39,7 @@ async def test_admin_can_reset_user_mfa(
     assert user.mfa_enrolled_at is None
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_non_admin_cannot_reset_others_mfa(
     client: AsyncClient, admin_user, db_session
 ):
@@ -73,7 +73,7 @@ async def test_non_admin_cannot_reset_others_mfa(
     assert resp.status_code == 403
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_admin_can_set_org_mfa_required(
     client: AsyncClient, admin_user, db_session
 ):
@@ -90,7 +90,7 @@ async def test_admin_can_set_org_mfa_required(
     assert (org.settings or {}).get("mfa_required") is True
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_admin_can_disable_org_mfa_required(
     client: AsyncClient, admin_user, db_session
 ):

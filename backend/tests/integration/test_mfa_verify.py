@@ -24,7 +24,7 @@ async def enrolled_user(admin_user, db_session):
     return user, secret, plain_codes, pre_access_token
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_verify_with_valid_totp_returns_access_token(
     client: AsyncClient, enrolled_user
 ):
@@ -43,7 +43,7 @@ async def test_verify_with_valid_totp_returns_access_token(
     assert data["user"] is not None
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_verify_with_wrong_totp_returns_401(
     client: AsyncClient, enrolled_user
 ):
@@ -58,7 +58,7 @@ async def test_verify_with_wrong_totp_returns_401(
     assert resp.status_code == 401
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_verify_with_backup_code_returns_access_token(
     client: AsyncClient, enrolled_user, db_session
 ):
@@ -77,7 +77,7 @@ async def test_verify_with_backup_code_returns_access_token(
     assert len(user.backup_codes) == 9
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_regenerate_backup_codes_returns_ten_new_codes(
     client: AsyncClient, enrolled_user
 ):
@@ -94,7 +94,7 @@ async def test_regenerate_backup_codes_returns_ten_new_codes(
         assert "-" in code
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_disable_mfa_clears_fields(
     client: AsyncClient, enrolled_user, db_session
 ):
@@ -114,7 +114,7 @@ async def test_disable_mfa_clears_fields(
     assert user.backup_codes is None
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_disable_mfa_blocked_when_org_requires_it(
     client: AsyncClient, enrolled_user, db_session
 ):
