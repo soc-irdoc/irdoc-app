@@ -25,6 +25,12 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 - **Webfonts are now self-hosted** instead of being loaded from `fonts.googleapis.com`. IRDoc is deployed on-prem and frequently air-gapped, where the external stylesheet silently fell back to system fonts; self-hosting also removes a third-party origin from the CSP and stops leaking viewer IPs to Google. Adds `@fontsource/syne` and `@fontsource/jetbrains-mono`; every Google subset is still declared with its `unicode-range`, so browsers download only the glyph ranges a page actually uses (Vite is now told never to inline font files — its 4KB default was embedding the small Greek/Cyrillic/Vietnamese subsets into the main stylesheet as `data:` URIs, which shipped them to every visitor and tripped `font-src` as well).
 
+### Internal
+
+- **CI's backend test job was intermittently failing with `out of shared memory` / `increase max_locks_per_transaction`** — the test suite's `setup_db` fixture drops and recreates the full ~28-table schema before every single test; measured directly, one cycle holds ~361 locks in one transaction, which reproducibly exhausted Postgres's default shared lock-table budget partway through a run and cascaded into failing every later test too. Raised `max_locks_per_transaction` to 1024 for CI's `postgres:16-alpine` service (via `POSTGRES_INITDB_ARGS`, the only way to set a postmaster-context setting on a service container). (#54)
+- **A second, unrelated CI failure: `RuntimeError: ... attached to a different loop`** — `test_mfa_admin.py` and `test_mfa_verify.py` were marked `@pytest.mark.anyio` instead of `@pytest.mark.asyncio`, the only two files in the suite doing so; this ran them on a different event loop than `pytest-asyncio`'s shared one, corrupting the test suite's shared DB connection pool and taking two unrelated tests down with it. (#54)
+- **`npm audit` in CI was failing on vitest/vite/esbuild advisories** that only affect devDependencies never shipped in the production bundle. Scoped the audit to `--omit=dev`, matching how the backend's `pip-audit` step already handles an accepted, unfixable finding rather than disabling the check outright. (#54)
+
 ## [0.1.1-alpha] - 2026-09-18
 
 ### Fixed
