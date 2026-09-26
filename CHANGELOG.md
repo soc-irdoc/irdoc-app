@@ -11,6 +11,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.1.3-alpha] - 2026-09-26
+
 ### Added
 
 - **Version badge** at the bottom of the left nav and in **Settings → About IRDoc**. It's grey when up to date, and yellow (the SEV-2 colour) with the newer version and a link to the release when an update exists. (#67)
@@ -24,7 +26,6 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 - **Actions To Do rendered badly in PDF reports**: each task's checkbox sat on its own line above the text, and completed tasks showed an empty box. Tiptap keeps the completion state only in `li[data-checked]` (the `<input>` never has `checked`), and the report stylesheet had no task-list rules. Task items now render inline, with a drawn checkbox that is filled and ticked for completed tasks, whose text is struck through. (#70)
 - **Reports regenerated 1 minute after the last change**: the default auto-regeneration delay is now **10 minutes**, so a burst of edits yields one new version. The defaults offered when configuring Local AI and SharePoint are also 10 minutes; delays an admin has already saved are unchanged. (#71)
-- **CI: lock file out of sync**: regenerated `requirements.lock.txt` after adding `packaging` as a direct requirement (#67).
 - **Incident search ignored the reference**: search matched only the title, so `INC-2026-0002` (or `0002`) found nothing. Search now matches the title or the reference, case-insensitively, and `%`/`_` are matched literally. (#64)
 - **Couldn't set a time on a new timeline entry**: a 1-second timer rewrote the Time field while the form was focused, overwriting whatever was typed. The form now has a live mode: date and time follow the clock until you edit either one, then stay pinned. A **Now** button returns to live mode, and a live-mode entry is stamped with the actual submit time. (#65)
 - **Update check never reported new versions**: it used GitHub's `/releases/latest`, which excludes pre-releases. Every IRDoc release is a pre-release, so the call always returned 404. It now lists releases and picks the highest by PEP 440 order, and flags an update only when that version is strictly newer than the running one (a newer or `dev` build no longer gets told to "update"). The installer wizard's update notice had the same bug and is fixed too. (#67)
@@ -33,6 +34,9 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 - **Report template Section block empty for every field except Executive Summary**: the field list pointed at `incident.metadata.*` keys that nothing in the app writes (Root Cause, Affected Data, Regulatory Notes, Preventive Actions). Analyst Notes read `metadata.notes`, but the Summary tab saves Notes to the `notes` column. AI Recommendations were never copied onto the report payload. The Section block now offers exactly the incident Summary tab fields (Executive Summary, Notes, Lessons Learned, To-do), resolved from one backend field map (`report_renderer/fields.py`). Saved templates using `incident.metadata.notes` now render Notes. Other removed fields render a "no longer supported" notice instead of silently showing no data. To-do task lists render as a checklist in PDFs. (#60)
 - **Text Block was a duplicate of Section**: it showed the same field list but could only resolve 4 of the 9 fields. A Text Block now holds rich text written into the template (disclaimers, guidance, sign-off) and appears the same in every report. Existing field-bound text blocks keep rendering, and the builder offers a one-click "Convert to Section". (#61)
 - **Evidence Register block only configurable by label**: added **Show SHA-256 hashes** and **Show uploader** toggles. The uploader column was read from config but never rendered; it now shows the uploader's name. (#62)
+### Internal
+
+- **CI: lock file out of sync**: regenerated `requirements.lock.txt` after adding `packaging` as a direct requirement (#67).
 
 ## [0.1.2-alpha] - 2026-09-22
 
@@ -176,6 +180,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.1-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.3-alpha...main
+[0.1.3-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.2-alpha...v0.1.3-alpha
+[0.1.2-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.1-alpha...v0.1.2-alpha
 [0.1.1-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.0-alpha...v0.1.1-alpha
 [0.1.0-alpha]: https://github.com/soc-irdoc/irdoc-app/releases/tag/v0.1.0-alpha
