@@ -3,6 +3,7 @@
  * Shows different fields depending on the block type.
  */
 import { ReportBlock } from '@/types/report'
+import { RichTextEditor } from '@/components/common/RichTextEditor'
 
 interface Props {
   block: ReportBlock
@@ -47,17 +48,19 @@ const STAT_OPTIONS = [
   { value: 'closed_at', label: 'Closed At' },
 ]
 
+// The incident Summary tab fields. Keep in sync with SUMMARY_FIELDS in
+// backend/app/services/report_renderer/fields.py.
 const SECTION_FIELD_OPTIONS = [
   { value: 'incident.executive_summary', label: 'Executive Summary' },
-  { value: 'incident.attack_vector', label: 'Attack Vector' },
-  { value: 'incident.metadata.notes', label: 'Analyst Notes' },
-  { value: 'incident.metadata.root_cause', label: 'Root Cause' },
-  { value: 'incident.metadata.affected_data', label: 'Affected Data / Systems' },
-  { value: 'incident.metadata.regulatory_notes', label: 'Regulatory Notes' },
-  { value: 'incident.metadata.preventive_actions', label: 'Preventive Actions' },
-  { value: 'ai.executive_summary', label: 'AI Executive Summary' },
-  { value: 'ai.recommendations', label: 'AI Recommendations' },
+  { value: 'incident.notes', label: 'Notes' },
+  { value: 'incident.lessons_learned', label: 'Lessons Learned' },
+  { value: 'incident.actions_todo', label: 'To-do' },
 ]
+
+// Paths saved by older templates that point at the same Summary data.
+const LEGACY_FIELD_ALIASES: Record<string, string> = {
+  'incident.metadata.notes': 'incident.notes',
+}
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -128,22 +131,65 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
     )
   }
 
-  if (type === 'section' || type === 'text_block') {
+  if (type === 'section') {
+    const field = block.field ? (LEGACY_FIELD_ALIASES[block.field] ?? block.field) : ''
+    const unsupported = field !== '' && !SECTION_FIELD_OPTIONS.some((o) => o.value === field)
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {renderLabelField()}
         <div style={rowStyle}>
-          <span style={labelStyle}>Field</span>
+          <span style={labelStyle}>Summary field</span>
           <select
             style={inputStyle}
-            value={block.field ?? ''}
+            value={field}
             onChange={(e) => onChange({ field: e.target.value })}
           >
             <option value="">— Select field —</option>
+            {unsupported && <option value={field}>Unsupported field ({field})</option>}
             {SECTION_FIELD_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+          {unsupported && (
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              This field is no longer available. Choose one of the incident Summary fields.
+            </span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (type === 'text_block') {
+    // Older templates bound text blocks to an incident field; those belong in a Section.
+    if (block.field && !block.content) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+            This text block shows an incident field. Text blocks now hold text you write
+            into the template; use a Section block to show incident fields.
+          </span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => onChange({ type: 'section' })}>
+              Convert to Section
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange({ field: undefined })}>
+              Write custom text instead
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {renderLabelField()}
+        <div style={rowStyle}>
+          <span style={labelStyle}>Content</span>
+          <RichTextEditor
+            content={block.content ?? ''}
+            onChange={(html) => onChange({ content: html === '<p></p>' ? '' : html })}
+            placeholder="Text that appears in every report built from this template (disclaimers, guidance, sign-off)…"
+          />
         </div>
       </div>
     )
@@ -319,7 +365,27 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
   }
 
   if (type === 'evidence_register') {
-    return renderLabelField()
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {renderLabelField()}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+          <input
+            type="checkbox"
+            checked={block.show_sha256 ?? true}
+            onChange={(e) => onChange({ show_sha256: e.target.checked })}
+          />
+          Show SHA-256 hashes
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+          <input
+            type="checkbox"
+            checked={block.show_uploader ?? false}
+            onChange={(e) => onChange({ show_uploader: e.target.checked })}
+          />
+          Show uploader
+        </label>
+      </div>
+    )
   }
 
   if (type === 'tag_list') {
