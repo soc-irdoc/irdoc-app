@@ -35,6 +35,8 @@ _DEFAULT_PAGE_CSS = """
 
 
 def _build_jinja_env() -> jinja2.Environment:
+    from app.services.report_renderer.fields import is_supported_field, resolve_field
+
     loader = jinja2.FileSystemLoader(str(_TEMPLATE_DIR))
     env = jinja2.Environment(
         loader=loader,
@@ -85,6 +87,8 @@ def _build_jinja_env() -> jinja2.Environment:
     env.filters["filesize"] = filesize
     env.filters["sanitize_html"] = sanitize_html
     env.globals["icon_data_uri"] = icon_data_uri
+    env.globals["resolve_field"] = resolve_field
+    env.globals["is_supported_field"] = is_supported_field
     return env
 
 

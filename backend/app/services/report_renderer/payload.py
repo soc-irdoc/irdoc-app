@@ -7,7 +7,7 @@ here so templates stay logic-free.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
@@ -85,6 +85,9 @@ class ReportPayload:
     ai_executive_summary: str | None = None
     ai_recommendations: str | None = None
 
+    # Attachment uploader display names, keyed by str(user id)
+    uploader_names: dict[str, str] = field(default_factory=dict)
+
     # Graph diagram — SVG generated server-side from incident graph data
     graph_svg: str | None = None
 
@@ -109,6 +112,7 @@ async def build_report_payload(
     from app.models.ioc import IOC
     from app.models.task import Task
     from app.models.timeline import TimelineEntry
+    from app.models.user import User
 
     # Fetch incident
     result = await db.execute(select(Incident).where(Incident.id == incident_id))
@@ -145,6 +149,14 @@ async def build_report_payload(
         select(Attachment).where(Attachment.incident_id == incident_id)
     )
     attachments = list(result.scalars().all())
+
+    uploader_ids = {a.uploaded_by for a in attachments if a.uploaded_by}
+    uploader_names: dict[str, str] = {}
+    if uploader_ids:
+        result = await db.execute(select(User).where(User.id.in_(uploader_ids)))
+        uploader_names = {
+            str(u.id): u.full_name or u.email for u in result.scalars().all()
+        }
 
     # Compute derived fields
     completed_tasks = [t for t in tasks if t.status == "done"]
@@ -183,4 +195,6 @@ async def build_report_payload(
         external_refs=external_refs,
         contained_at_str=_fmt_dt(incident.contained_at),
         closed_at_str=_fmt_dt(incident.closed_at),
+        ai_recommendations=incident.ai_recommendations,
+        uploader_names=uploader_names,
     )

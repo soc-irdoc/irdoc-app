@@ -1,38 +1,20 @@
 {% set label = block.get('label', 'Section') %}
 {% set field_path = block.get('field', '') %}
-{% set value = namespace(v=none) %}
-{# Resolve the field path against the payload #}
-{% if field_path == 'incident.executive_summary' %}
-  {% set value.v = p.incident.executive_summary %}
-{% elif field_path == 'incident.attack_vector' %}
-  {% set value.v = p.incident.attack_vector %}
-{% elif field_path == 'incident.metadata.notes' %}
-  {% set value.v = p.incident.metadata_.get('notes', '') if p.incident.metadata_ else '' %}
-{% elif field_path == 'incident.metadata.root_cause' %}
-  {% set value.v = p.incident.metadata_.get('root_cause', '') if p.incident.metadata_ else '' %}
-{% elif field_path == 'incident.metadata.affected_data' %}
-  {% set value.v = p.incident.metadata_.get('affected_data', '') if p.incident.metadata_ else '' %}
-{% elif field_path == 'incident.metadata.regulatory_notes' %}
-  {% set value.v = p.incident.metadata_.get('regulatory_notes', '') if p.incident.metadata_ else '' %}
-{% elif field_path == 'incident.metadata.preventive_actions' %}
-  {% set value.v = p.incident.metadata_.get('preventive_actions', '') if p.incident.metadata_ else '' %}
-{% elif field_path == 'ai.executive_summary' %}
-  {% set value.v = p.ai_executive_summary %}
-{% elif field_path == 'ai.recommendations' %}
-  {% set value.v = p.ai_recommendations %}
-{% endif %}
+{% set value = resolve_field(p, field_path) %}
 
 <div class="block">
   <h2>{{ label }}</h2>
-  {% if value.v is iterable and value.v is not string %}
-    {% if value.v %}
-      <ul>{% for item in value.v %}<li>{{ item }}</li>{% endfor %}</ul>
+  {% if field_path and not is_supported_field(field_path) %}
+    <p><em>This section is bound to a field that is no longer supported. Edit the report template and choose a Summary field.</em></p>
+  {% elif value is iterable and value is not string %}
+    {% if value %}
+      <ul>{% for item in value %}<li>{{ item }}</li>{% endfor %}</ul>
     {% else %}
       <p><em>No data available.</em></p>
     {% endif %}
   {% else %}
-    {% if value.v %}
-      {{ value.v | sanitize_html }}
+    {% if value %}
+      {{ value | sanitize_html }}
     {% else %}
       <p><em>No data available.</em></p>
     {% endif %}

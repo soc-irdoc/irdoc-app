@@ -14,6 +14,7 @@
           <th>Type</th>
           <th>Size</th>
           {% if show_sha256 %}<th>SHA-256</th>{% endif %}
+          {% if show_uploader %}<th>Uploaded by</th>{% endif %}
           <th>Uploaded</th>
         </tr>
       </thead>
@@ -26,13 +27,16 @@
           {% if show_sha256 %}
           <td><span class="sha-mono">{{ att.sha256[:32] }}…</span></td>
           {% endif %}
+          {% if show_uploader %}
+          <td>{{ p.uploader_names.get(att.uploaded_by|string, '—') if att.uploaded_by else '—' }}</td>
+          {% endif %}
           <td>{{ att.created_at | format_dt }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     <p style="font-size:9pt; color:#64748b; margin-top:6px;">
-      {{ p.attachments | length }} file(s) — SHA-256 hashes verified at upload time.
+      {{ p.attachments | length }} file(s){% if show_sha256 %} — SHA-256 hashes verified at upload time{% endif %}.
     </p>
   {% endif %}
 </div>

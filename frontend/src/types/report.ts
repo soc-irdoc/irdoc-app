@@ -77,6 +77,9 @@ export interface ReportBlock {
   watermark?: string
   fields?: string[]
   text?: string
+  content?: string        // text_block: template-authored rich text (HTML)
+  show_sha256?: boolean
+  show_uploader?: boolean
   premium?: boolean
 }
 
@@ -127,7 +130,7 @@ export const BLOCK_LIBRARY: {
     type: 'section',
     label: 'Section',
     icon: 'memo_color.svg',
-    description: 'Titled text section from a field',
+    description: 'Text from an incident Summary field',
     defaultConfig: { label: 'Executive Summary', field: 'incident.executive_summary' },
   },
   {
@@ -156,14 +159,14 @@ export const BLOCK_LIBRARY: {
     label: 'Evidence Register',
     icon: 'paperclip_color.svg',
     description: 'Table of uploaded files with hashes',
-    defaultConfig: { label: 'Evidence Register' },
+    defaultConfig: { label: 'Evidence Register', show_sha256: true, show_uploader: false },
   },
   {
     type: 'text_block',
     label: 'Text Block',
     icon: 'clipboard_color.svg',
-    description: 'Free-text or AI-generated narrative',
-    defaultConfig: { label: 'Notes', field: 'incident.executive_summary' },
+    description: 'Your own text, same in every report',
+    defaultConfig: { label: '', content: '' },
     premium: false,
   },
   {
