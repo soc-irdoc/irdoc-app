@@ -73,9 +73,8 @@ async def create_timeline_entry(
     out = TimelineEntryOut.model_validate(entry)
     await publish_ws(incident_id, "timeline:entry:added", out.model_dump(mode="json"))
 
-    from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": out, "error": None}
 
 
@@ -93,9 +92,8 @@ async def update_timeline_entry(
     out = TimelineEntryOut.model_validate(updated)
     await publish_ws(incident_id, "timeline:entry:updated", out.model_dump(mode="json"))
 
-    from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": out, "error": None}
 
 
@@ -110,6 +108,9 @@ async def delete_timeline_entry(
     entry = await timeline_service.get_entry(db, entry_id, incident_id)
     await timeline_service.delete_entry(db, entry)
     await publish_ws(incident_id, "timeline:entry:deleted", {"id": entry_id})
+
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
 
 
 @router.post("/incidents/{incident_id}/timeline/{entry_id}/pin")

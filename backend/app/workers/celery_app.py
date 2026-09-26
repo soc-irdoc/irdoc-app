@@ -21,14 +21,13 @@ celery_app.conf.update(
     task_default_queue="default",
     task_routes={
         "app.workers.tasks.generate_report": {"queue": "reports"},
-        "app.workers.tasks.generate_ai_report": {"queue": "ai"},
         "app.workers.tasks.enrich_ioc": {"queue": "enrichment"},
         "app.workers.tasks.verify_file_hash": {"queue": "default"},
         "app.workers.tasks.auto_detect_iocs_from_entry": {"queue": "default"},
         "app.workers.tasks.send_notification": {"queue": "default"},
         "app.workers.tasks.sync_to_sharepoint": {"queue": "default"},
         "app.workers.tasks.push_report_to_sharepoint": {"queue": "default"},
-        "app.workers.tasks.auto_generate_for_sharepoint": {"queue": "default"},
+        "app.workers.tasks.auto_regenerate_reports": {"queue": "default"},
     },
     beat_schedule={
         # Check for expired debounce locks every 10 seconds → fire sync tasks

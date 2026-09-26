@@ -14,8 +14,7 @@ from app.schemas.asset import (
     AssetTimelineLinkCreate,
     AssetUpdate,
 )
-from app.services import asset_service, incident_service
-from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
+from app.services import asset_service, incident_service, report_regen_service
 
 router = APIRouter(tags=["assets"])
 
@@ -42,8 +41,7 @@ async def create_asset(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     asset = await asset_service.create_asset(db, incident_id, data, str(current_user.id))
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": AssetOut.model_validate(asset), "error": None}
 
 
@@ -56,8 +54,7 @@ async def bulk_create_assets(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     assets = await asset_service.bulk_create_assets(db, incident_id, data, str(current_user.id))
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": [AssetOut.model_validate(a) for a in assets], "error": None}
 
 
@@ -72,8 +69,7 @@ async def update_asset(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     asset = await asset_service.get_asset(db, asset_id, incident_id)
     updated = await asset_service.update_asset(db, asset, data)
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": AssetOut.model_validate(updated), "error": None}
 
 
@@ -87,8 +83,7 @@ async def delete_asset(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     asset = await asset_service.get_asset(db, asset_id, incident_id)
     await asset_service.delete_asset(db, asset)
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
 
 
 # ── Asset-timeline links ──────────────────────────────────────────────────────
@@ -102,6 +97,7 @@ async def link_assets_to_entry(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     await asset_service.link_assets_to_entry(db, data.asset_ids, data.timeline_entry_id)
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": {"linked": len(data.asset_ids)}, "error": None}
 
 
@@ -118,6 +114,7 @@ async def unlink_asset_from_entry(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     await asset_service.unlink_asset_from_entry(db, asset_id, entry_id)
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
 
 
 @router.get("/incidents/{incident_id}/timeline/{entry_id}/assets")
@@ -154,6 +151,7 @@ async def create_asset_link(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     link = await asset_service.create_asset_link(db, incident_id, data, str(current_user.id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": AssetLinkOut.model_validate(link), "error": None}
 
 
@@ -166,3 +164,4 @@ async def delete_asset_link(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     await asset_service.delete_asset_link(db, link_id, incident_id)
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))

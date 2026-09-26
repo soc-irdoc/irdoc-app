@@ -397,7 +397,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                       {FORMAT_LABELS[r.format as keyof typeof FORMAT_LABELS] ?? r.format}
                     </td>
                     <td style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {r.is_ai_assisted ? `v${r.version_number}` : '—'}
+                      v{r.version_number}
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <span className={STATUS_CHIP[r.status] ?? 'chip chip-muted'} style={{ fontSize: '11px' }}>

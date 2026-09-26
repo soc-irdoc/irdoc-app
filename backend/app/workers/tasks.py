@@ -109,7 +109,6 @@ def generate_report(self, report_id: str, include_ai: bool = False, org_id: str 
     async def _run():
         from datetime import datetime, timezone
 
-        from sqlalchemy import func as sqlfunc
         from sqlalchemy import select
 
         from app.models.pdf_template import PdfTemplate
@@ -165,17 +164,6 @@ def generate_report(self, report_id: str, include_ai: bool = False, org_id: str 
                             ai_cfg = await get_ai_config(db, org_id)
 
                         max_events = ai_cfg.max_timeline_events if ai_cfg else 20
-
-                        # Version scoped to (incident, template) — exclude self to get prior max
-                        version_result = await db.execute(
-                            select(sqlfunc.max(Report.version_number)).where(
-                                Report.incident_id == report.incident_id,
-                                Report.report_template_id == report.report_template_id,
-                                Report.id != report.id,
-                            )
-                        )
-                        max_ver = version_result.scalar_one_or_none() or 0
-                        report.version_number = max_ver + 1
 
                         # Delta context from previous AI version of same template
                         prev_result = await db.execute(
@@ -294,79 +282,44 @@ def _emit_ws(incident_id: str, event: str, data: dict):
     r.close()
 
 
-@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
-def generate_ai_report(self, incident_id: str, org_id: str):
+async def _auto_regenerate_reports(incident_id: str, org_id: str, token: str, session_factory=None):
+    """Body of auto_regenerate_reports; split out so tests can pass a session factory."""
+    from app.services import report_regen_service as regen
+
+    r = regen._redis_client()
+    try:
+        if not regen.is_latest_token(r, incident_id, token):
+            logger.info("auto_regenerate_reports: superseded by a newer change for %s", incident_id)
+            return
+    finally:
+        r.close()
+
+    if session_factory is None:
+        from app.workers.db import WorkerSessionLocal
+        session_factory = WorkerSessionLocal
+
+    async with session_factory() as db:
+        jobs = await regen.create_regeneration_reports(db, incident_id, org_id)
+
+    for job in jobs:
+        generate_report.apply_async(
+            args=[job.report_id],
+            kwargs={
+                "include_ai": job.include_ai,
+                "org_id": org_id,
+                "trigger_sharepoint": job.trigger_sharepoint,
+            },
+        )
+
+
+@celery_app.task(bind=True, max_retries=2)
+def auto_regenerate_reports(self, incident_id: str, org_id: str, token: str):
+    """Debounced regeneration of every report already generated for an incident.
+
+    Scheduled by report_regen_service.maybe_trigger_report_regen on each incident
+    change; runs are skipped when a newer change has re-armed the debounce.
     """
-    Auto-triggered AI report generation routed to the 'ai' queue.
-
-    For each ReportTemplate flagged ai_auto_generate=True in this org:
-    - Skips templates with no prior report for this incident (seed not yet generated)
-    - Creates one pending Report per activated template and delegates to generate_report
-    """
-    async def _run():
-        from sqlalchemy import func as sqlfunc
-        from sqlalchemy import select
-
-        from app.models.report import Report
-        from app.models.template import ReportTemplate
-        from app.services.ai_config_service import get_ai_config
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
-
-        async with AsyncSessionLocal() as db:
-            ai_cfg = await get_ai_config(db, org_id)
-            if not ai_cfg or not ai_cfg.is_enabled:
-                return
-
-            tmpl_result = await db.execute(
-                select(ReportTemplate).where(
-                    ReportTemplate.org_id == org_id,
-                    ReportTemplate.ai_auto_generate.is_(True),
-                )
-            )
-            flagged = tmpl_result.scalars().all()
-            if not flagged:
-                return
-
-            reports_to_generate = []
-            for template in flagged:
-                count_result = await db.execute(
-                    select(sqlfunc.count(Report.id)).where(
-                        Report.incident_id == incident_id,
-                        Report.report_template_id == template.id,
-                    )
-                )
-                if count_result.scalar_one() == 0:
-                    logger.info(
-                        "generate_ai_report: skipping template %s for incident %s — no seed report yet",
-                        template.id, incident_id,
-                    )
-                    continue
-
-                report = Report(
-                    incident_id=incident_id,
-                    report_template_id=template.id,
-                    report_type="pdf",
-                    classification="confidential",
-                    is_ai_assisted=True,
-                    status="pending",
-                )
-                db.add(report)
-                reports_to_generate.append(report)
-
-            if not reports_to_generate:
-                return
-
-            await db.commit()
-            for report in reports_to_generate:
-                await db.refresh(report)
-
-        for report in reports_to_generate:
-            generate_report.apply_async(
-                args=[str(report.id)],
-                kwargs={"include_ai": True, "org_id": org_id},
-            )
-
-    run_async(_run())
+    run_async(_auto_regenerate_reports(incident_id, org_id, token))
 
 
 @celery_app.task(bind=True, max_retries=2, soft_time_limit=300, time_limit=360)
@@ -709,76 +662,6 @@ def push_report_to_sharepoint(self, report_id: str, org_id: str):
         raise self.retry(exc=exc)
 
 
-@celery_app.task(bind=True, max_retries=2)
-def auto_generate_for_sharepoint(self, incident_id: str, org_id: str):
-    """
-    Non-AI SharePoint sync: regenerate reports for templates already seeded on this incident.
-
-    Only templates for which the user has already manually generated at least one report
-    are considered. This mirrors the AI seed-based logic so the user controls which
-    templates get auto-synced by generating the first report manually.
-    Base scaffold reports (report_template_id=NULL) are excluded.
-    """
-    async def _run():
-        from sqlalchemy import select
-
-        from app.models.report import Report
-        from app.models.template import ReportTemplate
-        from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
-
-        async with AsyncSessionLocal() as db:
-            # Find distinct custom templates already used for this incident
-            seeded_ids_result = await db.execute(
-                select(Report.report_template_id)
-                .where(
-                    Report.incident_id == incident_id,
-                    Report.report_template_id.is_not(None),
-                )
-                .distinct()
-            )
-            seeded_template_ids = [row[0] for row in seeded_ids_result.all()]
-
-            if not seeded_template_ids:
-                logger.info(
-                    "auto_generate_for_sharepoint: no seeded templates for incident %s, skipping",
-                    incident_id,
-                )
-                return
-
-            tmpl_result = await db.execute(
-                select(ReportTemplate).where(ReportTemplate.id.in_(seeded_template_ids))
-            )
-            templates = tmpl_result.scalars().all()
-
-            reports_created = []
-            for template in templates:
-                report = Report(
-                    incident_id=incident_id,
-                    report_template_id=template.id,
-                    report_type="pdf",
-                    classification="confidential",
-                    is_ai_assisted=False,
-                    status="pending",
-                )
-                db.add(report)
-                reports_created.append(report)
-
-            if not reports_created:
-                return
-
-            await db.commit()
-            for report in reports_created:
-                await db.refresh(report)
-
-        for report in reports_created:
-            generate_report.apply_async(
-                args=[str(report.id)],
-                kwargs={"include_ai": False, "org_id": org_id, "trigger_sharepoint": True},
-            )
-
-    run_async(_run())
-
-
 @celery_app.task
 def process_expired_sync_locks():
     """
@@ -810,21 +693,6 @@ def process_expired_sync_locks():
                         logger.info("process_expired_sync_locks: fired sync incident=%s policy=%s", incident_id, policy_id)
                 except Exception as exc:
                     logger.warning("process_expired_sync_locks: failed to parse key %s: %s", key, exc)
-
-        # Global SharePoint no-AI sync keys: sp_nosync:{incident_id}:{org_id}
-        sp_keys = list(r.scan_iter("sp_nosync:*", count=100))
-        for key in sp_keys:
-            ttl = r.ttl(key)
-            if ttl == -2 or (0 <= ttl <= 2):
-                try:
-                    parts = key.decode().split(":")
-                    if len(parts) == 3:
-                        _, incident_id, org_id = parts
-                        auto_generate_for_sharepoint.delay(incident_id, org_id)
-                        r.delete(key)
-                        logger.info("process_expired_sync_locks: sp_nosync fired incident=%s org=%s", incident_id, org_id)
-                except Exception as exc:
-                    logger.warning("process_expired_sync_locks: sp_nosync key %s failed: %s", key, exc)
     finally:
         r.close()
 

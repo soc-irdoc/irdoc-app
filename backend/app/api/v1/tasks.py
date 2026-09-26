@@ -29,9 +29,8 @@ async def create_task(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     task = await task_service.create_task(db, incident_id, data, str(current_user.id))
-    from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": TaskOut.model_validate(task), "error": None}
 
 
@@ -46,9 +45,8 @@ async def update_task(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     task = await task_service.get_task(db, task_id, incident_id)
     updated = await task_service.update_task(db, task, data, str(current_user.id))
-    from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": TaskOut.model_validate(updated), "error": None}
 
 
@@ -62,3 +60,6 @@ async def delete_task(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     task = await task_service.get_task(db, task_id, incident_id)
     await task_service.delete_task(db, task)
+
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))

@@ -11,6 +11,11 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Reports not regenerated after incident changes** — auto-regeneration only existed as two integration-specific pipelines (AI, and SharePoint-without-AI), so on an install with neither enabled, editing an incident never produced a new report version. Even where it existed: AI orgs only regenerated templates flagged `ai_auto_generate`; AI + SharePoint orgs never regenerated or pushed unflagged templates; and the SharePoint debounce fired only if the 10-second beat scan happened to land in the key's last ~2 seconds, so most triggers were silently dropped. Replaced with a single debounced pipeline (`report_regen_service` + `auto_regenerate_reports`): once any report has been generated for an incident, every later change to it (fields, timeline, IOCs, tasks, assets, asset links, attachments) queues one new version of each template already used, including the base report. AI narrative and SharePoint push are applied per version when enabled. The debounce is now a trailing-edge token check on the scheduled task instead of a beat scan. Timeline deletes, IOC edits/deletes, task deletes, attachments and asset links now trigger regeneration too. (#58)
+- **Report version stuck at v1 for non-AI reports** — `version_number` was only computed inside `generate_report`'s AI branch. Versions are now assigned per (incident, template) when the report is created, for manual and automatic reports alike, and the reports table shows the version for every report. (#58)
+
 ## [0.1.2-alpha] - 2026-09-22
 
 ### Fixed
