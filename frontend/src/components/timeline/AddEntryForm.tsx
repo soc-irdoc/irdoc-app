@@ -35,17 +35,29 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
   const [source, setSource] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [focused, setFocused] = useState(false)
+  // Live mode: date/time follow the clock so "happening now" entries need no
+  // clicks. Any manual date/time edit pins the value; "Now" resumes live mode.
+  const [live, setLive] = useState(true)
   const [assetPickerOpen, setAssetPickerOpen] = useState(false)
   const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set())
 
-  // Auto-update time when form is focused
+  // Keep date/time on "now" while live and the form is focused
   useEffect(() => {
-    if (!focused) return
-    const interval = setInterval(() => {
+    if (!live || !focused) return
+    const tick = () => {
+      setDate(formatNowDate())
       setTime(formatNowTime())
-    }, 1000)
+    }
+    tick()
+    const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [focused])
+  }, [live, focused])
+
+  function resumeLive() {
+    setDate(formatNowDate())
+    setTime(formatNowTime())
+    setLive(true)
+  }
 
   // Reset date to today on mount
   useEffect(() => {
@@ -63,7 +75,9 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
     // timestamptz column silently treat local time as UTC, so entries came
     // back shifted by the browser's UTC offset. Mirrors EditEntryModal, which
     // already does this correctly.
-    const occurred_at = new Date(`${date}T${time}`).toISOString()
+    // In live mode the displayed time may be up to a second stale; use the
+    // actual submit instant.
+    const occurred_at = (live ? new Date() : new Date(`${date}T${time}`)).toISOString()
 
     try {
       const entry = await createEntry.mutateAsync({
@@ -109,8 +123,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       setDescription('')
       setSource('')
       setFiles([])
-      setDate(formatNowDate())
-      setTime(formatNowTime())
+      resumeLive()
       setSelectedAssetIds(new Set())
       setAssetPickerOpen(false)
 
@@ -194,7 +207,10 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
             type="date"
             className="form-input"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => {
+              setLive(false)
+              setDate(e.target.value)
+            }}
           />
         </div>
 
@@ -213,13 +229,28 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
           >
             Time
           </label>
-          <input
-            type="time"
-            step="1"
-            className="form-input"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              type="time"
+              step="1"
+              className="form-input"
+              value={time}
+              onChange={(e) => {
+                setLive(false)
+                setTime(e.target.value)
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={resumeLive}
+              disabled={live}
+              title={live ? 'Following the current time' : 'Reset date and time to now'}
+              style={{ whiteSpace: 'nowrap', color: live ? 'var(--green)' : undefined }}
+            >
+              {live ? '● Live' : 'Now'}
+            </button>
+          </div>
         </div>
 
         {/* Source */}

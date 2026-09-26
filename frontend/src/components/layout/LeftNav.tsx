@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { getInitials } from '@/lib/utils'
 import irdocDark from '@/assets/irdoc_dark.svg'
 import irdocLight from '@/assets/irdoc_light.svg'
+import { VersionBadge } from '@/components/common/VersionBadge'
 
 interface NavItem {
   icon: string
@@ -314,6 +315,11 @@ export function LeftNav() {
         collapsed={collapsed}
         onClick={() => logout.mutate()}
       />
+
+      {/* Version */}
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 4px 0', flexShrink: 0 }}>
+        <VersionBadge compact={collapsed} />
+      </div>
     </nav>
   )
 }

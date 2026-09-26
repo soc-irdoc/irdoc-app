@@ -107,6 +107,8 @@ export const BLOCK_LIBRARY: {
   icon: string
   description: string
   premium?: boolean
+  /** Needs Local AI (Ollama); greyed out in the builder while AI is disabled. */
+  requiresAi?: boolean
   defaultConfig: Partial<Omit<ReportBlock, 'id' | 'type'>>
 }[] = [
   {
@@ -202,6 +204,7 @@ export const BLOCK_LIBRARY: {
     label: 'AI Strategy Summary',
     icon: 'robot_color.svg',
     description: 'AI-generated strategic incident summary (evidence-grounded, coming soon)',
+    requiresAi: true,
     defaultConfig: {},
   },
   {

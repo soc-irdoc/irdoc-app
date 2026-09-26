@@ -9,7 +9,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { getInitials } from '@/lib/utils'
 import { mfaApi } from '@/lib/apiClient'
 import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
-import { useVersion } from '@/hooks/useVersion'
+import { VersionBadge } from '@/components/common/VersionBadge'
 
 function SettingsSection({
   icon,
@@ -85,7 +85,6 @@ export function SettingsPage() {
   const setUser = useAuthStore((s) => s.setUser)
   const { theme, toggle } = useThemeStore()
   const changePassword = useChangePassword()
-  const { version, latestVersion, updateAvailable } = useVersion()
 
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -303,28 +302,9 @@ export function SettingsPage() {
             Licensed under{' '}
             <span style={{ color: 'var(--accent)' }}>AGPL-3.0</span>.
           </p>
-          {version && (
-            <p style={{ marginTop: 8 }}>
-              <a
-                href="https://github.com/soc-irdoc/irdoc-app/releases"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: 'var(--accent)', textDecoration: 'none' }}
-              >
-                v{version}
-              </a>
-              {updateAvailable && (
-                <a
-                  href="https://github.com/soc-irdoc/irdoc-app/releases"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: 'block', marginTop: 4, color: 'var(--yellow)', textDecoration: 'none' }}
-                >
-                  New version available: v{latestVersion}
-                </a>
-              )}
-            </p>
-          )}
+          <p style={{ marginTop: 8 }}>
+            <VersionBadge />
+          </p>
         </div>
       </SettingsSection>
 
