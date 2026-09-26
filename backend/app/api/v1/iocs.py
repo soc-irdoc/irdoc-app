@@ -29,11 +29,10 @@ async def create_ioc(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     ioc = await ioc_service.create_ioc(db, incident_id, data, str(current_user.id))
+    from app.services import report_regen_service
     from app.services.enrichment_service import trigger_enrichment_for_new_ioc
-    from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
     enrichment_queued = await trigger_enrichment_for_new_ioc(str(ioc.id), str(current_user.org_id), db)
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": IOCOut.model_validate(ioc), "meta": {"enrichment_queued": enrichment_queued}, "error": None}
 
 
@@ -46,8 +45,8 @@ async def bulk_import_iocs(
 ):
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     iocs = await ioc_service.bulk_import(db, incident_id, data.text, str(current_user.id))
+    from app.services import report_regen_service
     from app.services.integration_service import get_enabled_plugins_for_org
-    from app.services.report_service import maybe_trigger_ai_report, maybe_trigger_sharepoint_sync
     plugins = await get_enabled_plugins_for_org(str(current_user.org_id), "ti", db)
     enrichment_queued = False
     if plugins:
@@ -55,8 +54,7 @@ async def bulk_import_iocs(
         for ioc in iocs:
             enrich_task.delay(str(ioc.id))
         enrichment_queued = True
-    await maybe_trigger_ai_report(db, incident_id, str(current_user.org_id))
-    await maybe_trigger_sharepoint_sync(db, incident_id, str(current_user.org_id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
     return {"data": [IOCOut.model_validate(i) for i in iocs], "meta": {"enrichment_queued": enrichment_queued}, "error": None}
 
 
@@ -82,6 +80,10 @@ async def update_ioc(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     ioc = await ioc_service.get_ioc(db, ioc_id, incident_id)
     updated = await ioc_service.update_ioc(db, ioc, data)
+
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
+
     return {"data": IOCOut.model_validate(updated), "error": None}
 
 
@@ -95,6 +97,9 @@ async def delete_ioc(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     ioc = await ioc_service.get_ioc(db, ioc_id, incident_id)
     await ioc_service.delete_ioc(db, ioc)
+
+    from app.services import report_regen_service
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
 
 
 @router.post("/iocs/{ioc_id}/enrich", status_code=202)

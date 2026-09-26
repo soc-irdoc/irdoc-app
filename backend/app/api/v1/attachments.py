@@ -6,7 +6,7 @@ from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.core.security import verify_file_token
 from app.schemas.attachment import AttachmentOut, AttachmentURLResponse
-from app.services import attachment_service, incident_service
+from app.services import attachment_service, incident_service, report_regen_service
 from app.services.storage.resolver import get_storage_backend
 
 router = APIRouter(tags=["attachments"])
@@ -32,6 +32,7 @@ async def upload_attachment(
     # Fire async hash verification
     from app.workers import tasks as worker_tasks
     worker_tasks.verify_file_hash.delay(str(attachment.id))
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
 
     return {"data": AttachmentOut.model_validate(attachment), "error": None}
 
@@ -59,6 +60,7 @@ async def delete_attachment(
     await incident_service.get_incident(db, incident_id, str(current_user.org_id))
     attachment = await attachment_service.get_attachment(db, attachment_id, incident_id)
     await attachment_service.delete_attachment(db, attachment)
+    await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
 
 
 @router.get("/files/{token}")
