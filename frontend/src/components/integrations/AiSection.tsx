@@ -28,7 +28,7 @@ const DEFAULT_STATE: FormState = {
   isEnabled: false,
   ollamaBaseUrl: 'http://ollama:11434',
   modelName: 'llama3.2',
-  debounceSeconds: 60,
+  debounceSeconds: 600,
   maxTimelineEvents: 20,
 }
 
@@ -237,7 +237,7 @@ export function AiSection() {
                         min={10}
                         max={3600}
                         value={form.debounceSeconds}
-                        onChange={(e) => set('debounceSeconds')(Math.min(3600, Math.max(10, parseInt(e.target.value, 10) || 60)))}
+                        onChange={(e) => set('debounceSeconds')(Math.min(3600, Math.max(10, parseInt(e.target.value, 10) || 600)))}
                       />
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
                         AI report regenerates this many seconds after the last incident update. Min 10s, max 3600s.

@@ -31,7 +31,7 @@ class SharePointPlugin:
                              "default": "{incident_ref} - {template_name}.pdf",
                              "placeholder": "{incident_ref} - {template_name}.pdf"},
         "debounce_seconds": {"type": "string", "label": "Sync Delay (seconds)",
-                             "default": "120", "placeholder": "120"},
+                             "default": "600", "placeholder": "600"},
     }
 
     async def test_connection(self, config: dict) -> bool:

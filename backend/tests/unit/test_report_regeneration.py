@@ -120,7 +120,7 @@ class TestTrigger:
 
         scheduled.assert_called_once()
         kwargs = scheduled.call_args.kwargs
-        assert kwargs["countdown"] == regen.DEFAULT_DEBOUNCE_SECONDS
+        assert kwargs["countdown"] == regen.DEFAULT_DEBOUNCE_SECONDS == 600  # #71: 10 minutes
         incident_id, org_id, token = kwargs["args"]
         assert (incident_id, org_id) == (str(incident.id), str(org.id))
         assert fake_redis.get(regen.regen_token_key(str(incident.id))) == token.encode()

@@ -113,3 +113,27 @@ def test_evidence_register_uploader_hidden_by_default():
     p.attachments = [_attachment(uploaded_by=uuid.uuid4())]
     html = _render({"type": "evidence_register"}, p)
     assert "Uploaded by" not in html
+
+
+def test_task_list_keeps_state_and_has_inline_checkbox_css():
+    # Regression (#70): task checkbox rendered on its own line and never showed
+    # completion. State lives only in li[data-checked]; the report CSS must lay
+    # items out inline and draw the checked box from that attribute.
+    from app.services.report_renderer.fixed_report import render_from_schema
+
+    todo = (
+        '<ul data-type="taskList">'
+        '<li data-checked="true" data-type="taskItem"><label><input type="checkbox"><span></span></label><p>done</p></li>'
+        '<li data-checked="false" data-type="taskItem"><label><input type="checkbox"><span></span></label><p>open</p></li>'
+        '</ul>'
+    )
+    p = _payload(actions_todo=todo)
+    p.generated_at = datetime(2026, 9, 26, tzinfo=timezone.utc)
+    p.analyst = SimpleNamespace(full_name="A")
+    html = render_from_schema(p, [{"type": "section", "field": "incident.actions_todo"}], brand={}, env=_env)
+
+    assert '<li data-checked="true" data-type="taskItem">' in html
+    assert '<li data-checked="false" data-type="taskItem">' in html
+    assert 'li[data-type="taskItem"] { display: flex;' in html
+    assert 'li[data-type="taskItem"] > label > input { display: none; }' in html
+    assert 'li[data-checked="true"] > label > span {' in html
