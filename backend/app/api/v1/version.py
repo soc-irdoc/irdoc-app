@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app.core.config import settings
 from app.core.security import get_current_user
-from app.services.version_check import get_latest_release_version
+from app.services.version_check import get_latest_release_version, is_newer
 
 router = APIRouter(tags=["version"])
 
@@ -15,7 +15,7 @@ async def get_version(current_user=Depends(get_current_user)):
         "data": {
             "version": settings.VERSION,
             "latest_version": latest,
-            "update_available": latest is not None and latest != settings.VERSION,
+            "update_available": is_newer(latest, settings.VERSION),
         },
         "error": None,
     }

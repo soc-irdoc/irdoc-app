@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 
 import bleach
 from fastapi import HTTPException, status
-from sqlalchemy import func, select, text
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -179,7 +179,12 @@ async def list_incidents(
     if severity_filter:
         query = query.where(Incident.severity == severity_filter)
     if search:
-        query = query.where(Incident.title.ilike(f"%{search}%"))
+        term = search.strip().replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
+        pattern = f"%{term}%"
+        query = query.where(or_(
+            Incident.title.ilike(pattern, escape="\\"),
+            Incident.incident_ref.ilike(pattern, escape="\\"),
+        ))
 
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar() or 0

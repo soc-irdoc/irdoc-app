@@ -26,6 +26,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import BlockConfigPanel from './BlockConfigPanel'
 import { ReportBlock, BlockType, BLOCK_LIBRARY } from '@/types/report'
+import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 
 interface Props {
   blocks: ReportBlock[]
@@ -47,8 +48,10 @@ function SortableBlockCard({
   onSelect,
   onRemove,
   onChange,
+  aiDisabled,
 }: {
   block: ReportBlock
+  aiDisabled: boolean
   isSelected: boolean
   onSelect: () => void
   onRemove: () => void
@@ -58,11 +61,13 @@ function SortableBlockCard({
     useSortable({ id: block.id })
 
   const libEntry = BLOCK_LIBRARY.find((b) => b.type === block.type)
+  const aiOff = !!libEntry?.requiresAi && aiDisabled
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.4 : aiOff ? 0.5 : 1,
+    filter: aiOff ? 'grayscale(1)' : undefined,
   }
 
   return (
@@ -112,7 +117,12 @@ function SortableBlockCard({
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
               {libEntry?.label ?? block.type}
             </div>
-            {(block.label || block.filter || block.field) && (
+            {aiOff && (
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px' }}>
+                {AI_DISABLED_HINT}
+              </div>
+            )}
+            {!aiOff && (block.label || block.filter || block.field) && (
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {block.label ? block.label : block.field ? `→ ${block.field}` : block.filter ?? ''}
               </div>
@@ -153,27 +163,32 @@ function BlockLibraryItem({
   label,
   description,
   onAdd,
+  disabled = false,
 }: {
   icon: string
   label: string
   description: string
   onAdd: () => void
+  disabled?: boolean
 }) {
   return (
     <div
+      aria-disabled={disabled}
       style={{
+        opacity: disabled ? 0.5 : 1,
+        filter: disabled ? 'grayscale(1)' : undefined,
         display: 'flex',
         alignItems: 'center',
         gap: '10px',
         padding: '8px 10px',
         borderRadius: '6px',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'background 0.12s',
       }}
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)' }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-      onClick={onAdd}
-      title={description}
+      onClick={disabled ? undefined : onAdd}
+      title={disabled ? `${description}. ${AI_DISABLED_HINT}` : description}
     >
       {icon.endsWith('.svg')
         ? <img src={`/icons/${icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
@@ -188,6 +203,8 @@ function BlockLibraryItem({
         className="btn btn-ghost btn-sm"
         style={{ fontSize: '11px', padding: '2px 7px', flexShrink: 0 }}
         onClick={(e) => { e.stopPropagation(); onAdd() }}
+        disabled={disabled}
+        aria-label={`Add ${label}`}
       >
         + Add
       </button>
@@ -200,6 +217,7 @@ function BlockLibraryItem({
 export default function ReportTemplateBuilder({ blocks, onChange, onPreview }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const { disabled: aiDisabled } = useAiStatus()
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -275,6 +293,7 @@ export default function ReportTemplateBuilder({ blocks, onChange, onPreview }: P
                   onSelect={() => setSelectedId(selectedId === block.id ? null : block.id)}
                   onRemove={() => removeBlock(block.id)}
                   onChange={(updates) => updateBlock(block.id, updates)}
+                  aiDisabled={aiDisabled}
                 />
               ))}
             </div>
@@ -320,6 +339,7 @@ export default function ReportTemplateBuilder({ blocks, onChange, onPreview }: P
           <BlockLibraryItem
             key={entry.type}
             {...entry}
+            disabled={!!entry.requiresAi && aiDisabled}
             onAdd={() => addBlock(entry.type)}
           />
         ))}

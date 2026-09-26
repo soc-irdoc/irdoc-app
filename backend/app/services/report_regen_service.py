@@ -32,8 +32,9 @@ from app.models.template import ReportTemplate
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DEBOUNCE_SECONDS = 60
-SHAREPOINT_DEFAULT_DEBOUNCE_SECONDS = 120
+# 10 minutes: a burst of edits during active response yields one new version.
+DEFAULT_DEBOUNCE_SECONDS = 600
+SHAREPOINT_DEFAULT_DEBOUNCE_SECONDS = 600
 # The token must outlive the countdown, otherwise the scheduled run would find
 # no token and skip itself.
 _TOKEN_TTL_MARGIN_SECONDS = 300

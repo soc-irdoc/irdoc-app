@@ -42,7 +42,7 @@ _DEFAULTS = {
     "is_enabled": False,
     "ollama_base_url": "http://ollama:11434",
     "model_name": "llama3.2",
-    "debounce_seconds": 60,
+    "debounce_seconds": 600,
     "max_timeline_events": 20,
 }
 

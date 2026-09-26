@@ -50,6 +50,8 @@ bleach==6.4.0
 anthropic==0.40.0
 openai==1.59.3
 httpx==0.28.1
+# Version ordering for the GitHub release update check (already pinned in the lock).
+packaging==26.3
 
 # ── Graph Layout (Phase 4) ────────────────────────────────────────────────────
 networkx==3.6.1

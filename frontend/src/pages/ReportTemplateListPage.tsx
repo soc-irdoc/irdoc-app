@@ -14,6 +14,7 @@ import {
   useToggleHideReportTemplate,
 } from '@/hooks/useReportTemplates'
 import { DESTINATION_OPTIONS } from '@/types/report'
+import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 import { Modal } from '@/components/common/Modal'
 import { AppShell } from '@/components/layout/AppShell'
 
@@ -31,6 +32,7 @@ export default function ReportTemplateListPage() {
   const deleteTemplate = useDeleteReportTemplate()
   const createTemplate = useCreateReportTemplate()
   const toggleAi = useToggleAiAutoGenerate()
+  const { disabled: aiDisabled } = useAiStatus()
   const toggleHide = useToggleHideReportTemplate()
 
   const [showNew, setShowNew] = useState(false)
@@ -170,9 +172,9 @@ export default function ReportTemplateListPage() {
                   <button
                     className={`btn btn-sm ${t.ai_auto_generate ? 'btn-accent' : 'btn-ghost'}`}
                     style={{ fontSize: '11px' }}
-                    title={t.ai_auto_generate ? 'AI auto-generate ON — click to disable' : 'AI auto-generate OFF — click to enable'}
+                    title={aiDisabled ? AI_DISABLED_HINT : t.ai_auto_generate ? 'AI auto-generate ON — click to disable' : 'AI auto-generate OFF — click to enable'}
                     onClick={() => toggleAi.mutate({ templateId: t.id, enabled: !t.ai_auto_generate })}
-                    disabled={toggleAi.isPending}
+                    disabled={toggleAi.isPending || aiDisabled}
                   >
                     AI {t.ai_auto_generate ? 'On' : 'Off'}
                   </button>

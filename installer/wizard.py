@@ -126,14 +126,26 @@ async def on_startup():
     if not os.environ.get("IRDOC_NO_UPDATE_CHECK"):
         try:
             import urllib.request, json as _json
+            from packaging.version import InvalidVersion, Version
+            # /releases/latest skips pre-releases (every IRDoc release so far),
+            # so list them and take the highest version.
             with urllib.request.urlopen(
-                "https://api.github.com/repos/soc-irdoc/irdoc-app/releases/latest",
+                "https://api.github.com/repos/soc-irdoc/irdoc-app/releases?per_page=20",
                 timeout=3,
             ) as resp:
-                data = _json.loads(resp.read())
-                latest = data.get("tag_name", "").lstrip("v")
-                if latest and latest != repo_version():
-                    state.update_available = latest
+                versions = []
+                for rel in _json.loads(resp.read()):
+                    tag = (rel.get("tag_name") or "").lstrip("v")
+                    if rel.get("draft") or not tag:
+                        continue
+                    try:
+                        versions.append((Version(tag), tag))
+                    except InvalidVersion:
+                        continue
+                if versions:
+                    newest_v, newest = max(versions)
+                    if newest_v > Version(repo_version()):
+                        state.update_available = newest
         except Exception:
             pass
 

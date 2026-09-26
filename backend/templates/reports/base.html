@@ -124,8 +124,18 @@
   /* ── Text block ───────────────────────────────────────────── */
   .text-block-content { border-left: 4px solid var(--brand-primary); padding: 14px 18px; border-radius: 0 6px 6px 0; font-size: 10.5pt; line-height: 1.65; }
   .text-block-content img { display: block; margin: 6px 0; }
-  ul[data-type="taskList"] { list-style: none; padding-left: 0; }
-  li[data-checked="true"] { text-decoration: line-through; color: #94a3b8; }
+  /* Tiptap task lists (Summary → Actions To Do). Completion state lives only
+     in li[data-checked]; the <input> never carries `checked`, so hide it and
+     draw the box on the sibling <span>. */
+  ul[data-type="taskList"] { list-style: none; padding-left: 0; margin: 6px 0; }
+  li[data-type="taskItem"] { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0; }
+  li[data-type="taskItem"] > label { flex-shrink: 0; margin-top: 3px; }
+  li[data-type="taskItem"] > label > input { display: none; }
+  li[data-type="taskItem"] > label > span { display: block; width: 11px; height: 11px; border: 1.5px solid #94a3b8; border-radius: 3px; }
+  li[data-type="taskItem"] > p { margin: 0; }
+  li[data-checked="true"] > label > span { background: #22c55e; border-color: #22c55e; }
+  li[data-checked="true"] > label > span::after { content: ""; display: block; width: 3px; height: 6px; margin: 1px 0 0 3.5px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+  li[data-checked="true"] > p { text-decoration: line-through; color: #94a3b8; }
 
   /* ── Evidence register ────────────────────────────────────── */
   .sha-mono { font-family: 'Courier New', monospace; font-size: 8.5pt; color: #475569; }

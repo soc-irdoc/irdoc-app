@@ -19,7 +19,7 @@ async def test_get_version_returns_current_version(client: AsyncClient, auth_hea
 
 @pytest.mark.asyncio
 async def test_get_version_flags_update_available(client: AsyncClient, auth_headers):
-    with patch("app.api.v1.version.get_latest_release_version", return_value="99.0.0"):
+    with patch("app.api.v1.version.get_latest_release_version", return_value="99.0.0"),          patch("app.api.v1.version.settings.VERSION", "0.1.2-alpha"):
         resp = await client.get("/api/v1/version", headers=auth_headers)
 
     assert resp.status_code == 200
@@ -32,3 +32,11 @@ async def test_get_version_flags_update_available(client: AsyncClient, auth_head
 async def test_get_version_requires_auth(client: AsyncClient):
     resp = await client.get("/api/v1/version")
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_version_no_update_when_running_newer(client: AsyncClient, auth_headers):
+    with patch("app.api.v1.version.get_latest_release_version", return_value="0.1.2-alpha"),          patch("app.api.v1.version.settings.VERSION", "0.1.3"):
+        resp = await client.get("/api/v1/version", headers=auth_headers)
+
+    assert resp.json()["data"]["update_available"] is False

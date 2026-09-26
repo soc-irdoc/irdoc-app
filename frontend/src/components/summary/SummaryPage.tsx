@@ -3,8 +3,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useIncident, useUpdateIncident } from '@/hooks/useIncident'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { RichTextEditor } from '@/components/common/RichTextEditor'
+import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 import { useUIStore } from '@/stores/uiStore'
-import { SEVERITY_LABELS, STATUS_LABELS, type UpdateIncidentPayload } from '@/types/incident'
+import { SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS, STATUS_LABELS, type UpdateIncidentPayload } from '@/types/incident'
 import { formatDateTime, formatRelative } from '@/lib/utils'
 import apiClient from '@/lib/apiClient'
 import { getSocket } from '@/lib/websocket'
@@ -14,39 +15,51 @@ interface SummaryPageProps {
 }
 
 // ── Stat card ────────────────────────────────────────────────
+// Chip colour classes (SEVERITY_COLORS / STATUS_COLORS) → theme colour tokens,
+// so the cards match the severity/status chips used elsewhere.
+const CHIP_COLOR_VARS: Record<string, string> = {
+  'chip-red': 'var(--red)',
+  'chip-yellow': 'var(--yellow)',
+  'chip-blue': 'var(--blue)',
+  'chip-green': 'var(--green)',
+  'chip-muted': 'var(--text-muted)',
+}
+
 function StatCard({ title, value, color }: { title: string; value: string | number; color?: string }) {
   return (
     <div
+      data-testid={`stat-${title.toLowerCase()}`}
       style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',
         borderTop: `2px solid ${color ?? 'var(--border)'}`,
-        borderRadius: 16,
-        padding: 18,
+        borderRadius: 12,
+        padding: '10px 16px',
+        minWidth: 0,
       }}
     >
       <h3
         style={{
-          fontSize: 12,
+          fontSize: 11,
           color: 'var(--text-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
-          marginBottom: 8,
+          marginBottom: 4,
         }}
       >
         {title}
       </h3>
       <p
         style={{
-          fontSize: 28,
-          fontWeight: 800,
+          fontSize: 18,
+          fontWeight: 600,
           color: color ?? 'var(--text-primary)',
-          fontVariantNumeric: 'tabular-nums',
-          letterSpacing: '-0.02em',
-          wordBreak: 'break-word',
-          overflowWrap: 'anywhere',
-          lineHeight: 1.2,
+          lineHeight: 1.3,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}
+        title={String(value)}
       >
         {value}
       </p>
@@ -207,9 +220,10 @@ interface AISectionProps {
   content: string | null | undefined
   endpoint: string
   wsEvent: string
+  disabled?: boolean
 }
 
-function AISection({ incidentId, label, content, endpoint, wsEvent }: AISectionProps) {
+function AISection({ incidentId, label, content, endpoint, wsEvent, disabled = false }: AISectionProps) {
   const addToast = useUIStore((s) => s.addToast)
   const qc = useQueryClient()
   const [generating, setGenerating] = useState(false)
@@ -237,12 +251,17 @@ function AISection({ incidentId, label, content, endpoint, wsEvent }: AISectionP
 
   return (
     <div
+      data-testid={`ai-section-${label}`}
+      aria-disabled={disabled}
+      title={disabled ? AI_DISABLED_HINT : undefined}
       style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',
         borderRadius: 12,
         marginBottom: 16,
         overflow: 'hidden',
+        opacity: disabled ? 0.5 : 1,
+        filter: disabled ? 'grayscale(1)' : undefined,
       }}
     >
       <div
@@ -261,7 +280,7 @@ function AISection({ incidentId, label, content, endpoint, wsEvent }: AISectionP
         <button
           type="button"
           onClick={handleGenerate}
-          disabled={generating}
+          disabled={generating || disabled}
           style={{
             fontSize: 12,
             padding: '4px 12px',
@@ -269,7 +288,7 @@ function AISection({ incidentId, label, content, endpoint, wsEvent }: AISectionP
             border: '1px solid var(--accent)',
             background: 'transparent',
             color: 'var(--accent)',
-            cursor: generating ? 'not-allowed' : 'pointer',
+            cursor: generating || disabled ? 'not-allowed' : 'pointer',
             opacity: generating ? 0.6 : 1,
           }}
         >
@@ -293,7 +312,9 @@ function AISection({ incidentId, label, content, endpoint, wsEvent }: AISectionP
         </pre>
       ) : (
         <p style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-muted)' }}>
-          No {label.toLowerCase()} yet. Click Generate to create one using AI.
+          {disabled
+            ? AI_DISABLED_HINT
+            : `No ${label.toLowerCase()} yet. Click Generate to create one using AI.`}
         </p>
       )}
     </div>
@@ -303,6 +324,7 @@ function AISection({ incidentId, label, content, endpoint, wsEvent }: AISectionP
 // ── Page ──────────────────────────────────────────────────────
 export function SummaryPage({ incidentId }: SummaryPageProps) {
   const { data: incident, isLoading } = useIncident(incidentId)
+  const { disabled: aiDisabled } = useAiStatus()
 
   if (isLoading) {
     return (
@@ -338,8 +360,8 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
           marginBottom: 20,
         }}
       >
-        <StatCard title="Severity" value={SEVERITY_LABELS[incident.severity]} color="var(--red)" />
-        <StatCard title="Status" value={STATUS_LABELS[incident.status]} color="var(--accent)" />
+        <StatCard title="Severity" value={SEVERITY_LABELS[incident.severity]} color={CHIP_COLOR_VARS[SEVERITY_COLORS[incident.severity]]} />
+        <StatCard title="Status" value={STATUS_LABELS[incident.status]} color={CHIP_COLOR_VARS[STATUS_COLORS[incident.status]]} />
       </div>
 
       {/* Incident details */}
@@ -447,6 +469,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
         label="AI Summary"
         content={incident.ai_summary}
         endpoint={`/incidents/${incidentId}/ai/summary`}
+        disabled={aiDisabled}
         wsEvent="ai:summary_ready"
       />
 
@@ -456,6 +479,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
         label="AI Recommendations"
         content={incident.ai_recommendations}
         endpoint={`/incidents/${incidentId}/ai/recommendations`}
+        disabled={aiDisabled}
         wsEvent="ai:recommendations_ready"
       />
     </div>

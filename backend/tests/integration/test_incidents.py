@@ -205,3 +205,36 @@ async def test_rich_text_font_size_round_trip(client: AsyncClient, auth_headers)
     assert "color" not in data["notes"]
     assert "red" not in data["notes"]
     assert 'data-font-size="14px"' in data["notes"]
+
+
+async def _create(client, headers, title):
+    r = await client.post("/api/v1/incidents", json={"title": title, "severity": "sev2"}, headers=headers)
+    return r.json()["data"]
+
+
+@pytest.mark.asyncio
+async def test_search_matches_incident_ref(client: AsyncClient, auth_headers):
+    # Regression (#64): search only matched the title.
+    a = await _create(client, auth_headers, "Phishing wave")
+    await _create(client, auth_headers, "Ransomware on file server")
+
+    for term in (a["incident_ref"], a["incident_ref"].lower(), a["incident_ref"][-4:]):
+        r = await client.get("/api/v1/incidents", params={"search": term}, headers=auth_headers)
+        refs = [i["incident_ref"] for i in r.json()["data"]]
+        assert refs == [a["incident_ref"]], term
+
+
+@pytest.mark.asyncio
+async def test_search_still_matches_title(client: AsyncClient, auth_headers):
+    await _create(client, auth_headers, "Phishing wave")
+    await _create(client, auth_headers, "Ransomware on file server")
+    r = await client.get("/api/v1/incidents", params={"search": "ransom"}, headers=auth_headers)
+    assert [i["title"] for i in r.json()["data"]] == ["Ransomware on file server"]
+
+
+@pytest.mark.asyncio
+async def test_search_treats_like_wildcards_literally(client: AsyncClient, auth_headers):
+    await _create(client, auth_headers, "Phishing wave")
+    for term in ("%", "_"):
+        r = await client.get("/api/v1/incidents", params={"search": term}, headers=auth_headers)
+        assert r.json()["meta"]["total"] == 0, term
