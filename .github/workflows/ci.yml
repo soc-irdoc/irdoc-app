@@ -111,7 +111,13 @@ jobs:
         # upstream by design. ecdsa is a hard dependency of python-jose but this
         # codebase only ever uses HS256/RS256 (see app/core/security.py, oidc.py),
         # never ES256, so the vulnerable code path is unreachable here.
-        run: pip-audit --requirement backend/requirements.lock.txt --ignore-vuln GHSA-wfm5-v35h-vwf4 --ignore-vuln PYSEC-2026-1325
+        # CVE-2026-85394: python-jose <=3.5.0 HMAC/public-key algorithm confusion,
+        # no fixed release yet. Only exploitable when decode() doesn't restrict
+        # algorithms; every decode here does — HS256 with SECRET_KEY (never a
+        # public key) in app/core/security.py, RS256-only against the Entra JWKS
+        # in oidc.py — so a forged HS256 token is rejected. Temporary: to be
+        # removed by migrating off python-jose or once a fixed release ships.
+        run: pip-audit --requirement backend/requirements.lock.txt --ignore-vuln GHSA-wfm5-v35h-vwf4 --ignore-vuln PYSEC-2026-1325 --ignore-vuln CVE-2026-85394
 
       - name: Lint (ruff)
         run: cd backend && ruff check .
