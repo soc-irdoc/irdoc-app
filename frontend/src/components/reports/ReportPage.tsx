@@ -180,6 +180,11 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
 
   const [generatingFor, setGeneratingFor] = useState<string | null>(null)
 
+  // Reports only store the template id; fall back to the report type for
+  // older reports and for templates that have since been deleted.
+  const reportTemplateName = (r: { report_template_id: string | null; report_type: string }) =>
+    reportTemplates.find((t) => t.id === r.report_template_id)?.name ?? r.report_type
+
   // Listen for report:ready and report:sharepoint_synced WebSocket events
   useEffect(() => {
     const socket = getSocket()
@@ -387,7 +392,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                   <tr key={r.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        {r.report_type}
+                        {reportTemplateName(r)}
                         {r.is_ai_assisted && (
                           <span className="chip chip-blue" style={{ fontSize: '10px', padding: '1px 6px' }}>AI</span>
                         )}

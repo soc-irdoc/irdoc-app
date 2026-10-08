@@ -2,7 +2,7 @@ from functools import lru_cache
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     BASE_URL: AnyHttpUrl = "http://localhost:3000"  # type: ignore[assignment]
     ALLOW_REGISTRATION: bool = True
     VERSION: str = "dev"
+    # Baked into release images at build time (Dockerfile ARG, from the repo's
+    # VERSION file). It wins over VERSION, which compose sets to the image
+    # *tag* — usually "latest", which says nothing about what is running.
+    APP_VERSION: str = ""
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://irp:changeme@db/irp"
@@ -70,6 +74,12 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
+
+    @model_validator(mode="after")
+    def _prefer_baked_version(self) -> "Settings":
+        if self.APP_VERSION:
+            self.VERSION = self.APP_VERSION
+        return self
 
     def get_cors_origins(self) -> list[str]:
         if self.CORS_ORIGINS:

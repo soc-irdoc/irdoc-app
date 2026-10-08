@@ -214,10 +214,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Read app version
+        id: app_version
+        # Baked into the backend image so the running app (version badge,
+        # update check, upgrade.sh) reports the release, not the image tag.
+        run: echo "APP_VERSION=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+
       - name: Build and push backend image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: ./backend
+          build-args: |
+            APP_VERSION=${{ steps.app_version.outputs.APP_VERSION }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |

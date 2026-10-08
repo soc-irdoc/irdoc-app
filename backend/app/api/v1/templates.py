@@ -59,6 +59,18 @@ async def delete_incident_template(
     await template_service.delete_incident_template(db, template)
 
 
+@router.post("/templates/incident/{template_id}/clone", status_code=201)
+async def clone_incident_template(
+    template_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("templates.create")),
+):
+    """Clone a template (typically a system one) into the org's own copy."""
+    source = await template_service.get_incident_template(db, template_id, str(current_user.org_id))
+    cloned = await template_service.clone_incident_template(db, source, str(current_user.org_id))
+    return {"data": IncidentTemplateOut.model_validate(cloned), "error": None}
+
+
 # ─── Report Templates ───────────────────────────────────────────────────────────
 
 @router.get("/templates/report")

@@ -14,6 +14,7 @@ export interface ConfigSchemaField {
   required?: boolean
   placeholder?: string
   default?: string
+  help?: string
   options?: { value: string; label: string }[]
 }
 

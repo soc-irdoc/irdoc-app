@@ -4,6 +4,7 @@ import { useLogin } from '@/hooks/useAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/common/Button'
 import apiClient from '@/lib/apiClient'
+import { getLoginErrorMessage } from '@/lib/utils'
 import { MFAVerifyModal } from '@/components/auth/MFAVerifyModal'
 import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
 
@@ -54,8 +55,7 @@ export function LoginPage() {
       }
       navigate('/incidents', { replace: true })
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } }
-      setError(axiosErr.response?.data?.detail ?? 'Invalid credentials')
+      setError(getLoginErrorMessage(err))
     }
   }
 

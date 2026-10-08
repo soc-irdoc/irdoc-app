@@ -45,6 +45,12 @@ RUN pip install --no-cache-dir --upgrade pip==26.2.0 \
 COPY requirements.lock.txt .
 RUN pip install --no-cache-dir --require-hashes -r requirements.lock.txt
 
+# ── Release version ─────────────────────────────────────────────────────────────
+# CI passes the repo's VERSION file here; a local `docker compose build` leaves
+# it empty and the app falls back to the VERSION env var (then "dev").
+ARG APP_VERSION=""
+ENV APP_VERSION=${APP_VERSION}
+
 # ── Application code ────────────────────────────────────────────────────────────
 COPY . .
 
@@ -56,7 +62,9 @@ RUN mkdir -p /app/backups && chown -R irp:irp /app/backups
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && chown irp:irp /entrypoint.sh
 
-USER irp
+# No `USER irp` here on purpose: entrypoint.sh starts as root only to fix the
+# ownership of the host bind mounts (storage/, backups/), then drops to irp
+# with setpriv before running migrations or the app (#80).
 
 EXPOSE 8000
 
