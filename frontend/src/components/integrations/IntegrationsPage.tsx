@@ -98,6 +98,9 @@ function IntegrationConfigModal({
               value={values[key] ?? ''}
               onChange={(e) => setValues((prev) => ({ ...prev, [key]: e.target.value }))}
             />
+            {field.help && (
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{field.help}</span>
+            )}
           </div>
         ))}
 

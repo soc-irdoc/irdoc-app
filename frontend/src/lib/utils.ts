@@ -10,6 +10,24 @@ export function getErrorMessage(err: unknown, fallback: string): string {
   return fallback
 }
 
+/**
+ * Message for a failed login. Only a backend `detail` string means the
+ * credentials themselves were rejected; a 502 while the backend restarts, the
+ * login rate limit, or an unreachable server must not read as a wrong password.
+ */
+export function getLoginErrorMessage(err: unknown): string {
+  if (!isAxiosError(err)) return 'Login failed. Please try again.'
+  const status = err.response?.status
+  const detail = err.response?.data?.detail
+  if (status === 429) return 'Too many login attempts. Wait a minute and try again.'
+  if (!err.response || (status !== undefined && status >= 500)) {
+    return 'Cannot reach the IRDoc server (it may still be starting). Try again in a moment.'
+  }
+  if (typeof detail === 'string') return detail
+  if (status === 422) return 'Enter a valid email address and password.'
+  return 'Invalid credentials'
+}
+
 export function formatDateTime(iso: string): string {
   return format(parseISO(iso), 'yyyy-MM-dd HH:mm:ss')
 }

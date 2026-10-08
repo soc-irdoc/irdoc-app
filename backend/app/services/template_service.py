@@ -2,6 +2,9 @@
 Template service: incident templates + report templates.
 System templates (org_id=null) are read-only — orgs must clone.
 """
+import copy
+import uuid
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -79,6 +82,27 @@ async def delete_incident_template(db: AsyncSession, template: IncidentTemplate)
         )
     await db.delete(template)
     await db.flush()
+
+
+async def clone_incident_template(
+    db: AsyncSession, source: IncidentTemplate, org_id: str
+) -> IncidentTemplate:
+    """Clone a template (usually a system one) into the org's own editable copy."""
+    # Slugs aren't unique in the schema, but give each copy its own so the
+    # copy is distinguishable from the original (and from earlier copies).
+    cloned = IncidentTemplate(
+        org_id=org_id,
+        name=f"{source.name} (Copy)",
+        slug=f"{source.slug[:85]}-copy-{uuid.uuid4().hex[:8]}",
+        description=source.description,
+        tasks_json=copy.deepcopy(source.tasks_json or []),
+        is_system=False,
+        is_hidden=False,
+    )
+    db.add(cloned)
+    await db.flush()
+    await db.refresh(cloned)
+    return cloned
 
 
 # ─── Report Templates ───────────────────────────────────────────────────────────

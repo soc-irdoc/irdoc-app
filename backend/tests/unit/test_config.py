@@ -5,13 +5,33 @@ from app.main import application, settings
 
 def test_version_defaults_to_dev(monkeypatch):
     monkeypatch.delenv("VERSION", raising=False)
+    monkeypatch.delenv("APP_VERSION", raising=False)
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     s = Settings(_env_file=None)
     assert s.VERSION == "dev"
 
 
 def test_version_reads_env_override(monkeypatch):
+    monkeypatch.delenv("APP_VERSION", raising=False)
     monkeypatch.setenv("VERSION", "0.1.0-alpha")
+    monkeypatch.setenv("SECRET_KEY", "x" * 32)
+    s = Settings(_env_file=None)
+    assert s.VERSION == "0.1.0-alpha"
+
+
+def test_baked_app_version_wins_over_image_tag(monkeypatch):
+    # Compose sets VERSION to the image tag ("latest"); the version baked into
+    # the image at build time is what is actually running.
+    monkeypatch.setenv("VERSION", "latest")
+    monkeypatch.setenv("APP_VERSION", "0.1.4-alpha")
+    monkeypatch.setenv("SECRET_KEY", "x" * 32)
+    s = Settings(_env_file=None)
+    assert s.VERSION == "0.1.4-alpha"
+
+
+def test_empty_app_version_falls_back_to_version(monkeypatch):
+    monkeypatch.setenv("VERSION", "0.1.0-alpha")
+    monkeypatch.setenv("APP_VERSION", "")
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     s = Settings(_env_file=None)
     assert s.VERSION == "0.1.0-alpha"

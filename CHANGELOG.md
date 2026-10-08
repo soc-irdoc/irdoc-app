@@ -11,6 +11,23 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Added
+
+- **SharePoint: save reports into an existing folder.** A new optional **Folder in Library** field, and **SharePoint Site URL** now also accepts the browser URL of the target folder (library view `…/AllItems.aspx?id=…`, folder path, or "Copy link" sharing link). IRDoc then takes the library and folder from the URL. Libraries are matched by display name (`Documents`, `Documenten`) or URL name (`Shared Documents`, `Gedeelde documenten`); before, only the display name matched, so a URL name created a new, empty library. Existing folders are reused and missing ones are created.
+- **SharePoint filename placeholders** `{severity}`, `{status}`, `{date}` and `{version}`, alongside `{incident_ref}`, `{incident_title}` and `{template_name}`. `{date}` was already documented but fell back to the default name. Characters SharePoint rejects are replaced with `-`, and `.pdf` is added when missing. Each integration field now shows a short hint under it.
+
+### Changed
+
+- **`upgrade.sh` refuses source-built installs.** On an install started with plain `docker compose up` (built from source, port 3000), it used to switch silently to the published-image stack (ports 80/443, files in `docker/storage/`). It now stops with instructions instead. It also waits for the backend health check before reporting. (#82)
+- **Real version reported.** The release version is baked into the backend image, so `upgrade.sh`, the version badge and the update check show e.g. `0.1.4-alpha` instead of `1.0.0` or the image tag `latest`. (#82)
+
+### Fixed
+
+- **`Permission denied: '/app/storage/reports'` on a fresh Docker install.** Docker creates the bind-mounted `docker/storage` and `docker/backups` owned by root, and the app runs as uid 999. The backend, worker and beat containers now take ownership of both directories at startup, then drop to the unprivileged user, so existing installs are fixed by upgrading. (#80)
+- **Cloning an incident template failed** ("Failed to clone template"): the clone endpoint the Incident Templates page calls didn't exist. Clones are named "<name> (Copy)" and are fully editable. (#81)
+- **Generated Reports table showed "pdf" as the template**; it now shows the report template's name.
+- **Login said "Invalid credentials" for every failure**, including a backend that was still starting, the login rate limit, or an unreachable server. Those now get their own messages. (#82)
+
 ## [0.1.3-alpha] - 2026-09-26
 
 ### Added

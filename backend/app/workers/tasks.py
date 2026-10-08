@@ -495,15 +495,14 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
             payload = await build_report_payload(incident_id=incident_id, analyst=analyst, db=db)
             report_bytes = render_incident_pdf(payload=payload)
 
-            # Build filename from pattern
-            pattern = policy.destination_config.get("filename_pattern", "{incident_ref}.pdf")
-            try:
-                filename = pattern.format(
-                    incident_ref=payload.incident.incident_ref,
-                    incident_title=payload.incident.title[:50].replace("/", "-"),
-                )
-            except KeyError:
-                filename = f"{payload.incident.incident_ref}.pdf"
+            from app.plugins.integrations.sharepoint import build_report_filename
+            filename = build_report_filename(
+                policy.destination_config.get("filename_pattern", "{incident_ref}.pdf"),
+                incident_ref=payload.incident.incident_ref,
+                incident_title=payload.incident.title,
+                severity=payload.incident.severity,
+                status=payload.incident.status,
+            )
 
             # Decrypt destination config + upload
             config = decrypt_config(dict(policy.destination_config))
@@ -621,15 +620,16 @@ def push_report_to_sharepoint(self, report_id: str, org_id: str):
                 select(Incident).where(Incident.id == report.incident_id)
             )).scalar_one_or_none()
 
-            pattern = config.get("filename_pattern", "{incident_ref} - {template_name}.pdf")
-            try:
-                filename = pattern.format(
-                    incident_ref=incident.incident_ref if incident else "INC",
-                    incident_title=(incident.title[:50].replace("/", "-") if incident else "Incident"),
-                    template_name=template_name,
-                )
-            except KeyError:
-                filename = f"{(incident.incident_ref if incident else 'INC')} - {template_name}.pdf"
+            from app.plugins.integrations.sharepoint import build_report_filename
+            filename = build_report_filename(
+                config.get("filename_pattern"),
+                incident_ref=incident.incident_ref if incident else None,
+                incident_title=incident.title if incident else None,
+                severity=incident.severity if incident else None,
+                status=incident.status if incident else None,
+                template_name=template_name,
+                version=report.version_number,
+            )
 
             sp_plugin = PLUGINS.get("sharepoint")
             if not sp_plugin:
