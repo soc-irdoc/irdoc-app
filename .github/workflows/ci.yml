@@ -314,7 +314,7 @@ jobs:
     permissions:
       packages: write
       # softprops/action-gh-release fetches/updates the release that
-      # triggered this run (to sync its body and attach files) — without
+      # triggered this run (to attach files) — without
       # this it 403s with "Resource not accessible by integration" and
       # the image retagging steps above it are the only part that runs.
       contents: write
@@ -355,10 +355,12 @@ jobs:
             --tag ghcr.io/soc-irdoc/irdoc-frontend:${{ steps.version.outputs.VERSION }} \
             ghcr.io/soc-irdoc/irdoc-frontend:${{ github.sha }}
 
-      - name: Create GitHub Release
+      - name: Attach deployment files to the release
+        # No body/body_path on purpose: the release notes are written by hand
+        # for each release (highlights + upgrade steps). body_path used to
+        # replace them with the whole CHANGELOG.md right after publishing.
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
-          body_path: CHANGELOG.md
           files: |
             docker/docker-compose.prod.yml
             docker/upgrade.sh
