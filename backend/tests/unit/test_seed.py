@@ -11,7 +11,9 @@ seed() must now only ever create org-agnostic system templates — never an
 org or a user — so that the first-run setup flow is the sole path that can
 create an admin account.
 """
+import pytest
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 import seed as seed_module
 from app.models.organization import Organization
@@ -57,3 +59,29 @@ async def test_seed_is_idempotent(db_session):
         await db_session.execute(select(IncidentTemplate).where(IncidentTemplate.is_system.is_(True)))
     ).scalars().all()
     assert len(incident_templates) == 4
+
+
+async def test_duplicate_system_template_is_rejected(db_session):
+    """Regression for #93: concurrent seeds left every system template twice.
+
+    The partial unique index must reject a second system copy while still
+    allowing an org's own template to reuse a system template's name.
+    """
+    seed_module.AsyncSessionLocal = lambda: db_session
+    await seed_module.seed()
+    await db_session.commit()
+
+    org = Organization(name="Org", slug="org")
+    db_session.add(org)
+    await db_session.flush()
+    db_session.add(ReportTemplate(org_id=org.id, name="Management Brief", is_system=False))
+    await db_session.commit()
+
+    db_session.add(ReportTemplate(org_id=None, name="Management Brief", is_system=True))
+    with pytest.raises(IntegrityError):
+        await db_session.commit()
+    await db_session.rollback()
+
+    db_session.add(IncidentTemplate(org_id=None, name="Phishing Attack", slug="phishing", is_system=True))
+    with pytest.raises(IntegrityError):
+        await db_session.commit()
