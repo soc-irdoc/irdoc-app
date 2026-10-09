@@ -1,0 +1,75 @@
+name: Release Provenance
+
+# Signs the files attached to each GitHub release (docker-compose.prod.yml,
+# upgrade.sh, backup.sh) with SLSA build provenance, and attaches the signed
+# bundle to the release as irdoc-<tag>.intoto.jsonl. OpenSSF Scorecard's
+# Signed-Releases check looks for exactly that file on each release.
+#
+# The release job in ci.yml attaches the files themselves, from the same tag
+# checkout this workflow attests, so the digests match.
+#
+# Run it by hand (Actions → Release Provenance → Run workflow) to add
+# provenance to a release published before this workflow existed.
+#
+# Verify a downloaded file with:
+#   gh attestation verify upgrade.sh --repo soc-irdoc/irdoc-app
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to sign, e.g. v0.1.4-alpha
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  provenance:
+    name: Attest release files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # upload the bundle to the release
+      id-token: write      # Sigstore signing identity
+      attestations: write  # store the attestation in GitHub
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Check files match the release assets
+        # Only relevant for older releases signed by hand: refuse to sign
+        # anything other than what users actually download. On a fresh
+        # release the assets may not be attached yet; missing ones are skipped.
+        run: |
+          mkdir -p "$RUNNER_TEMP/assets"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --dir "$RUNNER_TEMP/assets" \
+            --pattern docker-compose.prod.yml --pattern upgrade.sh --pattern backup.sh \
+            || true
+          for f in docker-compose.prod.yml upgrade.sh backup.sh; do
+            [ -f "$RUNNER_TEMP/assets/$f" ] || continue
+            cmp "docker/$f" "$RUNNER_TEMP/assets/$f" \
+              || { echo "::error::$f on release $TAG differs from docker/$f at the tag"; exit 1; }
+          done
+
+      - name: Generate provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            docker/docker-compose.prod.yml
+            docker/upgrade.sh
+            docker/backup.sh
+
+      - name: Attach provenance to the release
+        run: |
+          cp "${{ steps.attest.outputs.bundle-path }}" "irdoc-$TAG.intoto.jsonl"
+          gh release upload "$TAG" "irdoc-$TAG.intoto.jsonl" --repo "$GITHUB_REPOSITORY" --clobber
