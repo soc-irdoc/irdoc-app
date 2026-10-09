@@ -11,6 +11,10 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Report templates (and incident templates) listed twice.** On a fresh install the backend, worker and beat containers seed the database at the same moment. Two of them could both find the template tables empty and each insert the full set of system templates. The seed step now takes a database lock, so only one container seeds. Upgrading removes the extra copies; incidents, tasks, reports and sync policies that used a removed copy are moved to the one kept. A system template stays visible if any copy of it was visible. Custom templates are not changed. (#93)
+
 ## [0.1.4-alpha] - 2026-10-08
 
 ### Added

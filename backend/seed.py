@@ -6,16 +6,24 @@ Does NOT create an org or admin user — that must only ever happen through
 the first-run setup flow (POST /auth/setup, driven by the installer wizard
 or the app's own setup screen), so there is never a known-default admin
 account listening on a fresh install.
+
+The backend, worker and beat containers all run this script from the same
+entrypoint and start at the same moment, so the "already seeded?" check is
+serialised with a PostgreSQL advisory lock. Without it, two containers could
+both see an empty table and each insert a full set of templates (#93).
 """
 import asyncio
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.core.database import AsyncSessionLocal
 from app.models.template import IncidentTemplate, ReportTemplate
 
 logger = logging.getLogger(__name__)
+
+# Arbitrary app-wide key for pg_advisory_xact_lock; only seed.py uses it.
+SEED_LOCK_KEY = 0x1D0C5EED
 
 # ─── System Incident Templates ─────────────────────────────────────────────────
 
@@ -154,6 +162,12 @@ REPORT_TEMPLATES = [
 
 async def seed() -> None:
     async with AsyncSessionLocal() as db:
+        # Held until commit/rollback, so a concurrent seed waits here and then
+        # sees the rows this one inserted.
+        conn = await db.connection()
+        if conn.dialect.name == "postgresql":
+            await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": SEED_LOCK_KEY})
+
         # Check if already seeded
         result = await db.execute(
             select(IncidentTemplate.id).where(IncidentTemplate.is_system.is_(True)).limit(1)

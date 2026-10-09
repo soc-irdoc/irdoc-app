@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,6 +10,14 @@ from app.core.database import Base
 
 class IncidentTemplate(Base):
     __tablename__ = "incident_templates"
+    __table_args__ = (
+        # One row per system template — see migration 023 (#93).
+        Index(
+            "uq_incident_templates_system_slug", "slug", unique=True,
+            postgresql_where=text("is_system AND org_id IS NULL"),
+            sqlite_where=text("is_system AND org_id IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     org_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -26,6 +34,14 @@ class IncidentTemplate(Base):
 
 class ReportTemplate(Base):
     __tablename__ = "report_templates"
+    __table_args__ = (
+        # One row per system template — see migration 023 (#93).
+        Index(
+            "uq_report_templates_system_name", "name", unique=True,
+            postgresql_where=text("is_system AND org_id IS NULL"),
+            sqlite_where=text("is_system AND org_id IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     org_id: Mapped[uuid.UUID | None] = mapped_column(
