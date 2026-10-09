@@ -11,6 +11,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.1.5-alpha] - 2026-10-09
+
 ### Fixed
 
 - **Report templates (and incident templates) listed twice.** On a fresh install the backend, worker and beat containers seed the database at the same moment. Two of them could both find the template tables empty and each insert the full set of system templates. The seed step now takes a database lock, so only one container seeds. Upgrading removes the extra copies; incidents, tasks, reports and sync policies that used a removed copy are moved to the one kept. A system template stays visible if any copy of it was visible. Custom templates are not changed. (#93)
@@ -208,7 +210,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.4-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.5-alpha...main
+[0.1.5-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.4-alpha...v0.1.5-alpha
 [0.1.4-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.3-alpha...v0.1.4-alpha
 [0.1.3-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.2-alpha...v0.1.3-alpha
 [0.1.2-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.1-alpha...v0.1.2-alpha
