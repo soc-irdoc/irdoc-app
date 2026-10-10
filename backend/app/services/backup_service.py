@@ -1,5 +1,5 @@
 """
-Backup service — core logic for the built-in backup system.
+Backup service - core logic for the built-in backup system.
 
 Produces an encrypted, self-contained backup bundle containing:
   - a gzip-compressed PostgreSQL dump (via pg_dump)
@@ -279,7 +279,7 @@ async def run_backup(db: AsyncSession) -> BackupRecord:
     except Exception as exc:
         logger.exception("Backup failed")
         await db.rollback()
-        # Re-fetch config after rollback — object is expired
+        # Re-fetch config after rollback - object is expired
         result = await db.execute(select(BackupConfig))
         config = result.scalars().first()
         if config is not None:

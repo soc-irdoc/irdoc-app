@@ -5,7 +5,7 @@ from app.services.mfa_service import encrypt_secret, generate_backup_codes
 
 
 async def test_login_without_mfa_returns_access_token(client: AsyncClient, admin_user):
-    """Normal login — no MFA configured, no org requirement."""
+    """Normal login - no MFA configured, no org requirement."""
     _user, _org = admin_user
     resp = await client.post("/api/v1/auth/login", json={
         "email": "admin@test.com",

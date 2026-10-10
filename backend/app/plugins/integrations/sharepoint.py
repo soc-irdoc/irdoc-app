@@ -241,7 +241,7 @@ class SharePointPlugin:
                     f"Document library '{library_name}' not found on the site (available: {available})"
                 )
 
-            # Library not found — create it
+            # Library not found - create it
             r = await client.post(
                 f"{_GRAPH_BASE}/sites/{site_id}/lists",
                 json={"displayName": library_name, "list": {"template": "documentLibrary"}},
@@ -249,7 +249,7 @@ class SharePointPlugin:
             )
             r.raise_for_status()
 
-            # Fetch the new library's drive directly by list ID — avoids Graph propagation delay
+            # Fetch the new library's drive directly by list ID - avoids Graph propagation delay
             created_list_id = r.json()["id"]
             r = await client.get(
                 f"{_GRAPH_BASE}/sites/{site_id}/lists/{created_list_id}/drive",

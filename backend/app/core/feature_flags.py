@@ -11,7 +11,7 @@ from app.core.config import settings
 
 # Feature groups and their required plan
 FEATURE_MAP: dict[str, str] = {
-    # Core (AGPL) — always enabled
+    # Core (AGPL) - always enabled
     "timeline": "core",
     "iocs": "core",
     "evidence": "core",
@@ -21,13 +21,13 @@ FEATURE_MAP: dict[str, str] = {
     "local_storage": "core",
     "rest_api": "core",
 
-    # Everything shipped so far is core — nothing currently written is
+    # Everything shipped so far is core - nothing currently written is
     # premium. These stay mapped to "core" until a feature that actually
     # requires a commercial license ships.
     "report_template_builder": "core",
     "report_pdf_export": "core",
     "report_docx_export": "core",
-    "ai_summaries": "core",  # Ollama is local/free — no license gate
+    "ai_summaries": "core",  # Ollama is local/free - no license gate
     "sharepoint_sync": "core",
     "cloud_storage": "core",          # S3 / Azure / GCS backends
     "advanced_integrations": "core",  # VT, AbuseIPDB, Sentinel, CrowdStrike
@@ -37,7 +37,7 @@ FEATURE_MAP: dict[str, str] = {
     "sso_oidc": "core",
     "audit_log": "core",
 
-    # Not yet implemented — safe to leave gated since no code path uses them.
+    # Not yet implemented - safe to leave gated since no code path uses them.
     "multi_tenancy": "enterprise",
     "custom_branding": "enterprise",
     "mssp_mode": "enterprise",

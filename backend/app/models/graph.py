@@ -1,4 +1,4 @@
-"""GraphEdge SQLAlchemy model — manually created graph edges."""
+"""GraphEdge SQLAlchemy model - manually created graph edges."""
 import uuid
 
 from sqlalchemy import DateTime, ForeignKey, Text, func

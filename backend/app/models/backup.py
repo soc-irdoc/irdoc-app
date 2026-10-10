@@ -9,7 +9,7 @@ from app.core.database import Base
 
 
 class BackupConfig(Base):
-    """System-level backup configuration. Managed as a singleton — always get-or-create via the service layer."""
+    """System-level backup configuration. Managed as a singleton - always get-or-create via the service layer."""
 
     __tablename__ = "backup_configs"
 

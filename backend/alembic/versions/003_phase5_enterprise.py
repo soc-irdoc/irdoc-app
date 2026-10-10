@@ -1,4 +1,4 @@
-"""Phase 5 — user_invites table + sso_configs table + RLS policies
+"""Phase 5 - user_invites table + sso_configs table + RLS policies
 
 Revision ID: 003
 Revises: 002

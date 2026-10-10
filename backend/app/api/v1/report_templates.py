@@ -1,5 +1,5 @@
 """
-Report template extended endpoints — Phase 3.
+Report template extended endpoints - Phase 3.
 
 Adds clone and preview on top of the basic CRUD in templates.py.
 
@@ -79,7 +79,7 @@ async def update_report_template(
     if not is_hide_only and not check_feature("report_template_builder"):
         raise HTTPException(status_code=402, detail="Report Template Builder requires a premium license")
     if template.is_system and not is_hide_only:
-        raise HTTPException(status_code=403, detail="System templates are read-only — clone first")
+        raise HTTPException(status_code=403, detail="System templates are read-only - clone first")
     updated = await template_service.update_report_template(db, template, data)
     return {"data": ReportTemplateOut.model_validate(updated), "error": None}
 
@@ -105,7 +105,7 @@ async def upload_template_logo(
 
     template = await template_service.get_report_template(db, template_id, str(current_user.org_id))
     if template.is_system:
-        raise HTTPException(status_code=403, detail="System templates are read-only — clone first")
+        raise HTTPException(status_code=403, detail="System templates are read-only - clone first")
 
     template.logo_data_uri = data_uri
     await db.commit()

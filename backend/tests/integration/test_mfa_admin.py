@@ -24,7 +24,7 @@ async def test_admin_can_reset_user_mfa(
     client: AsyncClient, enrolled_admin, db_session
 ):
     user, org = enrolled_admin
-    # Use pre-MFA access token (not auth_headers — that would trigger challenge)
+    # Use pre-MFA access token (not auth_headers - that would trigger challenge)
     access_token = create_access_token(str(user.id), str(user.org_id))
     resp = await client.post(
         f"/api/v1/users/{user.id}/mfa/reset",

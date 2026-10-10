@@ -1,4 +1,4 @@
-"""Dashboard stats endpoint — aggregated metrics for the overview page."""
+"""Dashboard stats endpoint - aggregated metrics for the overview page."""
 from datetime import datetime, timedelta, timezone
 from typing import Any
 

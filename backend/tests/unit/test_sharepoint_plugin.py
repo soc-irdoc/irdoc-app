@@ -31,7 +31,7 @@ def _make_client(get_side_effects: list, post_return=None, put_return=None) -> A
 
 @pytest.mark.asyncio
 async def test_resolve_drive_id_returns_existing():
-    """Returns drive ID when library is already present — no POST called."""
+    """Returns drive ID when library is already present - no POST called."""
     plugin = SharePointPlugin()
     drives_resp = _mock_json_response({"value": [{"id": "drv-1", "name": "IR Reports"}]})
     client = _make_client(get_side_effects=[drives_resp])

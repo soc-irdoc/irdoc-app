@@ -6,8 +6,8 @@
   'ioc_count': (p.ioc_count | string, 'IOCs'),
   'entry_count': (p.entry_count | string, 'Timeline Events'),
   'opened_at': (p.incident.opened_at | format_dt, 'Opened'),
-  'contained_at': (p.contained_at_str or '—', 'Contained'),
-  'closed_at': (p.closed_at_str or '—', 'Closed'),
+  'contained_at': (p.contained_at_str or '-', 'Contained'),
+  'closed_at': (p.closed_at_str or '-', 'Closed'),
 } %}
 <div class="block stat-row">
   {% for stat in block.get('stats', ['severity', 'status', 'duration', 'affected_users']) %}

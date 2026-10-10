@@ -1,4 +1,4 @@
-"""Phase 4 — org_integrations + graph_edges tables
+"""Phase 4 - org_integrations + graph_edges tables
 
 Revision ID: 002
 Revises: 001

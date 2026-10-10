@@ -1,4 +1,4 @@
-"""Shodan integration — IP and domain enrichment."""
+"""Shodan integration - IP and domain enrichment."""
 import logging
 
 import httpx

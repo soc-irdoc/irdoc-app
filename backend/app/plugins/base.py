@@ -1,5 +1,5 @@
 """
-IntegrationPlugin Protocol — all plugins conform to this interface.
+IntegrationPlugin Protocol - all plugins conform to this interface.
 Plugins implement only the methods they support.
 """
 from typing import Protocol, runtime_checkable
@@ -11,7 +11,7 @@ class IntegrationPlugin(Protocol):
     display_name: str
     category: str          # siem | edr | iam | email | ticketing | comms | ti | storage_sync
     is_premium: bool
-    config_schema: dict    # JSON schema — frontend renders this as a dynamic form
+    config_schema: dict    # JSON schema - frontend renders this as a dynamic form
 
     async def test_connection(self, config: dict) -> bool:
         """Verify credentials are valid. Return True on success."""

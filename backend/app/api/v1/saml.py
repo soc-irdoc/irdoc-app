@@ -1,5 +1,5 @@
 """
-SAML 2.0 endpoints — REMOVED. IRDoc now uses OAuth2/OIDC for SSO.
+SAML 2.0 endpoints - REMOVED. IRDoc now uses OAuth2/OIDC for SSO.
 
 All routes return 410 Gone so any bookmarked or cached links get an explicit
 signal rather than a confusing 404.

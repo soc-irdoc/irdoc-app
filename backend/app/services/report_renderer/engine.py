@@ -45,14 +45,14 @@ def _build_jinja_env() -> jinja2.Environment:
 
     def format_dt(value):
         if value is None:
-            return "—"
+            return "-"
         if hasattr(value, "strftime"):
             return value.strftime("%Y-%m-%d %H:%M UTC")
         return str(value)
 
     def filesize(value):
         if value is None:
-            return "—"
+            return "-"
         for unit in ("B", "KB", "MB", "GB"):
             if value < 1024:
                 return f"{value:.0f} {unit}"
@@ -90,7 +90,7 @@ def _make_url_fetcher():
 
     Blocks file://, http://, and any other scheme to prevent SSRF and local
     file disclosure during PDF rendering. Blocked URLs raise ValueError, which
-    WeasyPrint downgrades to a warning — a rogue reference degrades to a
+    WeasyPrint downgrades to a warning - a rogue reference degrades to a
     missing image rather than failing the whole report.
 
     Must be a ``URLFetcher`` instance, not a plain function: since WeasyPrint
@@ -112,7 +112,7 @@ def render_incident_pdf_from_schema(
     classification: str = "CONFIDENTIAL",
 ) -> bytes:
     """Render a schema-driven incident report as PDF bytes."""
-    # noqa: N811 below — `WeasyHTML` disambiguates the class from the local `html` string
+    # noqa: N811 below - `WeasyHTML` disambiguates the class from the local `html` string
     from weasyprint import HTML as WeasyHTML  # noqa: N811
 
     from app.services.report_renderer.fixed_report import render_from_schema
@@ -145,7 +145,7 @@ def render_incident_pdf(
 
     If pdf_template is provided, its prefix/suffix pages and @page CSS wrap the content.
     """
-    # noqa: N811 below — `WeasyHTML` disambiguates the class from the local `html` string
+    # noqa: N811 below - `WeasyHTML` disambiguates the class from the local `html` string
     from weasyprint import HTML as WeasyHTML  # noqa: N811
 
     from app.services.report_renderer.fixed_report import render_fixed_report_html

@@ -1,4 +1,4 @@
-"""VirusTotal integration — IOC enrichment for all plan tiers."""
+"""VirusTotal integration - IOC enrichment for all plan tiers."""
 import base64
 import logging
 

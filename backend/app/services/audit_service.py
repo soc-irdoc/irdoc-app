@@ -1,5 +1,5 @@
 """
-Audit log service — writes to audit_log table and reads/exports.
+Audit log service - writes to audit_log table and reads/exports.
 
 Usage in services:
     await audit_service.log(db, user_id=user.id, org_id=org.id,
@@ -43,7 +43,7 @@ async def log(
     request: Request | None = None,
     risk_level: str = "normal",
 ) -> None:
-    """Write a single audit log entry. Flushes but does not commit — caller owns the transaction."""
+    """Write a single audit log entry. Flushes but does not commit - caller owns the transaction."""
     ip = None
     user_agent = None
     if request:

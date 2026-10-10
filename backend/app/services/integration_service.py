@@ -1,5 +1,5 @@
 """
-Integration service — CRUD for org_integrations, credential encryption/decryption.
+Integration service - CRUD for org_integrations, credential encryption/decryption.
 All integration credentials are Fernet-encrypted at rest and NEVER returned via API.
 """
 import logging

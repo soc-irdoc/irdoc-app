@@ -1,5 +1,5 @@
 """
-Inbound webhook API — authenticated via API key (not JWT).
+Inbound webhook API - authenticated via API key (not JWT).
 Any tool that can POST JSON can create IRDoc cases.
 Rate limited: WEBHOOK_RATE_LIMIT requests/min per key.
 """

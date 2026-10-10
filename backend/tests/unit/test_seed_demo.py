@@ -2,7 +2,7 @@
 Tests for the demo-only seeder (seed_demo.py).
 
 Unlike seed.py, this script IS expected to create an org, 4 users, and a
-batch of incidents — it's only ever run explicitly against the throwaway
+batch of incidents - it's only ever run explicitly against the throwaway
 demo.irdoc.io database, never wired into entrypoint.sh. See seed_demo.py's
 module docstring for why it has to stay a separate script from seed.py.
 """

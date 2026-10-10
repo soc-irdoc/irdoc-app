@@ -1,8 +1,8 @@
 """
-Seed script — runs on first startup if DB is empty.
+Seed script - runs on first startup if DB is empty.
 Creates: 4 system incident templates, 3 system report templates.
 
-Does NOT create an org or admin user — that must only ever happen through
+Does NOT create an org or admin user - that must only ever happen through
 the first-run setup flow (POST /auth/setup, driven by the installer wizard
 or the app's own setup screen), so there is never a known-default admin
 account listening on a fresh install.
@@ -57,7 +57,7 @@ INCIDENT_TEMPLATES = [
             {"title": "Review access logs for lateral movement", "phase": "Analysis", "priority": "high"},
             {"title": "Check for new admin accounts or backdoors", "phase": "Analysis", "priority": "high"},
             {"title": "Identify breach vector (phishing, brute force, etc.)", "phase": "Analysis", "priority": "high"},
-            {"title": "Audit permissions — remove excessive access", "phase": "Remediation", "priority": "medium"},
+            {"title": "Audit permissions - remove excessive access", "phase": "Remediation", "priority": "medium"},
             {"title": "Notify user and management", "phase": "Communication", "priority": "medium"},
             {"title": "Review and strengthen password policy", "phase": "Post-Incident", "priority": "low"},
         ],
@@ -154,7 +154,7 @@ REPORT_TEMPLATES = [
             {"type": "section", "title": "Regulatory Notifications"},
             {"type": "text_block", "placeholder": "List required regulatory notifications (GDPR, HIPAA, etc.) and status."},
             {"type": "divider"},
-            {"type": "text_block", "content": "CONFIDENTIAL — LEGAL PRIVILEGE"},
+            {"type": "text_block", "content": "CONFIDENTIAL - LEGAL PRIVILEGE"},
         ],
     },
 ]
@@ -204,7 +204,7 @@ async def seed() -> None:
             db.add(rt)
 
         await db.commit()
-        logger.info("Seed: done. No org or admin user created — run first-run setup to create one.")
+        logger.info("Seed: done. No org or admin user created - run first-run setup to create one.")
 
 
 if __name__ == "__main__":

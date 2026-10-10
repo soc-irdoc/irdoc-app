@@ -37,7 +37,7 @@ def do_run_migrations(connection: Connection) -> None:
     context.run_migrations()
 
 
-# Advisory lock key — any stable integer unique to this application
+# Advisory lock key - any stable integer unique to this application
 _MIGRATION_LOCK_KEY = 123456789
 
 

@@ -89,7 +89,7 @@ async def login(data: LoginRequest, request: Request, response: Response, db: As
 
     # ── MFA branching ────────────────────────────────────────────────────────
     if user.mfa_enabled:
-        # User has enrolled MFA — must verify TOTP before receiving real tokens
+        # User has enrolled MFA - must verify TOTP before receiving real tokens
         challenge_token = create_mfa_challenge_token(str(user.id), str(user.org_id))
         return {
             "data": LoginResponse(mfa_challenge_token=challenge_token).model_dump(),
@@ -101,7 +101,7 @@ async def login(data: LoginRequest, request: Request, response: Response, db: As
     mfa_required = (org.settings or {}).get("mfa_required", False) if org else False
 
     if mfa_required and not user.mfa_enabled:
-        # Org policy requires MFA but user hasn't enrolled — must set up first
+        # Org policy requires MFA but user hasn't enrolled - must set up first
         setup_token = create_mfa_setup_token(str(user.id), str(user.org_id))
         return {
             "data": LoginResponse(mfa_setup_token=setup_token).model_dump(),

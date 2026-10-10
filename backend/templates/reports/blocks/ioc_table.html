@@ -47,7 +47,7 @@
             {% elif col == 'description' %}
               {{ ioc.enrichment.get('description', '') if ioc.enrichment else '' }}
             {% else %}
-              {{ ioc[col] if col in ioc.__dict__ else '—' }}
+              {{ ioc[col] if col in ioc.__dict__ else '-' }}
             {% endif %}
           </td>
           {% endfor %}

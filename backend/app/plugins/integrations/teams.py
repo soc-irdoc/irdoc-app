@@ -1,4 +1,4 @@
-"""Microsoft Teams webhook notifications (core — free for all plans)."""
+"""Microsoft Teams webhook notifications (core - free for all plans)."""
 import logging
 
 import httpx

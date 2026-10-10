@@ -1,4 +1,4 @@
-"""AbuseIPDB integration — IP address enrichment."""
+"""AbuseIPDB integration - IP address enrichment."""
 import logging
 
 import httpx

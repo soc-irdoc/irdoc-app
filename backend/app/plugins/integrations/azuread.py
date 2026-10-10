@@ -77,7 +77,7 @@ class AzureADPlugin:
                     headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
                 )
                 if r.status_code in (200, 204):
-                    return "Password reset flag set — user must change password on next login."
+                    return "Password reset flag set - user must change password on next login."
                 return f"Failed with status {r.status_code}"
         except Exception as exc:
             logger.error("AzureAD reset password failed for %s: %s", user_id, exc)

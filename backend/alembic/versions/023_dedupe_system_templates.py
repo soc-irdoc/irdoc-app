@@ -87,6 +87,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Deleted duplicates are not restored — they were identical copies.
+    # Deleted duplicates are not restored - they were identical copies.
     op.execute("DROP INDEX IF EXISTS uq_report_templates_system_name")
     op.execute("DROP INDEX IF EXISTS uq_incident_templates_system_slug")

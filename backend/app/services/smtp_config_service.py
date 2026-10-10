@@ -1,5 +1,5 @@
 """
-SMTP configuration service — get/upsert per-org config with encrypted password.
+SMTP configuration service - get/upsert per-org config with encrypted password.
 """
 import logging
 import uuid

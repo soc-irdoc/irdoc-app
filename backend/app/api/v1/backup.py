@@ -1,5 +1,5 @@
 """
-Backup management endpoints — config, listing, manual trigger, download.
+Backup management endpoints - config, listing, manual trigger, download.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse

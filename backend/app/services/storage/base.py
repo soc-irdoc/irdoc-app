@@ -1,5 +1,5 @@
 """
-StorageBackend Protocol — ALL file I/O goes through this abstraction.
+StorageBackend Protocol - ALL file I/O goes through this abstraction.
 Never touch the filesystem directly anywhere else in the codebase.
 """
 from typing import Protocol, runtime_checkable

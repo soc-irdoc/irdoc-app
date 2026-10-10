@@ -1,4 +1,4 @@
-"""CrowdStrike Falcon integration — detections + host containment."""
+"""CrowdStrike Falcon integration - detections + host containment."""
 import logging
 
 import httpx

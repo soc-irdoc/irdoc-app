@@ -11,6 +11,20 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Changed
+
+- **New icon set.** The colour emoji icons are replaced by single-colour Font Awesome 6 icons that follow the dark/light theme. Text symbols used as icons (such as ✓, ⚠ and ▼) are replaced too. Integrations show their own logo: VirusTotal, SharePoint, Shodan and AbuseIPDB. Some icons that stood for two things are now split, for example Storage and Server, Settings and Org Settings, and Workstation and Laptop.
+- **IRDoc logo on the sign-in screens.** Login, first-run setup, invite sign-up and the required two-factor setup now show the IRDoc logo (light or dark to match the theme) instead of a shield or an "IR" tile.
+- **Plain hyphens instead of em dashes.** Labels, messages, empty table cells, generated reports, Slack messages and seeded templates use "-" instead of "—" or "–". AI-written text is converted the same way before it is saved. Text already stored, such as the audit log, existing reports and existing templates, is not changed.
+
+### Removed
+
+- **`icon` field in `GET /api/v1/integrations`.** It held a frontend image filename and was only used by the IRDoc UI, which now picks integration icons itself.
+
+### Fixed
+
+- **"Pinned" marker missing its icon in generated reports** when the backend ran in Docker: the icon was read from the frontend source folder, which isn't in the backend image. It is now part of the report template.
+
 ## [0.1.5-alpha] - 2026-10-09
 
 ### Fixed

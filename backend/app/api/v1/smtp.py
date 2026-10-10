@@ -1,5 +1,5 @@
 """
-SMTP configuration endpoints — get, upsert, test.
+SMTP configuration endpoints - get, upsert, test.
 """
 import logging
 

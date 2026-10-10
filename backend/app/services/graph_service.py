@@ -76,7 +76,7 @@ async def build_graph(incident_id: str, db: AsyncSession) -> dict[str, Any]:
             "style": {"borderColor": _IOC_COLORS.get(ioc.status, "#ef4444")},
         })
 
-    # ── Timeline entry nodes (pinned + detection types only — avoid graph clutter) ─
+    # ── Timeline entry nodes (pinned + detection types only - avoid graph clutter) ─
     entry_result = await db.execute(
         select(TimelineEntry).where(
             TimelineEntry.incident_id == incident_id
@@ -268,7 +268,7 @@ def _apply_layout(nodes: list[dict], edges: list[dict]) -> list[dict]:
         return nodes
 
     except ImportError:
-        logger.warning("networkx not available — using grid layout")
+        logger.warning("networkx not available - using grid layout")
         return _grid_layout(nodes)
 
 

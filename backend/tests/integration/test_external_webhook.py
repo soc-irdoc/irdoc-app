@@ -29,7 +29,7 @@ async def test_create_incident_via_webhook(client: AsyncClient, api_key_headers)
     response = await client.post(
         "/api/v1/external/incidents",
         json={
-            "title": "SDP Ticket #4421 — Suspicious Login",
+            "title": "SDP Ticket #4421 - Suspicious Login",
             "severity": "sev2",
             "external_ref": "SDP-2026-4421",
             "external_source": "servicedesk_plus",

@@ -64,7 +64,7 @@ async def test_setup_status_response_is_wrapped_in_data_envelope(client: AsyncCl
     every other endpoint (and the frontend's apiClient) uses a {"data": ...}
     envelope. LoginPage read res.data.data.setup_complete, which threw
     (data.data is undefined) and was silently swallowed by a bare `.catch(() =>
-    {})` — so a fresh install with zero users rendered a plain login form with
+    {})` - so a fresh install with zero users rendered a plain login form with
     no way to create the first admin account, instead of the setup form.
     """
     response = await client.get("/api/v1/auth/setup-status")

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ incident.title }} — {{ incident.incident_ref }}</title>
+<title>{{ incident.title }} - {{ incident.incident_ref }}</title>
 <style>
   :root {
     --brand-primary: {{ (brand.primary_colour if brand and brand.primary_colour) or '#F97316' }};
@@ -162,7 +162,7 @@
   {{ block_html | safe }}
   {% endfor %}
   <div class="report-footer">
-    <span>{% if brand and brand.company_name %}{{ brand.company_name }} · {% endif %}{{ classification | upper }} — {{ incident.incident_ref }}</span>
+    <span>{% if brand and brand.company_name %}{{ brand.company_name }} · {% endif %}{{ classification | upper }} - {{ incident.incident_ref }}</span>
     <span>Generated {{ generated_at | format_dt }} by {{ analyst.full_name }}</span>
   </div>
 </div>

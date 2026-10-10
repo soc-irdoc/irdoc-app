@@ -1,4 +1,4 @@
-"""Initial schema — all Phase 1 tables
+"""Initial schema - all Phase 1 tables
 
 Revision ID: 001
 Revises:

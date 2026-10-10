@@ -67,7 +67,7 @@ def _e(text: str) -> str:
 def render_graph_svg(graph_data: dict[str, Any]) -> str | None:
     """
     Return an SVG string from build_graph() output, or None if the graph is empty.
-    The SVG uses a white background and status-coloured node borders — safe to embed
+    The SVG uses a white background and status-coloured node borders - safe to embed
     in a light-background PDF without any browser rendering or theme injection.
     """
     nodes: list[dict] = graph_data.get("nodes", [])

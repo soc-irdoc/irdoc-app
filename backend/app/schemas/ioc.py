@@ -24,7 +24,7 @@ class IOCUpdate(BaseModel):
 
 
 class IOCBulkImport(BaseModel):
-    """Paste raw text — server auto-detects IOC types."""
+    """Paste raw text - server auto-detects IOC types."""
     text: str
 
 
@@ -47,6 +47,6 @@ class IOCOut(BaseModel):
 
 
 class IOCDetected(BaseModel):
-    """Auto-detected IOC suggestion — not yet saved."""
+    """Auto-detected IOC suggestion - not yet saved."""
     ioc_type: str
     value: str

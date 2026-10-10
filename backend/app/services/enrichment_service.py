@@ -1,5 +1,5 @@
 """
-IOC enrichment service — multi-provider enrichment + confidence score recalculation.
+IOC enrichment service - multi-provider enrichment + confidence score recalculation.
 """
 import logging
 from datetime import datetime, timezone
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def calculate_confidence(enrichment: dict) -> int:
     """
-    Compute a confidence score (0–100) from enrichment data.
+    Compute a confidence score (0-100) from enrichment data.
     Weighted average: VT (60%) + AbuseIPDB (40%) when available.
     """
     scores: list[tuple[float, float]] = []
@@ -36,7 +36,7 @@ def calculate_confidence(enrichment: dict) -> int:
         scores.append((float(ab.get("abuse_confidence_score", 0)), 0.4))
 
     if not scores:
-        return 50  # Unknown — no enrichment data
+        return 50  # Unknown - no enrichment data
 
     total_weight = sum(w for _, w in scores)
     weighted = sum(s * w for s, w in scores) / total_weight

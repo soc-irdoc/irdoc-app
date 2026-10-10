@@ -5,11 +5,11 @@ RUN groupadd -r irp && useradd -r -g irp irp
 
 # ── System deps for WeasyPrint + asyncpg + pg_dump ─────────────────────────────
 # `apt-get upgrade` picks up Debian point-release security patches (e.g.
-# libpcre2-8-0) that land in the archive between base-image rebuilds — the
+# libpcre2-8-0) that land in the archive between base-image rebuilds - the
 # pinned base digest above doesn't get those until Debian re-publishes it.
 # procps (pgrep/ps) isn't part of this slim base image; the celery-beat
 # container's healthcheck (docker-compose.prod.yml) shells out to `pgrep` and
-# has been failing with "pgrep: not found" (exit 127) since it was added —
+# has been failing with "pgrep: not found" (exit 127) since it was added -
 # beat itself runs fine, only the healthcheck was broken, so the container
 # always reported unhealthy.
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
@@ -38,7 +38,7 @@ WORKDIR /app
 # Base image ships an outdated pip with several known CVEs; upgrade before
 # the hash-pinned install (pip itself isn't in the lock file). Also strip the
 # fallback pip/setuptools wheels ensurepip bundles into the interpreter
-# distribution — dead weight we never invoke (no `ensurepip` calls at
+# distribution - dead weight we never invoke (no `ensurepip` calls at
 # runtime) that Trivy still flags at their old, unrelated CVE'd versions.
 RUN pip install --no-cache-dir --upgrade pip==26.2.0 \
     && rm -rf /usr/local/lib/python3.12/ensurepip/_bundled

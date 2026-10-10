@@ -2,7 +2,7 @@
 Automatic report regeneration after incident changes (issue #58).
 
 Once a report has been generated manually for an incident, every later change
-to that incident must produce a new report version — regardless of whether AI
+to that incident must produce a new report version - regardless of whether AI
 or SharePoint are enabled. AI and SharePoint only change *how* the new version
 is produced (AI narrative, push to a document library), never *whether* it is.
 

@@ -1,5 +1,5 @@
 """
-Audit log endpoints — paginated read + CSV export.
+Audit log endpoints - paginated read + CSV export.
 Enterprise feature: requires check_feature("audit_log").
 """
 from datetime import datetime

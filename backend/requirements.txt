@@ -20,7 +20,7 @@ python-jose[cryptography]==3.5.0
 cryptography==50.0.1
 
 # ── Redis / Celery ────────────────────────────────────────────────────────────
-# redis intentionally held at 5.2.1 — 6/7/8 are major SDK bumps with API
+# redis intentionally held at 5.2.1 - 6/7/8 are major SDK bumps with API
 # changes; needs hands-on testing (WS pub/sub, debounce locking) before
 # adopting, not a blind CI-green bump. See PR #18 discussion.
 redis==5.2.1
@@ -33,7 +33,7 @@ python-socketio==5.16.4
 # ── Rate Limiting ─────────────────────────────────────────────────────────────
 slowapi==0.1.10
 
-# ── Report Generation (Phase 3 — installed now so deps are resolved) ──────────
+# ── Report Generation (Phase 3 - installed now so deps are resolved) ──────────
 jinja2==3.1.6
 weasyprint==70.0
 python-docx==1.2.0
@@ -41,7 +41,7 @@ mammoth==1.12.1
 bleach==6.4.0
 
 # ── AI (Phase 3) ──────────────────────────────────────────────────────────────
-# anthropic and openai intentionally held at these versions — the available
+# anthropic and openai intentionally held at these versions - the available
 # bumps (0.40->1.4, 1.59->3.8) are breaking SDK majors likely to change
 # client construction / call signatures used in app/services/ai_service.py.
 # Needs hands-on testing against a real provider before adopting, not a

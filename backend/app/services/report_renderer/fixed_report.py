@@ -2,7 +2,7 @@
 Fixed incident report renderer.
 
 Defines the canonical set of report sections with auto-hide logic.
-Renders using existing Jinja2 block partials — no schema JSON needed.
+Renders using existing Jinja2 block partials - no schema JSON needed.
 """
 from __future__ import annotations
 
@@ -108,7 +108,7 @@ def render_from_schema(
             partial = jinja_env.get_template(f"reports/blocks/{block_type}.html")
             rendered_blocks.append(partial.render(block=block_config, p=payload, brand=brand))
         except jinja2.TemplateNotFound:
-            logger.warning("render_from_schema: unknown block type '%s' — skipped", block_type)
+            logger.warning("render_from_schema: unknown block type '%s' - skipped", block_type)
 
     from app.services.report_renderer.engine import _DEFAULT_PAGE_CSS
 
