@@ -120,7 +120,6 @@ class SharePointPlugin:
     display_name = "SharePoint / OneDrive"
     category = "storage_sync"
     is_premium = False
-    icon = "open_file_folder_color.svg"
     description = "Auto-sync incident reports to SharePoint on every update."
 
     config_schema = {

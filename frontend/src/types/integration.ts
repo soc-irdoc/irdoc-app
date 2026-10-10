@@ -23,7 +23,6 @@ export interface Integration {
   display_name: string
   category: IntegrationCategory
   is_premium: boolean
-  icon: string
   description: string
   config_schema: Record<string, ConfigSchemaField>
   // Per-org status (populated by API)

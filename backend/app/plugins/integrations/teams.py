@@ -21,7 +21,6 @@ class TeamsPlugin:
     display_name = "Microsoft Teams"
     category = "comms"
     is_premium = False
-    icon = "purple_circle_color.svg"
     description = "Send incident notifications to a Microsoft Teams channel via webhook."
 
     config_schema = {

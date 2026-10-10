@@ -14,7 +14,6 @@ class AbuseIPDBPlugin:
     display_name = "AbuseIPDB"
     category = "ti"
     is_premium = False
-    icon = "prohibited_color.svg"
     description = "Check IP addresses against the AbuseIPDB threat database."
 
     config_schema = {

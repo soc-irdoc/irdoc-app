@@ -18,7 +18,6 @@ class SentinelPlugin:
     display_name = "Microsoft Sentinel"
     category = "siem"
     is_premium = False
-    icon = "blue_circle_color.svg"
     description = "Pull alerts and run KQL queries from Microsoft Sentinel."
 
     config_schema = {

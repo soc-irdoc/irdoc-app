@@ -5,7 +5,6 @@ render_incident_pdf() is the single entry point for PDF generation.
 """
 from __future__ import annotations
 
-import base64
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -19,7 +18,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _TEMPLATE_DIR = Path(__file__).parent.parent.parent.parent / "templates"
-_ICONS_DIR = _TEMPLATE_DIR.parent.parent / "frontend" / "public" / "icons"
 
 _DEFAULT_PAGE_CSS = """
 @page {
@@ -76,17 +74,9 @@ def _build_jinja_env() -> jinja2.Environment:
         from app.services.incident_service import _sanitize_html
         return Markup(_sanitize_html(str(value)))
 
-    def icon_data_uri(filename: str) -> str:
-        path = _ICONS_DIR / filename
-        if not path.is_file():
-            return ""
-        data = base64.b64encode(path.read_bytes()).decode()
-        return f"data:image/svg+xml;base64,{data}"
-
     env.filters["format_dt"] = format_dt
     env.filters["filesize"] = filesize
     env.filters["sanitize_html"] = sanitize_html
-    env.globals["icon_data_uri"] = icon_data_uri
     env.globals["resolve_field"] = resolve_field
     env.globals["is_supported_field"] = is_supported_field
     return env
