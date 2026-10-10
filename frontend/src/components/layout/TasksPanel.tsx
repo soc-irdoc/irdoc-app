@@ -3,6 +3,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { ProgressBar } from '@/components/common/ProgressBar'
 import { PRIORITY_COLORS } from '@/types/task'
 import type { Task } from '@/types/task'
+import { FaCheck } from 'react-icons/fa6'
 
 interface TasksPanelProps {
   incidentId: string
@@ -143,7 +144,7 @@ export function TasksPanel({ incidentId }: TasksPanelProps) {
                         color: '#fff',
                       }}
                     >
-                      {task.status === 'done' && '✓'}
+                      {task.status === 'done' && <FaCheck size={9} aria-hidden="true" />}
                     </div>
 
                     {/* Text */}

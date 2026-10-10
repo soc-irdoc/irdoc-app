@@ -20,7 +20,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { FaXmark } from 'react-icons/fa6'
+import { FaGripVertical, FaXmark } from 'react-icons/fa6'
 
 interface TemplateTask {
   id: string
@@ -157,7 +157,7 @@ function SortableTaskRow({
         {...listeners}
         aria-label="Drag to reorder"
       >
-        ◉
+        <FaGripVertical size={12} aria-hidden="true" />
       </button>
 
       {/* Title */}

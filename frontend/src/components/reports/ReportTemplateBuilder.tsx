@@ -28,7 +28,7 @@ import BlockConfigPanel from './BlockConfigPanel'
 import { ReportBlock, BlockType, BLOCK_LIBRARY } from '@/types/report'
 import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 import type { IconType } from 'react-icons'
-import { FaEye, FaXmark } from 'react-icons/fa6'
+import { FaEye, FaGripVertical, FaXmark } from 'react-icons/fa6'
 import { Icon } from '@/components/common/Icon'
 
 interface Props {
@@ -108,7 +108,7 @@ function SortableBlockCard({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            ≡
+            <FaGripVertical size={12} aria-hidden="true" />
           </div>
 
           {libEntry && <Icon icon={libEntry.icon} size={16} style={{ marginRight: '8px', flexShrink: 0, color: 'var(--text-secondary)' }} />}

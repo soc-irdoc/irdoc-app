@@ -1,5 +1,5 @@
 import { useUIStore } from '@/stores/uiStore'
-import { FaCircleInfo, FaCircleXmark, FaXmark } from 'react-icons/fa6'
+import { FaCircleCheck, FaCircleInfo, FaCircleXmark, FaXmark } from 'react-icons/fa6'
 
 export function ToastContainer() {
   const { toasts, removeToast } = useUIStore()
@@ -23,7 +23,7 @@ export function ToastContainer() {
           }}
         >
           {toast.type === 'success'
-            ? <span style={{ fontSize: 16 }}>✓</span>
+            ? <FaCircleCheck size={16} aria-hidden="true" />
             : toast.type === 'error'
             ? <FaCircleXmark size={16} aria-hidden="true" />
             : <FaCircleInfo size={16} aria-hidden="true" />

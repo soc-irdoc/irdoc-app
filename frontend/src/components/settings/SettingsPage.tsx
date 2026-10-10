@@ -11,7 +11,7 @@ import { mfaApi } from '@/lib/apiClient'
 import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
 import { VersionBadge } from '@/components/common/VersionBadge'
 import type { IconType } from 'react-icons'
-import { FaCircleInfo, FaLock, FaMoon, FaPalette, FaSun, FaUser } from 'react-icons/fa6'
+import { FaCheck, FaCircleInfo, FaLock, FaMoon, FaPalette, FaSun, FaTriangleExclamation, FaUser } from 'react-icons/fa6'
 
 function SettingsSection({
   icon: SectionIcon,
@@ -156,7 +156,7 @@ export function SettingsPage() {
         {user?.mfa_enabled ? (
           <>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span className="chip chip-green" style={{ fontSize: 11 }}>Enabled ✓</span>
+              <span className="chip chip-green" style={{ fontSize: 11 }}>Enabled <FaCheck size={9} aria-hidden="true" /></span>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {user.backup_codes_remaining} backup code{user.backup_codes_remaining !== 1 ? 's' : ''} remaining
               </span>
@@ -341,7 +341,7 @@ export function SettingsPage() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)' }}>
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 28, maxWidth: 400, width: '90%' }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, color: 'var(--text-primary)' }}>New backup codes</div>
-            <p style={{ color: 'var(--yellow)', fontSize: 12, marginBottom: 14 }}>⚠ Your old codes are now invalid. Save these somewhere safe.</p>
+            <p style={{ color: 'var(--yellow)', fontSize: 12, marginBottom: 14 }}><FaTriangleExclamation size={12} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Your old codes are now invalid. Save these somewhere safe.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 16 }}>
               {newBackupCodes.map((c) => (
                 <div key={c} style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '4px 8px', background: 'var(--bg-elevated)', borderRadius: 4, color: 'var(--text-secondary)' }}>{c}</div>

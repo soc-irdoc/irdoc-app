@@ -10,8 +10,8 @@ import { formatRelative } from '@/lib/utils'
 import { getSocket } from '@/lib/websocket'
 import type { IconType } from 'react-icons'
 import {
-  FaArrowUpRightFromSquare, FaArrowsRotate, FaCircleCheck, FaClipboardList, FaFileLines, FaHourglassHalf, FaRobot,
-  FaTriangleExclamation,
+  FaArrowUpRightFromSquare, FaArrowsRotate, FaCircleCheck, FaClipboardList, FaDownload, FaFileLines,
+  FaHourglassHalf, FaRobot, FaTriangleExclamation,
 } from 'react-icons/fa6'
 import { BrandSharePoint } from '@/components/icons/brandIcons'
 import { Icon } from '@/components/common/Icon'
@@ -414,7 +414,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <span className={STATUS_CHIP[r.status] ?? 'chip chip-muted'} style={{ fontSize: '11px' }}>
-                        {r.status === 'generating' && <span style={{ marginRight: '4px' }}>⏳</span>}
+                        {r.status === 'generating' && <FaHourglassHalf size={10} aria-hidden="true" style={{ marginRight: '4px', verticalAlign: '-0.125em' }} />}
                         {r.status}
                       </span>
                     </td>
@@ -439,7 +439,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                             onClick={() => handleDownload(r)}
                             disabled={downloadReport.isPending}
                           >
-                            ⬇ Download
+                            <FaDownload size={11} aria-hidden="true" /> Download
                           </button>
                         )}
                         {r.status === 'failed' && r.error_message && (
@@ -447,7 +447,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                             style={{ fontSize: '11px', color: 'var(--status-red)', alignSelf: 'center', maxWidth: 240, wordBreak: 'break-word' }}
                             title={r.error_message}
                           >
-                            ⚠ {r.error_message.length > 120 ? r.error_message.slice(0, 120) + '…' : r.error_message}
+                            <FaTriangleExclamation size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />{r.error_message.length > 120 ? r.error_message.slice(0, 120) + '…' : r.error_message}
                           </span>
                         )}
                         <button

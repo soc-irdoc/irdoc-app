@@ -11,7 +11,7 @@ import {
 import { useReportTemplates } from '@/hooks/useReportTemplates'
 import { SyncPolicyCreate } from '@/types/report'
 import { formatRelative } from '@/lib/utils'
-import { FaCloudArrowUp } from 'react-icons/fa6'
+import { FaArrowsRotate, FaCloudArrowUp } from 'react-icons/fa6'
 import { BrandSharePoint } from '@/components/icons/brandIcons'
 
 interface Props {
@@ -114,7 +114,7 @@ export default function SyncPolicySection({ incidentId }: Props) {
                     disabled={triggerPolicy.isPending}
                     title="Sync now"
                   >
-                    ↺ Sync
+                    <FaArrowsRotate size={10} aria-hidden="true" /> Sync
                   </button>
                   <button
                     className="btn btn-ghost btn-sm"

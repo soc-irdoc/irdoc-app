@@ -9,7 +9,7 @@ import Image from '@tiptap/extension-image'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
-import { FaListCheck } from 'react-icons/fa6'
+import { FaIndent, FaListCheck, FaListOl, FaListUl, FaOutdent } from 'react-icons/fa6'
 
 // Tiptap initialises an empty editor as '<p></p>'. Normalise to '' so that
 // the empty-string content prop doesn't trigger constant setContent calls.
@@ -320,7 +320,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().toggleBulletList().run()}
                 title="Bullet list"
               >
-                ≡
+                <FaListUl size={12} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -330,7 +330,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().toggleOrderedList().run()}
                 title="Numbered list"
               >
-                1≡
+                <FaListOl size={12} aria-hidden="true" />
               </button>
 
               <div className="tb-sep" />
@@ -343,7 +343,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().sinkListItem('listItem').run()}
                 title="Indent"
               >
-                →
+                <FaIndent size={12} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -353,7 +353,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().liftListItem('listItem').run()}
                 title="Outdent"
               >
-                ←
+                <FaOutdent size={12} aria-hidden="true" />
               </button>
             </>
           )}

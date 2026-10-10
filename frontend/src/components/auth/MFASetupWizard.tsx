@@ -4,7 +4,7 @@ import { mfaApi } from '@/lib/apiClient'
 import { useAuthStore } from '@/stores/authStore'
 import type { User } from '@/types/user'
 import { BrandLogo } from '@/components/common/BrandLogo'
-import { FaMobileScreenButton } from 'react-icons/fa6'
+import { FaCheck, FaMobileScreenButton } from 'react-icons/fa6'
 
 interface Props {
   setupToken: string  // mfa_setup JWT for forced enrollment; empty string for voluntary (uses access token)
@@ -243,7 +243,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
             onClick={handleEnterApp}
             disabled={!savedConfirmed}
           >
-            Enable Two-Factor Authentication ✓
+            Enable Two-Factor Authentication <FaCheck size={12} aria-hidden="true" />
           </button>
         </div>
       )}

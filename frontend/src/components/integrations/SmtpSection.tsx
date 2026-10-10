@@ -3,7 +3,7 @@ import { useSmtpConfig, useSaveSmtpConfig, useTestSmtp } from '@/hooks/useSmtp'
 import { useOrgSettings } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
-import { FaEnvelope, FaPaperPlane } from 'react-icons/fa6'
+import { FaCheck, FaChevronDown, FaChevronUp, FaEnvelope, FaPaperPlane, FaXmark } from 'react-icons/fa6'
 
 const MASKED = '••••••'
 const PRODUCT_ORANGE = '#f97316'
@@ -236,7 +236,7 @@ export function SmtpSection() {
             style={{ fontSize: 11, padding: '2px 10px' }}
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? 'Collapse ▲' : 'Configure ▼'}
+            {expanded ? <>Collapse <FaChevronUp size={10} aria-hidden="true" /></> : <>Configure <FaChevronDown size={10} aria-hidden="true" /></>}
           </button>
         </div>
 
@@ -325,7 +325,7 @@ export function SmtpSection() {
                         color: testResult.ok ? 'var(--green)' : 'var(--red)',
                         border: `1px solid ${testResult.ok ? 'var(--green)' : 'var(--red)'}`,
                       }}>
-                        {testResult.ok ? '✓ Test email sent' : `✗ ${testResult.error}`}
+                        {testResult.ok ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Test email sent</> : <><FaXmark size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />{testResult.error}</>}
                       </div>
                     )}
                   </div>

@@ -25,7 +25,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
 import { NODE_TYPES } from './NodeTypes'
 import type { GraphNodeData } from '@/types/graph'
-import { FaLink, FaXmark } from 'react-icons/fa6'
+import { FaArrowsRotate, FaDownload, FaLink, FaXmark } from 'react-icons/fa6'
 
 interface InvestigationGraphProps {
   incidentId: string
@@ -299,10 +299,10 @@ export default function InvestigationGraph({ incidentId }: InvestigationGraphPro
             {nodes.length} nodes · {edges.length} edges
           </span>
           <button className="btn btn-ghost btn-sm" onClick={() => refetch()} style={{ fontSize: 11 }}>
-            ↻ Refresh
+            <FaArrowsRotate size={10} aria-hidden="true" /> Refresh
           </button>
           <button className="btn btn-ghost btn-sm" onClick={exportAsPNG} style={{ fontSize: 11 }}>
-            ↓ Export
+            <FaDownload size={10} aria-hidden="true" /> Export
           </button>
         </div>
 

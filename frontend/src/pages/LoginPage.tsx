@@ -8,6 +8,7 @@ import { getLoginErrorMessage } from '@/lib/utils'
 import { MFAVerifyModal } from '@/components/auth/MFAVerifyModal'
 import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
 import { BrandLogo } from '@/components/common/BrandLogo'
+import { FaUserShield } from 'react-icons/fa6'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -268,7 +269,7 @@ export function LoginPage() {
                   }
                 }}
               >
-                🔐 Sign in with SSO
+                <FaUserShield size={14} aria-hidden="true" /> Sign in with SSO
               </button>
             </form>
           )}

@@ -7,7 +7,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { formatNowDate, formatNowTime } from '@/lib/utils'
 import type { EntryType } from '@/types/timeline'
 import { ASSET_TYPE_ICONS, ASSET_TYPE_LABELS, type AssetType } from '@/types/asset'
-import { FaBox, FaDesktop } from 'react-icons/fa6'
+import { FaBox, FaChevronDown, FaChevronUp, FaDesktop } from 'react-icons/fa6'
 import { Icon } from '@/components/common/Icon'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
@@ -316,7 +316,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
           >
             <FaDesktop size={16} aria-hidden="true" /> Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
             {' '}
-            <span style={{ fontSize: 10 }}>{assetPickerOpen ? '▲' : '▼'}</span>
+            {assetPickerOpen ? <FaChevronUp size={10} aria-hidden="true" /> : <FaChevronDown size={10} aria-hidden="true" />}
           </button>
           {assetPickerOpen && (
             <div style={{

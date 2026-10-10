@@ -5,6 +5,7 @@ import {
   useSwitchStorageBackend,
 } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
+import { FaCheck, FaXmark } from 'react-icons/fa6'
 
 type Backend = 'local' | 's3' | 'azure_blob' | 'gcs'
 
@@ -376,7 +377,9 @@ export function StoragePage() {
                 color: testResult.ok ? 'var(--green)' : 'var(--red)',
               }}
             >
-              {testResult.ok ? '✓ Connected' : `✗ Failed: ${testResult.error ?? 'Unknown error'}`}
+              {testResult.ok
+                ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Connected</>
+                : <><FaXmark size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Failed: {testResult.error ?? 'Unknown error'}</>}
             </span>
           )}
         </div>

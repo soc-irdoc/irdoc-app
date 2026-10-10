@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAiConfig, useSaveAiConfig, useTestAiConfig } from '@/hooks/useAiConfig'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
-import { FaPlugCircleCheck, FaRobot } from 'react-icons/fa6'
+import { FaCheck, FaChevronDown, FaChevronUp, FaPlugCircleCheck, FaRobot, FaXmark } from 'react-icons/fa6'
 
 const subLabel = (text: string, optional = false) => (
   <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 6, display: 'block' }}>
@@ -152,7 +152,7 @@ export function AiSection() {
             style={{ fontSize: 11, padding: '2px 10px' }}
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? 'Collapse ▲' : 'Configure ▼'}
+            {expanded ? <>Collapse <FaChevronUp size={10} aria-hidden="true" /></> : <>Configure <FaChevronDown size={10} aria-hidden="true" /></>}
           </button>
         </div>
 
@@ -213,8 +213,8 @@ export function AiSection() {
                         lineHeight: 1.6,
                       }}>
                         {testResult.success
-                          ? `✓ Connected — model "${form.modelName}" is available`
-                          : `✗ ${testResult.error}`}
+                          ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Connected — model "{form.modelName}" is available</>
+                          : <><FaXmark size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />{testResult.error}</>}
                         {!testResult.success && testResult.error?.includes('ollama pull') && (
                           <div style={{ marginTop: 6, background: 'var(--bg-elevated)', borderRadius: 4, padding: '4px 8px', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-primary)', wordBreak: 'break-all' }}>
                             {testResult.error?.match(/docker compose.*ollama pull .+/)?.[0] ?? `ollama pull ${form.modelName}`}

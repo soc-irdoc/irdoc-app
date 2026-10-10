@@ -9,7 +9,7 @@ import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
 import { ASSET_TYPE_ICONS, type AssetType } from '@/types/asset'
 import type { TimelineEntry, EntryType, UpdateTimelineEntryPayload, Attachment } from '@/types/timeline'
-import { FaBox, FaDesktop } from 'react-icons/fa6'
+import { FaBox, FaDesktop, FaXmark } from 'react-icons/fa6'
 import { Icon } from '@/components/common/Icon'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
@@ -262,7 +262,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
                     title="Remove attachment"
                     aria-label={`Remove ${att.original_name}`}
                   >
-                    ✕
+                    <FaXmark size={12} aria-hidden="true" />
                   </button>
                 </div>
               ))}

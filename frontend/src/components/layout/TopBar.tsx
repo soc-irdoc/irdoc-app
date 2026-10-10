@@ -11,7 +11,10 @@ import { useOrgUsers } from '@/hooks/useOrgUsers'
 import { usePermission } from '@/lib/permissions'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
-import { FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline, FaTrashCan } from 'react-icons/fa6'
+import {
+  FaArrowLeft, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
+  FaTrashCan,
+} from 'react-icons/fa6'
 
 interface TopBarProps {
   incident: Incident
@@ -155,7 +158,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           title="Back to incidents"
           style={{ fontSize: 16 }}
         >
-          ←
+          <FaArrowLeft size={14} aria-hidden="true" />
         </button>
 
         {/* Severity badge */}

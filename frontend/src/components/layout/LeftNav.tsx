@@ -8,8 +8,8 @@ import { BrandLogo } from '@/components/common/BrandLogo'
 import { VersionBadge } from '@/components/common/VersionBadge'
 import type { IconType } from 'react-icons'
 import {
-  FaBolt, FaBoxArchive, FaBuilding, FaCircleHalfStroke, FaClipboardList, FaFileLines, FaGaugeHigh, FaGear,
-  FaHardDrive, FaPlug, FaRightFromBracket, FaScroll,
+  FaAnglesLeft, FaBars, FaBolt, FaBoxArchive, FaBuilding, FaCircleHalfStroke, FaClipboardList, FaFileLines,
+  FaGaugeHigh, FaGear, FaHardDrive, FaPlug, FaRightFromBracket, FaScroll,
 } from 'react-icons/fa6'
 
 interface NavItem {
@@ -183,7 +183,9 @@ export function LeftNav() {
           marginBottom: 4,
         }}
       >
-        <span style={{ flexShrink: 0, lineHeight: 1 }}>{collapsed ? '☰' : '◀'}</span>
+        {collapsed
+          ? <FaBars size={17} aria-hidden="true" style={{ flexShrink: 0 }} />
+          : <FaAnglesLeft size={17} aria-hidden="true" style={{ flexShrink: 0 }} />}
         <span style={{
           fontSize: 13,
           fontFamily: 'Syne, sans-serif',

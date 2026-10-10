@@ -11,7 +11,8 @@ import { CATEGORY_LABELS } from '@/types/integration'
 import type { Integration } from '@/types/integration'
 import type { IconType } from 'react-icons'
 import {
-  FaComments, FaEnvelopeOpenText, FaMicrosoft, FaPuzzlePiece, FaShieldVirus, FaSlack, FaTowerObservation, FaXmark,
+  FaCheck, FaChevronDown, FaChevronUp, FaComments, FaEnvelopeOpenText, FaMicrosoft, FaPuzzlePiece,
+  FaShieldVirus, FaSlack, FaTowerObservation, FaXmark,
 } from 'react-icons/fa6'
 import { SiVirustotal } from 'react-icons/si'
 import { BrandAbuseIpdb, BrandSharePoint, BrandShodan } from '@/components/icons/brandIcons'
@@ -92,7 +93,7 @@ function IntegrationConfigModal({
       const result = await testConn.mutateAsync(integration.name)
       setTestResult(result)
       if (result.ok) {
-        addToast('Connection successful ✓', 'success')
+        addToast('Connection successful', 'success')
       } else {
         addToast(`Connection failed: ${result.error}`, 'error')
       }
@@ -136,7 +137,9 @@ function IntegrationConfigModal({
               border: `1px solid ${testResult.ok ? 'var(--green)' : 'var(--red)'}`,
             }}
           >
-            {testResult.ok ? '✓ Connection successful' : `✗ ${testResult.error ?? 'Connection failed'}`}
+            {testResult.ok
+              ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Connection successful</>
+              : <><FaXmark size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />{testResult.error ?? 'Connection failed'}</>}
           </div>
         )}
 
@@ -191,7 +194,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   const statusText = !integration.is_configured
     ? 'Not configured'
     : integration.last_test_status === 'ok'
-    ? 'Connected ✓'
+    ? 'Connected'
     : integration.last_test_status === 'fail'
     ? 'Connection failed'
     : 'Configured'
@@ -414,7 +417,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
         <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 11, color: statusColor }}>{statusText}</span>
           <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 10px' }} onClick={() => setExpanded((v) => !v)}>
-            {expanded ? 'Collapse ▲' : 'Configure ▼'}
+            {expanded ? <>Collapse <FaChevronUp size={10} aria-hidden="true" /></> : <>Configure <FaChevronDown size={10} aria-hidden="true" /></>}
           </button>
         </div>
 

@@ -49,7 +49,7 @@ const CATEGORIES = [
   { key: 'settings', label: 'Settings' },
   { key: 'integrations', label: 'Integrations' },
   { key: 'api_keys', label: 'API Keys' },
-  { key: 'high_risk', label: '⚠ High Risk' },
+  { key: 'high_risk', label: 'High Risk' },
 ] as const
 
 function isHighRisk(action: string) {
@@ -133,6 +133,7 @@ export function AuditLogPage() {
             onClick={() => { setCategory(cat.key); setPage(1) }}
             className={category === cat.key ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
           >
+            {cat.key === 'high_risk' && <FaTriangleExclamation size={11} aria-hidden="true" />}
             {cat.label}
           </button>
         ))}

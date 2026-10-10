@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { LeftNav } from './LeftNav'
 import { useUIStore } from '@/stores/uiStore'
+import { FaTriangleExclamation } from 'react-icons/fa6'
 
 interface AppShellProps {
   children: ReactNode
@@ -45,7 +46,7 @@ export function AppShell({ children }: AppShellProps) {
               letterSpacing: '0.01em',
             }}
           >
-            <span style={{ fontSize: 14 }}>⚠</span>
+            <FaTriangleExclamation size={14} aria-hidden="true" style={{ flexShrink: 0 }} />
             <span>Real-time connection lost — reconnecting. Live updates are paused.</span>
           </div>
         )}

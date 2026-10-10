@@ -19,7 +19,7 @@ import {
   type DetectedIOC,
 } from '@/types/ioc'
 import { BrandAbuseIpdb, BrandShodan } from '@/components/icons/brandIcons'
-import { FaMagnifyingGlass, FaTrashCan } from 'react-icons/fa6'
+import { FaArrowsRotate, FaChevronDown, FaChevronUp, FaMagnifyingGlass, FaTrashCan } from 'react-icons/fa6'
 import { SiVirustotal } from 'react-icons/si'
 import { Icon } from '@/components/common/Icon'
 
@@ -87,7 +87,7 @@ function EnrichmentPanel({
           disabled={enriching}
           style={{ fontSize: 11 }}
         >
-          {enriching ? 'Queuing…' : '↻ Re-enrich'}
+          {enriching ? 'Queuing…' : <><FaArrowsRotate size={10} aria-hidden="true" /> Re-enrich</>}
         </button>
       </div>
 
@@ -328,7 +328,7 @@ function IOCRow({
               aria-label={expanded ? 'Collapse' : 'Expand enrichment'}
               style={{ fontSize: 12 }}
             >
-              {expanded ? '▲' : '▼'}
+              {expanded ? <FaChevronUp size={11} aria-hidden="true" /> : <FaChevronDown size={11} aria-hidden="true" />}
             </button>
             <button
               className="icon-btn"
