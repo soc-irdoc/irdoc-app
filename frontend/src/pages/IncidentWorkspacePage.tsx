@@ -30,7 +30,7 @@ export function IncidentWorkspacePage() {
     return () => leaveIncident(id)
   }, [id])
 
-  // Derive active section from URL param — keeps URL as single source of truth
+  // Derive active section from URL param - keeps URL as single source of truth
   const activeSection: Section = useMemo(() => {
     const s = section as Section
     return VALID_SECTIONS.includes(s) ? s : 'timeline'

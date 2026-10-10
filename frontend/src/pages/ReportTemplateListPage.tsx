@@ -1,5 +1,5 @@
 /**
- * /report-templates — lists all system + org templates.
+ * /report-templates - lists all system + org templates.
  * Clicking Edit opens the builder for org templates.
  * System templates can be cloned.
  */
@@ -17,12 +17,15 @@ import { DESTINATION_OPTIONS } from '@/types/report'
 import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 import { Modal } from '@/components/common/Modal'
 import { AppShell } from '@/components/layout/AppShell'
+import type { IconType } from 'react-icons'
+import { FaChartColumn, FaClipboardList, FaMicroscope, FaPen, FaScaleBalanced } from 'react-icons/fa6'
+import { Icon } from '@/components/common/Icon'
 
-const TEMPLATE_ICONS: Record<string, string> = {
-  management: 'bar_chart_color.svg',
-  analyst: 'microscope_color.svg',
-  legal: 'balance_scale_color.svg',
-  custom: 'pencil_color.svg',
+const TEMPLATE_ICONS: Record<string, IconType> = {
+  management: FaChartColumn,
+  analyst: FaMicroscope,
+  legal: FaScaleBalanced,
+  custom: FaPen,
 }
 
 export default function ReportTemplateListPage() {
@@ -95,7 +98,7 @@ export default function ReportTemplateListPage() {
                   gap: '14px',
                 }}
               >
-                <img src={`/icons/${TEMPLATE_ICONS[t.destination] ?? 'clipboard_color.svg'}`} width={22} height={22} alt="" aria-hidden="true" />
+                <Icon icon={TEMPLATE_ICONS[t.destination] ?? FaClipboardList} size={20} style={{ color: 'var(--text-secondary)' }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {t.name}
@@ -139,7 +142,7 @@ export default function ReportTemplateListPage() {
         </h2>
         {orgTemplates.length === 0 ? (
           <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
-            No custom templates yet — clone a system template or create a new one.
+            No custom templates yet - clone a system template or create a new one.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -156,7 +159,7 @@ export default function ReportTemplateListPage() {
                   gap: '14px',
                 }}
               >
-                <img src={`/icons/${TEMPLATE_ICONS[t.destination] ?? 'clipboard_color.svg'}`} width={22} height={22} alt="" aria-hidden="true" />
+                <Icon icon={TEMPLATE_ICONS[t.destination] ?? FaClipboardList} size={20} style={{ color: 'var(--text-secondary)' }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {t.name}
@@ -172,7 +175,7 @@ export default function ReportTemplateListPage() {
                   <button
                     className={`btn btn-sm ${t.ai_auto_generate ? 'btn-accent' : 'btn-ghost'}`}
                     style={{ fontSize: '11px' }}
-                    title={aiDisabled ? AI_DISABLED_HINT : t.ai_auto_generate ? 'AI auto-generate ON — click to disable' : 'AI auto-generate OFF — click to enable'}
+                    title={aiDisabled ? AI_DISABLED_HINT : t.ai_auto_generate ? 'AI auto-generate ON - click to disable' : 'AI auto-generate OFF - click to enable'}
                     onClick={() => toggleAi.mutate({ templateId: t.id, enabled: !t.ai_auto_generate })}
                     disabled={toggleAi.isPending || aiDisabled}
                   >

@@ -3,7 +3,7 @@ JWT auth + API key auth + password hashing.
 
 Access token:  15-min JWT, stored in Zustand (memory only)
 Refresh token: 30-day JWT, stored in HttpOnly SameSite=Strict cookie
-API keys:      irp_key_{random_32_hex} — argon2id hashed in DB, never stored plain
+API keys:      irp_key_{random_32_hex} - argon2id hashed in DB, never stored plain
 """
 import hashlib
 import hmac
@@ -108,7 +108,7 @@ def decode_token(token: str, expected_type: str = "access") -> dict:
 def generate_api_key() -> tuple[str, str, str]:
     """Return (raw_key, key_prefix, key_hash). Store hash only."""
     raw_key = f"{API_KEY_PREFIX}{secrets.token_hex(32)}"
-    key_prefix = raw_key[:16]  # "irp_key_a3f92b..." — shown in UI
+    key_prefix = raw_key[:16]  # "irp_key_a3f92b..." - shown in UI
     key_hash = ph.hash(raw_key)
     return raw_key, key_prefix, key_hash
 

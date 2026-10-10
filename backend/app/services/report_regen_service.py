@@ -4,7 +4,7 @@ Automatic report regeneration after incident changes.
 Once an analyst has generated a report for an incident, every later change to
 that incident produces a new version of each report "seed" (template, or the
 base report) already generated for it. This happens regardless of which
-integrations are enabled — AI and SharePoint only change *how* a version is
+integrations are enabled - AI and SharePoint only change *how* a version is
 produced:
 
   - AI enabled, licensed, and the template flagged ai_auto_generate

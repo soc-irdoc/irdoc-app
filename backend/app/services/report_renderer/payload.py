@@ -1,5 +1,5 @@
 """
-ReportPayload — the data context passed to the Jinja2 rendering engine.
+ReportPayload - the data context passed to the Jinja2 rendering engine.
 
 build_report_payload() fetches all incident data from the DB and assembles
 the payload. All derived fields (duration, counts, groupings) are computed
@@ -88,7 +88,7 @@ class ReportPayload:
     # Attachment uploader display names, keyed by str(user id)
     uploader_names: dict[str, str] = field(default_factory=dict)
 
-    # Graph diagram — SVG generated server-side from incident graph data
+    # Graph diagram - SVG generated server-side from incident graph data
     graph_svg: str | None = None
 
 

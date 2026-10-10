@@ -1,5 +1,5 @@
 """
-Admin endpoints — org settings, cloud storage config, SSO config.
+Admin endpoints - org settings, cloud storage config, SSO config.
 """
 import uuid
 

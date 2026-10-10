@@ -28,6 +28,8 @@ import {
   type AssetCriticality,
   type AssetLinkType,
 } from '@/types/asset'
+import { FaBox, FaDesktop, FaLink, FaPen, FaTrashCan } from 'react-icons/fa6'
+import { Icon } from '@/components/common/Icon'
 
 interface AssetsPageProps {
   incidentId: string
@@ -49,7 +51,7 @@ function AssetRow({
   return (
     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
       <td style={{ padding: '10px 12px', width: 40 }}>
-        <img src={`/icons/${ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? 'package_color.svg'}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+        <Icon icon={ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? FaBox} size={15} style={{ flexShrink: 0, color: 'var(--text-secondary)' }} />
       </td>
       <td style={{ padding: '10px 12px' }}>
         <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>
@@ -93,12 +95,12 @@ function AssetRow({
             onClick={() => onEdit(asset)}
             className="icon-btn"
             title="Edit asset"
-          ><img src="/icons/pencil_color.svg" width={16} height={16} alt="" aria-hidden="true" /></button>
+          ><FaPen size={16} aria-hidden="true" /></button>
           <button
             onClick={() => onDelete(asset)}
             className="icon-btn"
             title="Delete asset"
-          ><img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" /></button>
+          ><FaTrashCan size={16} aria-hidden="true" /></button>
         </div>
       </td>
     </tr>
@@ -123,7 +125,7 @@ function RelationshipRow({
   return (
     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
       <td style={{ padding: '10px 12px' }}>
-        <img src={`/icons/${ASSET_TYPE_ICONS[source.asset_type as AssetType] ?? 'package_color.svg'}`} width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle' }} />
+        <Icon icon={ASSET_TYPE_ICONS[source.asset_type as AssetType] ?? FaBox} size={13} style={{ verticalAlign: 'middle' }} />
         {' '}
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
           {source.name}
@@ -135,7 +137,7 @@ function RelationshipRow({
         </span>
       </td>
       <td style={{ padding: '10px 12px' }}>
-        <img src={`/icons/${ASSET_TYPE_ICONS[target.asset_type as AssetType] ?? 'package_color.svg'}`} width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle' }} />
+        <Icon icon={ASSET_TYPE_ICONS[target.asset_type as AssetType] ?? FaBox} size={13} style={{ verticalAlign: 'middle' }} />
         {' '}
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
           {target.name}
@@ -146,7 +148,7 @@ function RelationshipRow({
           onClick={() => onDelete(link.id)}
           className="icon-btn"
           title="Remove relationship"
-        ><img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" /></button>
+        ><FaTrashCan size={16} aria-hidden="true" /></button>
       </td>
     </tr>
   )
@@ -352,7 +354,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
 
                 <textarea
                   className="form-input"
-                  placeholder="Asset name(s) — one per line for bulk add"
+                  placeholder="Asset name(s) - one per line for bulk add"
                   value={namesInput}
                   onChange={e => setNamesInput(e.target.value)}
                   rows={2}
@@ -406,7 +408,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
             {/* Asset table */}
             {assets.length === 0 ? (
               <EmptyState
-                icon="desktop_computer_color.svg"
+                icon={FaDesktop}
                 title="No assets yet"
                 description="Add hosts, accounts, files, and other assets involved in this incident."
               />
@@ -530,9 +532,9 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
             {/* Relationships table */}
             {assetLinks.length === 0 ? (
               <EmptyState
-                icon="link_color.svg"
+                icon={FaLink}
                 title="No relationships yet"
-                description="Link assets together to map how they're connected — e.g. account → workstation → file."
+                description="Link assets together to map how they're connected - e.g. account → workstation → file."
               />
             ) : (
               <div style={{

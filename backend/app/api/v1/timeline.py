@@ -54,7 +54,7 @@ async def create_timeline_entry(
     try:
         worker_tasks.auto_detect_iocs_from_entry.delay(str(entry.id))
     except Exception as exc:
-        # Celery broker unavailable (e.g., Redis not running in test env) — best-effort dispatch
+        # Celery broker unavailable (e.g., Redis not running in test env) - best-effort dispatch
         import logging
         logging.getLogger(__name__).debug("Failed to dispatch IOC detection task: %s", exc)
 
@@ -65,7 +65,7 @@ async def create_timeline_entry(
         entity_type="incident",
         entity_id=str(incident_id),
         actor_label=current_user.email,
-        entity_label=f"{incident.incident_ref} — {incident.title}",
+        entity_label=f"{incident.incident_ref} - {incident.title}",
         user_id=str(current_user.id),
         request=request,
     )

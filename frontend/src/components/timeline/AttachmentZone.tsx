@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { fileSize } from '@/lib/utils'
+import { FaFileLines, FaPaperclip, FaXmark } from 'react-icons/fa6'
 
 interface AttachmentZoneProps {
   files: File[]
@@ -10,7 +11,7 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
 
-  // Global paste listener — captures screenshots pasted anywhere
+  // Global paste listener - captures screenshots pasted anywhere
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       const items = Array.from(e.clipboardData?.items ?? [])
@@ -60,7 +61,7 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
           addFiles(e.dataTransfer.files)
         }}
       >
-        <img src="/icons/paperclip_color.svg" width={22} height={22} alt="" aria-hidden="true" />
+        <FaPaperclip size={22} aria-hidden="true" />
         <div>
           <p>Drop files here, click to browse, or paste a screenshot</p>
           <p style={{ fontSize: 11, marginTop: 2, color: 'var(--text-muted)' }}>
@@ -112,7 +113,7 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
                     padding: 4,
                   }}
                 >
-                  <img src="/icons/page_facing_up_color.svg" width={20} height={20} alt="" aria-hidden="true" />
+                  <FaFileLines size={20} aria-hidden="true" />
                   <span style={{ fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', wordBreak: 'break-all' }}>
                     {fileSize(file.size)}
                   </span>
@@ -138,7 +139,7 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
                   padding: 0,
                 }}
               >
-                <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
+                <FaXmark size={14} aria-hidden="true" />
               </button>
             </div>
           ))}

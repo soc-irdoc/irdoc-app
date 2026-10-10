@@ -1,3 +1,10 @@
+import type { IconType } from 'react-icons'
+import {
+  FaAt, FaBox, FaCloud, FaComputer, FaCubes, FaDatabase, FaDesktop, FaEthernet, FaFileLines,
+  FaFolder, FaGlobe, FaHashtag, FaLaptop, FaLink, FaMobileScreenButton, FaNetworkWired,
+  FaPaperclip, FaServer, FaThumbtack, FaUser, FaUserGear,
+} from 'react-icons/fa6'
+
 export type NodeType =
   | 'ioc_ip'
   | 'ioc_domain'
@@ -71,32 +78,32 @@ export interface GraphData {
   edges: GraphEdge[]
 }
 
-export const NODE_TYPE_ICONS: Record<string, string> = {
-  ioc_ip:                'input_numbers_color.svg',
-  ioc_domain:            'globe_with_meridians_color.svg',
-  ioc_email:             'e-mail_color.svg',
-  ioc_url:               'link_color.svg',
-  ioc_hash:              '#',
-  ioc_file:              'page_facing_up_color.svg',
-  ioc_username:          'bust_in_silhouette_color.svg',
-  event:                 'pushpin_color.svg',
-  evidence:              'paperclip_color.svg',
-  asset_host:            'desktop_computer_color.svg',
-  asset_server:          'file_cabinet_color.svg',
-  asset_workstation:     'laptop_color.svg',
-  asset_laptop:          'laptop_color.svg',
-  asset_mobile:          'mobile_phone_color.svg',
-  asset_network_device:  'globe_with_meridians_color.svg',
-  asset_account:         'bust_in_silhouette_color.svg',
-  asset_service_account: 'robot_color.svg',
-  asset_file:            'page_facing_up_color.svg',
-  asset_directory:       'file_folder_color.svg',
-  asset_url:             'link_color.svg',
-  asset_email_address:   'e-mail_color.svg',
-  asset_database:        'card_file_box_color.svg',
-  asset_application:     'gear_color.svg',
-  asset_cloud_resource:  'cloud_color.svg',
-  asset_other:           'package_color.svg',
+export const NODE_TYPE_ICONS: Record<string, IconType> = {
+  ioc_ip:                FaNetworkWired,
+  ioc_domain:            FaGlobe,
+  ioc_email:             FaAt,
+  ioc_url:               FaLink,
+  ioc_hash:              FaHashtag,
+  ioc_file:              FaFileLines,
+  ioc_username:          FaUser,
+  event:                 FaThumbtack,
+  evidence:              FaPaperclip,
+  asset_host:            FaDesktop,
+  asset_server:          FaServer,
+  asset_workstation:     FaComputer,
+  asset_laptop:          FaLaptop,
+  asset_mobile:          FaMobileScreenButton,
+  asset_network_device:  FaEthernet,
+  asset_account:         FaUser,
+  asset_service_account: FaUserGear,
+  asset_file:            FaFileLines,
+  asset_directory:       FaFolder,
+  asset_url:             FaLink,
+  asset_email_address:   FaAt,
+  asset_database:        FaDatabase,
+  asset_application:     FaCubes,
+  asset_cloud_resource:  FaCloud,
+  asset_other:           FaBox,
 }
 
 export const ASSET_STATUS_COLORS: Record<string, string> = {

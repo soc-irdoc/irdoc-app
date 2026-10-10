@@ -10,6 +10,7 @@ import { getSocket } from '@/lib/websocket'
 import { useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
 import type { EntryType, TimelineEntry } from '@/types/timeline'
+import { FaTimeline } from 'react-icons/fa6'
 
 interface TimelinePageProps {
   incidentId: string
@@ -88,7 +89,7 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
               color: 'var(--text-primary)',
             }}
           >
-            ⏱ Timeline{' '}
+            <FaTimeline size={20} aria-hidden="true" />Timeline{' '}
             <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>
               {entries.length} entries
             </span>
@@ -112,7 +113,7 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
           </div>
         ) : entries.length === 0 ? (
           <EmptyState
-            icon="⏱"
+            icon={FaTimeline}
             title="No timeline entries"
             description='Add your first entry above or press "N" to focus the form.'
           />

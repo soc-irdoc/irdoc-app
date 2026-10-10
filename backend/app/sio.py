@@ -3,7 +3,7 @@ Socket.io server for IRDoc real-time collaboration.
 
 Architecture:
   - Single uvicorn worker (socket.io sessions are in-memory; multiple workers
-    require sticky sessions or a shared session store — not worth the complexity
+    require sticky sessions or a shared session store - not worth the complexity
     for a self-hosted IR platform sized for 5-50 concurrent analysts)
   - A background task subscribes to irp:ws:* Redis pub/sub channels published
     by Celery workers and route handlers, then emits to the appropriate rooms
@@ -144,7 +144,7 @@ async def _get_presence(incident_id: str) -> list[dict]:
 
 async def publish_ws(incident_id: str, event: str, data: dict) -> None:
     """Publish a WebSocket event via Redis. Use from FastAPI route handlers.
-    Connection errors are swallowed — WebSocket delivery is best-effort."""
+    Connection errors are swallowed - WebSocket delivery is best-effort."""
     import redis.exceptions as _redis_exc
 
     from app.core.debounce import get_redis

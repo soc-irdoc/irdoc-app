@@ -8,6 +8,7 @@ import { ProgressBar } from '@/components/common/ProgressBar'
 import { EmptyState } from '@/components/common/EmptyState'
 import { AppShell } from '@/components/layout/AppShell'
 import type { DashboardStats } from '@/types/dashboard'
+import { FaChartColumn } from 'react-icons/fa6'
 
 // ── Color maps ────────────────────────────────────────────────────────────────
 const STATUS_COLORS: Record<string, string> = {
@@ -265,7 +266,7 @@ function TeamWorkloadTile({ data }: { data: DashboardStats }) {
 
   return (
     <Tile>
-      <SectionLabel>Team Workload — Open Cases</SectionLabel>
+      <SectionLabel>Team Workload - Open Cases</SectionLabel>
       {workload.length === 0
         ? <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>No active assignments</div>
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
@@ -501,7 +502,7 @@ export function OverviewPage() {
         {!isLoading && data && (
           data.incidents.total === 0 && range !== 'all'
             ? <EmptyState
-                icon="bar_chart_color.svg"
+                icon={FaChartColumn}
                 title="No incidents in this period"
                 description="Try expanding the time range or check back later."
                 action={

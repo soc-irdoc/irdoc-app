@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { useUIStore } from '@/stores/uiStore'
 import { AVAILABLE_SCOPES } from '@/types/apiKey'
 import { formatRelative } from '@/lib/utils'
+import { FaKey, FaTriangleExclamation } from 'react-icons/fa6'
 
 export function APIKeysSection() {
   const addToast = useUIStore((s) => s.addToast)
@@ -65,7 +66,7 @@ export function APIKeysSection() {
         }}
       >
         <div>
-          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}><img src="/icons/key_color.svg" width={20} height={20} alt="" aria-hidden="true" /> API Keys</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}><FaKey size={20} aria-hidden="true" /> API Keys</p>
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
             Used by external tools to create cases in IRDoc.
           </p>
@@ -248,7 +249,7 @@ export function APIKeysSection() {
                     >
                       {scope.value}
                     </span>
-                    {' — '}
+                    {' - '}
                     {scope.label}
                   </span>
                 </label>
@@ -269,7 +270,7 @@ export function APIKeysSection() {
         </div>
       </Modal>
 
-      {/* Raw Key Display Modal — shown ONCE after creation */}
+      {/* Raw Key Display Modal - shown ONCE after creation */}
       <Modal
         open={!!showRawKey}
         onClose={() => setShowRawKey(null)}
@@ -286,7 +287,7 @@ export function APIKeysSection() {
             color: 'var(--yellow)',
           }}
         >
-          <img src="/icons/warning_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />This key will not be shown again. Copy it now.
+          <FaTriangleExclamation size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 6 }} />This key will not be shown again. Copy it now.
         </div>
         <div
           style={{
@@ -308,7 +309,7 @@ export function APIKeysSection() {
             variant="accent"
             onClick={() => {
               if (showRawKey) navigator.clipboard.writeText(showRawKey)
-              addToast('Copied to clipboard — key will not be shown again', 'success')
+              addToast('Copied to clipboard - key will not be shown again', 'success')
               setShowRawKey(null)
             }}
           >

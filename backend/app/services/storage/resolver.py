@@ -19,19 +19,19 @@ def get_storage_backend():
     if backend_name == "s3":
         from app.services.storage.s3 import S3StorageBackend  # noqa: F401
         raise ValueError(
-            "S3 backend requires config from DB storage_configs table — "
+            "S3 backend requires config from DB storage_configs table - "
             "use get_storage_backend_from_config() with the active StorageConfig row."
         )
     elif backend_name == "azure_blob":
         from app.services.storage.azure_blob import AzureBlobStorageBackend  # noqa: F401
         raise ValueError(
-            "Azure Blob backend requires config from DB storage_configs table — "
+            "Azure Blob backend requires config from DB storage_configs table - "
             "use get_storage_backend_from_config() with the active StorageConfig row."
         )
     elif backend_name == "gcs":
         from app.services.storage.gcs import GCSStorageBackend  # noqa: F401
         raise ValueError(
-            "GCS backend requires config from DB storage_configs table — "
+            "GCS backend requires config from DB storage_configs table - "
             "use get_storage_backend_from_config() with the active StorageConfig row."
         )
     else:

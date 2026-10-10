@@ -1,6 +1,6 @@
 """
 Attachment service: stream upload, SHA-256 (ALWAYS computed), StorageBackend delegation.
-SHA-256 is stored unconditionally — forensic integrity guarantee.
+SHA-256 is stored unconditionally - forensic integrity guarantee.
 """
 import hashlib
 import uuid
@@ -78,7 +78,7 @@ async def upload_attachment(
     data = b"".join(chunks)
     sha256 = hasher.hexdigest()
 
-    # Detect MIME from actual file bytes — reject content-type spoofing
+    # Detect MIME from actual file bytes - reject content-type spoofing
     actual_mime = _get_actual_mime(data)
     _validate_mime(actual_mime)
 
@@ -87,7 +87,7 @@ async def upload_attachment(
     if not safe_ext and actual_mime.startswith("text/"):
         safe_ext = ".txt"
 
-    # Store via backend — UUID-based path, outside web root
+    # Store via backend - UUID-based path, outside web root
     file_uuid = str(uuid.uuid4())
     stored_path = f"attachments/{incident_id}/{file_uuid}{safe_ext}"
 
@@ -134,6 +134,6 @@ async def delete_attachment(db: AsyncSession, attachment: Attachment) -> None:
     try:
         await backend.delete(attachment.stored_path)
     except FileNotFoundError:
-        pass  # Already gone from storage — still remove DB record
+        pass  # Already gone from storage - still remove DB record
     await db.delete(attachment)
     await db.flush()

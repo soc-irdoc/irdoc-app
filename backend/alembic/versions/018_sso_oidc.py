@@ -1,4 +1,4 @@
-"""Switch SSO from SAML to OIDC — replace SAML columns with tenant_id/client_id/client_secret.
+"""Switch SSO from SAML to OIDC - replace SAML columns with tenant_id/client_id/client_secret.
 
 Revision ID: 018
 Revises: 017

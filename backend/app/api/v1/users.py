@@ -251,7 +251,7 @@ async def create_invite(
     org = org_result.scalar_one_or_none()
     org_name = org.name if org else "IRDoc"
 
-    # Fire-and-forget — don't fail the request if email fails
+    # Fire-and-forget - don't fail the request if email fails
     try:
         await email_service.send_invite_email(
             to=str(data.email),
@@ -280,7 +280,7 @@ async def create_invite(
 
 @router.get("/invite/{token}")
 async def validate_invite(token: str, db: AsyncSession = Depends(get_db)):
-    """Validate an invite token (public — no auth required)."""
+    """Validate an invite token (public - no auth required)."""
     from datetime import datetime, timezone
 
     invite = await invite_service.get_invite_by_token(db, token)

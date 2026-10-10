@@ -6,6 +6,7 @@ import { formatDateTime, formatRelative, isImageMime } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
 import { Modal } from '@/components/common/Modal'
+import { FaImage, FaPaperclip, FaPen, FaThumbtack, FaTrashCan } from 'react-icons/fa6'
 
 interface TimelineEntryProps {
   entry: TEntry
@@ -114,7 +115,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
             zIndex: 1,
           }}
         >
-          <img src={`/icons/${config.icon}`} width={18} height={18} alt="" aria-hidden="true" />
+          <config.icon size={16} aria-hidden="true" style={{ color: dotStyle.border }} />
         </div>
 
         {/* Card */}
@@ -174,7 +175,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
 
                 {/* Pin indicator */}
                 {entry.is_pinned && (
-                  <img src="/icons/pushpin_color.svg" width={12} height={12} alt="" aria-hidden="true" title="Pinned" />
+                  <FaThumbtack size={12} aria-hidden="true" title="Pinned" />
                 )}
 
                 {/* Author */}
@@ -214,7 +215,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                     aria-label="Edit entry"
                     title="Edit"
                   >
-                    <img src="/icons/pencil_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+                    <FaPen size={16} aria-hidden="true" />
                   </button>
                 )}
                 <button
@@ -223,7 +224,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                   aria-label={entry.is_pinned ? 'Unpin entry' : 'Pin entry'}
                   title={entry.is_pinned ? 'Unpin' : 'Pin'}
                 >
-                  <img src="/icons/pushpin_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+                  <FaThumbtack size={16} aria-hidden="true" />
                 </button>
                 <button
                   className="icon-btn"
@@ -232,7 +233,7 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                   title="Delete"
                   style={{ color: 'var(--red)' }}
                 >
-                  <img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+                  <FaTrashCan size={16} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -284,7 +285,9 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                       e.currentTarget.style.color = 'var(--text-secondary)'
                     }}
                   >
-                    <img src={att.mime_type && isImageMime(att.mime_type) ? '/icons/framed_picture_color.svg' : '/icons/paperclip_color.svg'} width={16} height={16} alt="" aria-hidden="true" />
+                    {att.mime_type && isImageMime(att.mime_type)
+                      ? <FaImage size={14} aria-hidden="true" />
+                      : <FaPaperclip size={14} aria-hidden="true" />}
                     {att.original_name}
                   </button>
                 ))}

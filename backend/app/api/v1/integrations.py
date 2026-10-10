@@ -1,5 +1,5 @@
 """
-Integrations API — plugin list, config, test, toggle, and action endpoints.
+Integrations API - plugin list, config, test, toggle, and action endpoints.
 """
 import logging
 
@@ -156,7 +156,7 @@ async def sentinel_pull_alerts(
 ):
     """
     Pull Sentinel alerts as timeline entry candidates.
-    Returns preview list — analyst selects which to import.
+    Returns preview list - analyst selects which to import.
     """
     from app.core.feature_flags import check_feature
     if not check_feature("integration_siem"):

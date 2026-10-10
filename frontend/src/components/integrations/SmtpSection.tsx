@@ -3,6 +3,7 @@ import { useSmtpConfig, useSaveSmtpConfig, useTestSmtp } from '@/hooks/useSmtp'
 import { useOrgSettings } from '@/hooks/useAdmin'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
+import { FaCheck, FaChevronDown, FaChevronUp, FaEnvelope, FaPaperPlane, FaXmark } from 'react-icons/fa6'
 
 const MASKED = '••••••'
 const PRODUCT_ORANGE = '#f97316'
@@ -72,7 +73,7 @@ function InvitePreview({ fromName, subjectTemplate, accentColor, logoUrl, footer
         <div style={{ color: '#999', fontSize: 11, marginBottom: 4 }}>From: {fromName || 'IRDoc Alerts'}</div>
         <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e', marginBottom: 6 }}>{subject}</div>
         <div style={{ color: '#555', marginBottom: 12 }}>
-          Admin has invited you to join <strong>{orgName}</strong> on IRDoc — an Incident Response Documentation Platform.
+          Admin has invited you to join <strong>{orgName}</strong> on IRDoc - an Incident Response Documentation Platform.
         </div>
         <div style={{ marginBottom: 12 }}>
           <a href="#" style={{ display: 'inline-block', background: color, color: '#fff', padding: '10px 22px', borderRadius: 6, fontWeight: 700, textDecoration: 'none', fontSize: 12 }}>
@@ -126,7 +127,7 @@ export function SmtpSection() {
       })
       setPasswordSaved(smtpConfig.password === MASKED)
     } else if (smtpConfig === null) {
-      // No config yet — pre-fill branding from org settings
+      // No config yet - pre-fill branding from org settings
       setForm((prev) => ({ ...prev, logoUrl: orgLogo, accentColor: orgAccent }))
     }
   }, [smtpConfig, orgSettings])
@@ -213,7 +214,7 @@ export function SmtpSection() {
         {/* Header */}
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexShrink: 0 }}>
-            <img src="/icons/envelope_color.svg" width={20} height={20} alt="" aria-hidden="true" />
+            <FaEnvelope size={20} aria-hidden="true" />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>SMTP Server</p>
@@ -235,7 +236,7 @@ export function SmtpSection() {
             style={{ fontSize: 11, padding: '2px 10px' }}
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? 'Collapse ▲' : 'Configure ▼'}
+            {expanded ? <>Collapse <FaChevronUp size={10} aria-hidden="true" /></> : <>Configure <FaChevronDown size={10} aria-hidden="true" /></>}
           </button>
         </div>
 
@@ -312,7 +313,7 @@ export function SmtpSection() {
                       disabled={testSmtp.isPending || !form.host}
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
-                      {testSmtp.isPending ? 'Sending…' : <><img src="/icons/outbox_tray_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Send Test Email</>}
+                      {testSmtp.isPending ? 'Sending…' : <><FaPaperPlane size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Send Test Email</>}
                     </button>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>sends to your account email</span>
                     {testResult && (
@@ -324,7 +325,7 @@ export function SmtpSection() {
                         color: testResult.ok ? 'var(--green)' : 'var(--red)',
                         border: `1px solid ${testResult.ok ? 'var(--green)' : 'var(--red)'}`,
                       }}>
-                        {testResult.ok ? '✓ Test email sent' : `✗ ${testResult.error}`}
+                        {testResult.ok ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Test email sent</> : <><FaXmark size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />{testResult.error}</>}
                       </div>
                     )}
                   </div>

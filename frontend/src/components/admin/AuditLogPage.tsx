@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuditLog, useExportAuditLog } from '@/hooks/useAdmin'
+import { FaTriangleExclamation } from 'react-icons/fa6'
 
 const HIGH_RISK_ACTIONS = [
   'crowdstrike.contain_host',
@@ -48,7 +49,7 @@ const CATEGORIES = [
   { key: 'settings', label: 'Settings' },
   { key: 'integrations', label: 'Integrations' },
   { key: 'api_keys', label: 'API Keys' },
-  { key: 'high_risk', label: '⚠ High Risk' },
+  { key: 'high_risk', label: 'High Risk' },
 ] as const
 
 function isHighRisk(action: string) {
@@ -65,7 +66,7 @@ function renderDiff(diff: Record<string, unknown> | null | undefined): React.Rea
       {hasFromTo && (
         <>
           <dt style={{ color: 'var(--text-muted)' }}>Changed</dt>
-          <dd>{String(diff.from ?? '—')} → {String(diff.to ?? '—')}</dd>
+          <dd>{String(diff.from ?? '-')} → {String(diff.to ?? '-')}</dd>
         </>
       )}
       {visibleEntries.filter(([k]) => k !== 'from' && k !== 'to').map(([key, val]) => (
@@ -132,6 +133,7 @@ export function AuditLogPage() {
             onClick={() => { setCategory(cat.key); setPage(1) }}
             className={category === cat.key ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
           >
+            {cat.key === 'high_risk' && <FaTriangleExclamation size={11} aria-hidden="true" />}
             {cat.label}
           </button>
         ))}
@@ -255,7 +257,7 @@ export function AuditLogPage() {
                             ? `user:${String(item.user_id).slice(0, 8)}…`
                             : item.api_key_id
                             ? `key:${String(item.api_key_id).slice(0, 8)}…`
-                            : '—'
+                            : '-'
                           )}
                         </td>
                         <td style={tableCellStyle}>
@@ -272,7 +274,7 @@ export function AuditLogPage() {
                                 style={{ fontSize: 10 }}
                                 title="High risk action"
                               >
-                                <img src="/icons/warning_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 3 }} />HIGH RISK
+                                <FaTriangleExclamation size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 3 }} />HIGH RISK
                               </span>
                             )}
                           </div>
@@ -286,7 +288,7 @@ export function AuditLogPage() {
                         >
                           {item.entity_label ?? (item.entity_type && item.entity_id
                             ? `${item.entity_type}:${String(item.entity_id).slice(0, 8)}…`
-                            : '—'
+                            : '-'
                           )}
                         </td>
                         <td
@@ -297,7 +299,7 @@ export function AuditLogPage() {
                             color: 'var(--text-muted)',
                           }}
                         >
-                          {item.ip_address ?? '—'}
+                          {item.ip_address ?? '-'}
                         </td>
                       </tr>
                       {expandedId === item.id && (
@@ -335,7 +337,7 @@ export function AuditLogPage() {
           }}
         >
           <span>
-            {(page - 1) * perPage + 1}–{Math.min(page * perPage, total)} of {total}
+            {(page - 1) * perPage + 1}-{Math.min(page * perPage, total)} of {total}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button

@@ -39,7 +39,7 @@ def _build_base_docx() -> bytes:
 
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    sub_run = subtitle.add_run("IRDoc — Incident Response Platform")
+    sub_run = subtitle.add_run("IRDoc - Incident Response Platform")
     sub_run.font.size = Pt(12)
     sub_run.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 

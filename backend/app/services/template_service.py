@@ -1,6 +1,6 @@
 """
 Template service: incident templates + report templates.
-System templates (org_id=null) are read-only — orgs must clone.
+System templates (org_id=null) are read-only - orgs must clone.
 """
 import copy
 import uuid

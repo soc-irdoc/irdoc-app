@@ -11,6 +11,10 @@ import { useOrgUsers } from '@/hooks/useOrgUsers'
 import { usePermission } from '@/lib/permissions'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
+import {
+  FaArrowLeft, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
+  FaTrashCan,
+} from 'react-icons/fa6'
 
 interface TopBarProps {
   incident: Incident
@@ -19,12 +23,12 @@ interface TopBarProps {
 }
 
 const SECTIONS = [
-  { key: 'timeline', label: 'Timeline', icon: 'stopwatch_color.svg' },
-  { key: 'iocs',     label: 'IOCs',     icon: 'magnifying_glass_tilted_left_color.svg' },
-  { key: 'assets',   label: 'Assets',   icon: 'desktop_computer_color.svg' },
-  { key: 'summary',  label: 'Summary',  icon: 'bar_chart_color.svg' },
-  { key: 'reports',  label: 'Reports',  icon: 'page_facing_up_color.svg' },
-  { key: 'graph',    label: 'Graph',    icon: 'spider_web_color.svg' },
+  { key: 'timeline', label: 'Timeline', icon: FaTimeline },
+  { key: 'iocs',     label: 'IOCs',     icon: FaMagnifyingGlass },
+  { key: 'assets',   label: 'Assets',   icon: FaDesktop },
+  { key: 'summary',  label: 'Summary',  icon: FaChartColumn },
+  { key: 'reports',  label: 'Reports',  icon: FaFileLines },
+  { key: 'graph',    label: 'Graph',    icon: FaCircleNodes },
 ]
 
 function PresenceAvatars({ incidentId }: { incidentId: string }) {
@@ -154,7 +158,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           title="Back to incidents"
           style={{ fontSize: 16 }}
         >
-          ←
+          <FaArrowLeft size={14} aria-hidden="true" />
         </button>
 
         {/* Severity badge */}
@@ -247,7 +251,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
             aria-label="Change assignee"
             style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6, maxWidth: 130 }}
           >
-            <option value="">— Unassigned</option>
+            <option value="">- Unassigned</option>
             {orgUsers.map((u) => (
               <option key={u.id} value={u.id}>{u.full_name}</option>
             ))}
@@ -281,7 +285,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
               title="Delete incident"
               style={{ padding: '4px 8px' }}
             >
-              <img src="/icons/wastebasket_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+              <FaTrashCan size={16} aria-hidden="true" />
             </button>
           )}
         </div>
@@ -317,7 +321,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
               fontFamily: 'Syne, sans-serif',
             }}
           >
-            <img src={`/icons/${sec.icon}`} width={18} height={18} alt="" aria-hidden="true" style={{ flexShrink: 0 }} /> {sec.label}
+            <sec.icon size={14} aria-hidden="true" style={{ flexShrink: 0 }} /> {sec.label}
           </button>
         ))}
       </div>

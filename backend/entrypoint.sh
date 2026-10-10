@@ -23,7 +23,7 @@ fi
 
 echo "=== IRDoc Backend Starting ==="
 
-# Wait for DB to be ready (belt-and-suspenders — compose healthcheck handles primary wait)
+# Wait for DB to be ready (belt-and-suspenders - compose healthcheck handles primary wait)
 until python -c "
 import asyncio, sys
 import asyncpg
@@ -50,7 +50,7 @@ alembic upgrade head
 echo "Running seed script..."
 python seed.py
 
-# Start the application — if a command was passed (worker/beat), run it; otherwise start uvicorn
+# Start the application - if a command was passed (worker/beat), run it; otherwise start uvicorn
 if [ $# -gt 0 ]; then
     exec "$@"
 else

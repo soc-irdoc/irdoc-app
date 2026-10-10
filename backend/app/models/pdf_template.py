@@ -1,4 +1,4 @@
-"""PdfTemplate model — company-branded DOCX templates for PDF report generation."""
+"""PdfTemplate model - company-branded DOCX templates for PDF report generation."""
 import uuid
 from datetime import datetime
 

@@ -11,6 +11,8 @@ import {
 import { useReportTemplates } from '@/hooks/useReportTemplates'
 import { SyncPolicyCreate } from '@/types/report'
 import { formatRelative } from '@/lib/utils'
+import { FaArrowsRotate, FaCloudArrowUp } from 'react-icons/fa6'
+import { BrandSharePoint } from '@/components/icons/brandIcons'
 
 interface Props {
   incidentId: string
@@ -79,7 +81,7 @@ export default function SyncPolicySection({ incidentId }: Props) {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <img src="/icons/outbox_tray_color.svg" width={14} height={14} alt="" aria-hidden="true" />{p.destination.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                      {p.destination === 'sharepoint' ? <BrandSharePoint size={13} aria-hidden="true" /> : <FaCloudArrowUp size={13} aria-hidden="true" />}{p.destination.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                     </span>
                     <span
                       className={`chip ${p.is_active ? 'chip-green' : 'chip-muted'}`}
@@ -112,7 +114,7 @@ export default function SyncPolicySection({ incidentId }: Props) {
                     disabled={triggerPolicy.isPending}
                     title="Sync now"
                   >
-                    ↺ Sync
+                    <FaArrowsRotate size={10} aria-hidden="true" /> Sync
                   </button>
                   <button
                     className="btn btn-ghost btn-sm"
@@ -162,7 +164,7 @@ export default function SyncPolicySection({ incidentId }: Props) {
                   value={form.report_template_id ?? ''}
                   onChange={(e) => setForm({ ...form, report_template_id: e.target.value || null })}
                 >
-                  <option value="">— Select template —</option>
+                  <option value="">- Select template -</option>
                   {templates.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}

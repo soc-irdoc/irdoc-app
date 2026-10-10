@@ -9,7 +9,7 @@ export function useGraph(incidentId: string) {
       const res = await apiClient.get(`/incidents/${incidentId}/graph`)
       return res.data.data
     },
-    staleTime: 30_000, // graph is expensive to build — 30s cache
+    staleTime: 30_000, // graph is expensive to build - 30s cache
   })
 }
 

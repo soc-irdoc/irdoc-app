@@ -73,7 +73,7 @@ async def delete_edge(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete a manually created graph edge."""
-    # edge_id from frontend is "manual-{uuid}" — strip prefix
+    # edge_id from frontend is "manual-{uuid}" - strip prefix
     raw_id = edge_id.replace("manual-", "", 1)
     deleted = await graph_service.delete_manual_edge(raw_id, db)
     if not deleted:

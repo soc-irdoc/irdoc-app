@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { FaXmark } from 'react-icons/fa6'
 
 interface ModalProps {
   open?: boolean
@@ -55,7 +56,7 @@ export function Modal({ open = true, onClose, title, children, size = 'md', maxW
             onClick={onClose}
             aria-label="Close modal"
           >
-            <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
+            <FaXmark size={14} aria-hidden="true" />
           </button>
         </div>
         {/* Body */}

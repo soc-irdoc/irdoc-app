@@ -17,7 +17,7 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: str  # plain str — allows admin@localhost and other local addresses
+    email: str  # plain str - allows admin@localhost and other local addresses
     password: str
 
 
@@ -127,7 +127,7 @@ class MFAVerifyRequest(BaseModel):
 
 
 class MFASetupInitResponse(BaseModel):
-    secret_uri: str  # otpauth:// URI — client renders as QR
+    secret_uri: str  # otpauth:// URI - client renders as QR
 
 
 class MFASetupCompleteResponse(BaseModel):
@@ -135,7 +135,7 @@ class MFASetupCompleteResponse(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
-    backup_codes: list[str]  # 10 plain codes, shown once — stored hashed, never retrievable again
+    backup_codes: list[str]  # 10 plain codes, shown once - stored hashed, never retrievable again
     user: UserOut
 
 

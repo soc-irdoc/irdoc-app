@@ -5,7 +5,6 @@ render_incident_pdf() is the single entry point for PDF generation.
 """
 from __future__ import annotations
 
-import base64
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -19,7 +18,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _TEMPLATE_DIR = Path(__file__).parent.parent.parent.parent / "templates"
-_ICONS_DIR = _TEMPLATE_DIR.parent.parent / "frontend" / "public" / "icons"
 
 _DEFAULT_PAGE_CSS = """
 @page {
@@ -47,14 +45,14 @@ def _build_jinja_env() -> jinja2.Environment:
 
     def format_dt(value):
         if value is None:
-            return "—"
+            return "-"
         if hasattr(value, "strftime"):
             return value.strftime("%Y-%m-%d %H:%M UTC")
         return str(value)
 
     def filesize(value):
         if value is None:
-            return "—"
+            return "-"
         for unit in ("B", "KB", "MB", "GB"):
             if value < 1024:
                 return f"{value:.0f} {unit}"
@@ -76,17 +74,9 @@ def _build_jinja_env() -> jinja2.Environment:
         from app.services.incident_service import _sanitize_html
         return Markup(_sanitize_html(str(value)))
 
-    def icon_data_uri(filename: str) -> str:
-        path = _ICONS_DIR / filename
-        if not path.is_file():
-            return ""
-        data = base64.b64encode(path.read_bytes()).decode()
-        return f"data:image/svg+xml;base64,{data}"
-
     env.filters["format_dt"] = format_dt
     env.filters["filesize"] = filesize
     env.filters["sanitize_html"] = sanitize_html
-    env.globals["icon_data_uri"] = icon_data_uri
     env.globals["resolve_field"] = resolve_field
     env.globals["is_supported_field"] = is_supported_field
     return env
@@ -100,7 +90,7 @@ def _make_url_fetcher():
 
     Blocks file://, http://, and any other scheme to prevent SSRF and local
     file disclosure during PDF rendering. Blocked URLs raise ValueError, which
-    WeasyPrint downgrades to a warning — a rogue reference degrades to a
+    WeasyPrint downgrades to a warning - a rogue reference degrades to a
     missing image rather than failing the whole report.
 
     Must be a ``URLFetcher`` instance, not a plain function: since WeasyPrint
@@ -122,7 +112,7 @@ def render_incident_pdf_from_schema(
     classification: str = "CONFIDENTIAL",
 ) -> bytes:
     """Render a schema-driven incident report as PDF bytes."""
-    # noqa: N811 below — `WeasyHTML` disambiguates the class from the local `html` string
+    # noqa: N811 below - `WeasyHTML` disambiguates the class from the local `html` string
     from weasyprint import HTML as WeasyHTML  # noqa: N811
 
     from app.services.report_renderer.fixed_report import render_from_schema
@@ -155,7 +145,7 @@ def render_incident_pdf(
 
     If pdf_template is provided, its prefix/suffix pages and @page CSS wrap the content.
     """
-    # noqa: N811 below — `WeasyHTML` disambiguates the class from the local `html` string
+    # noqa: N811 below - `WeasyHTML` disambiguates the class from the local `html` string
     from weasyprint import HTML as WeasyHTML  # noqa: N811
 
     from app.services.report_renderer.fixed_report import render_fixed_report_html

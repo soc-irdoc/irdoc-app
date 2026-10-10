@@ -1,5 +1,5 @@
 """
-LocalStorageBackend — files stored on the container filesystem.
+LocalStorageBackend - files stored on the container filesystem.
 Files are served via signed token endpoint, never directly from web root.
 """
 import os
@@ -24,7 +24,7 @@ class LocalStorageBackend:
 
         Callers today only ever pass server-generated paths (UUID-based
         attachment keys, validated backup filenames), but this is a shared
-        backend class reachable from several call sites — defend the sink
+        backend class reachable from several call sites - defend the sink
         itself rather than relying on every caller staying disciplined.
         """
         full_path = os.path.realpath(os.path.join(self._base_path_str, path))

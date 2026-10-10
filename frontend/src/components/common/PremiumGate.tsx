@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 
 interface PremiumGateProps {
-  /** Feature flag key — e.g. "report_pdf_export" */
+  /** Feature flag key - e.g. "report_pdf_export" */
   feature?: string
   /** Alias for feature (used in Phase 3 components) */
   featureKey?: string

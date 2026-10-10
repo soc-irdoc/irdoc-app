@@ -4,7 +4,7 @@ The prod compose enumerates every backend env var explicitly, unlike the dev
 compose which just mounts `env_file: .env`. That difference matters: a var
 written as `${FOO:-}` is *always* injected, as an empty string, so it overrides
 the pydantic default instead of falling back to it. For a Literal-typed setting
-an empty string is not a legal value, and `Settings()` raises at import time —
+an empty string is not a legal value, and `Settings()` raises at import time -
 which crash-loops backend, worker and beat together on a fresh install, since
 all three run the same entrypoint. `AI_BACKEND: ${AI_BACKEND:-}` did exactly
 that.
@@ -21,7 +21,7 @@ COMPOSE = Path(__file__).resolve().parents[3] / "docker" / "docker-compose.prod.
 # Matches a whole-value compose interpolation: ${NAME} or ${NAME:-default}
 VAR_RE = re.compile(r"^\$\{([A-Z_][A-Z0-9_]*)(?::-(.*))?\}$", re.DOTALL)
 
-# Vars the compose file gives no default for — the wizard always writes these,
+# Vars the compose file gives no default for - the wizard always writes these,
 # so a realistic "operator changed nothing else" run still has them set.
 OPERATOR_SUPPLIED = {
     "DATABASE_URL": "postgresql+asyncpg://irp:pw@irdoc-db/irp",

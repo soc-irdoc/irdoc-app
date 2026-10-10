@@ -28,7 +28,7 @@ _RICH_TEXT_ATTRS: dict[str, list[str]] = {
     # data-type="taskItem" must survive alongside data-checked so Tiptap can
     # reconstruct task-list nodes when the HTML is reloaded.
     "li": ["data-type", "data-checked"],
-    # Tiptap TaskItem renders checkboxes as <input type="checkbox"> — preserve
+    # Tiptap TaskItem renders checkboxes as <input type="checkbox"> - preserve
     # the type attribute so stored HTML is portable for future report rendering.
     "input": ["type"],
     "img": ["src", "alt"],
@@ -84,7 +84,7 @@ async def generate_ref(db: AsyncSession, org_id: str) -> str:
         n = result.scalar()
     except OperationalError:
         # SQLite fallback (test environments): use row count for uniqueness.
-        # Do NOT rollback — the failed DDL statement does not taint the session.
+        # Do NOT rollback - the failed DDL statement does not taint the session.
         prefix = f"INC-{year}-"
         count_result = await db.execute(
             select(func.count()).select_from(Incident).where(

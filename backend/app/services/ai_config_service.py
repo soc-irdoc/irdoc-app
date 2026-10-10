@@ -1,5 +1,5 @@
 """
-AI configuration service — get/upsert per-org Ollama config, test connectivity.
+AI configuration service - get/upsert per-org Ollama config, test connectivity.
 """
 import logging
 import uuid

@@ -1,4 +1,4 @@
-"""VirusTotal integration — IOC enrichment for all plan tiers."""
+"""VirusTotal integration - IOC enrichment for all plan tiers."""
 import base64
 import logging
 
@@ -17,7 +17,6 @@ class VirusTotalPlugin:
     display_name = "VirusTotal"
     category = "ti"
     is_premium = False
-    icon = "microbe_color.svg"
     description = "Enrich IOCs (IP, domain, URL, hash) via VirusTotal."
 
     config_schema = {

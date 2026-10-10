@@ -7,8 +7,8 @@ run. Because the wizard treated 409 ("setup already done") as success, the
 operator's chosen credentials were silently discarded and the public,
 well-known default account remained the real admin.
 
-seed() must now only ever create org-agnostic system templates — never an
-org or a user — so that the first-run setup flow is the sole path that can
+seed() must now only ever create org-agnostic system templates - never an
+org or a user - so that the first-run setup flow is the sole path that can
 create an admin account.
 """
 import pytest

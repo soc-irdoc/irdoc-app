@@ -1,4 +1,4 @@
-"""Microsoft Sentinel integration — pull alerts, run KQL queries."""
+"""Microsoft Sentinel integration - pull alerts, run KQL queries."""
 import logging
 from datetime import datetime, timezone
 
@@ -18,7 +18,6 @@ class SentinelPlugin:
     display_name = "Microsoft Sentinel"
     category = "siem"
     is_premium = False
-    icon = "blue_circle_color.svg"
     description = "Pull alerts and run KQL queries from Microsoft Sentinel."
 
     config_schema = {
@@ -102,7 +101,7 @@ class SentinelPlugin:
         props = item.get("properties", {})
         return {
             "entry_type": "detection",
-            "description": f"[Sentinel] {props.get('title', 'Alert')} — {props.get('description', '')}",
+            "description": f"[Sentinel] {props.get('title', 'Alert')} - {props.get('description', '')}",
             "occurred_at": props.get("createdTimeUtc", datetime.now(timezone.utc).isoformat()),
             "source": "sentinel",
             "metadata": {

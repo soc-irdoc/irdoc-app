@@ -1,3 +1,9 @@
+import type { IconType } from 'react-icons'
+import {
+  FaAlignLeft, FaBullseye, FaChartColumn, FaCircleNodes, FaFileCirclePlus, FaFileLines, FaFilePen,
+  FaHeading, FaMinus, FaPaperclip, FaRobot, FaSquareCheck, FaTag, FaTimeline,
+} from 'react-icons/fa6'
+
 // ─── Report Types ─────────────────────────────────────────────────────────────
 
 export type ReportFormat = 'markdown' | 'html' | 'pdf' | 'docx'
@@ -104,7 +110,7 @@ export interface ReportTemplate {
 export const BLOCK_LIBRARY: {
   type: BlockType
   label: string
-  icon: string
+  icon: IconType
   description: string
   premium?: boolean
   /** Needs Local AI (Ollama); greyed out in the builder while AI is disabled. */
@@ -114,7 +120,7 @@ export const BLOCK_LIBRARY: {
   {
     type: 'cover',
     label: 'Cover Page',
-    icon: 'page_facing_up_color.svg',
+    icon: FaFileLines,
     description: 'Title page with incident metadata',
     defaultConfig: {
       fields: ['incident.title', 'incident.ref', 'incident.severity', 'incident.status', 'generated_at'],
@@ -124,49 +130,49 @@ export const BLOCK_LIBRARY: {
   {
     type: 'stat_row',
     label: 'Stat Row',
-    icon: 'bar_chart_color.svg',
+    icon: FaChartColumn,
     description: 'Horizontal row of metric cards',
     defaultConfig: { stats: ['severity', 'status', 'duration', 'affected_users'] },
   },
   {
     type: 'section',
     label: 'Section',
-    icon: 'memo_color.svg',
+    icon: FaFilePen,
     description: 'Text from an incident Summary field',
     defaultConfig: { label: 'Executive Summary', field: 'incident.executive_summary' },
   },
   {
     type: 'timeline',
     label: 'Timeline',
-    icon: 'one_oclock_color.svg',
+    icon: FaTimeline,
     description: 'Chronological list of entries',
     defaultConfig: { label: 'Full Incident Timeline', filter: 'all', show_attachments: true, max_entries: 0 },
   },
   {
     type: 'ioc_table',
     label: 'IOC Table',
-    icon: 'bullseye_color.svg',
+    icon: FaBullseye,
     description: 'Table of indicators of compromise',
     defaultConfig: { label: 'Indicators of Compromise', filter: 'all', columns: ['type', 'value', 'status'] },
   },
   {
     type: 'task_list',
     label: 'Task List',
-    icon: 'check_mark_button_color.svg',
+    icon: FaSquareCheck,
     description: 'Response task checklist',
     defaultConfig: { label: 'Response Tasks', filter: 'all', show_completed: true },
   },
   {
     type: 'evidence_register',
     label: 'Evidence Register',
-    icon: 'paperclip_color.svg',
+    icon: FaPaperclip,
     description: 'Table of uploaded files with hashes',
     defaultConfig: { label: 'Evidence Register', show_sha256: true, show_uploader: false },
   },
   {
     type: 'text_block',
     label: 'Text Block',
-    icon: 'clipboard_color.svg',
+    icon: FaAlignLeft,
     description: 'Your own text, same in every report',
     defaultConfig: { label: '', content: '' },
     premium: false,
@@ -174,35 +180,35 @@ export const BLOCK_LIBRARY: {
   {
     type: 'header',
     label: 'Header',
-    icon: 'H',
+    icon: FaHeading,
     description: 'Section heading text',
     defaultConfig: { text: 'Section Heading' },
   },
   {
     type: 'tag_list',
     label: 'Tag List',
-    icon: 'label_color.svg',
+    icon: FaTag,
     description: 'Renders array fields as chips',
     defaultConfig: { label: 'Attack Vectors', field: 'incident.attack_vector' },
   },
   {
     type: 'divider',
     label: 'Divider',
-    icon: '─',
+    icon: FaMinus,
     description: 'Visual separator',
     defaultConfig: {},
   },
   {
     type: 'page_break',
     label: 'Page Break',
-    icon: '↵',
+    icon: FaFileCirclePlus,
     description: 'Forces page break in PDF',
     defaultConfig: {},
   },
   {
     type: 'ai_strategy',
     label: 'AI Strategy Summary',
-    icon: 'robot_color.svg',
+    icon: FaRobot,
     description: 'AI-generated strategic incident summary (evidence-grounded, coming soon)',
     requiresAi: true,
     defaultConfig: {},
@@ -210,7 +216,7 @@ export const BLOCK_LIBRARY: {
   {
     type: 'graph_snapshot',
     label: 'Graph Snapshot',
-    icon: 'spider_web_color.svg',
+    icon: FaCircleNodes,
     description: 'Embeds a white-paper-ready snapshot of the incident relationship graph',
     defaultConfig: { label: 'Incident Graph' },
   },

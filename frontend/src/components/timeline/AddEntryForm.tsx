@@ -7,6 +7,8 @@ import { useUIStore } from '@/stores/uiStore'
 import { formatNowDate, formatNowTime } from '@/lib/utils'
 import type { EntryType } from '@/types/timeline'
 import { ASSET_TYPE_ICONS, ASSET_TYPE_LABELS, type AssetType } from '@/types/asset'
+import { FaBox, FaChevronDown, FaChevronUp, FaDesktop } from 'react-icons/fa6'
+import { Icon } from '@/components/common/Icon'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
   { value: 'detection',   label: 'Detection' },
@@ -70,7 +72,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
 
     // `${date}T${time}` has no timezone offset, so `new Date(...)` parses it
     // as local wall-clock time (per spec, a date-time string with no offset is
-    // local) — .toISOString() then converts that to an absolute UTC instant.
+    // local) - .toISOString() then converts that to an absolute UTC instant.
     // Sending the naive string as-is (as this used to) let the backend's
     // timestamptz column silently treat local time as UTC, so entries came
     // back shifted by the browser's UTC offset. Mirrors EditEntryModal, which
@@ -87,7 +89,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         source: source.trim() || undefined,
       })
 
-      // Upload attachments if any — track successes and failures for a consolidated toast
+      // Upload attachments if any - track successes and failures for a consolidated toast
       let uploadedCount = 0
       let failedCount = 0
       if (files.length > 0 && entry?.id) {
@@ -127,14 +129,14 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       setSelectedAssetIds(new Set())
       setAssetPickerOpen(false)
 
-      // Consolidated result toast — include attachment outcome when files were queued
+      // Consolidated result toast - include attachment outcome when files were queued
       if (files.length === 0) {
         addToast('Entry added', 'success')
       } else if (failedCount === 0) {
         addToast(`Entry added. ${uploadedCount} attachment${uploadedCount !== 1 ? 's' : ''} uploaded.`, 'success')
       } else {
         addToast(
-          `Entry added. ${uploadedCount} of ${files.length} attachment${files.length !== 1 ? 's' : ''} uploaded — ${failedCount} failed.`,
+          `Entry added. ${uploadedCount} of ${files.length} attachment${files.length !== 1 ? 's' : ''} uploaded - ${failedCount} failed.`,
           'error',
         )
       }
@@ -312,9 +314,9 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
               padding: '4px 0',
             }}
           >
-            <img src="/icons/desktop_computer_color.svg" width={16} height={16} alt="" aria-hidden="true" /> Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
+            <FaDesktop size={16} aria-hidden="true" /> Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
             {' '}
-            <span style={{ fontSize: 10 }}>{assetPickerOpen ? '▲' : '▼'}</span>
+            {assetPickerOpen ? <FaChevronUp size={10} aria-hidden="true" /> : <FaChevronDown size={10} aria-hidden="true" />}
           </button>
           {assetPickerOpen && (
             <div style={{
@@ -354,7 +356,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
                       gap: 5,
                     }}
                   >
-                    <img src={`/icons/${ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? 'package_color.svg'}`} width={16} height={16} alt="" aria-hidden="true" />
+                    <Icon icon={ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? FaBox} size={14} />
                     <span>{asset.name}</span>
                     <span style={{ fontSize: 10, opacity: 0.6 }}>
                       {ASSET_TYPE_LABELS[asset.asset_type as AssetType]}

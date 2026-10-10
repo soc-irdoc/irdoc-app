@@ -1,4 +1,4 @@
-"""Phase 4b — assets, asset_timeline_links, asset_links tables
+"""Phase 4b - assets, asset_timeline_links, asset_links tables
 
 Revision ID: 004
 Revises: 003

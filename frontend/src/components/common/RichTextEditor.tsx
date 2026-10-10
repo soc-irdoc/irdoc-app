@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
+import { FaIndent, FaListCheck, FaListOl, FaListUl, FaOutdent } from 'react-icons/fa6'
 
 // Tiptap initialises an empty editor as '<p></p>'. Normalise to '' so that
 // the empty-string content prop doesn't trigger constant setContent calls.
@@ -176,7 +177,7 @@ export function RichTextEditor({
   const isHeading2 = editor.isActive('heading', { level: 2 })
   const headingValue = isHeading1 ? 'h1' : isHeading2 ? 'h2' : 'normal'
 
-  // Bug 1 fix: no onMouseDown/e.preventDefault on <select> — that blocked the
+  // Bug 1 fix: no onMouseDown/e.preventDefault on <select> - that blocked the
   // dropdown from opening. Restore editor focus explicitly after the change.
   function setHeading(value: string) {
     if (value === 'h1') {
@@ -202,7 +203,7 @@ export function RichTextEditor({
   }
 
   // Prevent the editor from losing focus (and the selection from being cleared)
-  // when the user clicks a toolbar button. NOT applied to <select> elements —
+  // when the user clicks a toolbar button. NOT applied to <select> elements -
   // e.preventDefault on a select's mousedown blocks the dropdown from opening.
   function blockBlur(e: React.MouseEvent) {
     e.preventDefault()
@@ -235,7 +236,7 @@ export function RichTextEditor({
               onClick={() => editor.chain().toggleTaskList().run()}
               title="Insert task item"
             >
-              <img src="/icons/ballot_box_with_ballot_color.svg" width={16} height={16} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> Task
+              <FaListCheck size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> Task
             </button>
           ) : (
             <select
@@ -250,7 +251,7 @@ export function RichTextEditor({
             </select>
           )}
 
-          {/* Font size — visible on all toolbars */}
+          {/* Font size - visible on all toolbars */}
           <select
             aria-label="Font size"
             className="tb-select"
@@ -319,7 +320,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().toggleBulletList().run()}
                 title="Bullet list"
               >
-                ≡
+                <FaListUl size={12} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -329,7 +330,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().toggleOrderedList().run()}
                 title="Numbered list"
               >
-                1≡
+                <FaListOl size={12} aria-hidden="true" />
               </button>
 
               <div className="tb-sep" />
@@ -342,7 +343,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().sinkListItem('listItem').run()}
                 title="Indent"
               >
-                →
+                <FaIndent size={12} aria-hidden="true" />
               </button>
               <button
                 type="button"
@@ -352,7 +353,7 @@ export function RichTextEditor({
                 onClick={() => editor.chain().liftListItem('listItem').run()}
                 title="Outdent"
               >
-                ←
+                <FaOutdent size={12} aria-hidden="true" />
               </button>
             </>
           )}

@@ -1,10 +1,10 @@
 """
-OAuth2 / OIDC Authorization Code Flow — Entra ID SSO endpoints.
+OAuth2 / OIDC Authorization Code Flow - Entra ID SSO endpoints.
 
-- GET /auth/oidc/login      — Initiate login, returns Azure redirect URL (public)
-- GET /auth/oidc/callback   — Handle authorization code from Azure (public)
+- GET /auth/oidc/login      - Initiate login, returns Azure redirect URL (public)
+- GET /auth/oidc/callback   - Handle authorization code from Azure (public)
 
-Enterprise feature — check_feature("sso_oidc") before any OIDC operation.
+Enterprise feature - check_feature("sso_oidc") before any OIDC operation.
 """
 import logging
 import secrets
@@ -38,7 +38,7 @@ REFRESH_COOKIE_SETTINGS = {
     "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
 }
 
-# OAuth2 error codes that Azure may legitimately return — anything else is mapped
+# OAuth2 error codes that Azure may legitimately return - anything else is mapped
 # to "server_error" to prevent reflected injection.
 _ALLOWED_OAUTH_ERRORS = frozenset({
     "access_denied", "invalid_request", "unauthorized_client",
@@ -93,7 +93,7 @@ async def _get_enabled_config(db: AsyncSession):
     if not cfg.tenant_id or not cfg.client_id or not cfg.client_secret:
         raise HTTPException(
             status_code=400,
-            detail="SSO is not fully configured — Tenant ID, Client ID, and Client Secret are all required",
+            detail="SSO is not fully configured - Tenant ID, Client ID, and Client Secret are all required",
         )
     return org, cfg
 
@@ -165,10 +165,10 @@ async def oidc_callback(
     try:
         cookie_state, cookie_nonce = cookie_raw.split("|", 1)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid state cookie format — please try logging in again")
+        raise HTTPException(status_code=400, detail="Invalid state cookie format - please try logging in again")
 
     if not cookie_state or cookie_state != state:
-        raise HTTPException(status_code=400, detail="Invalid CSRF state — please try logging in again")
+        raise HTTPException(status_code=400, detail="Invalid CSRF state - please try logging in again")
 
     org, cfg = await _get_enabled_config(db)
     client_secret = sso_service.decrypt_client_secret(cfg.client_secret)
@@ -192,7 +192,7 @@ async def oidc_callback(
             tokens = resp.json()
     except Exception as exc:
         logger.error("OIDC token exchange failed: %s", exc)
-        raise HTTPException(status_code=502, detail="Failed to exchange authorization code — check your Client Secret")
+        raise HTTPException(status_code=502, detail="Failed to exchange authorization code - check your Client Secret")
 
     id_token = tokens.get("id_token", "")
     if not id_token:
@@ -220,7 +220,7 @@ async def oidc_callback(
 
     # Verify nonce to prevent token replay attacks
     if claims.get("nonce") != cookie_nonce:
-        raise HTTPException(status_code=401, detail="ID token nonce mismatch — possible replay attack")
+        raise HTTPException(status_code=401, detail="ID token nonce mismatch - possible replay attack")
 
     email = (claims.get("email") or claims.get("preferred_username") or "").lower().strip()
     full_name = (claims.get("name") or email.split("@")[0]).strip()
@@ -228,7 +228,7 @@ async def oidc_callback(
     if not email:
         raise HTTPException(
             status_code=400,
-            detail="OIDC token missing email — ensure the 'email' scope is consented in your App Registration",
+            detail="OIDC token missing email - ensure the 'email' scope is consented in your App Registration",
         )
 
     # Role from group object IDs mapped in config
@@ -267,7 +267,7 @@ async def oidc_callback(
 
     _, refresh_token = auth_service.issue_tokens(user)
 
-    # Deliver session via httpOnly refresh cookie only — no token in the URL.
+    # Deliver session via httpOnly refresh cookie only - no token in the URL.
     # The frontend's existing tryRestore() calls POST /auth/refresh with the cookie
     # and receives a fresh access token, so no additional frontend changes are needed.
     redirect_response = RedirectResponse(

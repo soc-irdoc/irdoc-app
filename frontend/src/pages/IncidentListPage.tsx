@@ -20,6 +20,7 @@ import {
   type Incident,
 } from '@/types/incident'
 import { formatRelative } from '@/lib/utils'
+import { FaBolt, FaTrashCan } from 'react-icons/fa6'
 
 function AssigneeDisplay({ incident, onPickUp }: { incident: Incident; onPickUp: (e: React.MouseEvent) => void }) {
   const { assigned_user } = incident
@@ -45,7 +46,7 @@ function AssigneeDisplay({ incident, onPickUp }: { incident: Incident; onPickUp:
   }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— Unassigned</span>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>- Unassigned</span>
       <button
         className="btn btn-ghost btn-sm"
         onClick={onPickUp}
@@ -169,7 +170,7 @@ function IncidentCard({
           title="Delete incident"
           style={{ flexShrink: 0, padding: '2px 6px' }}
         >
-          <img src="/icons/wastebasket_color.svg" width={14} height={14} alt="" aria-hidden="true" />
+          <FaTrashCan size={14} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -317,7 +318,7 @@ export function IncidentListPage() {
             </div>
           ) : incidents.length === 0 ? (
             <EmptyState
-              icon="high_voltage_color.svg"
+              icon={FaBolt}
               title="No incidents"
               description="Create your first incident to get started."
               action={

@@ -12,6 +12,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { Modal } from '@/components/common/Modal'
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/admin'
 import type { OrgUser } from '@/types/admin'
+import { FaUsers } from 'react-icons/fa6'
 
 function ConfirmDeactivateModal({
   user,
@@ -216,7 +217,7 @@ export function TeamPage() {
         <h2
           style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}
         >
-          <img src="/icons/busts_in_silhouette_color.svg" width={24} height={24} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 8 }} />Team Members
+          <FaUsers size={24} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 8 }} />Team Members
         </h2>
         <button className="btn btn-accent btn-sm" onClick={() => setShowInviteModal(true)}>
           + Invite User

@@ -1,5 +1,5 @@
 """
-Report endpoints — Phase 3.
+Report endpoints - Phase 3.
 
 POST   /incidents/{id}/reports          → enqueue generation
 GET    /incidents/{id}/reports          → list generated reports

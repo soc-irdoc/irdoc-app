@@ -1,5 +1,9 @@
 import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { IconType } from 'react-icons'
+import {
+  FaBuilding, FaClipboardList, FaFileLines, FaHardDrive, FaPlug, FaScroll, FaShieldHalved, FaUserShield, FaUsers,
+} from 'react-icons/fa6'
 
 type AdminTab = 'team' | 'org' | 'storage' | 'templates' | 'reports' | 'integrations' | 'audit' | 'sso'
 
@@ -11,19 +15,19 @@ interface AdminShellProps {
 
 interface SidebarItem {
   id: AdminTab
-  icon: string
+  icon: IconType
   label: string
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: 'team', icon: 'busts_in_silhouette_color.svg', label: 'Team' },
-  { id: 'org', icon: 'gear_color.svg', label: 'Org Settings' },
-  { id: 'storage', icon: 'file_cabinet_color.svg', label: 'Storage' },
-  { id: 'templates', icon: 'clipboard_color.svg', label: 'Incident Templates' },
-  { id: 'reports', icon: 'page_facing_up_color.svg', label: 'Report Templates' },
-  { id: 'integrations', icon: 'link_color.svg', label: 'Integrations' },
-  { id: 'audit', icon: 'scroll_color.svg', label: 'Audit Log' },
-  { id: 'sso', icon: 'locked_with_key_color.svg', label: 'SSO' },
+  { id: 'team', icon: FaUsers, label: 'Team' },
+  { id: 'org', icon: FaBuilding, label: 'Org Settings' },
+  { id: 'storage', icon: FaHardDrive, label: 'Storage' },
+  { id: 'templates', icon: FaClipboardList, label: 'Incident Templates' },
+  { id: 'reports', icon: FaFileLines, label: 'Report Templates' },
+  { id: 'integrations', icon: FaPlug, label: 'Integrations' },
+  { id: 'audit', icon: FaScroll, label: 'Audit Log' },
+  { id: 'sso', icon: FaUserShield, label: 'SSO' },
 ]
 
 export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps) {
@@ -78,7 +82,7 @@ export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps
             ← Back
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/icons/shield_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+            <FaShieldHalved size={16} aria-hidden="true" />
             <span
               style={{
                 fontSize: 14,
@@ -120,7 +124,7 @@ export function AdminShell({ children, activeTab, onTabChange }: AdminShellProps
                 }}
                 aria-label={item.label}
               >
-                <img src={`/icons/${item.icon}`} width={18} height={18} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+                <item.icon size={15} aria-hidden="true" style={{ flexShrink: 0 }} />
                 <span style={{ flex: 1 }}>{item.label}</span>
               </button>
             )

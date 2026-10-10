@@ -1,9 +1,9 @@
 """
-Demo-only seed script — creates the org, the 4 demo role accounts, and ~20
+Demo-only seed script - creates the org, the 4 demo role accounts, and ~20
 richly-detailed incidents used by the public demo.irdoc.io environment.
 
 This is intentionally NOT wired into entrypoint.sh (unlike seed.py). It must
-only ever be invoked explicitly, on the demo box, by docker/demo-restore.sh —
+only ever be invoked explicitly, on the demo box, by docker/demo-restore.sh -
 running it against a real customer install would create known-credential
 accounts, which is exactly the bug seed.py's docstring warns about. See
 seed.py and test_seed.py for the "no known default admin" invariant this
@@ -43,7 +43,7 @@ DEMO_ACCOUNTS = [
     ("viewer@irdoc.io", "Demo Viewer", "viewer", "DEMO_VIEWER_PASSWORD"),
 ]
 
-# Containment/closure lag, keyed by severity — used to derive contained_at/closed_at
+# Containment/closure lag, keyed by severity - used to derive contained_at/closed_at
 # from opened_at so timestamps read as plausible rather than instantaneous.
 _CONTAINMENT_HOURS = {"sev1": 4, "sev2": 8, "sev3": 16, "sev4": 30}
 _CLOSURE_HOURS = {"sev1": 24, "sev2": 48, "sev3": 72, "sev4": 120}
@@ -54,7 +54,7 @@ INCIDENT_SCENARIOS = [
     # ── phishing ─────────────────────────────────────────────────────────────
     {
         "template_slug": "phishing", "status": "open", "severity": "sev1",
-        "title": "Executive spear-phishing targeting CFO — fraudulent wire request",
+        "title": "Executive spear-phishing targeting CFO - fraudulent wire request",
         "summary": "A spoofed email impersonating the CEO asked the CFO to authorize an urgent wire transfer. "
                     "The transfer was not made; the sender domain and email are under investigation.",
         "attack_vector": ["email", "social-engineering"], "affected_users": 1, "days_ago": 1,
@@ -376,7 +376,7 @@ async def seed_demo() -> None:
         missing = {s["template_slug"] for s in INCIDENT_SCENARIOS} - set(templates)
         if missing:
             raise RuntimeError(
-                f"seed_demo: system incident templates {missing} not found — run seed.py first."
+                f"seed_demo: system incident templates {missing} not found - run seed.py first."
             )
 
         for scenario in INCIDENT_SCENARIOS:

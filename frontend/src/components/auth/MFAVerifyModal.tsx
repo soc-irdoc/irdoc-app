@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { mfaApi } from '@/lib/apiClient'
 import { useAuthStore } from '@/stores/authStore'
+import { FaLock } from 'react-icons/fa6'
 
 interface Props {
   challengeToken: string
@@ -67,7 +68,7 @@ export function MFAVerifyModal({ challengeToken, onSuccess }: Props) {
       >
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-            <img src="/icons/locked_with_key_color.svg" width={28} height={28} alt="" aria-hidden="true" />
+            <FaLock size={28} aria-hidden="true" />
           </div>
           <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
             Two-Factor Authentication

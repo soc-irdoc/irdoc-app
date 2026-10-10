@@ -24,5 +24,5 @@ class APIKeyOut(BaseModel):
 
 
 class APIKeyCreated(APIKeyOut):
-    """Returned only once at creation — contains the full raw key."""
+    """Returned only once at creation - contains the full raw key."""
     raw_key: str

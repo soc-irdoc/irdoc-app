@@ -1,5 +1,5 @@
 """
-Email service — console (dev) and SMTP (prod).
+Email service - console (dev) and SMTP (prod).
 Falls back to console if no SMTP config is found in the database or is_enabled=False.
 """
 import logging

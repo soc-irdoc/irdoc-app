@@ -1,3 +1,9 @@
+import type { IconType } from 'react-icons'
+import {
+  FaAt, FaBox, FaCloud, FaComputer, FaCubes, FaDatabase, FaDesktop, FaEthernet, FaFileLines,
+  FaFolder, FaLaptop, FaLink, FaMobileScreenButton, FaServer, FaUser, FaUserGear,
+} from 'react-icons/fa6'
+
 export type AssetType =
   | 'host'
   | 'server'
@@ -59,23 +65,23 @@ export interface AssetLink {
 
 // ── Display helpers ───────────────────────────────────────────────────────────
 
-export const ASSET_TYPE_ICONS: Record<AssetType, string> = {
-  host: 'desktop_computer_color.svg',
-  server: 'file_cabinet_color.svg',
-  workstation: 'laptop_color.svg',
-  laptop: 'laptop_color.svg',
-  mobile: 'mobile_phone_color.svg',
-  network_device: 'globe_with_meridians_color.svg',
-  account: 'bust_in_silhouette_color.svg',
-  service_account: 'robot_color.svg',
-  file: 'page_facing_up_color.svg',
-  directory: 'file_folder_color.svg',
-  url: 'link_color.svg',
-  email_address: 'e-mail_color.svg',
-  database: 'card_file_box_color.svg',
-  application: 'gear_color.svg',
-  cloud_resource: 'cloud_color.svg',
-  other: 'package_color.svg',
+export const ASSET_TYPE_ICONS: Record<AssetType, IconType> = {
+  host: FaDesktop,
+  server: FaServer,
+  workstation: FaComputer,
+  laptop: FaLaptop,
+  mobile: FaMobileScreenButton,
+  network_device: FaEthernet,
+  account: FaUser,
+  service_account: FaUserGear,
+  file: FaFileLines,
+  directory: FaFolder,
+  url: FaLink,
+  email_address: FaAt,
+  database: FaDatabase,
+  application: FaCubes,
+  cloud_resource: FaCloud,
+  other: FaBox,
 }
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {

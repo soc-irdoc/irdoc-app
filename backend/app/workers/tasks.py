@@ -1,7 +1,7 @@
 """
 Celery tasks.
 Phase 1: verify_file_hash and auto_detect_iocs_from_entry are functional.
-Phase 3: generate_report, generate_ai_summary, generate_ai_recommendations — fully implemented.
+Phase 3: generate_report, generate_ai_summary, generate_ai_recommendations - fully implemented.
 Phase 4: enrich_ioc, sync_to_sharepoint, send_notification.
 """
 import asyncio
@@ -19,7 +19,7 @@ def run_async(coro):
     asyncio.run() creates a fresh event loop, runs the coroutine, and waits for
     all pending callbacks before closing the loop.  The worker engine pool is
     disposed *inside* the coroutine (while the loop is still active) so asyncpg
-    can properly close connections — calling dispose() outside the loop left stale
+    can properly close connections - calling dispose() outside the loop left stale
     connections attached to the old loop, causing the next task to fail with
     "Future attached to a different loop".
     """
@@ -77,7 +77,7 @@ def verify_file_hash(self, attachment_id: str):
 def auto_detect_iocs_from_entry(self, entry_id: str):
     """
     Scan timeline entry description for IOC patterns.
-    Logs detections — surface to UI in a future iteration.
+    Logs detections - surface to UI in a future iteration.
     """
     async def _run():
         from sqlalchemy import select
@@ -95,7 +95,7 @@ def auto_detect_iocs_from_entry(self, entry_id: str):
             detected = auto_detect(entry.description)
             if detected:
                 logger.info(
-                    "auto_detect: entry %s — found %d IOC(s): %s",
+                    "auto_detect: entry %s - found %d IOC(s): %s",
                     entry_id,
                     len(detected),
                     [d.value for d in detected[:5]],
@@ -243,7 +243,7 @@ def generate_report(self, report_id: str, include_ai: bool = False, org_id: str 
                 await db.commit()
 
                 logger.info(
-                    "generate_report: %s completed — %d bytes at %s",
+                    "generate_report: %s completed - %d bytes at %s",
                     report_id, len(file_bytes), storage_path,
                 )
 
@@ -430,7 +430,7 @@ def enrich_ioc(self, ioc_id: str):
     """
     async def _run():
         # Ensure all plugins are loaded
-        import app.plugins  # noqa: F401 — triggers auto-registration
+        import app.plugins  # noqa: F401 - triggers auto-registration
         from app.services.enrichment_service import enrich_ioc as do_enrich
         from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
@@ -471,7 +471,7 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
 
         from sqlalchemy import select
 
-        import app.plugins  # noqa: F401 — loads SharePointPlugin
+        import app.plugins  # noqa: F401 - loads SharePointPlugin
         from app.models.report import SyncPolicy
         from app.plugins.registry import PLUGINS
         from app.services.integration_service import decrypt_config
@@ -510,7 +510,7 @@ def sync_to_sharepoint(self, incident_id: str, policy_id: str):
             if not sp_plugin:
                 raise RuntimeError("SharePoint plugin not loaded")
 
-            # payload.incident is guaranteed non-None — build_report_payload raises on missing incident
+            # payload.incident is guaranteed non-None - build_report_payload raises on missing incident
             sharepoint_url = await sp_plugin().push_report(
                 report_bytes, filename, {**config, "_incident_ref": payload.incident.incident_ref}
             )
@@ -585,7 +585,7 @@ def push_report_to_sharepoint(self, report_id: str, org_id: str):
     async def _run():
         from sqlalchemy import select
 
-        import app.plugins  # noqa: F401 — loads SharePointPlugin
+        import app.plugins  # noqa: F401 - loads SharePointPlugin
         from app.models.incident import Incident
         from app.models.report import Report
         from app.models.template import ReportTemplate
@@ -597,7 +597,7 @@ def push_report_to_sharepoint(self, report_id: str, org_id: str):
         async with AsyncSessionLocal() as db:
             report = (await db.execute(select(Report).where(Report.id == report_id))).scalar_one_or_none()
             if not report or report.status != "ready" or not report.storage_path:
-                logger.info("push_report_to_sharepoint: skipping %s — not ready or no storage_path", report_id)
+                logger.info("push_report_to_sharepoint: skipping %s - not ready or no storage_path", report_id)
                 return
 
             sp_record = await get_integration(org_id, "sharepoint", db)

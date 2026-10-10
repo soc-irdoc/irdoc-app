@@ -9,6 +9,7 @@ import { SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS, STATUS_LABELS, type Up
 import { formatDateTime, formatRelative } from '@/lib/utils'
 import apiClient from '@/lib/apiClient'
 import { getSocket } from '@/lib/websocket'
+import { FaChartColumn, FaClipboardList, FaFilePen, FaLightbulb, FaNoteSticky, FaRobot, FaSquareCheck } from 'react-icons/fa6'
 
 interface SummaryPageProps {
   incidentId: string
@@ -274,7 +275,7 @@ function AISection({ incidentId, label, content, endpoint, wsEvent, disabled = f
         }}
       >
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <img src="/icons/robot_color.svg" width={20} height={20} alt="" aria-hidden="true" />
+          <FaRobot size={20} aria-hidden="true" />
           {label}
         </h3>
         <button
@@ -348,7 +349,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
           gap: 10,
         }}
       >
-        <img src="/icons/bar_chart_color.svg" width={24} height={24} alt="" aria-hidden="true" /> Incident Summary
+        <FaChartColumn size={24} aria-hidden="true" /> Incident Summary
       </h2>
 
       {/* Severity + Status */}
@@ -385,7 +386,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
             gap: 8,
           }}
         >
-          <img src="/icons/clipboard_color.svg" width={20} height={20} alt="" aria-hidden="true" /> Incident Details
+          <FaClipboardList size={20} aria-hidden="true" /> Incident Details
         </h3>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <tbody>
@@ -428,7 +429,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Executive Summary */}
       <RichTextSection
-        title={<><img src="/icons/memo_color.svg" width={20} height={20} alt="" aria-hidden="true" />Executive Summary</>}
+        title={<><FaFilePen size={20} aria-hidden="true" />Executive Summary</>}
         fieldKey="executive_summary"
         content={incident.executive_summary ?? ''}
         incidentId={incidentId}
@@ -437,7 +438,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Notes */}
       <RichTextSection
-        title={<><img src="/icons/spiral_notepad_color.svg" width={20} height={20} alt="" aria-hidden="true" />Notes</>}
+        title={<><FaNoteSticky size={20} aria-hidden="true" />Notes</>}
         fieldKey="notes"
         content={incident.notes ?? ''}
         incidentId={incidentId}
@@ -446,7 +447,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Lessons Learned */}
       <RichTextSection
-        title={<><img src="/icons/light_bulb_color.svg" width={20} height={20} alt="" aria-hidden="true" />Lessons Learned</>}
+        title={<><FaLightbulb size={20} aria-hidden="true" />Lessons Learned</>}
         fieldKey="lessons_learned"
         content={incident.lessons_learned ?? ''}
         incidentId={incidentId}
@@ -455,7 +456,7 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
 
       {/* Actions To Do */}
       <RichTextSection
-        title={<><img src="/icons/check_mark_button_color.svg" width={20} height={20} alt="" aria-hidden="true" />Actions To Do</>}
+        title={<><FaSquareCheck size={20} aria-hidden="true" />Actions To Do</>}
         fieldKey="actions_todo"
         content={incident.actions_todo ?? ''}
         incidentId={incidentId}

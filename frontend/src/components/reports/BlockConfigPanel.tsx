@@ -144,7 +144,7 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
             value={field}
             onChange={(e) => onChange({ field: e.target.value })}
           >
-            <option value="">— Select field —</option>
+            <option value="">- Select field -</option>
             {unsupported && <option value={field}>Unsupported field ({field})</option>}
             {SECTION_FIELD_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -407,7 +407,7 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
     )
   }
 
-  // divider, page_break — no config
+  // divider, page_break - no config
   return (
     <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
       No configuration for this block type.

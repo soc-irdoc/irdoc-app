@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     VERSION: str = "dev"
     # Baked into release images at build time (Dockerfile ARG, from the repo's
     # VERSION file). It wins over VERSION, which compose sets to the image
-    # *tag* — usually "latest", which says nothing about what is running.
+    # *tag* - usually "latest", which says nothing about what is running.
     APP_VERSION: str = ""
 
     # Database
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     # MSSP
     MSSP_MODE: bool = False
 
-    # CORS — defaults to BASE_URL; override for multi-origin setups.
+    # CORS - defaults to BASE_URL; override for multi-origin setups.
     # NoDecode: pydantic-settings otherwise tries to JSON-parse env values for
     # list-typed fields before our comma-splitting validator below ever runs,
     # which raises SettingsError on a plain "a,b" env var.
@@ -86,7 +86,7 @@ class Settings(BaseSettings):
             return self.CORS_ORIGINS
         # No explicit override: allow BASE_URL plus the same host reached via
         # localhost/127.0.0.1 on the same port. Analysts routinely test a fresh
-        # install through localhost before BASE_URL's hostname/DNS is wired up —
+        # install through localhost before BASE_URL's hostname/DNS is wired up -
         # WebSocket handshakes always send Origin (unlike same-origin polling
         # GETs), so without this the socket silently 403s while the rest of the
         # app works fine.

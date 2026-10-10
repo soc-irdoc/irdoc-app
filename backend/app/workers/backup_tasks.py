@@ -16,7 +16,7 @@ def run_async(coro):
     asyncio.run() creates a fresh event loop, runs the coroutine, and waits for
     all pending callbacks before closing the loop.  The engine pool is disposed
     *inside* the coroutine (while the loop is still active) so asyncpg can
-    properly close connections — calling dispose() outside the loop left stale
+    properly close connections - calling dispose() outside the loop left stale
     connections attached to the old loop, causing the next task to fail with
     "Future attached to a different loop".
     """
@@ -65,7 +65,7 @@ def check_and_run_backup(self):
                 )
                 record = await run_backup(db)
                 logger.info(
-                    "check_and_run_backup: backup complete — %s (%d bytes)",
+                    "check_and_run_backup: backup complete - %s (%d bytes)",
                     record.filename,
                     record.size_bytes,
                 )

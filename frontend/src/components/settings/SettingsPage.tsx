@@ -10,13 +10,15 @@ import { getInitials } from '@/lib/utils'
 import { mfaApi } from '@/lib/apiClient'
 import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
 import { VersionBadge } from '@/components/common/VersionBadge'
+import type { IconType } from 'react-icons'
+import { FaCheck, FaCircleInfo, FaLock, FaMoon, FaPalette, FaSun, FaTriangleExclamation, FaUser } from 'react-icons/fa6'
 
 function SettingsSection({
-  icon,
+  icon: SectionIcon,
   title,
   children,
 }: {
-  icon: string
+  icon: IconType
   title: string
   children: React.ReactNode
 }) {
@@ -42,7 +44,7 @@ function SettingsSection({
           gap: 8,
         }}
       >
-        <img src={`/icons/${icon}`} width={20} height={20} alt="" aria-hidden="true" /> {title}
+        <SectionIcon size={16} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} /> {title}
       </div>
       {children}
     </div>
@@ -150,11 +152,11 @@ export function SettingsPage() {
         Settings
       </div>
       {/* Security */}
-      <SettingsSection icon="locked_with_key_color.svg" title="Two-Factor Authentication">
+      <SettingsSection icon={FaLock} title="Two-Factor Authentication">
         {user?.mfa_enabled ? (
           <>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span className="chip chip-green" style={{ fontSize: 11 }}>Enabled ✓</span>
+              <span className="chip chip-green" style={{ fontSize: 11 }}>Enabled <FaCheck size={9} aria-hidden="true" /></span>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {user.backup_codes_remaining} backup code{user.backup_codes_remaining !== 1 ? 's' : ''} remaining
               </span>
@@ -181,7 +183,7 @@ export function SettingsPage() {
       </SettingsSection>
 
       {/* Profile */}
-      <SettingsSection icon="bust_in_silhouette_color.svg" title="Profile">
+      <SettingsSection icon={FaUser} title="Profile">
         <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 20 }}>
           <div
             style={{
@@ -267,7 +269,7 @@ export function SettingsPage() {
       </SettingsSection>
 
       {/* Appearance */}
-      <SettingsSection icon="artist_palette_color.svg" title="Appearance">
+      <SettingsSection icon={FaPalette} title="Appearance">
         <SettingsRow
           title="Theme"
           description="Switch between dark and light mode"
@@ -275,8 +277,8 @@ export function SettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}>
               {theme === 'dark'
-                ? <><img src="/icons/crescent_moon_color.svg" width={14} height={14} alt="" aria-hidden="true" />Dark</>
-                : <><img src="/icons/sun_color.svg" width={14} height={14} alt="" aria-hidden="true" />Light</>
+                ? <><FaMoon size={14} aria-hidden="true" />Dark</>
+                : <><FaSun size={14} aria-hidden="true" />Light</>
               }
             </span>
             <ToggleSwitch
@@ -292,10 +294,10 @@ export function SettingsPage() {
       {user?.role === 'admin' && <APIKeysSection />}
 
       {/* About */}
-      <SettingsSection icon="information_color.svg" title="About IRDoc">
+      <SettingsSection icon={FaCircleInfo} title="About IRDoc">
         <div style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-muted)' }}>
           <p>
-            <strong style={{ color: 'var(--text-primary)' }}>IRDoc</strong> — Open-Core Incident
+            <strong style={{ color: 'var(--text-primary)' }}>IRDoc</strong> - Open-Core Incident
             Response Documentation Platform
           </p>
           <p style={{ marginTop: 8 }}>
@@ -339,7 +341,7 @@ export function SettingsPage() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)' }}>
           <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 28, maxWidth: 400, width: '90%' }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, color: 'var(--text-primary)' }}>New backup codes</div>
-            <p style={{ color: 'var(--yellow)', fontSize: 12, marginBottom: 14 }}>⚠ Your old codes are now invalid. Save these somewhere safe.</p>
+            <p style={{ color: 'var(--yellow)', fontSize: 12, marginBottom: 14 }}><FaTriangleExclamation size={12} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Your old codes are now invalid. Save these somewhere safe.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 16 }}>
               {newBackupCodes.map((c) => (
                 <div key={c} style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '4px 8px', background: 'var(--bg-elevated)', borderRadius: 4, color: 'var(--text-secondary)' }}>{c}</div>

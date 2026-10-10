@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from functools import partial
 
-# Azure storage account names are 3-24 lowercase letters/digits — enforcing
+# Azure storage account names are 3-24 lowercase letters/digits - enforcing
 # this before interpolating into a hostname rules out SSRF via a crafted
 # account_name (e.g. "evil.com#") regardless of who can reach this config.
 _ACCOUNT_NAME_RE = re.compile(r"^[a-z0-9]{3,24}$")

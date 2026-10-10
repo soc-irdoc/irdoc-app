@@ -60,3 +60,5 @@ IRDoc's core is free and will stay that way. If your organization relies on it a
 ## License
 
 **Core** (this repository): [AGPL-3.0](LICENSE)
+
+**Third-party icons:** UI icons are from [Font Awesome Free](https://fontawesome.com/license/free) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) and [Simple Icons](https://simpleicons.org/) ([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)), via [react-icons](https://react-icons.github.io/react-icons/) (MIT). Integration logos (VirusTotal, Microsoft SharePoint, Shodan, AbuseIPDB, Microsoft, Slack) are trademarks of their respective owners and are shown only to identify the matching integration.

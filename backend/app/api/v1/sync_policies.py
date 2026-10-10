@@ -1,5 +1,5 @@
 """
-Sync policy endpoints — Phase 3.
+Sync policy endpoints - Phase 3.
 
 GET    /incidents/{id}/sync-policies            → list
 POST   /incidents/{id}/sync-policies            → create (premium)

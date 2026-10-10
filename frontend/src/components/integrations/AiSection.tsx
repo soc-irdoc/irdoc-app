@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAiConfig, useSaveAiConfig, useTestAiConfig } from '@/hooks/useAiConfig'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
+import { FaCheck, FaChevronDown, FaChevronUp, FaPlugCircleCheck, FaRobot, FaXmark } from 'react-icons/fa6'
 
 const subLabel = (text: string, optional = false) => (
   <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 6, display: 'block' }}>
@@ -64,7 +65,7 @@ export function AiSection() {
 
   const statusColor = config?.is_enabled ? 'var(--green)' : 'var(--text-muted)'
   const statusText = config?.is_enabled
-    ? `Enabled — ${config.model_name} via ${config.ollama_base_url}`
+    ? `Enabled - ${config.model_name} via ${config.ollama_base_url}`
     : 'Disabled'
 
   async function handleSave(e: React.FormEvent) {
@@ -126,11 +127,11 @@ export function AiSection() {
         {/* Header */}
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexShrink: 0 }}>
-            <img src="/icons/robot_color.svg" width={20} height={20} alt="" aria-hidden="true" />
+            <FaRobot size={20} aria-hidden="true" />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Local AI (Ollama)</p>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Air-gapped, evidence-grounded report generation — no cloud required</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Air-gapped, evidence-grounded report generation - no cloud required</p>
           </div>
           <ToggleSwitch
             checked={form.isEnabled}
@@ -151,7 +152,7 @@ export function AiSection() {
             style={{ fontSize: 11, padding: '2px 10px' }}
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? 'Collapse ▲' : 'Configure ▼'}
+            {expanded ? <>Collapse <FaChevronUp size={10} aria-hidden="true" /></> : <>Configure <FaChevronDown size={10} aria-hidden="true" /></>}
           </button>
         </div>
 
@@ -197,7 +198,7 @@ export function AiSection() {
                       disabled={testConfig.isPending || !form.ollamaBaseUrl}
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
-                      {testConfig.isPending ? 'Testing…' : <><img src="/icons/electric_plug_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Test Connection</>}
+                      {testConfig.isPending ? 'Testing…' : <><FaPlugCircleCheck size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Test Connection</>}
                     </button>
 
                     {testResult && (
@@ -212,8 +213,8 @@ export function AiSection() {
                         lineHeight: 1.6,
                       }}>
                         {testResult.success
-                          ? `✓ Connected — model "${form.modelName}" is available`
-                          : `✗ ${testResult.error}`}
+                          ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Connected - model "{form.modelName}" is available</>
+                          : <><FaXmark size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />{testResult.error}</>}
                         {!testResult.success && testResult.error?.includes('ollama pull') && (
                           <div style={{ marginTop: 6, background: 'var(--bg-elevated)', borderRadius: 4, padding: '4px 8px', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-primary)', wordBreak: 'break-all' }}>
                             {testResult.error?.match(/docker compose.*ollama pull .+/)?.[0] ?? `ollama pull ${form.modelName}`}
@@ -269,7 +270,7 @@ export function AiSection() {
                     lineHeight: 1.6,
                   }}>
                     <strong style={{ color: 'var(--text-primary)' }}>Version history:</strong> Each AI generation creates a new versioned report.
-                    Previous versions are never overwritten — all are preserved for audit and traceability.
+                    Previous versions are never overwritten - all are preserved for audit and traceability.
                     New reports are delta-aware: the AI reviews the previous narrative before writing the next one.
                   </div>
                 </div>

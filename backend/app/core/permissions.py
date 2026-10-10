@@ -3,7 +3,7 @@ RBAC permission system.
 
 Roles (ascending privilege): viewer < analyst < senior_analyst < admin
 
-Permission boundaries are enforced server-side only — never rely on frontend hiding.
+Permission boundaries are enforced server-side only - never rely on frontend hiding.
 """
 from fastapi import Depends, HTTPException, status
 

@@ -1,4 +1,5 @@
 import type { EntryType } from '@/types/timeline'
+import { FaDownload } from 'react-icons/fa6'
 
 const FILTER_OPTIONS: Array<{ value: EntryType | 'all'; label: string }> = [
   { value: 'all',         label: 'All' },
@@ -43,7 +44,7 @@ export function TimelineFilters({ active, onChange, onExportCSV }: TimelineFilte
         onClick={onExportCSV}
         title="Export timeline as CSV"
       >
-        ↓ Export CSV
+        <FaDownload size={11} aria-hidden="true" /> Export CSV
       </button>
     </div>
   )

@@ -1,5 +1,5 @@
 """
-Report service — PDF-only pipeline.
+Report service - PDF-only pipeline.
 """
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ async def enqueue_report(
         incident_id=incident_id,
         report_template_id=request.report_template_id,
         pdf_template_id=request.pdf_template_id if not request.report_template_id else None,
-        report_type="pdf",          # always "pdf" — the format discriminator
+        report_type="pdf",          # always "pdf" - the format discriminator
         destination=None,
         classification=request.classification,
         generated_by=generated_by,

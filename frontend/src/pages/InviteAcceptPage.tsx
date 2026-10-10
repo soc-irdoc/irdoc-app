@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/common/Button'
 import apiClient from '@/lib/apiClient'
+import { BrandLogo } from '@/components/common/BrandLogo'
+import { FaLinkSlash } from 'react-icons/fa6'
 
 interface InviteInfo {
   email: string
@@ -81,24 +83,7 @@ export default function InviteAcceptPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              background: 'var(--accent)',
-              borderRadius: 14,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: 18,
-              color: '#fff',
-              margin: '0 auto 16px',
-              letterSpacing: '-0.5px',
-            }}
-          >
-            IR
-          </div>
+          <BrandLogo size={72} style={{ display: 'block', margin: '0 auto 16px' }} />
           <h1
             style={{
               fontFamily: 'Syne, sans-serif',
@@ -135,7 +120,7 @@ export default function InviteAcceptPage() {
             </div>
           ) : invalid ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ marginBottom: 12 }}><img src="/icons/link_color.svg" width={32} height={32} alt="" aria-hidden="true" /></div>
+              <div style={{ marginBottom: 12 }}><FaLinkSlash size={32} aria-hidden="true" /></div>
               <h2
                 style={{
                   fontSize: 16,
@@ -289,7 +274,7 @@ export default function InviteAcceptPage() {
             color: 'var(--text-muted)',
           }}
         >
-          IRDoc — Incident Response Documentation Platform
+          IRDoc - Incident Response Documentation Platform
         </p>
       </div>
     </div>

@@ -41,7 +41,7 @@ export function scheduleTokenRefresh(token: string) {
   if (warnAt > now) {
     expiryWarningTimer = setTimeout(() => {
       useUIStore.getState().addToast(
-        'Your session expires soon. Save your work — you may be asked to log in again.',
+        'Your session expires soon. Save your work - you may be asked to log in again.',
         'info',
       )
     }, warnAt - now)
@@ -51,7 +51,7 @@ export function scheduleTokenRefresh(token: string) {
     proactiveRefreshTimer = setTimeout(async () => {
       try {
         const res = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
-        // Cancel the expiry warning — refresh succeeded, no warning needed
+        // Cancel the expiry warning - refresh succeeded, no warning needed
         if (expiryWarningTimer) {
           clearTimeout(expiryWarningTimer)
           expiryWarningTimer = null
@@ -60,7 +60,7 @@ export function scheduleTokenRefresh(token: string) {
         useAuthStore.getState().setToken(newToken)
         scheduleTokenRefresh(newToken)
       } catch {
-        // Refresh failed silently — the next API call will handle the 401
+        // Refresh failed silently - the next API call will handle the 401
       }
     }, refreshAt - now)
   }
@@ -89,7 +89,7 @@ function rejectQueue(err: unknown) {
   refreshQueue = []
 }
 
-// 401 interceptor — attempt token refresh, then retry
+// 401 interceptor - attempt token refresh, then retry
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -97,7 +97,7 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry) {
       // MFA action endpoints: 401 means wrong code, not an expired session.
-      // Let the calling component handle the error directly — no redirect or reload.
+      // Let the calling component handle the error directly - no redirect or reload.
       const mfaActionUrls = ['/auth/mfa/verify', '/auth/mfa/setup/complete']
       if (mfaActionUrls.some((u) => original.url?.includes(u))) {
         return Promise.reject(error)

@@ -1,11 +1,14 @@
+import type { IconType } from 'react-icons'
+import { FaInbox } from 'react-icons/fa6'
+
 interface EmptyStateProps {
-  icon?: string
+  icon?: IconType
   title: string
   description?: string
   action?: React.ReactNode
 }
 
-export function EmptyState({ icon = 'open_mailbox_with_lowered_flag_color.svg', title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon: EmptyIcon = FaInbox, title, description, action }: EmptyStateProps) {
   return (
     <div className="animate-fade-in flex flex-col items-center justify-center py-16 gap-5 text-center">
       <div style={{
@@ -18,10 +21,7 @@ export function EmptyState({ icon = 'open_mailbox_with_lowered_flag_color.svg', 
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        {icon.endsWith('.svg')
-          ? <img src={`/icons/${icon}`} width={48} height={48} alt="" aria-hidden="true" />
-          : <span style={{ fontSize: 32 }}>{icon}</span>
-        }
+        <EmptyIcon size={30} aria-hidden="true" style={{ color: 'var(--text-muted)' }} />
       </div>
       <div>
         <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{title}</p>

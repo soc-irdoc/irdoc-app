@@ -1,11 +1,11 @@
 """
 MFA endpoints.
 
-GET    /auth/mfa/setup                    — Generate a fresh TOTP secret (mfa_setup OR access token)
-POST   /auth/mfa/setup/complete           — Verify code, enable MFA, return real tokens (mfa_setup OR access token)
-POST   /auth/mfa/verify                   — Complete MFA challenge login (mfa_challenge token)
-POST   /auth/mfa/backup-codes/regenerate  — Regenerate backup codes (access token)
-DELETE /auth/mfa/disable                  — Disable MFA (access token)
+GET    /auth/mfa/setup                    - Generate a fresh TOTP secret (mfa_setup OR access token)
+POST   /auth/mfa/setup/complete           - Verify code, enable MFA, return real tokens (mfa_setup OR access token)
+POST   /auth/mfa/verify                   - Complete MFA challenge login (mfa_challenge token)
+POST   /auth/mfa/backup-codes/regenerate  - Regenerate backup codes (access token)
+DELETE /auth/mfa/disable                  - Disable MFA (access token)
 """
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING

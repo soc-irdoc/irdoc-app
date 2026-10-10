@@ -27,7 +27,7 @@ export function getSocket(): Socket {
     })
 
     socket.on('disconnect', () => {
-      // Only show the banner after 4 s — transient reconnects stay invisible
+      // Only show the banner after 4 s - transient reconnects stay invisible
       disconnectTimer = setTimeout(() => {
         useUIStore.getState().setWsConnected(false)
       }, 4000)

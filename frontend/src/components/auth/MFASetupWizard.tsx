@@ -3,6 +3,8 @@ import { QRCodeSVG } from 'qrcode.react'
 import { mfaApi } from '@/lib/apiClient'
 import { useAuthStore } from '@/stores/authStore'
 import type { User } from '@/types/user'
+import { BrandLogo } from '@/components/common/BrandLogo'
+import { FaCheck, FaMobileScreenButton } from 'react-icons/fa6'
 
 interface Props {
   setupToken: string  // mfa_setup JWT for forced enrollment; empty string for voluntary (uses access token)
@@ -48,7 +50,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
     } catch (err: unknown) {
       setCodeError(
         (err as { response?: { data?: { error?: { message?: string } } } })
-          .response?.data?.error?.message ?? 'Invalid code — check your app and try again.',
+          .response?.data?.error?.message ?? 'Invalid code - check your app and try again.',
       )
     } finally {
       setLoading(false)
@@ -105,7 +107,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
       {step === 1 && (
         <div style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <img src="/icons/mobile_phone_color.svg" width={32} height={32} alt="" aria-hidden="true" />
+            <FaMobileScreenButton size={32} aria-hidden="true" />
           </div>
           <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: 'var(--text-primary)' }}>
             Install an authenticator app
@@ -241,7 +243,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
             onClick={handleEnterApp}
             disabled={!savedConfirmed}
           >
-            Enable Two-Factor Authentication ✓
+            Enable Two-Factor Authentication <FaCheck size={12} aria-hidden="true" />
           </button>
         </div>
       )}
@@ -280,13 +282,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
         borderRadius: 12, padding: 40, width: '90%', maxWidth: 480,
       }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{
-            width: 44, height: 44,
-            background: 'linear-gradient(135deg, var(--accent), #ea580c)',
-            borderRadius: 10, margin: '0 auto 10px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22,
-          }}><img src="/icons/shield_color.svg" width={32} height={32} alt="" aria-hidden="true" /></div>
+          <BrandLogo size={56} style={{ display: 'block', margin: '0 auto 10px' }} />
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>IRDoc</div>
           <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>
             Two-factor authentication setup required

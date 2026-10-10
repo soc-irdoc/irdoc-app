@@ -1,5 +1,5 @@
 """
-AI configuration endpoints — get, upsert, test Ollama connection.
+AI configuration endpoints - get, upsert, test Ollama connection.
 """
 import logging
 

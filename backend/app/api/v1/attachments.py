@@ -65,7 +65,7 @@ async def delete_attachment(
 
 @router.get("/files/{token}")
 async def serve_file(token: str):
-    """Serve files via signed token — never directly from web root."""
+    """Serve files via signed token - never directly from web root."""
     path = verify_file_token(token)
     if not path:
         from fastapi import HTTPException, status

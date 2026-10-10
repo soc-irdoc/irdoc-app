@@ -11,7 +11,7 @@ from app.core.database import Base
 class IncidentTemplate(Base):
     __tablename__ = "incident_templates"
     __table_args__ = (
-        # One row per system template — see migration 023 (#93).
+        # One row per system template - see migration 023 (#93).
         Index(
             "uq_incident_templates_system_slug", "slug", unique=True,
             postgresql_where=text("is_system AND org_id IS NULL"),
@@ -35,7 +35,7 @@ class IncidentTemplate(Base):
 class ReportTemplate(Base):
     __tablename__ = "report_templates"
     __table_args__ = (
-        # One row per system template — see migration 023 (#93).
+        # One row per system template - see migration 023 (#93).
         Index(
             "uq_report_templates_system_name", "name", unique=True,
             postgresql_where=text("is_system AND org_id IS NULL"),

@@ -61,6 +61,20 @@ def validate_ollama_url(url: str) -> None:
             )
 
 
+# Applied to every provider call: IRDoc text uses a plain hyphen, never em/en dashes.
+_DASH_RULE = "Use a plain hyphen (-) for dashes. Never use em dashes or en dashes."
+
+
+def with_style_rules(system: str) -> str:
+    """Append IRDoc's house style rules to a system prompt."""
+    return f"{system}\n\n{_DASH_RULE}"
+
+
+def normalize_dashes(text: str) -> str:
+    """Replace em and en dashes in model output with a plain hyphen."""
+    return text.replace("\u2014", "-").replace("\u2013", "-")
+
+
 @runtime_checkable
 class AIProvider(Protocol):
     async def complete(self, system: str, user: str, max_tokens: int = 400) -> str: ...
@@ -76,10 +90,10 @@ class AnthropicProvider:
         response = await client.messages.create(
             model=settings.AI_MODEL,
             max_tokens=max_tokens,
-            system=system,
+            system=with_style_rules(system),
             messages=[{"role": "user", "content": user}],
         )
-        return response.content[0].text
+        return normalize_dashes(response.content[0].text)
 
 
 class OpenAIProvider:
@@ -91,11 +105,11 @@ class OpenAIProvider:
             model=settings.AI_MODEL,
             max_tokens=max_tokens,
             messages=[
-                {"role": "system", "content": system},
+                {"role": "system", "content": with_style_rules(system)},
                 {"role": "user", "content": user},
             ],
         )
-        return response.choices[0].message.content or ""
+        return normalize_dashes(response.choices[0].message.content or "")
 
 
 class OllamaProvider:
@@ -113,14 +127,14 @@ class OllamaProvider:
 
         payload = {
             "model": self.model,
-            "prompt": f"{system}\n\n{user}",
+            "prompt": f"{with_style_rules(system)}\n\n{user}",
             "stream": False,
             "options": {"num_predict": max_tokens},
         }
         async with httpx.AsyncClient(timeout=300) as client:
             response = await client.post(f"{self.base_url}/api/generate", json=payload)
             response.raise_for_status()
-            return response.json().get("response", "")
+            return normalize_dashes(response.json().get("response", ""))
 
 
 def get_ai_provider(ai_config: "AiConfig | None" = None) -> AIProvider:
@@ -153,7 +167,7 @@ _AUDIENCE_SYSTEM: dict[str, str] = {
         "You are a senior incident response analyst writing a concise executive summary "
         "for a non-technical management audience. Focus on: what happened, what was affected, "
         "what was done, and current status. Write in 3-5 clear sentences. "
-        "Use plain language — no technical jargon. Past tense for resolved items. "
+        "Use plain language - no technical jargon. Past tense for resolved items. "
         "Do not use bullet points. "
         "IMPORTANT: Use ONLY the evidence provided below. Do not introduce new facts. "
         "Do not speculate beyond what the data supports. "
@@ -165,7 +179,7 @@ _AUDIENCE_SYSTEM: dict[str, str] = {
         "You are a senior technical incident response analyst writing a detailed technical "
         "analysis for your IR team. Focus on: attack vectors, indicators of compromise (IOC types "
         "and values), affected systems, TTPs observed, technical timeline, and remediation steps. "
-        "Be specific — reference IOC values, entry types, and technical findings from the data. "
+        "Be specific - reference IOC values, entry types, and technical findings from the data. "
         "Use numbered sections if helpful. Past tense for resolved items. "
         "IMPORTANT: Use ONLY the evidence provided below. Do not introduce new facts. "
         "Do not speculate beyond what the data supports. "
@@ -178,7 +192,7 @@ _AUDIENCE_SYSTEM: dict[str, str] = {
         "the chain of evidence, who did what and when, affected data or systems, and any regulatory "
         "implications suggested by the evidence. "
         "Write in plain, precise language suitable for legal proceedings. Avoid technical jargon. "
-        "Be especially conservative with speculation — every claim must be grounded in the provided "
+        "Be especially conservative with speculation - every claim must be grounded in the provided "
         "evidence. Use explicit hedges: 'Based on currently available evidence...', "
         "'It has not yet been determined whether...'. "
         "IMPORTANT: Use ONLY the evidence provided below. Do not introduce new facts."
@@ -206,7 +220,7 @@ def build_executive_summary_prompt(
     ioc_active = payload.iocs_by_status.get("active", [])
     ioc_note = f"{payload.ioc_count} total ({len(ioc_active)} active)"
     if payload.ioc_count > 50:
-        ioc_note += f" — showing first 50 of {payload.ioc_count}"
+        ioc_note += f" - showing first 50 of {payload.ioc_count}"
 
     user = (
         f"Incident: {payload.incident.title}\n"
@@ -232,7 +246,7 @@ def build_delta_report_prompt(
     Builds a delta-aware prompt for versioned AI report generation.
 
     If previous_narrative is None: full first-generation prompt (v1).
-    If previous_narrative is provided: delta prompt — AI is instructed to
+    If previous_narrative is provided: delta prompt - AI is instructed to
     keep stable sections unchanged and only update what new evidence requires.
     audience maps to ReportTemplate.destination (management/analyst/legal/custom).
     """
@@ -245,7 +259,7 @@ def build_delta_report_prompt(
         f"{base_persona}\n\n"
         "You are now UPDATING an existing report. You will receive the PREVIOUS report narrative "
         "and the CURRENT incident data. Your task:\n"
-        "1. Keep all sections that have NOT changed EXACTLY as they were — same wording, same structure.\n"
+        "1. Keep all sections that have NOT changed EXACTLY as they were - same wording, same structure.\n"
         "2. Update ONLY the sections affected by new evidence, timeline events, or status changes.\n"
         "3. If any statement in the previous report now contradicts the current evidence, "
         "flag it explicitly: 'NOTE: Previous assessment [quote] is superseded by [new finding].'\n"
@@ -287,7 +301,7 @@ def build_recommendations_prompt(payload, max_timeline_events: int = 15) -> tupl
     system = (
         "You are a senior incident response analyst writing post-incident recommendations. "
         "Provide 3-5 specific, actionable technical recommendations to prevent recurrence. "
-        "Be concrete — reference the specific attack vector and findings. "
+        "Be concrete - reference the specific attack vector and findings. "
         "Format as a numbered list."
     )
 

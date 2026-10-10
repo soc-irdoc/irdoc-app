@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class ExternalIncidentCreate(BaseModel):
-    """Inbound webhook payload — any tool that can POST JSON can use this."""
+    """Inbound webhook payload - any tool that can POST JSON can use this."""
     title: str
     severity: Literal["sev1", "sev2", "sev3", "sev4"] = "sev2"
     template: str = "blank"          # matches incident_template.slug

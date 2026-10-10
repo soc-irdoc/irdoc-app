@@ -61,7 +61,7 @@ async def create_incident(
         entity_type="incident",
         entity_id=str(incident.id),
         actor_label=current_user.email,
-        entity_label=f"{incident.incident_ref} — {incident.title}",
+        entity_label=f"{incident.incident_ref} - {incident.title}",
         diff={"title": incident.title, "severity": incident.severity},
         user_id=str(current_user.id),
         request=request,
@@ -96,7 +96,7 @@ async def update_incident(
 
     updated = await incident_service.update_incident(db, incident, data)
 
-    entity_label = f"{updated.incident_ref} — {updated.title}"
+    entity_label = f"{updated.incident_ref} - {updated.title}"
     audit_kwargs = dict(
         db=db,
         org_id=str(current_user.org_id),
@@ -150,7 +150,7 @@ async def delete_incident(
         entity_type="incident",
         entity_id=str(incident.id),
         actor_label=current_user.email,
-        entity_label=f"{incident.incident_ref} — {incident.title}",
+        entity_label=f"{incident.incident_ref} - {incident.title}",
         risk_level="high",
         user_id=str(current_user.id),
         request=request,

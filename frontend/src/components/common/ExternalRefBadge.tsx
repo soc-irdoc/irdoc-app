@@ -1,4 +1,5 @@
 import type { IncidentExternalRef } from '@/types/incident'
+import { FaArrowUpRightFromSquare } from 'react-icons/fa6'
 
 const SOURCE_LABELS: Record<string, string> = {
   servicedesk_plus: 'SDP',
@@ -13,7 +14,6 @@ interface ExternalRefBadgeProps {
 
 export function ExternalRefBadge({ ref }: ExternalRefBadgeProps) {
   const label = SOURCE_LABELS[ref.external_source] ?? ref.external_source
-  const content = `${label}-${ref.external_ref} ↗`
 
   if (ref.external_url) {
     return (
@@ -24,7 +24,8 @@ export function ExternalRefBadge({ ref }: ExternalRefBadgeProps) {
         className="chip chip-blue"
         title={`Open in ${ref.external_source}`}
       >
-        {content}
+        {`${label}-${ref.external_ref}`}
+        <FaArrowUpRightFromSquare size={9} aria-hidden="true" />
       </a>
     )
   }

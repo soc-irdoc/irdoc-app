@@ -44,7 +44,7 @@ export function App() {
         setAuth(refreshRes.data.user, token)
         scheduleTokenRefresh(token)
       } catch {
-        // No session — user will be redirected to login by ProtectedRoute
+        // No session - user will be redirected to login by ProtectedRoute
       } finally {
         setIsRestoring(false)
       }

@@ -1,3 +1,6 @@
+import type { IconType } from 'react-icons'
+import { FaComment, FaFilePen, FaMagnifyingGlass, FaMicroscope, FaPaperclip, FaShieldHalved } from 'react-icons/fa6'
+
 export type EntryType = 'detection' | 'analysis' | 'containment' | 'evidence' | 'comms' | 'note'
 
 export interface Attachment {
@@ -41,42 +44,42 @@ export const ENTRY_TYPE_CONFIG: Record<EntryType, {
   label: string
   dotClass: string
   badgeClass: string
-  icon: string
+  icon: IconType
 }> = {
   detection: {
     label: 'Detection',
     dotClass: 'dot-detection',
     badgeClass: 'badge-detection',
-    icon: 'magnifying_glass_tilted_left_color.svg',
+    icon: FaMagnifyingGlass,
   },
   analysis: {
     label: 'Analysis',
     dotClass: 'dot-analysis',
     badgeClass: 'badge-analysis',
-    icon: 'microscope_color.svg',
+    icon: FaMicroscope,
   },
   containment: {
     label: 'Containment',
     dotClass: 'dot-containment',
     badgeClass: 'badge-containment',
-    icon: 'shield_color.svg',
+    icon: FaShieldHalved,
   },
   evidence: {
     label: 'Evidence',
     dotClass: 'dot-evidence',
     badgeClass: 'badge-evidence',
-    icon: 'paperclip_color.svg',
+    icon: FaPaperclip,
   },
   comms: {
     label: 'Comms',
     dotClass: 'dot-comms',
     badgeClass: 'badge-comms',
-    icon: 'speech_balloon_color.svg',
+    icon: FaComment,
   },
   note: {
     label: 'Note',
     dotClass: 'dot-note',
     badgeClass: 'badge-note',
-    icon: 'memo_color.svg',
+    icon: FaFilePen,
   },
 }

@@ -86,7 +86,7 @@ class StorageConfigOut(BaseModel):
     backend: str
     is_active: bool
     created_at: datetime
-    # config is intentionally omitted — never returned to client
+    # config is intentionally omitted - never returned to client
 
 
 class StorageConfigCreate(BaseModel):
@@ -104,14 +104,14 @@ class SSOConfigOut(BaseModel):
     is_enabled: bool
     tenant_id: str | None = None
     client_id: str | None = None
-    # client_secret is intentionally omitted — never returned to client
+    # client_secret is intentionally omitted - never returned to client
     role_mappings: dict[str, Any] = {}
 
 
 class SSOConfigUpdate(BaseModel):
     tenant_id: str | None = None
     client_id: str | None = None
-    client_secret: str | None = None  # plaintext — encrypted at the service layer
+    client_secret: str | None = None  # plaintext - encrypted at the service layer
     role_mappings: dict[str, Any] | None = None
     is_enabled: bool | None = None
 

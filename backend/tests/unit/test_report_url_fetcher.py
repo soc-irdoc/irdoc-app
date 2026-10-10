@@ -7,7 +7,7 @@ still used the old API failed with::
 
     AttributeError: 'function' object has no attribute '_fail_on_errors'
 
-...but only once the document actually referenced a resource — i.e. only when
+...but only once the document actually referenced a resource - i.e. only when
 a report template carried a logo. These tests pin both halves of the contract:
 data: URIs must render, everything else must stay blocked.
 """

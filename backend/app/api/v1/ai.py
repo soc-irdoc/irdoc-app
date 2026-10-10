@@ -1,5 +1,5 @@
 """
-AI endpoints — Phase 3.
+AI endpoints - Phase 3.
 
 POST /incidents/{id}/ai/summary         → generate executive summary (premium)
 POST /incidents/{id}/ai/recommendations → generate recommendations (premium)

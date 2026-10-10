@@ -1,6 +1,6 @@
 """
 IOC service: CRUD + auto-type detection regex.
-Same patterns as frontend lib/iocDetector.ts — keep in sync.
+Same patterns as frontend lib/iocDetector.ts - keep in sync.
 """
 import re
 

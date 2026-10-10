@@ -1,4 +1,4 @@
-"""SSO/OIDC config management — reading and writing org SSO settings."""
+"""SSO/OIDC config management - reading and writing org SSO settings."""
 import base64
 import uuid as _uuid
 
@@ -48,7 +48,7 @@ async def get_sso_config(db: AsyncSession, org_id: str) -> SSOConfig | None:
 async def upsert_sso_config(db: AsyncSession, org_id: str, data: dict) -> SSOConfig:
     from datetime import datetime, timezone
 
-    # Encrypt client_secret before persisting — only when a new value is supplied
+    # Encrypt client_secret before persisting - only when a new value is supplied
     if data.get("client_secret"):
         data = dict(data)
         data["client_secret"] = encrypt_client_secret(data["client_secret"])

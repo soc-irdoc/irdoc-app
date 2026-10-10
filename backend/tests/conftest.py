@@ -54,7 +54,7 @@ if "sqlite" in _TEST_DB_URL_RAW:
                 return None
             if isinstance(value, _uuid_mod.UUID):
                 return str(value)
-            return str(value)  # already a string — pass through
+            return str(value)  # already a string - pass through
         return process
 
     _PG_UUID.bind_processor = _sqlite_uuid_bind_processor  # type: ignore[method-assign]
