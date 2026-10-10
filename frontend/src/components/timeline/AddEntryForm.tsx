@@ -7,6 +7,8 @@ import { useUIStore } from '@/stores/uiStore'
 import { formatNowDate, formatNowTime } from '@/lib/utils'
 import type { EntryType } from '@/types/timeline'
 import { ASSET_TYPE_ICONS, ASSET_TYPE_LABELS, type AssetType } from '@/types/asset'
+import { FaBox, FaDesktop } from 'react-icons/fa6'
+import { Icon } from '@/components/common/Icon'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
   { value: 'detection',   label: 'Detection' },
@@ -312,7 +314,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
               padding: '4px 0',
             }}
           >
-            <img src="/icons/desktop_computer_color.svg" width={16} height={16} alt="" aria-hidden="true" /> Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
+            <FaDesktop size={16} aria-hidden="true" /> Link assets{selectedAssetIds.size > 0 ? ` (${selectedAssetIds.size} selected)` : ''}
             {' '}
             <span style={{ fontSize: 10 }}>{assetPickerOpen ? '▲' : '▼'}</span>
           </button>
@@ -354,7 +356,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
                       gap: 5,
                     }}
                   >
-                    <img src={`/icons/${ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? 'package_color.svg'}`} width={16} height={16} alt="" aria-hidden="true" />
+                    <Icon icon={ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? FaBox} size={14} />
                     <span>{asset.name}</span>
                     <span style={{ fontSize: 10, opacity: 0.6 }}>
                       {ASSET_TYPE_LABELS[asset.asset_type as AssetType]}

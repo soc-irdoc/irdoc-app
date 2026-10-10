@@ -9,6 +9,27 @@ import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { Modal } from '@/components/common/Modal'
 import { CATEGORY_LABELS } from '@/types/integration'
 import type { Integration } from '@/types/integration'
+import type { IconType } from 'react-icons'
+import {
+  FaComments, FaEnvelopeOpenText, FaMicrosoft, FaPuzzlePiece, FaShieldVirus, FaSlack, FaTowerObservation, FaXmark,
+} from 'react-icons/fa6'
+import { SiVirustotal } from 'react-icons/si'
+import { BrandAbuseIpdb, BrandSharePoint, BrandShodan } from '@/components/icons/brandIcons'
+import { Icon } from '@/components/common/Icon'
+
+/** Card icon per integration plugin name; unknown plugins fall back to a puzzle piece. */
+const INTEGRATION_ICONS: Record<string, IconType> = {
+  virustotal: SiVirustotal,
+  abuseipdb: BrandAbuseIpdb,
+  shodan: BrandShodan,
+  sharepoint: BrandSharePoint,
+  azuread: FaMicrosoft,
+  sentinel: FaTowerObservation,
+  crowdstrike: FaShieldVirus,
+  proofpoint: FaEnvelopeOpenText,
+  teams: FaComments,
+  slack: FaSlack,
+}
 
 // ── Integration Config Modal ──────────────────────────────────────────────────
 
@@ -198,7 +219,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
               background: 'var(--bg-elevated)', flexShrink: 0,
             }}
           >
-            <img src={`/icons/${integration.icon}`} width={20} height={20} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
+            <Icon icon={INTEGRATION_ICONS[integration.name] ?? FaPuzzlePiece} size={20} style={{ flexShrink: 0, color: 'var(--text-primary)' }} />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -380,7 +401,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
         {/* Card header */}
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexShrink: 0 }}>
-            <img src="/icons/locked_with_key_color.svg" width={20} height={20} alt="" aria-hidden="true" />
+            <FaMicrosoft size={20} aria-hidden="true" />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Single Sign-On (SSO)</p>
@@ -504,7 +525,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                         style={{ color: 'var(--red)', flexShrink: 0 }}
                         onClick={() => setRoleMappings((prev) => prev.filter((_, idx) => idx !== i))}
                         aria-label="Remove mapping"
-                      ><img src="/icons/multiply_color.svg" width={12} height={12} alt="" aria-hidden="true" /></button>
+                      ><FaXmark size={12} aria-hidden="true" /></button>
                     </div>
                   ))}
                   <button

@@ -3,6 +3,8 @@
  * All node types share the same base layout — only icon and color differ.
  */
 import { Handle, Position, type NodeProps } from '@xyflow/react'
+import type { IconType } from 'react-icons'
+import { FaBox } from 'react-icons/fa6'
 import type { GraphNodeData } from '@/types/graph'
 import { NODE_TYPE_ICONS, IOC_STATUS_COLORS, ASSET_STATUS_COLORS } from '@/types/graph'
 
@@ -18,14 +20,14 @@ const ENTRY_TYPE_COLORS: Record<string, string> = {
 // ── Base Node Layout ──────────────────────────────────────────────────────────
 
 function BaseNode({
-  icon,
+  icon: Icon,
   label,
   color,
   subtitle,
   badge,
   selected,
 }: {
-  icon: string
+  icon: IconType
   label: string
   color: string
   subtitle?: string
@@ -49,10 +51,7 @@ function BaseNode({
       <Handle type="target" position={Position.Top} style={{ background: color }} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {icon === '#'
-          ? <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace', flexShrink: 0 }}>#</span>
-          : <img src={`/icons/${icon}`} width={22} height={22} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
-        }
+        <Icon size={20} aria-hidden="true" style={{ flexShrink: 0, color }} />
         <div style={{ flex: 1, overflow: 'hidden' }}>
           <p
             style={{
@@ -97,7 +96,7 @@ function BaseNode({
 
 function IOCNodeBase({ data, selected, nodeType }: NodeProps & { nodeType: string }) {
   const d = data as unknown as GraphNodeData
-  const icon = NODE_TYPE_ICONS[nodeType] ?? '?'
+  const icon = NODE_TYPE_ICONS[nodeType] ?? FaBox
   const color = IOC_STATUS_COLORS[d.status ?? 'active'] ?? '#ef4444'
   const badge = d.confidence !== undefined ? `${d.confidence}%` : undefined
 
@@ -141,7 +140,7 @@ export function EvidenceNode({ data, selected }: NodeProps) {
 
 function AssetNodeBase({ data, selected, nodeType }: NodeProps & { nodeType: string }) {
   const d = data as unknown as GraphNodeData
-  const icon = NODE_TYPE_ICONS[nodeType] ?? 'package_color.svg'
+  const icon = NODE_TYPE_ICONS[nodeType] ?? FaBox
   const color = ASSET_STATUS_COLORS[d.status ?? 'suspected'] ?? '#f97316'
   const badge = d.criticality as string | undefined
 

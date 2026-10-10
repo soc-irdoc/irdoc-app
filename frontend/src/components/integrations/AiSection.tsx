@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAiConfig, useSaveAiConfig, useTestAiConfig } from '@/hooks/useAiConfig'
 import { useUIStore } from '@/stores/uiStore'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
+import { FaPlugCircleCheck, FaRobot } from 'react-icons/fa6'
 
 const subLabel = (text: string, optional = false) => (
   <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.5px', marginBottom: 6, display: 'block' }}>
@@ -126,7 +127,7 @@ export function AiSection() {
         {/* Header */}
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', flexShrink: 0 }}>
-            <img src="/icons/robot_color.svg" width={20} height={20} alt="" aria-hidden="true" />
+            <FaRobot size={20} aria-hidden="true" />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Local AI (Ollama)</p>
@@ -197,7 +198,7 @@ export function AiSection() {
                       disabled={testConfig.isPending || !form.ollamaBaseUrl}
                       style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
-                      {testConfig.isPending ? 'Testing…' : <><img src="/icons/electric_plug_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Test Connection</>}
+                      {testConfig.isPending ? 'Testing…' : <><FaPlugCircleCheck size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Test Connection</>}
                     </button>
 
                     {testResult && (

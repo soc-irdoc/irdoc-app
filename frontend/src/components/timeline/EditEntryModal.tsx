@@ -9,6 +9,8 @@ import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
 import { ASSET_TYPE_ICONS, type AssetType } from '@/types/asset'
 import type { TimelineEntry, EntryType, UpdateTimelineEntryPayload, Attachment } from '@/types/timeline'
+import { FaBox, FaDesktop } from 'react-icons/fa6'
+import { Icon } from '@/components/common/Icon'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
   { value: 'detection', label: 'Detection' },
@@ -274,7 +276,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
         {/* Asset picker */}
         {allAssets.length > 0 && (
           <div style={{ marginTop: 12 }}>
-            <label style={LABEL_STYLE}><img src="/icons/desktop_computer_color.svg" width={16} height={16} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> Linked Assets</label>
+            <label style={LABEL_STYLE}><FaDesktop size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> Linked Assets</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
               {allAssets.map((asset) => {
                 const linked = localLinkedAssetIds.has(asset.id)
@@ -297,7 +299,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
                       gap: 5,
                     }}
                   >
-                    <img src={`/icons/${ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? 'package_color.svg'}`} width={16} height={16} alt="" aria-hidden="true" />
+                    <Icon icon={ASSET_TYPE_ICONS[asset.asset_type as AssetType] ?? FaBox} size={14} />
                     <span>{asset.name}</span>
                   </button>
                 )

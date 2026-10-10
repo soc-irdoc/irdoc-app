@@ -16,6 +16,7 @@ import {
 } from '@/hooks/useReportTemplates'
 import { ReportBlock, DESTINATION_OPTIONS } from '@/types/report'
 import { AppShell } from '@/components/layout/AppShell'
+import { FaImage } from 'react-icons/fa6'
 
 let _id = 1
 function tempId() { return `blk-${Date.now()}-${_id++}` }
@@ -193,7 +194,7 @@ export default function ReportTemplateEditorPage() {
                     disabled={uploadLogo.isPending}
                     title="Upload logo"
                   >
-                    {uploadLogo.isPending ? 'Uploading…' : <><img src="/icons/framed_picture_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Logo</>}
+                    {uploadLogo.isPending ? 'Uploading…' : <><FaImage size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Logo</>}
                   </button>
                 )}
                 <input

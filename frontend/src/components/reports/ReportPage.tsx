@@ -8,6 +8,13 @@ import { useIntegrations } from '@/hooks/useIntegrations'
 import { Report, FORMAT_LABELS } from '@/types/report'
 import { formatRelative } from '@/lib/utils'
 import { getSocket } from '@/lib/websocket'
+import type { IconType } from 'react-icons'
+import {
+  FaArrowUpRightFromSquare, FaArrowsRotate, FaCircleCheck, FaClipboardList, FaFileLines, FaHourglassHalf, FaRobot,
+  FaTriangleExclamation,
+} from 'react-icons/fa6'
+import { BrandSharePoint } from '@/components/icons/brandIcons'
+import { Icon } from '@/components/common/Icon'
 
 interface Props {
   incidentId: string
@@ -32,18 +39,21 @@ function AiBanner({ reports }: { reports: Report[] }) {
 
   let bg = 'rgba(99,102,241,0.06)'
   let border = 'rgba(99,102,241,0.2)'
-  let icon = 'robot_color.svg'
+  let icon: IconType = FaRobot
+  let iconColor = 'rgb(99,102,241)'
   let text: React.ReactNode = null
 
   if (isGenerating) {
     bg = 'rgba(59,130,246,0.06)'
     border = 'rgba(59,130,246,0.2)'
-    icon = '⏳'
+    icon = FaHourglassHalf
+    iconColor = 'rgb(59,130,246)'
     text = <span style={{ color: 'var(--text-secondary)' }}>AI is generating a new report version…</span>
   } else if (latestReady) {
     bg = 'rgba(34,197,94,0.06)'
     border = 'rgba(34,197,94,0.2)'
-    icon = '✓'
+    icon = FaCircleCheck
+    iconColor = 'var(--green)'
     text = (
       <span style={{ color: 'var(--text-secondary)' }}>
         AI report is current.{' '}
@@ -55,7 +65,8 @@ function AiBanner({ reports }: { reports: Report[] }) {
   } else if (latestFailed) {
     bg = 'rgba(239,68,68,0.06)'
     border = 'rgba(239,68,68,0.2)'
-    icon = '⚠'
+    icon = FaTriangleExclamation
+    iconColor = 'var(--red)'
     text = <span style={{ color: 'var(--red)' }}>AI report generation failed. It will retry on the next incident update.</span>
   } else {
     text = (
@@ -77,10 +88,7 @@ function AiBanner({ reports }: { reports: Report[] }) {
       gap: 12,
       fontSize: 13,
     }}>
-      {icon.endsWith('.svg')
-        ? <img src={`/icons/${icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
-        : <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
-      }
+      <Icon icon={icon} size={16} style={{ flexShrink: 0, color: iconColor }} />
       <div style={{ flex: 1 }}>
         <strong style={{ color: 'var(--text-primary)', fontSize: 12 }}>AI Report Assistant </strong>
         {text}
@@ -109,7 +117,8 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
 
   let bg = 'rgba(14,165,233,0.06)'
   let border = 'rgba(14,165,233,0.2)'
-  let icon = 'open_file_folder_color.svg'
+  let icon: IconType = BrandSharePoint
+  let iconColor = 'rgb(14,165,233)'
   let text: React.ReactNode
 
   if (!lastSynced) {
@@ -121,7 +130,8 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
   } else if (hasPendingChanges) {
     bg = 'rgba(234,179,8,0.06)'
     border = 'rgba(234,179,8,0.2)'
-    icon = '🔄'
+    icon = FaArrowsRotate
+    iconColor = 'var(--yellow)'
     text = (
       <span style={{ color: 'var(--text-secondary)' }}>
         SharePoint sync active.{' '}
@@ -133,7 +143,8 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
   } else {
     bg = 'rgba(34,197,94,0.06)'
     border = 'rgba(34,197,94,0.2)'
-    icon = '✓'
+    icon = FaCircleCheck
+    iconColor = 'var(--green)'
     text = (
       <span style={{ color: 'var(--text-secondary)' }}>
         SharePoint sync active.{' '}
@@ -156,10 +167,7 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
       gap: 12,
       fontSize: 13,
     }}>
-      {icon.endsWith('.svg')
-        ? <img src={`/icons/${icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
-        : <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
-      }
+      <Icon icon={icon} size={16} style={{ flexShrink: 0, color: iconColor }} />
       <div style={{ flex: 1 }}>
         <strong style={{ color: 'var(--text-primary)', fontSize: 12 }}>SharePoint Sync </strong>
         {text}
@@ -265,7 +273,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
               flexDirection: 'column',
               gap: '8px',
             }}>
-              <img src="/icons/page_facing_up_color.svg" width={24} height={24} alt="" aria-hidden="true" />
+              <FaFileLines size={24} aria-hidden="true" />
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
                   Base Template
@@ -305,7 +313,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                     style={{ height: '32px', width: 'auto', objectFit: 'contain', alignSelf: 'flex-start' }}
                   />
                 ) : (
-                  <img src="/icons/clipboard_color.svg" width={24} height={24} alt="" aria-hidden="true" />
+                  <FaClipboardList size={24} aria-hidden="true" />
                 )}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -422,7 +430,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                             rel="noopener noreferrer"
                             className="btn btn-ghost btn-sm"
                           >
-                            <img src="/icons/link_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Access Report
+                            <FaArrowUpRightFromSquare size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Access Report
                           </a>
                         )}
                         {r.status === 'ready' && !r.sharepoint_url && (

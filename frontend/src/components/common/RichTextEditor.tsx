@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
+import { FaListCheck } from 'react-icons/fa6'
 
 // Tiptap initialises an empty editor as '<p></p>'. Normalise to '' so that
 // the empty-string content prop doesn't trigger constant setContent calls.
@@ -235,7 +236,7 @@ export function RichTextEditor({
               onClick={() => editor.chain().toggleTaskList().run()}
               title="Insert task item"
             >
-              <img src="/icons/ballot_box_with_ballot_color.svg" width={16} height={16} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> Task
+              <FaListCheck size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> Task
             </button>
           ) : (
             <select

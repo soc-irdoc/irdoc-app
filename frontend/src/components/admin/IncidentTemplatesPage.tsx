@@ -20,6 +20,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { FaXmark } from 'react-icons/fa6'
 
 interface TemplateTask {
   id: string
@@ -192,7 +193,7 @@ function SortableTaskRow({
         onClick={onDelete}
         aria-label="Remove task"
       >
-        <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
+        <FaXmark size={14} aria-hidden="true" />
       </button>
     </div>
   )
@@ -310,7 +311,7 @@ function TemplateEditorPanel({ template, onSave, onClose, saving }: EditorProps)
           {template?.id ? `Edit: ${template.name}` : 'New Template'}
         </span>
         <button className="icon-btn" onClick={onClose} aria-label="Close editor">
-          <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
+          <FaXmark size={14} aria-hidden="true" />
         </button>
       </div>
 

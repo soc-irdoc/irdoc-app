@@ -17,6 +17,8 @@ import { Modal } from '@/components/common/Modal'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/admin'
 import type { OrgUser } from '@/types/admin'
+import type { IconType } from 'react-icons'
+import { FaBuildingUser, FaMicrosoft, FaUserLock } from 'react-icons/fa6'
 
 // ── Invite Modal ─────────────────────────────────────────────────────────────
 
@@ -287,10 +289,10 @@ export function OrgSettingsPage() {
     enterprise: 'chip-yellow',
   }
 
-  const AUTH_OPTIONS: { id: AuthSource; icon: string; label: string; desc: string }[] = [
-    { id: 'local',  icon: 'key_color.svg', label: 'Local Users',        desc: 'Managed manually in the Team section' },
-    { id: 'azure',  icon: 'cloud_color.svg', label: 'Entra ID / Azure AD', desc: 'Import users from Azure Active Directory' },
-    { id: 'onprem', icon: 'office_building_color.svg', label: 'On-Premises AD',      desc: 'Sync with on-premises Active Directory' },
+  const AUTH_OPTIONS: { id: AuthSource; icon: IconType; label: string; desc: string }[] = [
+    { id: 'local',  icon: FaUserLock, label: 'Local Users',        desc: 'Managed manually in the Team section' },
+    { id: 'azure',  icon: FaMicrosoft, label: 'Entra ID / Azure AD', desc: 'Import users from Azure Active Directory' },
+    { id: 'onprem', icon: FaBuildingUser, label: 'On-Premises AD',      desc: 'Sync with on-premises Active Directory' },
   ]
 
   return (
@@ -573,7 +575,7 @@ export function OrgSettingsPage() {
                       />
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <img src={`/icons/${opt.icon}`} width={18} height={18} alt="" aria-hidden="true" />
+                          <opt.icon size={15} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
                           <span>{opt.label}</span>
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{opt.desc}</div>

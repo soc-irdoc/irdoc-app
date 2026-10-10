@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuditLog, useExportAuditLog } from '@/hooks/useAdmin'
+import { FaTriangleExclamation } from 'react-icons/fa6'
 
 const HIGH_RISK_ACTIONS = [
   'crowdstrike.contain_host',
@@ -272,7 +273,7 @@ export function AuditLogPage() {
                                 style={{ fontSize: 10 }}
                                 title="High risk action"
                               >
-                                <img src="/icons/warning_color.svg" width={14} height={14} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 3 }} />HIGH RISK
+                                <FaTriangleExclamation size={14} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 3 }} />HIGH RISK
                               </span>
                             )}
                           </div>

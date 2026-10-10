@@ -1,4 +1,5 @@
 import { useUIStore } from '@/stores/uiStore'
+import { FaCircleInfo, FaCircleXmark, FaXmark } from 'react-icons/fa6'
 
 export function ToastContainer() {
   const { toasts, removeToast } = useUIStore()
@@ -24,8 +25,8 @@ export function ToastContainer() {
           {toast.type === 'success'
             ? <span style={{ fontSize: 16 }}>✓</span>
             : toast.type === 'error'
-            ? <img src="/icons/multiply_color.svg" width={16} height={16} alt="" aria-hidden="true" />
-            : <img src="/icons/information_color.svg" width={16} height={16} alt="" aria-hidden="true" />
+            ? <FaCircleXmark size={16} aria-hidden="true" />
+            : <FaCircleInfo size={16} aria-hidden="true" />
           }
           <p
             className="flex-1 text-sm font-medium"
@@ -38,7 +39,7 @@ export function ToastContainer() {
             onClick={() => removeToast(toast.id)}
             aria-label="Dismiss"
           >
-            <img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" />
+            <FaXmark size={14} aria-hidden="true" />
           </button>
         </div>
       ))}

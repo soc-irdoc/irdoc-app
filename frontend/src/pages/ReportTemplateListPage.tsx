@@ -17,12 +17,15 @@ import { DESTINATION_OPTIONS } from '@/types/report'
 import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 import { Modal } from '@/components/common/Modal'
 import { AppShell } from '@/components/layout/AppShell'
+import type { IconType } from 'react-icons'
+import { FaChartColumn, FaClipboardList, FaMicroscope, FaPen, FaScaleBalanced } from 'react-icons/fa6'
+import { Icon } from '@/components/common/Icon'
 
-const TEMPLATE_ICONS: Record<string, string> = {
-  management: 'bar_chart_color.svg',
-  analyst: 'microscope_color.svg',
-  legal: 'balance_scale_color.svg',
-  custom: 'pencil_color.svg',
+const TEMPLATE_ICONS: Record<string, IconType> = {
+  management: FaChartColumn,
+  analyst: FaMicroscope,
+  legal: FaScaleBalanced,
+  custom: FaPen,
 }
 
 export default function ReportTemplateListPage() {
@@ -95,7 +98,7 @@ export default function ReportTemplateListPage() {
                   gap: '14px',
                 }}
               >
-                <img src={`/icons/${TEMPLATE_ICONS[t.destination] ?? 'clipboard_color.svg'}`} width={22} height={22} alt="" aria-hidden="true" />
+                <Icon icon={TEMPLATE_ICONS[t.destination] ?? FaClipboardList} size={20} style={{ color: 'var(--text-secondary)' }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {t.name}
@@ -156,7 +159,7 @@ export default function ReportTemplateListPage() {
                   gap: '14px',
                 }}
               >
-                <img src={`/icons/${TEMPLATE_ICONS[t.destination] ?? 'clipboard_color.svg'}`} width={22} height={22} alt="" aria-hidden="true" />
+                <Icon icon={TEMPLATE_ICONS[t.destination] ?? FaClipboardList} size={20} style={{ color: 'var(--text-secondary)' }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {t.name}

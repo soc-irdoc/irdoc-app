@@ -1,3 +1,6 @@
+import type { IconType } from 'react-icons'
+import { FaAt, FaFileLines, FaGlobe, FaHashtag, FaLink, FaNetworkWired, FaUser } from 'react-icons/fa6'
+
 export type IOCType = 'email' | 'domain' | 'ip' | 'url' | 'hash' | 'file' | 'username'
 export type IOCStatus = 'active' | 'blocked' | 'remediated' | 'fp'
 export type TLPLevel = 'white' | 'green' | 'amber' | 'red'
@@ -36,14 +39,14 @@ export interface DetectedIOC {
   value: string
 }
 
-export const IOC_TYPE_ICONS: Record<IOCType, string> = {
-  email:    'e-mail_color.svg',
-  domain:   'globe_with_meridians_color.svg',
-  ip:       'electric_plug_color.svg',
-  url:      'link_color.svg',
-  hash:     '#',
-  file:     'page_facing_up_color.svg',
-  username: 'bust_in_silhouette_color.svg',
+export const IOC_TYPE_ICONS: Record<IOCType, IconType> = {
+  email:    FaAt,
+  domain:   FaGlobe,
+  ip:       FaNetworkWired,
+  url:      FaLink,
+  hash:     FaHashtag,
+  file:     FaFileLines,
+  username: FaUser,
 }
 
 export const IOC_STATUS_COLORS: Record<IOCStatus, string> = {

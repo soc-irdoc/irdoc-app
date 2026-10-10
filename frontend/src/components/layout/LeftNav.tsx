@@ -6,37 +6,42 @@ import { useAuthStore } from '@/stores/authStore'
 import { getInitials } from '@/lib/utils'
 import { BrandLogo } from '@/components/common/BrandLogo'
 import { VersionBadge } from '@/components/common/VersionBadge'
+import type { IconType } from 'react-icons'
+import {
+  FaBolt, FaBoxArchive, FaBuilding, FaCircleHalfStroke, FaClipboardList, FaFileLines, FaGaugeHigh, FaGear,
+  FaHardDrive, FaPlug, FaRightFromBracket, FaScroll,
+} from 'react-icons/fa6'
 
 interface NavItem {
-  icon: string
+  icon: IconType
   label: string
   path: string
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: '◈',  label: 'Overview',  path: '/overview' },
-  { icon: 'high_voltage_color.svg', label: 'Incidents', path: '/incidents' },
-  { icon: 'gear_color.svg',  label: 'Settings', path: '/settings' },
+  { icon: FaGaugeHigh, label: 'Overview',  path: '/overview' },
+  { icon: FaBolt, label: 'Incidents', path: '/incidents' },
+  { icon: FaGear, label: 'Settings', path: '/settings' },
 ]
 
 const MANAGEMENT_ITEMS: NavItem[] = [
-  { icon: 'gear_color.svg', label: 'Org Settings', path: '/admin/org' },
-  { icon: 'file_cabinet_color.svg', label: 'Storage', path: '/admin/storage' },
-  { icon: 'floppy_disk_color.svg', label: 'Backups', path: '/admin/backups' },
-  { icon: 'clipboard_color.svg', label: 'Incident Templates', path: '/admin/templates' },
-  { icon: 'page_facing_up_color.svg', label: 'Report Templates', path: '/report-templates' },
-  { icon: 'link_color.svg', label: 'Integrations', path: '/admin/integrations' },
-  { icon: 'scroll_color.svg', label: 'Audit Log', path: '/admin/audit' },
+  { icon: FaBuilding, label: 'Org Settings', path: '/admin/org' },
+  { icon: FaHardDrive, label: 'Storage', path: '/admin/storage' },
+  { icon: FaBoxArchive, label: 'Backups', path: '/admin/backups' },
+  { icon: FaClipboardList, label: 'Incident Templates', path: '/admin/templates' },
+  { icon: FaFileLines, label: 'Report Templates', path: '/report-templates' },
+  { icon: FaPlug, label: 'Integrations', path: '/admin/integrations' },
+  { icon: FaScroll, label: 'Audit Log', path: '/admin/audit' },
 ]
 
 function NavButton({
-  icon,
+  icon: NavIcon,
   label,
   active,
   collapsed,
   onClick,
 }: {
-  icon: string
+  icon: IconType
   label: string
   active: boolean
   collapsed: boolean
@@ -69,10 +74,7 @@ function NavButton({
         boxShadow: active && !collapsed ? 'inset 2px 0 0 var(--accent)' : 'none',
       }}
     >
-      {icon.endsWith('.svg')
-        ? <img src={`/icons/${icon}`} width={20} height={20} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
-        : <span style={{ flexShrink: 0, lineHeight: 1 }}>{icon}</span>
-      }
+      <NavIcon size={17} aria-hidden="true" style={{ flexShrink: 0 }} />
       <span style={{
         fontSize: 13,
         fontFamily: 'Syne, sans-serif',
@@ -247,7 +249,7 @@ export function LeftNav() {
 
       {/* Theme toggle */}
       <NavButton
-        icon="◑"
+        icon={FaCircleHalfStroke}
         label="Toggle theme"
         active={false}
         collapsed={collapsed}
@@ -307,7 +309,7 @@ export function LeftNav() {
 
       {/* Logout */}
       <NavButton
-        icon="→"
+        icon={FaRightFromBracket}
         label="Sign out"
         active={false}
         collapsed={collapsed}

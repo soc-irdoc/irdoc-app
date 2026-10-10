@@ -27,6 +27,9 @@ import { CSS } from '@dnd-kit/utilities'
 import BlockConfigPanel from './BlockConfigPanel'
 import { ReportBlock, BlockType, BLOCK_LIBRARY } from '@/types/report'
 import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
+import type { IconType } from 'react-icons'
+import { FaEye, FaXmark } from 'react-icons/fa6'
+import { Icon } from '@/components/common/Icon'
 
 interface Props {
   blocks: ReportBlock[]
@@ -108,10 +111,7 @@ function SortableBlockCard({
             ≡
           </div>
 
-          {libEntry?.icon && (libEntry.icon.endsWith('.svg')
-            ? <img src={`/icons/${libEntry.icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ marginRight: '8px', flexShrink: 0 }} />
-            : <span style={{ fontSize: '14px', marginRight: '8px', flexShrink: 0, lineHeight: 1 }}>{libEntry.icon}</span>
-          )}
+          {libEntry && <Icon icon={libEntry.icon} size={16} style={{ marginRight: '8px', flexShrink: 0, color: 'var(--text-secondary)' }} />}
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -135,7 +135,7 @@ function SortableBlockCard({
             onClick={(e) => { e.stopPropagation(); onRemove() }}
             aria-label="Remove block"
           >
-            <img src="/icons/multiply_color.svg" width={12} height={12} alt="" aria-hidden="true" />
+            <FaXmark size={12} aria-hidden="true" />
           </button>
         </div>
 
@@ -159,13 +159,13 @@ function SortableBlockCard({
 // ─── Block Library Panel ───────────────────────────────────────────────────────
 
 function BlockLibraryItem({
-  icon,
+  icon: BlockIcon,
   label,
   description,
   onAdd,
   disabled = false,
 }: {
-  icon: string
+  icon: IconType
   label: string
   description: string
   onAdd: () => void
@@ -190,10 +190,7 @@ function BlockLibraryItem({
       onClick={disabled ? undefined : onAdd}
       title={disabled ? `${description}. ${AI_DISABLED_HINT}` : description}
     >
-      {icon.endsWith('.svg')
-        ? <img src={`/icons/${icon}`} width={16} height={16} alt="" aria-hidden="true" style={{ flexShrink: 0 }} />
-        : <span style={{ fontSize: '14px', width: '22px', textAlign: 'center', flexShrink: 0, lineHeight: 1 }}>{icon}</span>
-      }
+      <BlockIcon size={16} aria-hidden="true" style={{ flexShrink: 0, color: 'var(--text-secondary)' }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
           {label}
@@ -312,7 +309,7 @@ export default function ReportTemplateBuilder({ blocks, onChange, onPreview }: P
                   color: 'var(--text-primary)',
                 }}
               >
-                {(() => { const e = BLOCK_LIBRARY.find((b) => b.type === activeBlock.type); if (!e) return null; return <>{e.icon.endsWith('.svg') ? <img src={`/icons/${e.icon}`} width={14} height={14} alt="" aria-hidden="true" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6, flexShrink: 0 }} /> : <span style={{ marginRight: 6 }}>{e.icon}</span>}{e.label}</> })()}
+                {(() => { const e = BLOCK_LIBRARY.find((b) => b.type === activeBlock.type); if (!e) return null; return <><Icon icon={e.icon} size={14} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6, flexShrink: 0 }} />{e.label}</> })()}
               </div>
             )}
           </DragOverlay>
@@ -323,7 +320,7 @@ export default function ReportTemplateBuilder({ blocks, onChange, onPreview }: P
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
             {onPreview && (
               <button className="btn btn-ghost btn-sm" onClick={onPreview}>
-                <img src="/icons/eyes_color.svg" width={16} height={16} alt="" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Preview
+                <FaEye size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} />Preview
               </button>
             )}
           </div>

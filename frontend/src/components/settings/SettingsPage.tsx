@@ -10,13 +10,15 @@ import { getInitials } from '@/lib/utils'
 import { mfaApi } from '@/lib/apiClient'
 import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
 import { VersionBadge } from '@/components/common/VersionBadge'
+import type { IconType } from 'react-icons'
+import { FaCircleInfo, FaLock, FaMoon, FaPalette, FaSun, FaUser } from 'react-icons/fa6'
 
 function SettingsSection({
-  icon,
+  icon: SectionIcon,
   title,
   children,
 }: {
-  icon: string
+  icon: IconType
   title: string
   children: React.ReactNode
 }) {
@@ -42,7 +44,7 @@ function SettingsSection({
           gap: 8,
         }}
       >
-        <img src={`/icons/${icon}`} width={20} height={20} alt="" aria-hidden="true" /> {title}
+        <SectionIcon size={16} aria-hidden="true" style={{ color: 'var(--text-secondary)' }} /> {title}
       </div>
       {children}
     </div>
@@ -150,7 +152,7 @@ export function SettingsPage() {
         Settings
       </div>
       {/* Security */}
-      <SettingsSection icon="locked_with_key_color.svg" title="Two-Factor Authentication">
+      <SettingsSection icon={FaLock} title="Two-Factor Authentication">
         {user?.mfa_enabled ? (
           <>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -181,7 +183,7 @@ export function SettingsPage() {
       </SettingsSection>
 
       {/* Profile */}
-      <SettingsSection icon="bust_in_silhouette_color.svg" title="Profile">
+      <SettingsSection icon={FaUser} title="Profile">
         <div style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: 20 }}>
           <div
             style={{
@@ -267,7 +269,7 @@ export function SettingsPage() {
       </SettingsSection>
 
       {/* Appearance */}
-      <SettingsSection icon="artist_palette_color.svg" title="Appearance">
+      <SettingsSection icon={FaPalette} title="Appearance">
         <SettingsRow
           title="Theme"
           description="Switch between dark and light mode"
@@ -275,8 +277,8 @@ export function SettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}>
               {theme === 'dark'
-                ? <><img src="/icons/crescent_moon_color.svg" width={14} height={14} alt="" aria-hidden="true" />Dark</>
-                : <><img src="/icons/sun_color.svg" width={14} height={14} alt="" aria-hidden="true" />Light</>
+                ? <><FaMoon size={14} aria-hidden="true" />Dark</>
+                : <><FaSun size={14} aria-hidden="true" />Light</>
               }
             </span>
             <ToggleSwitch
@@ -292,7 +294,7 @@ export function SettingsPage() {
       {user?.role === 'admin' && <APIKeysSection />}
 
       {/* About */}
-      <SettingsSection icon="information_color.svg" title="About IRDoc">
+      <SettingsSection icon={FaCircleInfo} title="About IRDoc">
         <div style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-muted)' }}>
           <p>
             <strong style={{ color: 'var(--text-primary)' }}>IRDoc</strong> — Open-Core Incident

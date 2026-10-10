@@ -25,6 +25,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
 import { NODE_TYPES } from './NodeTypes'
 import type { GraphNodeData } from '@/types/graph'
+import { FaLink, FaXmark } from 'react-icons/fa6'
 
 interface InvestigationGraphProps {
   incidentId: string
@@ -60,7 +61,7 @@ function NodeDetailPanel({
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
           Node Details
         </h3>
-        <button className="icon-btn" onClick={onClose} aria-label="Close panel"><img src="/icons/multiply_color.svg" width={14} height={14} alt="" aria-hidden="true" /></button>
+        <button className="icon-btn" onClick={onClose} aria-label="Close panel"><FaXmark size={14} aria-hidden="true" /></button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -261,7 +262,7 @@ export default function InvestigationGraph({ incidentId }: InvestigationGraphPro
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <EmptyState
-          icon="link_color.svg"
+          icon={FaLink}
           title="No graph data yet"
           description="Add IOCs and timeline entries to build the investigation graph."
         />

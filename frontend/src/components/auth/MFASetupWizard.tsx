@@ -4,6 +4,7 @@ import { mfaApi } from '@/lib/apiClient'
 import { useAuthStore } from '@/stores/authStore'
 import type { User } from '@/types/user'
 import { BrandLogo } from '@/components/common/BrandLogo'
+import { FaMobileScreenButton } from 'react-icons/fa6'
 
 interface Props {
   setupToken: string  // mfa_setup JWT for forced enrollment; empty string for voluntary (uses access token)
@@ -106,7 +107,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
       {step === 1 && (
         <div style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <img src="/icons/mobile_phone_color.svg" width={32} height={32} alt="" aria-hidden="true" />
+            <FaMobileScreenButton size={32} aria-hidden="true" />
           </div>
           <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: 'var(--text-primary)' }}>
             Install an authenticator app
