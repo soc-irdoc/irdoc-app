@@ -136,7 +136,7 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
       <span style={{ color: 'var(--text-secondary)' }}>
         SharePoint sync active.{' '}
         <span style={{ color: 'var(--text-muted)' }}>
-          Last synced: {formatRelative(lastSynced.generated_at ?? lastSynced.created_at)} — incident has changes, sync pending.
+          Last synced: {formatRelative(lastSynced.generated_at ?? lastSynced.created_at)} - incident has changes, sync pending.
         </span>
       </span>
     )
@@ -149,7 +149,7 @@ function SharePointBanner({ reports, incidentUpdatedAt }: { reports: Report[], i
       <span style={{ color: 'var(--text-secondary)' }}>
         SharePoint sync active.{' '}
         <span style={{ color: 'var(--text-muted)' }}>
-          Last synced: {formatRelative(lastSynced.generated_at ?? lastSynced.created_at)} — report is current.
+          Last synced: {formatRelative(lastSynced.generated_at ?? lastSynced.created_at)} - report is current.
         </span>
       </span>
     )
@@ -263,7 +263,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
           <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Loading templates…</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
-            {/* Base template card — always shown */}
+            {/* Base template card - always shown */}
             <div style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border)',
@@ -419,7 +419,7 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
                       </span>
                     </td>
                     <td style={{ padding: '10px 14px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {r.generated_at ? formatRelative(r.generated_at) : '—'}
+                      {r.generated_at ? formatRelative(r.generated_at) : '-'}
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>

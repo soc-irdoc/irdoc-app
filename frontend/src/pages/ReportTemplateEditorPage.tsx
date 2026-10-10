@@ -174,7 +174,7 @@ export default function ReportTemplateEditorPage() {
             </select>
           </div>
 
-          {/* Brand settings — only available after save */}
+          {/* Brand settings - only available after save */}
           {!isNew && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid var(--border)', paddingLeft: '12px' }}>
               {/* Logo */}

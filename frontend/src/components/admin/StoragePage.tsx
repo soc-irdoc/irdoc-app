@@ -336,7 +336,7 @@ export function StoragePage() {
           <BackendCard
             id="local"
             label="Local Filesystem"
-            description="Store files on the server's local disk (default — suitable for single-server deployments)"
+            description="Store files on the server's local disk (default - suitable for single-server deployments)"
             selected={selected === 'local'}
             onSelect={() => setSelected('local')}
           />

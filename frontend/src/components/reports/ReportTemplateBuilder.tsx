@@ -1,5 +1,5 @@
 /**
- * Report Template Builder — drag-and-drop canvas + block library.
+ * Report Template Builder - drag-and-drop canvas + block library.
  *
  * Left side: canvas (ordered list of blocks, drag to reorder, click to configure)
  * Right side: block library (click or drag to add)

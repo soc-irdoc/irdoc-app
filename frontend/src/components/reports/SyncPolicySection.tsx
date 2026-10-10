@@ -164,7 +164,7 @@ export default function SyncPolicySection({ incidentId }: Props) {
                   value={form.report_template_id ?? ''}
                   onChange={(e) => setForm({ ...form, report_template_id: e.target.value || null })}
                 >
-                  <option value="">— Select template —</option>
+                  <option value="">- Select template -</option>
                   {templates.map((t) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}

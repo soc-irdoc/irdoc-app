@@ -47,7 +47,7 @@ export function AppShell({ children }: AppShellProps) {
             }}
           >
             <FaTriangleExclamation size={14} aria-hidden="true" style={{ flexShrink: 0 }} />
-            <span>Real-time connection lost — reconnecting. Live updates are paused.</span>
+            <span>Real-time connection lost - reconnecting. Live updates are paused.</span>
           </div>
         )}
         {children}

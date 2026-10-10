@@ -177,7 +177,7 @@ export function RichTextEditor({
   const isHeading2 = editor.isActive('heading', { level: 2 })
   const headingValue = isHeading1 ? 'h1' : isHeading2 ? 'h2' : 'normal'
 
-  // Bug 1 fix: no onMouseDown/e.preventDefault on <select> — that blocked the
+  // Bug 1 fix: no onMouseDown/e.preventDefault on <select> - that blocked the
   // dropdown from opening. Restore editor focus explicitly after the change.
   function setHeading(value: string) {
     if (value === 'h1') {
@@ -203,7 +203,7 @@ export function RichTextEditor({
   }
 
   // Prevent the editor from losing focus (and the selection from being cleared)
-  // when the user clicks a toolbar button. NOT applied to <select> elements —
+  // when the user clicks a toolbar button. NOT applied to <select> elements -
   // e.preventDefault on a select's mousedown blocks the dropdown from opening.
   function blockBlur(e: React.MouseEvent) {
     e.preventDefault()
@@ -251,7 +251,7 @@ export function RichTextEditor({
             </select>
           )}
 
-          {/* Font size — visible on all toolbars */}
+          {/* Font size - visible on all toolbars */}
           <select
             aria-label="Font size"
             className="tb-select"

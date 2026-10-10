@@ -249,7 +249,7 @@ export function APIKeysSection() {
                     >
                       {scope.value}
                     </span>
-                    {' — '}
+                    {' - '}
                     {scope.label}
                   </span>
                 </label>
@@ -270,7 +270,7 @@ export function APIKeysSection() {
         </div>
       </Modal>
 
-      {/* Raw Key Display Modal — shown ONCE after creation */}
+      {/* Raw Key Display Modal - shown ONCE after creation */}
       <Modal
         open={!!showRawKey}
         onClose={() => setShowRawKey(null)}
@@ -309,7 +309,7 @@ export function APIKeysSection() {
             variant="accent"
             onClick={() => {
               if (showRawKey) navigator.clipboard.writeText(showRawKey)
-              addToast('Copied to clipboard — key will not be shown again', 'success')
+              addToast('Copied to clipboard - key will not be shown again', 'success')
               setShowRawKey(null)
             }}
           >

@@ -50,7 +50,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
     } catch (err: unknown) {
       setCodeError(
         (err as { response?: { data?: { error?: { message?: string } } } })
-          .response?.data?.error?.message ?? 'Invalid code — check your app and try again.',
+          .response?.data?.error?.message ?? 'Invalid code - check your app and try again.',
       )
     } finally {
       setLoading(false)

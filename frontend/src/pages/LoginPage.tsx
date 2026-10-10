@@ -61,7 +61,7 @@ export function LoginPage() {
     }
   }
 
-  // Full-page takeover — wizard replaces the login page entirely
+  // Full-page takeover - wizard replaces the login page entirely
   if (mfaSetupToken) {
     return (
       <MFASetupWizard
@@ -283,7 +283,7 @@ export function LoginPage() {
             color: 'var(--text-muted)',
           }}
         >
-          IRDoc — Incident Response Documentation Platform
+          IRDoc - Incident Response Documentation Platform
         </p>
       </div>
 

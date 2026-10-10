@@ -274,7 +274,7 @@ export default function InviteAcceptPage() {
             color: 'var(--text-muted)',
           }}
         >
-          IRDoc — Incident Response Documentation Platform
+          IRDoc - Incident Response Documentation Platform
         </p>
       </div>
     </div>

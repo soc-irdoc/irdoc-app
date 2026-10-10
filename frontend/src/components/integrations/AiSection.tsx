@@ -65,7 +65,7 @@ export function AiSection() {
 
   const statusColor = config?.is_enabled ? 'var(--green)' : 'var(--text-muted)'
   const statusText = config?.is_enabled
-    ? `Enabled — ${config.model_name} via ${config.ollama_base_url}`
+    ? `Enabled - ${config.model_name} via ${config.ollama_base_url}`
     : 'Disabled'
 
   async function handleSave(e: React.FormEvent) {
@@ -131,7 +131,7 @@ export function AiSection() {
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Local AI (Ollama)</p>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Air-gapped, evidence-grounded report generation — no cloud required</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Air-gapped, evidence-grounded report generation - no cloud required</p>
           </div>
           <ToggleSwitch
             checked={form.isEnabled}
@@ -213,7 +213,7 @@ export function AiSection() {
                         lineHeight: 1.6,
                       }}>
                         {testResult.success
-                          ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Connected — model "{form.modelName}" is available</>
+                          ? <><FaCheck size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />Connected - model "{form.modelName}" is available</>
                           : <><FaXmark size={11} aria-hidden="true" style={{ verticalAlign: '-0.125em', marginRight: 4 }} />{testResult.error}</>}
                         {!testResult.success && testResult.error?.includes('ollama pull') && (
                           <div style={{ marginTop: 6, background: 'var(--bg-elevated)', borderRadius: 4, padding: '4px 8px', fontFamily: 'monospace', fontSize: 10, color: 'var(--text-primary)', wordBreak: 'break-all' }}>
@@ -270,7 +270,7 @@ export function AiSection() {
                     lineHeight: 1.6,
                   }}>
                     <strong style={{ color: 'var(--text-primary)' }}>Version history:</strong> Each AI generation creates a new versioned report.
-                    Previous versions are never overwritten — all are preserved for audit and traceability.
+                    Previous versions are never overwritten - all are preserved for audit and traceability.
                     New reports are delta-aware: the AI reviews the previous narrative before writing the next one.
                   </div>
                 </div>

@@ -297,7 +297,7 @@ export function SettingsPage() {
       <SettingsSection icon={FaCircleInfo} title="About IRDoc">
         <div style={{ padding: '16px 20px', fontSize: 13, color: 'var(--text-muted)' }}>
           <p>
-            <strong style={{ color: 'var(--text-primary)' }}>IRDoc</strong> — Open-Core Incident
+            <strong style={{ color: 'var(--text-primary)' }}>IRDoc</strong> - Open-Core Incident
             Response Documentation Platform
           </p>
           <p style={{ marginTop: 8 }}>

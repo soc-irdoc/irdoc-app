@@ -23,7 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         to true). Under React 18, a transition-wrapped update can be starved
         indefinitely by ongoing synchronous re-renders elsewhere in the tree
         (e.g. zustand/websocket-driven updates), so history.pushState /
-        replaceState changes the URL but <Routes> never re-renders to match —
+        replaceState changes the URL but <Routes> never re-renders to match -
         exactly the "URL changes, screen doesn't" symptom. Opt out so route
         changes apply as a normal, synchronous state update.
       */}

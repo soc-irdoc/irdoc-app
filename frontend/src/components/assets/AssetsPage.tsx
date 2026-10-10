@@ -354,7 +354,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
 
                 <textarea
                   className="form-input"
-                  placeholder="Asset name(s) — one per line for bulk add"
+                  placeholder="Asset name(s) - one per line for bulk add"
                   value={namesInput}
                   onChange={e => setNamesInput(e.target.value)}
                   rows={2}
@@ -534,7 +534,7 @@ export function AssetsPage({ incidentId }: AssetsPageProps) {
               <EmptyState
                 icon={FaLink}
                 title="No relationships yet"
-                description="Link assets together to map how they're connected — e.g. account → workstation → file."
+                description="Link assets together to map how they're connected - e.g. account → workstation → file."
               />
             ) : (
               <div style={{

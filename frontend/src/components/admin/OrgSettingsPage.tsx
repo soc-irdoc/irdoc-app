@@ -456,7 +456,7 @@ export function OrgSettingsPage() {
                               className="btn btn-ghost btn-sm"
                               style={{ color: 'var(--yellow)' }}
                               onClick={() => setResetMFATarget(u)}
-                              title="Reset MFA — user must re-enroll on next login"
+                              title="Reset MFA - user must re-enroll on next login"
                             >
                               Reset MFA
                             </button>
@@ -660,7 +660,7 @@ export function OrgSettingsPage() {
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Entra ID / Azure AD</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-                      Not configured — set up SSO (OIDC) in Integrations
+                      Not configured - set up SSO (OIDC) in Integrations
                     </div>
                   </div>
                 </div>
@@ -712,7 +712,7 @@ export function OrgSettingsPage() {
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Require MFA for all local users</div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                  SSO users are unaffected — MFA for SSO is managed by your identity provider.
+                  SSO users are unaffected - MFA for SSO is managed by your identity provider.
                 </div>
               </div>
               <ToggleSwitch

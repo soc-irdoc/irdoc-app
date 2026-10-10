@@ -251,7 +251,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
             aria-label="Change assignee"
             style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6, maxWidth: 130 }}
           >
-            <option value="">— Unassigned</option>
+            <option value="">- Unassigned</option>
             {orgUsers.map((u) => (
               <option key={u.id} value={u.id}>{u.full_name}</option>
             ))}

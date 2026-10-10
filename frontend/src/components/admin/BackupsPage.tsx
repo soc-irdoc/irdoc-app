@@ -69,7 +69,7 @@ function formatRelative(dateStr: string | null): string {
 }
 
 function formatBytes(bytes: number | null): string {
-  if (bytes === null) return '—'
+  if (bytes === null) return '-'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -141,7 +141,7 @@ export function BackupsPage() {
     config?.last_backup_status === 'running' || triggerBackup.isPending
 
   const statusBadge = (status: BackupConfig['last_backup_status']) => {
-    if (!status) return <span style={{ color: 'var(--text-muted)' }}>—</span>
+    if (!status) return <span style={{ color: 'var(--text-muted)' }}>-</span>
     const styles: Record<string, React.CSSProperties> = {
       success: {
         background: 'rgba(34,197,94,0.15)',
@@ -183,7 +183,7 @@ export function BackupsPage() {
       </div>
 
       <div style={{ maxWidth: 640 }}>
-        {/* Card 1 — Configuration */}
+        {/* Card 1 - Configuration */}
         <SectionCard title="Configuration">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* Enable toggle */}
@@ -301,7 +301,7 @@ export function BackupsPage() {
           </div>
         </SectionCard>
 
-        {/* Card 2 — Backup Status */}
+        {/* Card 2 - Backup Status */}
         <SectionCard title="Backup Status">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -375,7 +375,7 @@ export function BackupsPage() {
           </div>
         </SectionCard>
 
-        {/* Card 3 — Backup History */}
+        {/* Card 3 - Backup History */}
         <SectionCard title="Backup History">
           {!records || records.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>
@@ -467,7 +467,7 @@ export function BackupsPage() {
               lineHeight: 1.5,
             }}
           >
-            Backups are AES-256-GCM encrypted. Keep your .env — you need SECRET_KEY to decrypt them.
+            Backups are AES-256-GCM encrypted. Keep your .env - you need SECRET_KEY to decrypt them.
           </p>
         </SectionCard>
       </div>

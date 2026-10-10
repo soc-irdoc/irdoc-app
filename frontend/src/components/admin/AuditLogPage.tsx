@@ -66,7 +66,7 @@ function renderDiff(diff: Record<string, unknown> | null | undefined): React.Rea
       {hasFromTo && (
         <>
           <dt style={{ color: 'var(--text-muted)' }}>Changed</dt>
-          <dd>{String(diff.from ?? '—')} → {String(diff.to ?? '—')}</dd>
+          <dd>{String(diff.from ?? '-')} → {String(diff.to ?? '-')}</dd>
         </>
       )}
       {visibleEntries.filter(([k]) => k !== 'from' && k !== 'to').map(([key, val]) => (
@@ -257,7 +257,7 @@ export function AuditLogPage() {
                             ? `user:${String(item.user_id).slice(0, 8)}…`
                             : item.api_key_id
                             ? `key:${String(item.api_key_id).slice(0, 8)}…`
-                            : '—'
+                            : '-'
                           )}
                         </td>
                         <td style={tableCellStyle}>
@@ -288,7 +288,7 @@ export function AuditLogPage() {
                         >
                           {item.entity_label ?? (item.entity_type && item.entity_id
                             ? `${item.entity_type}:${String(item.entity_id).slice(0, 8)}…`
-                            : '—'
+                            : '-'
                           )}
                         </td>
                         <td
@@ -299,7 +299,7 @@ export function AuditLogPage() {
                             color: 'var(--text-muted)',
                           }}
                         >
-                          {item.ip_address ?? '—'}
+                          {item.ip_address ?? '-'}
                         </td>
                       </tr>
                       {expandedId === item.id && (
@@ -337,7 +337,7 @@ export function AuditLogPage() {
           }}
         >
           <span>
-            {(page - 1) * perPage + 1}–{Math.min(page * perPage, total)} of {total}
+            {(page - 1) * perPage + 1}-{Math.min(page * perPage, total)} of {total}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button

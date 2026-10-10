@@ -1,5 +1,5 @@
 /**
- * /report-templates — lists all system + org templates.
+ * /report-templates - lists all system + org templates.
  * Clicking Edit opens the builder for org templates.
  * System templates can be cloned.
  */
@@ -142,7 +142,7 @@ export default function ReportTemplateListPage() {
         </h2>
         {orgTemplates.length === 0 ? (
           <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
-            No custom templates yet — clone a system template or create a new one.
+            No custom templates yet - clone a system template or create a new one.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -175,7 +175,7 @@ export default function ReportTemplateListPage() {
                   <button
                     className={`btn btn-sm ${t.ai_auto_generate ? 'btn-accent' : 'btn-ghost'}`}
                     style={{ fontSize: '11px' }}
-                    title={aiDisabled ? AI_DISABLED_HINT : t.ai_auto_generate ? 'AI auto-generate ON — click to disable' : 'AI auto-generate OFF — click to enable'}
+                    title={aiDisabled ? AI_DISABLED_HINT : t.ai_auto_generate ? 'AI auto-generate ON - click to disable' : 'AI auto-generate OFF - click to enable'}
                     onClick={() => toggleAi.mutate({ templateId: t.id, enabled: !t.ai_auto_generate })}
                     disabled={toggleAi.isPending || aiDisabled}
                   >

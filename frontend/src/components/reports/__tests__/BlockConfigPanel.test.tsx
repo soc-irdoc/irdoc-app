@@ -14,7 +14,7 @@ describe('BlockConfigPanel', () => {
   it('offers only the incident Summary fields for a Section block', () => {
     render(<BlockConfigPanel block={block({ field: 'incident.executive_summary' })} onChange={vi.fn()} />)
     const labels = screen.getAllByRole('option').map((o) => o.textContent)
-    expect(labels).toEqual(['— Select field —', 'Executive Summary', 'Notes', 'Lessons Learned', 'To-do'])
+    expect(labels).toEqual(['- Select field -', 'Executive Summary', 'Notes', 'Lessons Learned', 'To-do'])
   })
 
   it('maps the legacy metadata.notes path onto Notes', () => {

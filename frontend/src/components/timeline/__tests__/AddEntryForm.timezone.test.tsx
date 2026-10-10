@@ -3,13 +3,13 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { AddEntryForm } from '../AddEntryForm'
 
 // Regression test for: a timeline entry saved as 19:57:03 local time displayed
-// back as 22:57:0x — a 3-hour shift matching this machine's UTC+3 offset.
+// back as 22:57:0x - a 3-hour shift matching this machine's UTC+3 offset.
 //
 // Root cause: AddEntryForm built `occurred_at` as a naive `${date}T${time}`
 // string with no timezone offset (unlike EditEntryModal, which correctly does
 // `new Date(...).toISOString()`). The backend's timestamptz column assumes a
 // naive datetime is UTC, so the local wall-clock time got stored as if it were
-// UTC, and was then correctly converted UTC→local for display — silently
+// UTC, and was then correctly converted UTC→local for display - silently
 // adding the offset a second time on every read.
 
 const mutateAsync = vi.fn().mockResolvedValue({ id: 'entry-1' })
@@ -39,7 +39,7 @@ describe('AddEntryForm timezone handling', () => {
     const { container } = render(<AddEntryForm incidentId="incident-1" />)
 
     // The date/time <label>s aren't associated to their <input>s (no
-    // htmlFor/id), so they aren't reachable via getByLabelText — select by
+    // htmlFor/id), so they aren't reachable via getByLabelText - select by
     // input type instead.
     const dateInput = container.querySelector('input[type="date"]') as HTMLInputElement
     const timeInput = container.querySelector('input[type="time"]') as HTMLInputElement

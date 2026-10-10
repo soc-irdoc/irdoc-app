@@ -622,7 +622,7 @@ export function IncidentTemplatesPage() {
         >
           System Templates
           <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>
-            Read-only — clone to customise
+            Read-only - clone to customise
           </span>
         </div>
 

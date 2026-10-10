@@ -46,7 +46,7 @@ function AssigneeDisplay({ incident, onPickUp }: { incident: Incident; onPickUp:
   }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— Unassigned</span>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>- Unassigned</span>
       <button
         className="btn btn-ghost btn-sm"
         onClick={onPickUp}

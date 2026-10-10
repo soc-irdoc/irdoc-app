@@ -72,7 +72,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
 
     // `${date}T${time}` has no timezone offset, so `new Date(...)` parses it
     // as local wall-clock time (per spec, a date-time string with no offset is
-    // local) — .toISOString() then converts that to an absolute UTC instant.
+    // local) - .toISOString() then converts that to an absolute UTC instant.
     // Sending the naive string as-is (as this used to) let the backend's
     // timestamptz column silently treat local time as UTC, so entries came
     // back shifted by the browser's UTC offset. Mirrors EditEntryModal, which
@@ -89,7 +89,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         source: source.trim() || undefined,
       })
 
-      // Upload attachments if any — track successes and failures for a consolidated toast
+      // Upload attachments if any - track successes and failures for a consolidated toast
       let uploadedCount = 0
       let failedCount = 0
       if (files.length > 0 && entry?.id) {
@@ -129,14 +129,14 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       setSelectedAssetIds(new Set())
       setAssetPickerOpen(false)
 
-      // Consolidated result toast — include attachment outcome when files were queued
+      // Consolidated result toast - include attachment outcome when files were queued
       if (files.length === 0) {
         addToast('Entry added', 'success')
       } else if (failedCount === 0) {
         addToast(`Entry added. ${uploadedCount} attachment${uploadedCount !== 1 ? 's' : ''} uploaded.`, 'success')
       } else {
         addToast(
-          `Entry added. ${uploadedCount} of ${files.length} attachment${files.length !== 1 ? 's' : ''} uploaded — ${failedCount} failed.`,
+          `Entry added. ${uploadedCount} of ${files.length} attachment${files.length !== 1 ? 's' : ''} uploaded - ${failedCount} failed.`,
           'error',
         )
       }

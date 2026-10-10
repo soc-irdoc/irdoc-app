@@ -306,7 +306,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
       setIsEnabled(ssoConfig.is_enabled)
       setTenantId(ssoConfig.tenant_id ?? '')
       setClientId(ssoConfig.client_id ?? '')
-      // client_secret is never returned — leave blank (user re-enters to rotate)
+      // client_secret is never returned - leave blank (user re-enters to rotate)
       setRoleMappings(
         Object.entries(ssoConfig.role_mappings ?? {}).map(([group, role]) => ({ group, role }))
       )
@@ -328,7 +328,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
       addToast('Application (Client) ID is required', 'error')
       return
     }
-    // Client secret required on first save — afterwards it stays encrypted in the DB
+    // Client secret required on first save - afterwards it stays encrypted in the DB
     const hasExistingSecret = !!ssoConfig?.client_id  // if client_id is saved, secret was previously set
     if (!hasExistingSecret && !clientSecret.trim()) {
       addToast('Client Secret is required for the initial configuration', 'error')
@@ -345,7 +345,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
     if (clientSecret.trim()) payload.client_secret = clientSecret.trim()
     try {
       await updateSSO.mutateAsync(payload)
-      setClientSecret('')  // clear after save — never persisted in UI
+      setClientSecret('')  // clear after save - never persisted in UI
       addToast('SSO configuration saved', 'success')
     } catch {
       addToast('Failed to save SSO configuration', 'error')
@@ -369,7 +369,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
     : isEnabled
     ? 'SSO Active'
     : ssoConfig?.client_id
-    ? 'Configured — inactive'
+    ? 'Configured - inactive'
     : 'Not configured'
 
   const subLabel = (text: string) => (
@@ -408,7 +408,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Single Sign-On (SSO)</p>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Entra ID / Azure AD — OAuth2 / OIDC</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Entra ID / Azure AD - OAuth2 / OIDC</p>
           </div>
           <ToggleSwitch checked={isEnabled} onChange={handleToggleEnable} ariaLabel="Toggle SSO" />
         </div>
@@ -428,9 +428,9 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
               {subCard('Azure App Registration Credentials',
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    <strong style={{ color: 'var(--text-primary)' }}>OAuth2 / OIDC — no SAML required.</strong>{' '}
+                    <strong style={{ color: 'var(--text-primary)' }}>OAuth2 / OIDC - no SAML required.</strong>{' '}
                     Create an <strong>App Registration</strong> (not an Enterprise Application) in Entra ID and add the Redirect URI below.
-                    The same App Registration can be shared with SharePoint sync — they are configured independently.
+                    The same App Registration can be shared with SharePoint sync - they are configured independently.
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -467,7 +467,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                     <input
                       type="password"
                       className="form-input"
-                      placeholder="Paste new secret to set or rotate — leave blank to keep existing"
+                      placeholder="Paste new secret to set or rotate - leave blank to keep existing"
                       value={clientSecret}
                       onChange={(e) => setClientSecret(e.target.value)}
                       autoComplete="new-password"
@@ -479,7 +479,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                 </div>
               )}
 
-              {subCard('Redirect URI — Register in Azure',
+              {subCard('Redirect URI - Register in Azure',
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                     In your App Registration → <strong>Authentication → Add a platform → Web</strong>, add this Redirect URI:
@@ -559,7 +559,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-// Integrations hidden from UI until a future phase — backend plugins kept intact
+// Integrations hidden from UI until a future phase - backend plugins kept intact
 const HIDDEN_INTEGRATIONS = new Set(['teams', 'slack', 'crowdstrike', 'proofpoint', 'sentinel', 'azuread'])
 
 export function IntegrationsPage() {

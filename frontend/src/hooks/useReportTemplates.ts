@@ -158,7 +158,7 @@ export function useCloneReportTemplate() {
     },
     onSuccess: (t) => {
       qc.invalidateQueries({ queryKey: ['report-templates'] })
-      addToast(`"${t.name}" created — ready to edit`, 'success')
+      addToast(`"${t.name}" created - ready to edit`, 'success')
     },
     onError: (err) => {
       addToast(getErrorMessage(err, 'Failed to clone template'), 'error')

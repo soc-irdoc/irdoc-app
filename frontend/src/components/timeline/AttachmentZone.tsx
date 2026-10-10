@@ -11,7 +11,7 @@ export function AttachmentZone({ files, onFilesChange }: AttachmentZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
 
-  // Global paste listener — captures screenshots pasted anywhere
+  // Global paste listener - captures screenshots pasted anywhere
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       const items = Array.from(e.clipboardData?.items ?? [])

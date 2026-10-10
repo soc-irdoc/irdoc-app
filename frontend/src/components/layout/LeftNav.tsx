@@ -157,7 +157,7 @@ export function LeftNav() {
         )}
       </div>
 
-      {/* Collapse toggle — nav item at top, above all other items */}
+      {/* Collapse toggle - nav item at top, above all other items */}
       <button
         onClick={toggleCollapsed}
         aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
@@ -210,7 +210,7 @@ export function LeftNav() {
         />
       ))}
 
-      {/* Management section — admin only */}
+      {/* Management section - admin only */}
       {user?.role === 'admin' && (
         <>
           <div style={{

@@ -1,5 +1,5 @@
 /**
- * Investigation Graph — React Flow canvas for visualizing entity relationships.
+ * Investigation Graph - React Flow canvas for visualizing entity relationships.
  * Phase 4 component: lazy-loaded from IncidentWorkspacePage.
  */
 import { useCallback, useRef, useState } from 'react'

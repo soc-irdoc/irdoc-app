@@ -73,7 +73,7 @@ function InvitePreview({ fromName, subjectTemplate, accentColor, logoUrl, footer
         <div style={{ color: '#999', fontSize: 11, marginBottom: 4 }}>From: {fromName || 'IRDoc Alerts'}</div>
         <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e', marginBottom: 6 }}>{subject}</div>
         <div style={{ color: '#555', marginBottom: 12 }}>
-          Admin has invited you to join <strong>{orgName}</strong> on IRDoc — an Incident Response Documentation Platform.
+          Admin has invited you to join <strong>{orgName}</strong> on IRDoc - an Incident Response Documentation Platform.
         </div>
         <div style={{ marginBottom: 12 }}>
           <a href="#" style={{ display: 'inline-block', background: color, color: '#fff', padding: '10px 22px', borderRadius: 6, fontWeight: 700, textDecoration: 'none', fontSize: 12 }}>
@@ -127,7 +127,7 @@ export function SmtpSection() {
       })
       setPasswordSaved(smtpConfig.password === MASKED)
     } else if (smtpConfig === null) {
-      // No config yet — pre-fill branding from org settings
+      // No config yet - pre-fill branding from org settings
       setForm((prev) => ({ ...prev, logoUrl: orgLogo, accentColor: orgAccent }))
     }
   }, [smtpConfig, orgSettings])

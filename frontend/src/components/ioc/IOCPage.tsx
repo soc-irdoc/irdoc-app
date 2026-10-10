@@ -49,9 +49,9 @@ function EnrichmentPanel({
     try {
       const res = await apiClient.post<{ data: { enrichment_queued: boolean } }>(`/iocs/${iocId}/enrich`)
       if (res.data.data.enrichment_queued) {
-        addToast('Enrichment queued — results will appear shortly', 'success')
+        addToast('Enrichment queued - results will appear shortly', 'success')
       } else {
-        addToast('No TI integrations enabled — enrichment skipped', 'info')
+        addToast('No TI integrations enabled - enrichment skipped', 'info')
       }
     } catch {
       addToast('Failed to queue enrichment', 'error')
@@ -419,9 +419,9 @@ export function IOCPage({ incidentId }: IOCPageProps) {
       const result = await createIOC.mutateAsync({ ioc_type: newType, value: newValue.trim(), confidence: newConfidence })
       setNewValue('')
       if (result.enrichment_queued) {
-        addToast('IOC added — enrichment queued', 'success')
+        addToast('IOC added - enrichment queued', 'success')
       } else {
-        addToast('IOC added — no TI integrations enabled, enrichment skipped', 'info')
+        addToast('IOC added - no TI integrations enabled, enrichment skipped', 'info')
       }
     } catch {
       addToast('Failed to add IOC', 'error')
@@ -436,9 +436,9 @@ export function IOCPage({ incidentId }: IOCPageProps) {
       setDetectedIOCs([])
       setDetectText('')
       if (result.enrichment_queued) {
-        addToast(`Added ${toAdd.length} IOCs — enrichment queued`, 'success')
+        addToast(`Added ${toAdd.length} IOCs - enrichment queued`, 'success')
       } else {
-        addToast(`Added ${toAdd.length} IOCs — no TI integrations enabled, enrichment skipped`, 'info')
+        addToast(`Added ${toAdd.length} IOCs - no TI integrations enabled, enrichment skipped`, 'info')
       }
     } catch {
       addToast('Bulk import failed', 'error')
@@ -501,7 +501,7 @@ export function IOCPage({ incidentId }: IOCPageProps) {
             <input
               type="text"
               className="form-input"
-              placeholder="IOC value — paste multi-line text to auto-detect..."
+              placeholder="IOC value - paste multi-line text to auto-detect..."
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
               onPaste={handleValuePaste}
@@ -518,7 +518,7 @@ export function IOCPage({ incidentId }: IOCPageProps) {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
               }}>
-                Confidence (0–100)
+                Confidence (0-100)
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input

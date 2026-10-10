@@ -266,7 +266,7 @@ function TeamWorkloadTile({ data }: { data: DashboardStats }) {
 
   return (
     <Tile>
-      <SectionLabel>Team Workload — Open Cases</SectionLabel>
+      <SectionLabel>Team Workload - Open Cases</SectionLabel>
       {workload.length === 0
         ? <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>No active assignments</div>
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
