@@ -7,6 +7,7 @@ import apiClient from '@/lib/apiClient'
 import { getLoginErrorMessage } from '@/lib/utils'
 import { MFAVerifyModal } from '@/components/auth/MFAVerifyModal'
 import { MFASetupWizard } from '@/components/auth/MFASetupWizard'
+import { BrandLogo } from '@/components/common/BrandLogo'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -108,21 +109,7 @@ export function LoginPage() {
       <div className="animate-enter-up" style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              background: 'linear-gradient(135deg, var(--accent), rgba(249,115,22,0.7))',
-              borderRadius: 16,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-              boxShadow: '0 0 24px rgba(249,115,22,0.25)',
-            }}
-          >
-            <img src="/icons/shield_color.svg" width={40} height={40} alt="" aria-hidden="true" />
-          </div>
+          <BrandLogo size={72} style={{ display: 'block', margin: '0 auto 16px' }} />
           <h1
             style={{
               fontFamily: 'Syne, sans-serif',

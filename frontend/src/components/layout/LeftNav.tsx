@@ -4,8 +4,7 @@ import { useThemeStore } from '@/stores/themeStore'
 import { useLogout } from '@/hooks/useAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { getInitials } from '@/lib/utils'
-import irdocDark from '@/assets/irdoc_dark.svg'
-import irdocLight from '@/assets/irdoc_light.svg'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { VersionBadge } from '@/components/common/VersionBadge'
 
 interface NavItem {
@@ -93,7 +92,7 @@ function NavButton({
 export function LeftNav() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { toggle, theme } = useThemeStore()
+  const { toggle } = useThemeStore()
   const logout = useLogout()
   const user = useAuthStore((s) => s.user)
 
@@ -136,12 +135,11 @@ export function LeftNav() {
         flexShrink: 0,
         padding: '0 2px',
       }}>
-        <img
-          src={theme === 'dark' ? irdocDark : irdocLight}
-          alt="IRDoc"
+        <BrandLogo
+          size={70}
           title="IRDoc"
           onClick={() => navigate('/overview')}
-          style={{ width: 70, height: 70, objectFit: 'contain', cursor: 'pointer', flexShrink: 0 }}
+          style={{ cursor: 'pointer' }}
         />
 
         {!collapsed && (

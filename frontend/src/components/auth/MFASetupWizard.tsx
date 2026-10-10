@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { mfaApi } from '@/lib/apiClient'
 import { useAuthStore } from '@/stores/authStore'
 import type { User } from '@/types/user'
+import { BrandLogo } from '@/components/common/BrandLogo'
 
 interface Props {
   setupToken: string  // mfa_setup JWT for forced enrollment; empty string for voluntary (uses access token)
@@ -280,13 +281,7 @@ export function MFASetupWizard({ setupToken, asModal = false, onSuccess }: Props
         borderRadius: 12, padding: 40, width: '90%', maxWidth: 480,
       }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{
-            width: 44, height: 44,
-            background: 'linear-gradient(135deg, var(--accent), #ea580c)',
-            borderRadius: 10, margin: '0 auto 10px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22,
-          }}><img src="/icons/shield_color.svg" width={32} height={32} alt="" aria-hidden="true" /></div>
+          <BrandLogo size={56} style={{ display: 'block', margin: '0 auto 10px' }} />
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>IRDoc</div>
           <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>
             Two-factor authentication setup required

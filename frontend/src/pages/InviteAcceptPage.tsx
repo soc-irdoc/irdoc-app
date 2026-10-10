@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/common/Button'
 import apiClient from '@/lib/apiClient'
+import { BrandLogo } from '@/components/common/BrandLogo'
 
 interface InviteInfo {
   email: string
@@ -81,24 +82,7 @@ export default function InviteAcceptPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              background: 'var(--accent)',
-              borderRadius: 14,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 800,
-              fontSize: 18,
-              color: '#fff',
-              margin: '0 auto 16px',
-              letterSpacing: '-0.5px',
-            }}
-          >
-            IR
-          </div>
+          <BrandLogo size={72} style={{ display: 'block', margin: '0 auto 16px' }} />
           <h1
             style={{
               fontFamily: 'Syne, sans-serif',
