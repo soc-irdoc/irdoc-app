@@ -191,10 +191,34 @@ jobs:
             fi
           fi
 
+  # ── Installer wizard + upgrade path ───────────────────────────────────────
+  # Covers the nginx.conf migration both upgrade paths run (#57) and the
+  # wizard's upgrade steps (#105). No database needed.
+  test-installer:
+    name: Installer — Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: installer/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r installer/requirements.txt
+
+      - name: Run tests
+        run: python -m pytest installer/tests -v
+
   # ── Build & Push Docker images (on merge to main) ─────────────────────────
   build-and-push:
     name: Build & Push Docker Images
-    needs: [test-backend, test-frontend]
+    needs: [test-backend, test-frontend, test-installer]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     # Safety net: without this, a hung step (see the frontend arm64/QEMU
