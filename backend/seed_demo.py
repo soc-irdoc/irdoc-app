@@ -114,7 +114,7 @@ INCIDENT_SCENARIOS = [
                     "The credential has been rotated and the repository history scrubbed.",
         "attack_vector": ["source-code-leak"], "affected_users": 1, "days_ago": 6,
         "assigned_role": "senior_analyst",
-        "iocs": [("other", "github.com/former-contractor/acme-tool", "Public repo containing the leaked credential")],
+        "iocs": [("url", "https://github.com/former-contractor/acme-tool", "Public repo containing the leaked credential")],
     },
     {
         "template_slug": "credential-compromise", "status": "closed", "severity": "high",
@@ -132,7 +132,7 @@ INCIDENT_SCENARIOS = [
                     "phishing prompt. Scope and blast radius are being assessed.",
         "attack_vector": ["oauth", "email"], "affected_users": 3, "days_ago": 1,
         "assigned_role": "senior_analyst",
-        "iocs": [("other", "app-id: 7e2c1a9d-...", "Malicious OAuth application ID")],
+        "iocs": [("url", "hxxps://mail-sync-connector[.]com/oauth/callback", "Redirect URI of the malicious OAuth app")],
     },
     {
         "template_slug": "credential-compromise", "status": "monitoring", "severity": "medium",

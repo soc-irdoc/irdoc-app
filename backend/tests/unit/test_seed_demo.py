@@ -6,15 +6,19 @@ batch of incidents - it's only ever run explicitly against the throwaway
 demo.irdoc.io database, never wired into entrypoint.sh. See seed_demo.py's
 module docstring for why it has to stay a separate script from seed.py.
 """
+from typing import get_args
+
 from sqlalchemy import select
 
 import seed as seed_module
 import seed_demo as seed_demo_module
+from app.core.severity import SEVERITIES
 from app.models.incident import Incident
 from app.models.organization import Organization
 from app.models.task import Task
 from app.models.timeline import TimelineEntry
 from app.models.user import User
+from app.schemas.ioc import IOCCreate
 
 
 async def _seed_templates_and_demo(db_session, monkeypatch):
@@ -90,3 +94,13 @@ async def test_seed_demo_respects_password_env_overrides(db_session, monkeypatch
     viewer = (await db_session.execute(select(User).where(User.role == "viewer"))).scalar_one()
     assert verify_password("AdminOnly123!", admin.password_hash)
     assert verify_password("SharedFallback123!", viewer.password_hash)
+
+
+def test_seed_demo_only_uses_values_the_api_accepts():
+    """seed_demo.py writes to the DB directly, skipping API validation, so an
+    IOC type or severity the UI doesn't know can slip in unnoticed (#112)."""
+    ioc_types = set(get_args(IOCCreate.model_fields["ioc_type"].annotation))
+    for scenario in seed_demo_module.INCIDENT_SCENARIOS:
+        assert scenario["severity"] in SEVERITIES, scenario["title"]
+        for ioc_type, _value, _description in scenario.get("iocs", []):
+            assert ioc_type in ioc_types, (scenario["title"], ioc_type)

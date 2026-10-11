@@ -11,6 +11,11 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Fixed
+
+- **IOCs tab crashed** ("Minified React error #130" in the browser console) when an incident had an IOC whose type isn't one of the built-in ones, such as the `other` IOCs in the demo data. These IOCs now show with a generic tag icon. Introduced in 0.1.6-alpha. (#112)
+- **Demo data used an IOC type the API rejects.** The demo seed created two IOCs of type `other`, which IRDoc itself doesn't accept; they are now URLs. (#112)
+
 ## [0.1.6-alpha] - 2026-10-11
 
 ### Changed

@@ -11,7 +11,7 @@ import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
 import { getSocket } from '@/lib/websocket'
 import {
-  IOC_TYPE_ICONS,
+  iocTypeIcon,
   TLP_COLORS,
   type IOC,
   type IOCType,
@@ -252,7 +252,7 @@ function IOCRow({
         {/* Type */}
         <td style={{ padding: '10px 14px', borderBottom: expanded ? 'none' : '1px solid var(--border-subtle)' }}>
           <span className="chip chip-muted" style={{ fontSize: 11 }}>
-            <Icon icon={IOC_TYPE_ICONS[ioc.ioc_type]} size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />{ioc.ioc_type}
+            <Icon icon={iocTypeIcon(ioc.ioc_type)} size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />{ioc.ioc_type}
           </span>
         </td>
 
@@ -608,7 +608,7 @@ export function IOCPage({ incidentId }: IOCPageProps) {
                   setSelectedIOCs(next)
                 }}
               />
-              <span className="chip chip-muted" style={{ fontSize: 10, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon icon={IOC_TYPE_ICONS[ioc.ioc_type]} size={10} />{ioc.ioc_type}</span>
+              <span className="chip chip-muted" style={{ fontSize: 10, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon icon={iocTypeIcon(ioc.ioc_type)} size={10} />{ioc.ioc_type}</span>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ioc.value}
               </span>

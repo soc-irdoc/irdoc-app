@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { FaAt, FaFileLines, FaGlobe, FaHashtag, FaLink, FaNetworkWired, FaUser } from 'react-icons/fa6'
+import { FaAt, FaFileLines, FaGlobe, FaHashtag, FaLink, FaNetworkWired, FaTag, FaUser } from 'react-icons/fa6'
 
 export type IOCType = 'email' | 'domain' | 'ip' | 'url' | 'hash' | 'file' | 'username'
 export type IOCStatus = 'active' | 'blocked' | 'remediated' | 'fp'
@@ -47,6 +47,11 @@ export const IOC_TYPE_ICONS: Record<IOCType, IconType> = {
   hash:     FaHashtag,
   file:     FaFileLines,
   username: FaUser,
+}
+
+/** Icon for an IOC type. Older or seeded data can hold types outside IOCType (e.g. "other"). */
+export function iocTypeIcon(type: string): IconType {
+  return IOC_TYPE_ICONS[type as IOCType] ?? FaTag
 }
 
 export const IOC_STATUS_COLORS: Record<IOCStatus, string> = {
