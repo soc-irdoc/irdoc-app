@@ -10,6 +10,7 @@ from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.severity import normalize_severity
 from app.models.attachment import Attachment
 from app.models.incident import Incident, IncidentExternalRef
 from app.models.ioc import IOC
@@ -177,7 +178,7 @@ async def list_incidents(
     if status_filter:
         query = query.where(Incident.status == status_filter)
     if severity_filter:
-        query = query.where(Incident.severity == severity_filter)
+        query = query.where(Incident.severity == normalize_severity(severity_filter))
     if search:
         term = search.strip().replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
         pattern = f"%{term}%"

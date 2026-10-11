@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Incident, Severity, IncidentStatus } from '@/types/incident'
-import { SEVERITY_COLORS, STATUS_COLORS } from '@/types/incident'
+import { SEVERITIES, SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS } from '@/types/incident'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
 import { copyToClipboard } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
@@ -176,10 +176,9 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
             paddingRight: 6,
           }}
         >
-          <option value="sev1">SEV-1</option>
-          <option value="sev2">SEV-2</option>
-          <option value="sev3">SEV-3</option>
-          <option value="sev4">SEV-4</option>
+          {SEVERITIES.map((sev) => (
+            <option key={sev} value={sev}>{SEVERITY_LABELS[sev]}</option>
+          ))}
         </select>
 
         {/* Incident ref */}

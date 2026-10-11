@@ -256,10 +256,10 @@ def test_filename_default_pattern():
 def test_filename_all_placeholders():
     name = build_report_filename(
         "{date}_{incident_ref}_{severity}_{status}_{template_name}_v{version}_{incident_title}",
-        incident_ref="INC-1", template_name="Tech", severity="sev2", status="contained",
+        incident_ref="INC-1", template_name="Tech", severity="high", status="contained",
         version=3, incident_title="Phish", date="2026-10-08",
     )
-    assert name == "2026-10-08_INC-1_sev2_contained_Tech_v3_Phish.pdf"
+    assert name == "2026-10-08_INC-1_high_contained_Tech_v3_Phish.pdf"
 
 
 def test_filename_strips_characters_sharepoint_rejects():

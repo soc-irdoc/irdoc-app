@@ -7,7 +7,7 @@ from httpx import AsyncClient
 async def incident_id(client: AsyncClient, auth_headers):
     r = await client.post(
         "/api/v1/incidents",
-        json={"title": "IOC Test Incident", "severity": "sev1"},
+        json={"title": "IOC Test Incident", "severity": "critical"},
         headers=auth_headers,
     )
     return r.json()["data"]["id"]

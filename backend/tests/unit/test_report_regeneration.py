@@ -356,7 +356,7 @@ class TestVersioning:
         _, org = admin_user
         tmpl = await _template(db_session, org)
         inc = await client.post(
-            "/api/v1/incidents", json={"title": "Versioned", "severity": "sev3"}, headers=auth_headers
+            "/api/v1/incidents", json={"title": "Versioned", "severity": "medium"}, headers=auth_headers
         )
         incident_id = inc.json()["data"]["id"]
 
@@ -441,7 +441,7 @@ class TestEndpointsTriggerRegeneration:
     @pytest.fixture
     async def incident_id(self, client, auth_headers):
         r = await client.post(
-            "/api/v1/incidents", json={"title": "Hooked", "severity": "sev2"}, headers=auth_headers
+            "/api/v1/incidents", json={"title": "Hooked", "severity": "high"}, headers=auth_headers
         )
         return r.json()["data"]["id"]
 

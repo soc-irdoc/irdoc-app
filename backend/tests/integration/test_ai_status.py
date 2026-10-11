@@ -32,7 +32,7 @@ async def test_status_requires_auth(client: AsyncClient):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("kind", ["summary", "recommendations"])
 async def test_generate_rejected_when_ai_disabled(client: AsyncClient, auth_headers, kind):
-    inc = await client.post("/api/v1/incidents", json={"title": "X", "severity": "sev2"}, headers=auth_headers)
+    inc = await client.post("/api/v1/incidents", json={"title": "X", "severity": "high"}, headers=auth_headers)
     r = await client.post(f"/api/v1/incidents/{inc.json()['data']['id']}/ai/{kind}", headers=auth_headers)
     assert r.status_code == 409
     assert "disabled" in r.text

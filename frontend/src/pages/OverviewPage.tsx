@@ -18,13 +18,13 @@ const STATUS_COLORS: Record<string, string> = {
   closed: '#3fb950',
 }
 const SEV_COLORS: Record<string, string> = {
-  sev1: '#f85149',
-  sev2: '#e3b341',
-  sev3: '#58a6ff',
-  sev4: '#3fb950',
+  critical: '#b62324',
+  high: '#f85149',
+  medium: '#e3b341',
+  low: '#58a6ff',
 }
 const SEV_LABELS: Record<string, string> = {
-  sev1: 'Sev 1', sev2: 'Sev 2', sev3: 'Sev 3', sev4: 'Sev 4',
+  critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low',
 }
 const PRIORITY_COLORS: Record<string, string> = {
   critical: '#f85149', high: '#e3b341', medium: '#58a6ff', low: '#3fb950',

@@ -27,7 +27,7 @@ const mockIncident: Incident = {
   org_id: 'org-1',
   incident_ref: 'INC-0001',
   title: 'Test incident',
-  severity: 'sev2',
+  severity: 'high',
   status: 'open',
   assigned_to: null,
   assigned_user: null,

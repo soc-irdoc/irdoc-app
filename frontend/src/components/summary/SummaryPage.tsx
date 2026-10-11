@@ -19,6 +19,7 @@ interface SummaryPageProps {
 // Chip colour classes (SEVERITY_COLORS / STATUS_COLORS) → theme colour tokens,
 // so the cards match the severity/status chips used elsewhere.
 const CHIP_COLOR_VARS: Record<string, string> = {
+  'chip-crimson': 'var(--crimson)',
   'chip-red': 'var(--red)',
   'chip-yellow': 'var(--yellow)',
   'chip-blue': 'var(--blue)',

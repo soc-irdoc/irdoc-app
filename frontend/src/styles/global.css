@@ -34,6 +34,8 @@
   --accent-glow:   rgba(249,115,22,0.25);
   --green:         #3fb950;
   --green-dim:     rgba(63,185,80,0.16);
+  --crimson:       #b62324;
+  --crimson-dim:   rgba(182,35,36,0.3);
   --red:           #f85149;
   --red-dim:       rgba(248,81,73,0.16);
   --yellow:        #e3b341;
@@ -62,6 +64,8 @@
   --accent-glow:   rgba(232,89,12,0.2);
   --green:         #1a7f37;
   --green-dim:     rgba(26,127,55,0.1);
+  --crimson:       #82071e;
+  --crimson-dim:   rgba(130,7,30,0.12);
   --red:           #cf222e;
   --red-dim:       rgba(207,34,46,0.1);
   --yellow:        #9a6700;
@@ -240,6 +244,12 @@ textarea.form-input {
 
 .chip-blue:hover {
   filter: brightness(1.2);
+}
+
+.chip-crimson {
+  background: var(--crimson-dim);
+  color: var(--crimson);
+  border-color: var(--crimson);
 }
 
 .chip-red {

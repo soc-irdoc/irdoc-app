@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.core.severity import Severity
+
 
 class UserBrief(BaseModel):
     id: UUID
@@ -32,14 +34,14 @@ class ExternalRefCreate(BaseModel):
 
 class IncidentCreate(BaseModel):
     title: str
-    severity: Literal["sev1", "sev2", "sev3", "sev4"] = "sev2"
+    severity: Severity = "high"
     template_id: str | None = None
     assigned_to: str | None = None
 
 
 class IncidentUpdate(BaseModel):
     title: str | None = None
-    severity: Literal["sev1", "sev2", "sev3", "sev4"] | None = None
+    severity: Severity | None = None
     status: Literal["open", "contained", "closed", "monitoring"] | None = None
     executive_summary: str | None = None
     notes: str | None = None

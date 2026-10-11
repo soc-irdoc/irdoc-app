@@ -45,15 +45,15 @@ DEMO_ACCOUNTS = [
 
 # Containment/closure lag, keyed by severity - used to derive contained_at/closed_at
 # from opened_at so timestamps read as plausible rather than instantaneous.
-_CONTAINMENT_HOURS = {"sev1": 4, "sev2": 8, "sev3": 16, "sev4": 30}
-_CLOSURE_HOURS = {"sev1": 24, "sev2": 48, "sev3": 72, "sev4": 120}
+_CONTAINMENT_HOURS = {"critical": 4, "high": 8, "medium": 16, "low": 30}
+_CLOSURE_HOURS = {"critical": 24, "high": 48, "medium": 72, "low": 120}
 
 # 20 incidents, 5 per system template category, cycling through all 4 statuses
 # so every status/category combination is represented at least once.
 INCIDENT_SCENARIOS = [
     # ── phishing ─────────────────────────────────────────────────────────────
     {
-        "template_slug": "phishing", "status": "open", "severity": "sev1",
+        "template_slug": "phishing", "status": "open", "severity": "critical",
         "title": "Executive spear-phishing targeting CFO - fraudulent wire request",
         "summary": "A spoofed email impersonating the CEO asked the CFO to authorize an urgent wire transfer. "
                     "The transfer was not made; the sender domain and email are under investigation.",
@@ -62,7 +62,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("domain", "acme-financeteam.com", "Lookalike domain used as the reply-to address")],
     },
     {
-        "template_slug": "phishing", "status": "monitoring", "severity": "sev2",
+        "template_slug": "phishing", "status": "monitoring", "severity": "high",
         "title": "Bulk phishing campaign impersonating IT helpdesk",
         "summary": "34 employees received an email asking them to 'verify their password' via a fake helpdesk portal. "
                     "The malicious link has been blocked; monitoring for any successful credential entry.",
@@ -71,7 +71,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("url", "hxxps://it-helpdesk-verify[.]net/login", "Credential harvesting page")],
     },
     {
-        "template_slug": "phishing", "status": "contained", "severity": "sev2",
+        "template_slug": "phishing", "status": "contained", "severity": "high",
         "title": "Credential-harvesting phishing page mimicking SSO login",
         "summary": "A pixel-perfect clone of the corporate SSO login page was distributed via a QR code in a "
                     "vendor invoice. 12 users clicked through; passwords for affected accounts have been reset.",
@@ -80,7 +80,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("domain", "sso-acmecorp-secure.net", "Cloned SSO login page")],
     },
     {
-        "template_slug": "phishing", "status": "closed", "severity": "sev3",
+        "template_slug": "phishing", "status": "closed", "severity": "medium",
         "title": "QR-code phishing ('quishing') via physical mail to finance team",
         "summary": "A physical letter with a malicious QR code was mailed to the finance department. No devices "
                     "were compromised; awareness training was issued to the affected team.",
@@ -89,7 +89,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("url", "hxxps://bit.ly/3xQu1sh", "Shortened URL embedded in the QR code")],
     },
     {
-        "template_slug": "phishing", "status": "open", "severity": "sev3",
+        "template_slug": "phishing", "status": "open", "severity": "medium",
         "title": "Phishing email with malicious OneDrive link reported by employee",
         "summary": "An employee self-reported a suspicious 'shared document' email before clicking. Sender and "
                     "link are being triaged.",
@@ -99,7 +99,7 @@ INCIDENT_SCENARIOS = [
     },
     # ── credential-compromise ────────────────────────────────────────────────
     {
-        "template_slug": "credential-compromise", "status": "monitoring", "severity": "sev1",
+        "template_slug": "credential-compromise", "status": "monitoring", "severity": "critical",
         "title": "Leaked credentials from third-party breach reused against VPN",
         "summary": "Credentials exposed in an unrelated third-party breach were used in a successful VPN login. "
                     "The account has been forced to reset; monitoring for further reuse across other services.",
@@ -108,7 +108,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("ip", "203.0.113.44", "Source IP of the VPN login")],
     },
     {
-        "template_slug": "credential-compromise", "status": "contained", "severity": "sev1",
+        "template_slug": "credential-compromise", "status": "contained", "severity": "critical",
         "title": "Service account credentials found in public GitHub repo",
         "summary": "A hardcoded service account credential was discovered in a public fork of an internal tool. "
                     "The credential has been rotated and the repository history scrubbed.",
@@ -117,7 +117,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("other", "github.com/former-contractor/acme-tool", "Public repo containing the leaked credential")],
     },
     {
-        "template_slug": "credential-compromise", "status": "closed", "severity": "sev2",
+        "template_slug": "credential-compromise", "status": "closed", "severity": "high",
         "title": "Password-spray attack against Microsoft 365 tenant",
         "summary": "Low-and-slow password-spray attempts were detected against 58 accounts over several days. "
                     "No accounts were compromised; conditional access policies were tightened.",
@@ -126,7 +126,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("ip", "198.51.100.23", "Primary source IP for the spray attempts")],
     },
     {
-        "template_slug": "credential-compromise", "status": "open", "severity": "sev2",
+        "template_slug": "credential-compromise", "status": "open", "severity": "high",
         "title": "Suspicious OAuth app granted mailbox access via consent phishing",
         "summary": "A user granted a third-party OAuth application broad mailbox permissions after a consent "
                     "phishing prompt. Scope and blast radius are being assessed.",
@@ -135,7 +135,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("other", "app-id: 7e2c1a9d-...", "Malicious OAuth application ID")],
     },
     {
-        "template_slug": "credential-compromise", "status": "monitoring", "severity": "sev3",
+        "template_slug": "credential-compromise", "status": "monitoring", "severity": "medium",
         "title": "Former employee account reactivated without authorization",
         "summary": "An offboarded employee's account was found re-enabled outside the normal offboarding "
                     "process. Account has been disabled again; reviewing access logs for activity during the window.",
@@ -145,7 +145,7 @@ INCIDENT_SCENARIOS = [
     },
     # ── malware-infection ────────────────────────────────────────────────────
     {
-        "template_slug": "malware-infection", "status": "contained", "severity": "sev3",
+        "template_slug": "malware-infection", "status": "contained", "severity": "medium",
         "title": "Cryptomining malware detected on build server",
         "summary": "EDR flagged an unauthorized cryptomining process consuming CPU on a CI build agent. "
                     "The host has been isolated and the process terminated.",
@@ -154,7 +154,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("hash", "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", "Cryptominer binary SHA-256")],
     },
     {
-        "template_slug": "malware-infection", "status": "closed", "severity": "sev2",
+        "template_slug": "malware-infection", "status": "closed", "severity": "high",
         "title": "USB-borne worm spreading across warehouse kiosks",
         "summary": "A self-propagating worm spread via USB drives across 7 warehouse kiosk terminals. All "
                     "affected devices were reimaged; USB ports on kiosks are now policy-restricted.",
@@ -163,7 +163,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("hash", "1c383cd30b7c298ab50293adfecb7b18", "Worm dropper MD5")],
     },
     {
-        "template_slug": "malware-infection", "status": "open", "severity": "sev1",
+        "template_slug": "malware-infection", "status": "open", "severity": "critical",
         "title": "Ransomware note discovered on finance file server",
         "summary": "A ransom note was found on the finance department's file server; several shares show "
                     "encrypted file extensions. The host has been network-isolated pending forensic imaging.",
@@ -172,7 +172,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("ip", "192.0.2.77", "Suspected lateral-movement source host")],
     },
     {
-        "template_slug": "malware-infection", "status": "monitoring", "severity": "sev1",
+        "template_slug": "malware-infection", "status": "monitoring", "severity": "critical",
         "title": "Trojanized invoice attachment executed on accounts-payable workstation",
         "summary": "A malicious macro-enabled invoice was opened by an AP clerk, dropping a remote-access trojan. "
                     "The host has been reimaged; monitoring the network for further beaconing.",
@@ -181,7 +181,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("domain", "cdn-update-service.net", "Suspected C2 domain")],
     },
     {
-        "template_slug": "malware-infection", "status": "contained", "severity": "sev4",
+        "template_slug": "malware-infection", "status": "contained", "severity": "low",
         "title": "Legacy EDR alert: known malware family reappears on retired laptop",
         "summary": "A previously-decommissioned laptop, briefly reconnected for data recovery, triggered an alert "
                     "for a malware family from a prior incident. The device has been wiped again.",
@@ -191,7 +191,7 @@ INCIDENT_SCENARIOS = [
     },
     # ── suspicious-login ─────────────────────────────────────────────────────
     {
-        "template_slug": "suspicious-login", "status": "closed", "severity": "sev3",
+        "template_slug": "suspicious-login", "status": "closed", "severity": "medium",
         "title": "Brute-force attempts against exposed RDP host",
         "summary": "Thousands of failed RDP login attempts were logged against an internet-facing jump host. "
                     "No successful logins occurred; the host was moved behind the VPN.",
@@ -200,7 +200,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("ip", "203.0.113.201", "Primary brute-force source IP")],
     },
     {
-        "template_slug": "suspicious-login", "status": "open", "severity": "sev2",
+        "template_slug": "suspicious-login", "status": "open", "severity": "high",
         "title": "Multiple failed MFA prompts followed by successful login from unrecognized device",
         "summary": "A user received a burst of unexpected MFA push notifications, one of which was accidentally "
                     "approved. Reviewing whether any post-login actions were taken.",
@@ -209,7 +209,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [],
     },
     {
-        "template_slug": "suspicious-login", "status": "monitoring", "severity": "sev1",
+        "template_slug": "suspicious-login", "status": "monitoring", "severity": "critical",
         "title": "After-hours admin console login from unfamiliar ASN",
         "summary": "An administrative console login occurred at 3am local time from an ASN never seen for this "
                     "account. Session was terminated; monitoring for repeat attempts.",
@@ -218,7 +218,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("ip", "198.51.100.9", "Source IP of the after-hours login")],
     },
     {
-        "template_slug": "suspicious-login", "status": "contained", "severity": "sev3",
+        "template_slug": "suspicious-login", "status": "contained", "severity": "medium",
         "title": "Login from Tor exit node on customer-support shared account",
         "summary": "A shared support-team account was used to log in from a known Tor exit node. The account's "
                     "password has been rotated and Tor egress is now blocked at the WAF.",
@@ -227,7 +227,7 @@ INCIDENT_SCENARIOS = [
         "iocs": [("ip", "185.220.101.7", "Tor exit node used for the login")],
     },
     {
-        "template_slug": "suspicious-login", "status": "closed", "severity": "sev2",
+        "template_slug": "suspicious-login", "status": "closed", "severity": "high",
         "title": "Geographically impossible logins across two continents within minutes",
         "summary": "Impossible-travel detection flagged logins from two continents 11 minutes apart on the same "
                     "account. Investigation concluded the account had been compromised via a stale session token, "

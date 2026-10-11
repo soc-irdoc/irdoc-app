@@ -8,10 +8,10 @@ from app.plugins.registry import register_plugin
 logger = logging.getLogger(__name__)
 
 _SEVERITY_COLORS = {
-    "sev1": "FF0000",
-    "sev2": "FF8C00",
-    "sev3": "FFD700",
-    "sev4": "36A64F",
+    "critical": "B62324",
+    "high": "F85149",
+    "medium": "E3B341",
+    "low": "58A6FF",
 }
 
 
