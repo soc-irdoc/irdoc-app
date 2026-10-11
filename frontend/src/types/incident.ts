@@ -1,4 +1,4 @@
-export type Severity = 'sev1' | 'sev2' | 'sev3' | 'sev4'
+export type Severity = 'critical' | 'high' | 'medium' | 'low'
 export type IncidentStatus = 'open' | 'contained' | 'closed' | 'monitoring'
 
 export interface UserBrief {
@@ -69,18 +69,20 @@ export interface UpdateIncidentPayload {
   assigned_to?: string | null
 }
 
+export const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low']
+
 export const SEVERITY_LABELS: Record<Severity, string> = {
-  sev1: 'SEV-1',
-  sev2: 'SEV-2',
-  sev3: 'SEV-3',
-  sev4: 'SEV-4',
+  critical: 'CRITICAL',
+  high: 'HIGH',
+  medium: 'MEDIUM',
+  low: 'LOW',
 }
 
 export const SEVERITY_COLORS: Record<Severity, string> = {
-  sev1: 'chip-red',
-  sev2: 'chip-yellow',
-  sev3: 'chip-blue',
-  sev4: 'chip-muted',
+  critical: 'chip-crimson',
+  high: 'chip-red',
+  medium: 'chip-yellow',
+  low: 'chip-blue',
 }
 
 export const STATUS_LABELS: Record<IncidentStatus, string> = {

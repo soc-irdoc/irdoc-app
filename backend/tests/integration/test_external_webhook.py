@@ -30,7 +30,7 @@ async def test_create_incident_via_webhook(client: AsyncClient, api_key_headers)
         "/api/v1/external/incidents",
         json={
             "title": "SDP Ticket #4421 - Suspicious Login",
-            "severity": "sev2",
+            "severity": "high",
             "external_ref": "SDP-2026-4421",
             "external_source": "servicedesk_plus",
             "external_url": "https://sdp.example.com/requests/4421",
@@ -50,7 +50,7 @@ async def test_create_incident_via_webhook(client: AsyncClient, api_key_headers)
 async def test_webhook_requires_api_key(client: AsyncClient):
     response = await client.post(
         "/api/v1/external/incidents",
-        json={"title": "No auth", "severity": "sev2"},
+        json={"title": "No auth", "severity": "high"},
     )
     assert response.status_code == 401
 
@@ -73,7 +73,7 @@ async def test_webhook_wrong_scope(client: AsyncClient, admin_user, db_session: 
 
     response = await client.post(
         "/api/v1/external/incidents",
-        json={"title": "Should fail", "severity": "sev2"},
+        json={"title": "Should fail", "severity": "high"},
         headers={"Authorization": f"ApiKey {raw_key}"},
     )
     assert response.status_code == 403
@@ -83,7 +83,18 @@ async def test_webhook_wrong_scope(client: AsyncClient, admin_user, db_session: 
 async def test_webhook_invalid_severity(client: AsyncClient, api_key_headers):
     response = await client.post(
         "/api/v1/external/incidents",
-        json={"title": "Bad severity", "severity": "critical"},  # invalid
+        json={"title": "Bad severity", "severity": "sev5"},  # invalid
         headers=api_key_headers,
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_webhook_accepts_legacy_severity(client: AsyncClient, api_key_headers):
+    """Senders written before #109 still post sev1-sev4."""
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Legacy sender", "severity": "sev1"},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 201

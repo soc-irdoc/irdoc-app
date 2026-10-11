@@ -17,7 +17,7 @@ class Incident(Base):
     )
     incident_ref: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
     title: Mapped[str] = mapped_column(Text, nullable=False)
-    severity: Mapped[str] = mapped_column(String(10), default="sev1")
+    severity: Mapped[str] = mapped_column(String(10), default="critical")
     status: Mapped[str] = mapped_column(String(20), default="open")
     template_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("incident_templates.id"), nullable=True

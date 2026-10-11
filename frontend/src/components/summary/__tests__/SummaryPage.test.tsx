@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SummaryPage } from '../SummaryPage'
 
 const incident = {
-  id: 'i1', incident_ref: 'INC-2026-0002', title: 'T', severity: 'sev2', status: 'monitoring',
+  id: 'i1', incident_ref: 'INC-2026-0002', title: 'T', severity: 'critical', status: 'monitoring',
   executive_summary: '', notes: '', lessons_learned: '', actions_todo: '',
   ai_summary: null, ai_recommendations: null, attack_vector: [], affected_users: 0,
   opened_at: '2026-09-26T10:00:00Z', created_at: '2026-09-26T10:00:00Z', updated_at: '2026-09-26T10:00:00Z',
@@ -35,13 +35,13 @@ describe('SummaryPage', () => {
 
   it('colours severity and status cards by value on a single line (#66)', () => {
     renderPage()
-    const sev = within(screen.getByTestId('stat-severity')).getByText('SEV-2')
+    const sev = within(screen.getByTestId('stat-severity')).getByText('CRITICAL')
     const status = within(screen.getByTestId('stat-status')).getByText('MONITORING')
-    expect(sev.style.color).toBe('var(--yellow)')
+    expect(sev.style.color).toBe('var(--crimson)')
     expect(sev.style.fontSize).toBe('18px')
     expect(sev.style.whiteSpace).toBe('nowrap')
     expect(status.style.color).toBe('var(--blue)')
-    expect(screen.getByTestId('stat-severity').style.borderTop).toContain('var(--yellow)')
+    expect(screen.getByTestId('stat-severity').style.borderTop).toContain('var(--crimson)')
   })
 
   it('greys out AI cards and their Generate buttons when AI is disabled (#68)', () => {

@@ -11,6 +11,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { usePermission } from '@/lib/permissions'
 import {
+  SEVERITIES,
   SEVERITY_LABELS,
   SEVERITY_COLORS,
   STATUS_LABELS,
@@ -185,8 +186,6 @@ const STATUS_TABS: Array<{ value: IncidentStatus | 'all'; label: string }> = [
   { value: 'closed',     label: 'Closed' },
 ]
 
-const SEVERITIES: Severity[] = ['sev1', 'sev2', 'sev3', 'sev4']
-
 export function IncidentListPage() {
   const navigate = useNavigate()
   const addToast = useUIStore((s) => s.addToast)
@@ -199,7 +198,7 @@ export function IncidentListPage() {
   const canDelete = usePermission('senior_analyst')
 
   const [newTitle, setNewTitle] = useState('')
-  const [newSeverity, setNewSeverity] = useState<Severity>('sev2')
+  const [newSeverity, setNewSeverity] = useState<Severity>('high')
   const [newTemplateId, setNewTemplateId] = useState('')
 
   const { data, isLoading } = useIncidents({
@@ -234,7 +233,7 @@ export function IncidentListPage() {
       })
       setShowCreate(false)
       setNewTitle('')
-      setNewSeverity('sev2')
+      setNewSeverity('high')
       setNewTemplateId('')
       navigate(`/incidents/${incident.id}/timeline`)
     } catch {

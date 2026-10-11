@@ -1,12 +1,12 @@
-from typing import Literal
-
 from pydantic import BaseModel
+
+from app.core.severity import Severity
 
 
 class ExternalIncidentCreate(BaseModel):
     """Inbound webhook payload - any tool that can POST JSON can use this."""
     title: str
-    severity: Literal["sev1", "sev2", "sev3", "sev4"] = "sev2"
+    severity: Severity = "high"  # sev1-sev4 still accepted
     template: str = "blank"          # matches incident_template.slug
     external_ref: str | None = None  # e.g. "SDP-2026-4421"
     external_source: str | None = None  # e.g. "servicedesk_plus"

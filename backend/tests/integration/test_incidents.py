@@ -7,13 +7,13 @@ from httpx import AsyncClient
 async def test_create_incident(client: AsyncClient, auth_headers):
     response = await client.post(
         "/api/v1/incidents",
-        json={"title": "Test Incident", "severity": "sev2"},
+        json={"title": "Test Incident", "severity": "high"},
         headers=auth_headers,
     )
     assert response.status_code == 201
     data = response.json()["data"]
     assert data["title"] == "Test Incident"
-    assert data["severity"] == "sev2"
+    assert data["severity"] == "high"
     assert data["incident_ref"].startswith("INC-")
 
 
@@ -21,12 +21,12 @@ async def test_create_incident(client: AsyncClient, auth_headers):
 async def test_list_incidents(client: AsyncClient, auth_headers):
     await client.post(
         "/api/v1/incidents",
-        json={"title": "Incident A", "severity": "sev1"},
+        json={"title": "Incident A", "severity": "critical"},
         headers=auth_headers,
     )
     await client.post(
         "/api/v1/incidents",
-        json={"title": "Incident B", "severity": "sev3"},
+        json={"title": "Incident B", "severity": "medium"},
         headers=auth_headers,
     )
     response = await client.get("/api/v1/incidents", headers=auth_headers)
@@ -38,7 +38,7 @@ async def test_list_incidents(client: AsyncClient, auth_headers):
 async def test_get_incident(client: AsyncClient, auth_headers):
     create = await client.post(
         "/api/v1/incidents",
-        json={"title": "Get Me", "severity": "sev2"},
+        json={"title": "Get Me", "severity": "high"},
         headers=auth_headers,
     )
     iid = create.json()["data"]["id"]
@@ -51,7 +51,7 @@ async def test_get_incident(client: AsyncClient, auth_headers):
 async def test_update_incident(client: AsyncClient, auth_headers):
     create = await client.post(
         "/api/v1/incidents",
-        json={"title": "Update Me", "severity": "sev2"},
+        json={"title": "Update Me", "severity": "high"},
         headers=auth_headers,
     )
     iid = create.json()["data"]["id"]
@@ -68,8 +68,8 @@ async def test_update_incident(client: AsyncClient, auth_headers):
 
 @pytest.mark.asyncio
 async def test_filter_by_status(client: AsyncClient, auth_headers):
-    await client.post("/api/v1/incidents", json={"title": "Open", "severity": "sev2"}, headers=auth_headers)
-    r2 = await client.post("/api/v1/incidents", json={"title": "Closed", "severity": "sev3"}, headers=auth_headers)
+    await client.post("/api/v1/incidents", json={"title": "Open", "severity": "high"}, headers=auth_headers)
+    r2 = await client.post("/api/v1/incidents", json={"title": "Closed", "severity": "medium"}, headers=auth_headers)
     iid = r2.json()["data"]["id"]
     await client.put(f"/api/v1/incidents/{iid}", json={"status": "closed"}, headers=auth_headers)
 
@@ -79,8 +79,8 @@ async def test_filter_by_status(client: AsyncClient, auth_headers):
 
 @pytest.mark.asyncio
 async def test_incident_ref_sequential(client: AsyncClient, auth_headers):
-    r1 = await client.post("/api/v1/incidents", json={"title": "A", "severity": "sev1"}, headers=auth_headers)
-    r2 = await client.post("/api/v1/incidents", json={"title": "B", "severity": "sev1"}, headers=auth_headers)
+    r1 = await client.post("/api/v1/incidents", json={"title": "A", "severity": "critical"}, headers=auth_headers)
+    r2 = await client.post("/api/v1/incidents", json={"title": "B", "severity": "critical"}, headers=auth_headers)
     ref1 = r1.json()["data"]["incident_ref"]
     ref2 = r2.json()["data"]["incident_ref"]
     # Both should be INC-YYYY-NNNN format
@@ -94,7 +94,7 @@ async def test_rich_text_fields_round_trip(client: AsyncClient, auth_headers):
     # Create incident
     res = await client.post(
         "/api/v1/incidents",
-        json={"title": "Rich Text Test", "severity": "sev2"},
+        json={"title": "Rich Text Test", "severity": "high"},
         headers=auth_headers,
     )
     assert res.status_code == 201
@@ -141,7 +141,7 @@ async def test_rich_text_fields_sanitize_xss(client: AsyncClient, auth_headers):
     """Dangerous HTML in rich text fields is stripped by bleach on save."""
     res = await client.post(
         "/api/v1/incidents",
-        json={"title": "XSS Test", "severity": "sev3"},
+        json={"title": "XSS Test", "severity": "medium"},
         headers=auth_headers,
     )
     assert res.status_code == 201
@@ -175,7 +175,7 @@ async def test_rich_text_font_size_round_trip(client: AsyncClient, auth_headers)
     """font-size style on <span> is preserved; other CSS properties are stripped."""
     res = await client.post(
         "/api/v1/incidents",
-        json={"title": "Font Size Test", "severity": "sev3"},
+        json={"title": "Font Size Test", "severity": "medium"},
         headers=auth_headers,
     )
     assert res.status_code == 201
@@ -208,7 +208,7 @@ async def test_rich_text_font_size_round_trip(client: AsyncClient, auth_headers)
 
 
 async def _create(client, headers, title):
-    r = await client.post("/api/v1/incidents", json={"title": title, "severity": "sev2"}, headers=headers)
+    r = await client.post("/api/v1/incidents", json={"title": title, "severity": "high"}, headers=headers)
     return r.json()["data"]
 
 
@@ -238,3 +238,36 @@ async def test_search_treats_like_wildcards_literally(client: AsyncClient, auth_
     for term in ("%", "_"):
         r = await client.get("/api/v1/incidents", params={"search": term}, headers=auth_headers)
         assert r.json()["meta"]["total"] == 0, term
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("legacy, new", [("sev1", "critical"), ("sev2", "high"), ("SEV3", "medium"), ("sev4", "low")])
+async def test_legacy_severity_is_mapped(client: AsyncClient, auth_headers, legacy, new):
+    r = await client.post("/api/v1/incidents", json={"title": "Legacy", "severity": legacy}, headers=auth_headers)
+    assert r.status_code == 201
+    assert r.json()["data"]["severity"] == new
+
+
+@pytest.mark.asyncio
+async def test_update_with_legacy_severity(client: AsyncClient, auth_headers):
+    r = await client.post("/api/v1/incidents", json={"title": "Bump", "severity": "low"}, headers=auth_headers)
+    inc_id = r.json()["data"]["id"]
+    r = await client.put(f"/api/v1/incidents/{inc_id}", json={"severity": "sev1"}, headers=auth_headers)
+    assert r.status_code == 200
+    assert r.json()["data"]["severity"] == "critical"
+
+
+@pytest.mark.asyncio
+async def test_unknown_severity_rejected(client: AsyncClient, auth_headers):
+    r = await client.post("/api/v1/incidents", json={"title": "Bad", "severity": "sev5"}, headers=auth_headers)
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_filter_by_legacy_severity(client: AsyncClient, auth_headers):
+    await client.post("/api/v1/incidents", json={"title": "Crit", "severity": "critical"}, headers=auth_headers)
+    await client.post("/api/v1/incidents", json={"title": "Low", "severity": "low"}, headers=auth_headers)
+    for value in ("critical", "sev1"):
+        r = await client.get(f"/api/v1/incidents?severity={value}", headers=auth_headers)
+        titles = [i["title"] for i in r.json()["data"]]
+        assert titles == ["Crit"]

@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
+from app.core.severity import SEVERITY_LABELS
+
 if TYPE_CHECKING:
     from app.models.attachment import Attachment
     from app.models.incident import Incident, IncidentExternalRef
@@ -20,12 +22,6 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
-SEVERITY_LABELS = {
-    "sev1": "SEV-1 (Critical)",
-    "sev2": "SEV-2 (High)",
-    "sev3": "SEV-3 (Medium)",
-    "sev4": "SEV-4 (Low)",
-}
 
 STATUS_LABELS = {
     "open": "Open",

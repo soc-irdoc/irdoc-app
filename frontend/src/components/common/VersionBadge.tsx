@@ -1,5 +1,5 @@
 /**
- * Running IRDoc version, as a pill. Grey when up to date; yellow (SEV-2
+ * Running IRDoc version, as a pill. Grey when up to date; yellow (MEDIUM
  * colour) with the newer version when a release is available, linking to it.
  */
 import { useVersion } from '@/hooks/useVersion'

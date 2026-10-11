@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.severity import SEVERITIES
 from app.core.security import get_current_user
 from app.models.audit import AuditLog
 from app.models.incident import Incident
@@ -92,7 +93,7 @@ async def get_dashboard_stats(
     result: dict[str, Any] = {
         "incidents": {
             "by_status": {k: by_status.get(k, 0) for k in ["open", "monitoring", "contained", "closed"]},
-            "by_severity": {k: by_severity.get(k, 0) for k in ["sev1", "sev2", "sev3", "sev4"]},
+            "by_severity": {k: by_severity.get(k, 0) for k in SEVERITIES},
             "total": sum(by_status.values()),
             "recent": [_serialize_incident(i) for i in recent_rows],
         },
