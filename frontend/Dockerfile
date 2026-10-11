@@ -11,5 +11,9 @@ FROM nginx:alpine@sha256:72ba65eb42c10344912a84ff42408db7d34f2feb642204570ab8fc5
 RUN apk update && apk upgrade --no-cache
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Security headers live in the image so upgrades update them; the upgrade
+# paths run irdoc-nginx-migrate to switch an old host nginx.conf over (#57).
+COPY nginx/irdoc-security-headers.conf /etc/nginx/snippets/irdoc-security-headers.conf
+COPY --chmod=755 nginx/irdoc-nginx-migrate.sh /usr/local/bin/irdoc-nginx-migrate
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

@@ -16,6 +16,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 - **New icon set.** The colour emoji icons are replaced by single-colour Font Awesome 6 icons that follow the dark/light theme. Text symbols used as icons (such as ✓, ⚠ and ▼) are replaced too. Integrations show their own logo: VirusTotal, SharePoint, Shodan and AbuseIPDB. Some icons that stood for two things are now split, for example Storage and Server, Settings and Org Settings, and Workstation and Laptop.
 - **IRDoc logo on the sign-in screens.** Login, first-run setup, invite sign-up and the required two-factor setup now show the IRDoc logo (light or dark to match the theme) instead of a shield or an "IR" tile.
 - **Plain hyphens instead of em dashes.** Labels, messages, empty table cells, generated reports, Slack messages and seeded templates use "-" instead of "—" or "–". AI-written text is converted the same way before it is saved. Text already stored, such as the audit log, existing reports and existing templates, is not changed.
+- **Security headers come from the frontend image.** The Content-Security-Policy and the other security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) now ship in the frontend image instead of being written into `docker/nginx/nginx.conf`, so upgrades keep them current. HSTS stays in `nginx.conf`, because it depends on the HTTPS mode. Installs using the plain-HTTP default `nginx.conf` now also get the CSP and Permissions-Policy headers. (#57)
+- **Upgrades update an old `nginx.conf`.** `upgrade.sh` and the installer wizard now switch an existing `nginx.conf` to the shared security headers. Only the header lines change; certificate paths and any other edits are kept, and the original is saved next to it as `nginx.conf.bak-<date>`. If nginx rejects the updated file, the backup is put back automatically. Wizard snapshots now include `nginx.conf`, so a rollback restores it too. (#57)
 
 ### Removed
 
@@ -25,6 +27,9 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 - **"Pinned" marker missing its icon in generated reports** when the backend ran in Docker: the icon was read from the frontend source folder, which isn't in the backend image. It is now part of the report template.
 - **IRDoc logo looked smaller in the light theme** than in the dark theme, in the left navigation and on the sign-in screens. Both logo files now have the same square canvas and padding, so the logo is the same size in both themes (and slightly larger than before). (#102)
+- **Uploaded or pasted images showed as broken in the UI on upgraded installs** (logo preview in the report template editor, screenshots pasted into rich text). Installs created before 0.1.2 kept an outdated Content-Security-Policy in `nginx.conf` that blocked these previews, because upgrades never updated that file. Upgrading now fixes it (see Changed). Generated reports were not affected. (#57)
+- **Installer wizard upgrades failed at "Running database migrations"**: the step used the container name instead of the compose service name, and would have run the migrations with the old image. (#105)
+- **Timeline tab re-rendered in a loop** while it was open ("Maximum update depth exceeded" in the browser console), wasting CPU even when no entry was being edited. (#101)
 
 ## [0.1.5-alpha] - 2026-10-09
 

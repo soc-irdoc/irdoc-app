@@ -71,17 +71,10 @@ def generate_self_signed(common_name: str, san_list: list[str], days: int = 825)
     return cert_pem, key_pem
 
 
-CSP = (
-    "default-src 'self'; "
-    "script-src 'self'; "
-    "style-src 'self' 'unsafe-inline'; "
-    "img-src 'self' data: blob:; "
-    "font-src 'self'; "
-    "connect-src 'self'; "
-    "object-src 'none'; "
-    "base-uri 'self'; "
-    "frame-ancestors 'none';"
-)
+# CSP, X-Frame-Options, nosniff, Referrer-Policy and Permissions-Policy ship in
+# the frontend image (frontend/nginx/irdoc-security-headers.conf), so they are
+# updated by upgrades instead of being frozen into the host config (#57).
+SECURITY_HEADERS_SNIPPET = "/etc/nginx/snippets/irdoc-security-headers.conf"
 
 
 def generate_nginx_conf(mode: str) -> str:
@@ -115,18 +108,7 @@ def generate_nginx_conf(mode: str) -> str:
     }"""
 
     security_headers = f"""
-    # CSP relaxations, all required by the SPA — each one was verified as needed:
-    #   style-src 'unsafe-inline' — TipTap/ProseMirror injects a <style> tag at
-    #     runtime, and the dashboard renders a <style> block for keyframes. A nonce
-    #     is not an option here: nginx serves index.html as a static file.
-    #   img-src data: — logo previews and pasted rich-text images are read client
-    #     side as base64 data URIs; blob: — attachment and export previews.
-    # Fonts are self-hosted, so no third-party style/font origin is allowed.
-    add_header Content-Security-Policy "{CSP}" always;
-    add_header X-Frame-Options "DENY" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;"""
+    include {SECURITY_HEADERS_SNIPPET};"""
 
     if mode == "behind_lb":
         return upstream + f"""server {{
