@@ -24,6 +24,7 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 ### Fixed
 
 - **"Pinned" marker missing its icon in generated reports** when the backend ran in Docker: the icon was read from the frontend source folder, which isn't in the backend image. It is now part of the report template.
+- **IRDoc logo looked smaller in the light theme** than in the dark theme, in the left navigation and on the sign-in screens. Both logo files now have the same square canvas and padding, so the logo is the same size in both themes (and slightly larger than before). (#102)
 
 ## [0.1.5-alpha] - 2026-10-09
 
