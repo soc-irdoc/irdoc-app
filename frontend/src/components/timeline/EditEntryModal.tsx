@@ -7,7 +7,7 @@ import { useUpdateTimelineEntry } from '@/hooks/useTimeline'
 import { useAssets, useLinkAssetsToEntry, useUnlinkAssetFromEntry, useEntryAssets } from '@/hooks/useAssets'
 import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
-import { ASSET_TYPE_ICONS, type AssetType } from '@/types/asset'
+import { ASSET_TYPE_ICONS, type Asset, type AssetType } from '@/types/asset'
 import type { TimelineEntry, EntryType, UpdateTimelineEntryPayload, Attachment } from '@/types/timeline'
 import { FaBox, FaDesktop, FaXmark } from 'react-icons/fa6'
 import { Icon } from '@/components/common/Icon'
@@ -31,6 +31,11 @@ const LABEL_STYLE: React.CSSProperties = {
   display: 'block',
 }
 
+// Stable default for the asset queries. A fresh `[]` on every render would
+// re-trigger the linked-assets sync effect below in a loop while the modal is
+// closed and its query is disabled (#101).
+const NO_ASSETS: Asset[] = []
+
 interface EditEntryModalProps {
   entry: TimelineEntry | null
   incidentId: string
@@ -41,8 +46,8 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
   const addToast = useUIStore((s) => s.addToast)
   const qc = useQueryClient()
   const updateEntry = useUpdateTimelineEntry(incidentId)
-  const { data: allAssets = [] } = useAssets(incidentId)
-  const { data: linkedAssets = [] } = useEntryAssets(incidentId, entry?.id ?? '')
+  const { data: allAssets = NO_ASSETS } = useAssets(incidentId)
+  const { data: linkedAssets = NO_ASSETS } = useEntryAssets(incidentId, entry?.id ?? '')
   const linkAssets = useLinkAssetsToEntry(incidentId)
   const unlinkAsset = useUnlinkAssetFromEntry(incidentId)
 
