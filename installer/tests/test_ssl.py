@@ -9,7 +9,9 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives.serialization import pkcs12
 import os, stat
 
-from installer.core.ssl import parse_pfx, generate_self_signed, generate_nginx_conf, write_certs
+from installer.core.ssl import (
+    SECURITY_HEADERS_SNIPPET, parse_pfx, generate_self_signed, generate_nginx_conf, write_certs,
+)
 
 
 def _make_test_pfx(passphrase: bytes = b"testpass") -> bytes:
@@ -61,7 +63,7 @@ def test_generate_nginx_conf_behind_lb_has_no_ssl():
     assert "listen 80" in conf
     assert "X-Forwarded-Proto" in conf
     assert "Strict-Transport-Security" in conf
-    assert "Content-Security-Policy" in conf
+    assert "irdoc-security-headers.conf" in conf
 
 
 def test_generate_nginx_conf_import_has_ssl_block():
@@ -69,26 +71,17 @@ def test_generate_nginx_conf_import_has_ssl_block():
     assert "listen 443 ssl" in conf
     assert "ssl_certificate" in conf
     assert "/etc/nginx/ssl/cert.pem" in conf
-    assert "Content-Security-Policy" in conf
+    assert "irdoc-security-headers.conf" in conf
 
 
-def test_generate_nginx_conf_csp_allows_what_the_spa_actually_needs():
-    """Regression: an over-strict CSP silently broke fonts, inline styles and
-    data:/blob: previews in the browser. Pin the directives the SPA depends on."""
-    conf = generate_nginx_conf("import")
-    csp = next(
-        line for line in conf.splitlines() if "Content-Security-Policy" in line
-    )
-    assert "style-src 'self' 'unsafe-inline'" in csp  # TipTap injects a <style> tag
-    assert "img-src 'self' data: blob:" in csp  # logo / attachment previews
-    assert "font-src 'self'" in csp  # fonts are self-hosted
-    # ...while the parts that actually matter stay locked down.
-    assert "script-src 'self';" in csp
-    assert "'unsafe-eval'" not in csp
-    assert "object-src 'none'" in csp
-    assert "frame-ancestors 'none'" in csp
-    # No third-party origins — installs are frequently air-gapped.
-    assert "http://" not in csp and "https://" not in csp
+def test_generate_nginx_conf_includes_security_headers_snippet():
+    """#57: the headers come from the snippet in the frontend image, so upgrades
+    update them. The CSP itself is pinned in test_nginx_migrate.py."""
+    for mode in ("import", "behind_lb"):
+        conf = generate_nginx_conf(mode)
+        assert f"include {SECURITY_HEADERS_SNIPPET};" in conf
+        assert "Content-Security-Policy" not in conf
+        assert "Strict-Transport-Security" in conf  # depends on mode, stays here
 
 
 def test_generate_nginx_conf_selfsigned_same_as_import():

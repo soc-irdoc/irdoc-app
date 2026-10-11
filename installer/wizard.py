@@ -31,6 +31,7 @@ from installer.core import ssl as ssl_core
 from installer.core.config import assemble_env, generate_secrets, read_existing_env, write_env
 from installer.core.docker import detect_mode, run_compose, COMPOSE_FILE
 from installer.core.health import wait_for_health
+from installer.core import nginx as nginx_core
 from installer.core.snapshot import take_snapshot, list_snapshots, restore_snapshot
 from installer.core.ssl import write_certs, generate_nginx_conf
 
@@ -532,6 +533,20 @@ async def upgrade_progress_page(request: Request):
     return templates.TemplateResponse(request, "upgrade_progress.html", _template_context())
 
 
+def _exit_code(line: str) -> int:
+    return int(line.split("__EXIT__", 1)[1].strip())
+
+
+async def _nginx_config_ok(attempts: int = 10) -> bool:
+    """`nginx -t` in the running frontend container, retried while it starts up."""
+    for _ in range(attempts):
+        async for line in run_compose(["exec", "-T", "frontend", "nginx", "-t"]):
+            if "__EXIT__" in line and _exit_code(line) == 0:
+                return True
+        await asyncio.sleep(1)
+    return False
+
+
 @app.get("/upgrade/progress/stream")
 async def upgrade_progress_stream():
     async def generator():
@@ -555,8 +570,11 @@ async def upgrade_progress_stream():
 
             # Step: Run migrations
             yield "data: __STEP__Running database migrations\n\n"
+            # `backend` is the compose service (irdoc-backend is only its
+            # container name), and the new image must run the migrations (#105).
             async for line in run_compose(
-                ["run", "--rm", "irdoc-backend", "alembic", "upgrade", "head"]
+                ["run", "--rm", "backend", "alembic", "upgrade", "head"],
+                env_override=version_env,
             ):
                 yield line
                 if "__EXIT__" in line and "__EXIT__0" not in line:
@@ -564,10 +582,36 @@ async def upgrade_progress_stream():
                     yield "data: __FAIL__Migration failed\n\n"
                     return
 
+            # Step: Move an old nginx.conf to the image's security headers (#57).
+            # Best effort: if it can't be done, the existing config still works.
+            yield "data: __STEP__Updating nginx config\n\n"
+            nginx_dir = DOCKER_DIR / "nginx"
+            nginx_patched = False
+            async for line in run_compose(nginx_core.migrate_args(nginx_dir), env_override=version_env):
+                if "__EXIT__" in line:
+                    code = _exit_code(line)
+                    nginx_patched = code == nginx_core.MIGRATE_UPDATED
+                    if code not in (nginx_core.MIGRATE_UPDATED, nginx_core.MIGRATE_UNCHANGED):
+                        yield "data: nginx.conf not updated (this image can't do it); keeping the existing config.\n\n"
+                    continue
+                yield line
+
             # Step: Start containers
             yield "data: __STEP__Starting containers\n\n"
             async for line in run_compose(["up", "-d", "--remove-orphans"], env_override=version_env):
                 yield line
+
+            if nginx_patched and await _nginx_config_ok():
+                # The container may not have been recreated (same image), so
+                # make sure the running nginx picks up the updated file.
+                async for line in run_compose(["exec", "-T", "frontend", "nginx", "-s", "reload"]):
+                    yield line
+            elif nginx_patched:
+                backup = nginx_core.restore_backup(nginx_dir)
+                restored = backup.name if backup else "nothing"
+                yield f"data: Updated nginx.conf was rejected by nginx; restored {restored}.\n\n"
+                async for line in run_compose(["restart", "frontend"], env_override=version_env):
+                    yield line
 
             # Step: Health check
             yield "data: __STEP__Health check\n\n"

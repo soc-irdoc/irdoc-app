@@ -22,3 +22,29 @@ def test_list_snapshots_returns_sorted_by_timestamp(tmp_path):
     result = list_snapshots(tmp_path)
     assert len(result) == 2
     assert result[0]["version_from"] == "1.0.0"
+
+
+@pytest.mark.asyncio
+async def test_snapshot_saves_and_restores_nginx_conf(tmp_path, monkeypatch):
+    """#57: an upgrade may switch nginx.conf to the image's headers snippet,
+    which an older image doesn't have, so a rollback must restore it too."""
+    import installer.core.snapshot as snapshot
+
+    repo = tmp_path / "repo"
+    (repo / "docker" / "nginx").mkdir(parents=True)
+    conf = repo / "docker" / "nginx" / "nginx.conf"
+    conf.write_text("original")
+    monkeypatch.setattr(snapshot, "_REPO_ROOT", repo)
+
+    pg_dump = MagicMock(returncode=0)
+    pg_dump.communicate = AsyncMock(return_value=(b"-- dump", b""))
+    with patch.object(snapshot.asyncio, "create_subprocess_exec", AsyncMock(return_value=pg_dump)):
+        snap = await snapshot.take_snapshot(tmp_path / "snap", "1.0.0", "1.1.0")
+
+    assert (snap / "nginx.conf.bak").read_text() == "original"
+    assert "nginx.conf.bak" in json.loads((snap / "snapshot.json").read_text())["files"]
+
+    conf.write_text("patched")
+    (snap / "dump.sql").unlink()  # skip the database part of the restore
+    await snapshot.restore_snapshot(snap)
+    assert conf.read_text() == "original"

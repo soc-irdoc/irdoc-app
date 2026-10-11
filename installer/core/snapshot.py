@@ -21,7 +21,7 @@ def _sha256(path: Path) -> str:
 
 
 async def take_snapshot(snapshot_dir: Path, version_from: str, version_to: str) -> Path:
-    """Create full backup: env + ssl + pg_dump + storage tar. Returns snapshot_dir."""
+    """Create full backup: env + ssl + nginx.conf + pg_dump + storage tar. Returns snapshot_dir."""
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     os.chmod(snapshot_dir, stat.S_IRWXU)  # 0o700
 
@@ -40,6 +40,14 @@ async def take_snapshot(snapshot_dir: Path, version_from: str, version_to: str) 
         ssl_dst = snapshot_dir / "ssl"
         shutil.copytree(ssl_src, ssl_dst)
         files_recorded.append("ssl/")
+
+    # 2b. Backup nginx.conf - the upgrade may switch it to the image's security
+    # headers snippet (#57), which an older image doesn't have, so a rollback
+    # must put the old file back too.
+    nginx_src = docker_dir / "nginx" / "nginx.conf"
+    if nginx_src.exists():
+        shutil.copy2(nginx_src, snapshot_dir / "nginx.conf.bak")
+        files_recorded.append("nginx.conf.bak")
 
     # 3. pg_dump via docker exec
     dump_path = snapshot_dir / "dump.sql"
@@ -100,6 +108,13 @@ async def restore_snapshot(snapshot_dir: Path) -> None:
         if ssl_dst.exists():
             shutil.rmtree(ssl_dst)
         shutil.copytree(ssl_bak, ssl_dst)
+
+    # Restore nginx.conf in place: it is bind-mounted into the frontend
+    # container as a single file, so keep the same inode.
+    nginx_bak = snapshot_dir / "nginx.conf.bak"
+    if nginx_bak.exists():
+        with open(nginx_bak, "rb") as src, open(docker_dir / "nginx" / "nginx.conf", "wb") as dst:
+            shutil.copyfileobj(src, dst)
 
     # Restore database: start a temporary postgres container to restore into
     dump_path = snapshot_dir / "dump.sql"

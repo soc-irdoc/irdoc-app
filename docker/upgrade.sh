@@ -15,6 +15,7 @@ set -e
 VERSION=${1:-latest}
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.prod.yml"
+NGINX_DIR="${SCRIPT_DIR}/nginx"
 
 echo "=== IRDoc Upgrade ==="
 echo "Target version: ${VERSION}"
@@ -42,16 +43,59 @@ EOF
   exit 1
 fi
 
-echo "[1/4] Pulling images..."
+echo "[1/5] Pulling images..."
 VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" pull
 
-echo "[2/4] Running database migrations..."
+echo "[2/5] Running database migrations..."
 VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" run --rm backend alembic upgrade head
 
-echo "[3/4] Restarting services..."
+# Installs from before #57 have the security headers (CSP etc.) written into
+# the host nginx.conf, where upgrades never changed them. The new frontend
+# image ships them as a snippet plus a script that switches the old file over
+# in place (keeping a nginx.conf.bak-<timestamp> copy). Best effort: if the
+# image can't do it, the existing config keeps working.
+echo "[3/5] Updating nginx config..."
+nginx_patched=false
+# Git Bash on Windows: MSYS must not rewrite /irdoc-nginx/... into a Windows
+# path, so hand docker C:/... host paths ourselves. No-ops on Linux.
+host_dir=$(cd "${SCRIPT_DIR}" && pwd -W 2>/dev/null) || host_dir=${SCRIPT_DIR}
+set +e
+MSYS_NO_PATHCONV=1 VERSION=${VERSION} docker compose -f "${host_dir}/docker-compose.prod.yml" \
+  run --rm --no-deps -v "${host_dir}/nginx:/irdoc-nginx" --user "$(id -u):$(id -g)" \
+  --entrypoint irdoc-nginx-migrate frontend /irdoc-nginx/nginx.conf
+rc=$?
+set -e
+case ${rc} in
+  0) nginx_patched=true ;;
+  10) ;;
+  *) echo "nginx.conf not updated (this image can't do it); keeping the existing config." ;;
+esac
+
+echo "[4/5] Restarting services..."
 VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans
 
-echo "[4/4] Verifying deployment..."
+echo "[5/5] Verifying deployment..."
+if [ "${nginx_patched}" = true ]; then
+  nginx_ok=false
+  for _ in $(seq 1 10); do
+    if VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" exec -T frontend nginx -t >/dev/null 2>&1; then
+      nginx_ok=true
+      break
+    fi
+    sleep 1
+  done
+  if [ "${nginx_ok}" = true ]; then
+    # The container may not have been recreated (same image), so make sure the
+    # running nginx picks up the updated file.
+    VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" exec -T frontend nginx -s reload
+  else
+    backup=$(ls -1 "${NGINX_DIR}"/nginx.conf.bak-* | tail -n 1)
+    # In place: nginx.conf is bind-mounted into the container as a single file.
+    cat "${backup}" > "${NGINX_DIR}/nginx.conf"
+    echo "Updated nginx.conf was rejected by nginx; restored $(basename "${backup}")." >&2
+    VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" restart frontend
+  fi
+fi
 healthy=false
 for _ in $(seq 1 30); do
   if VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" exec -T backend \
