@@ -11,6 +11,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.1.6-alpha] - 2026-10-11
+
 ### Changed
 
 - **Severities renamed to Critical, High, Medium and Low.** SEV-1 is now CRITICAL (a new, darker red), SEV-2 is HIGH (red), SEV-3 is MEDIUM (yellow) and SEV-4 is LOW (blue). This applies across the incident list, the incident workspace, the summary page, the overview dashboard, Teams notifications and generated reports, where the severity now reads "Critical" instead of "SEV-1 (Critical)". Existing incidents are converted automatically when you upgrade. The API now returns `critical`, `high`, `medium` and `low` instead of `sev1`-`sev4`; it still accepts the old values when creating, updating or filtering incidents, and on the external incident webhook, so existing integrations keep working. Audit log entries and reports generated before the upgrade keep the old names. (#109)
@@ -231,7 +233,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.5-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.6-alpha...main
+[0.1.6-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.5-alpha...v0.1.6-alpha
 [0.1.5-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.4-alpha...v0.1.5-alpha
 [0.1.4-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.3-alpha...v0.1.4-alpha
 [0.1.3-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.2-alpha...v0.1.3-alpha
