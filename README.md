@@ -6,7 +6,7 @@
 [![CodeQL](https://github.com/soc-irdoc/irdoc-app/actions/workflows/codeql.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/codeql.yml)
 [![Secret Scan](https://github.com/soc-irdoc/irdoc-app/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/soc-irdoc/irdoc-app/actions/workflows/secret-scan.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/soc-irdoc/irdoc-app/badge)](https://scorecard.dev/viewer/?uri=github.com/soc-irdoc/irdoc-app)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](LICENSE.md)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-red?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/petruspinu)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/petruspinu)
 
@@ -59,6 +59,6 @@ IRDoc's core is free and will stay that way. If your organization relies on it a
 
 ## License
 
-**Core** (this repository): [AGPL-3.0](LICENSE)
+**Core** (this repository): [AGPL-3.0](LICENSE.md)
 
 **Third-party icons:** UI icons are from [Font Awesome Free](https://fontawesome.com/license/free) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) and [Simple Icons](https://simpleicons.org/) ([CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)), via [react-icons](https://react-icons.github.io/react-icons/) (MIT). Integration logos (VirusTotal, Microsoft SharePoint, Shodan, AbuseIPDB, Microsoft, Slack) are trademarks of their respective owners and are shown only to identify the matching integration.
