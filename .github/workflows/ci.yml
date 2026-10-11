@@ -26,18 +26,15 @@ jobs:
           POSTGRES_DB: irp_test
           POSTGRES_USER: irp
           POSTGRES_PASSWORD: testpassword
-          # tests/conftest.py's setup_db fixture drops and recreates the full
-          # ~28-table schema before *every* test (measured: ~361 locks per
-          # drop_all+create_all cycle, in one transaction). Postgres's default
-          # max_locks_per_transaction=64 sizes its shared lock-table pool at
-          # 64 * max_connections — comfortably enough most of the time, but
-          # tight enough that timing jitter on a loaded CI runner can exhaust
-          # it mid-run ("out of shared memory" / "increase
-          # max_locks_per_transaction"), which then cascades: every later
-          # test's own setup_db also fails. 1024 gives ~2800x the measured
-          # per-cycle requirement. (initdb -c writes straight into
-          # postgresql.conf, since max_locks_per_transaction can't be changed
-          # after the postmaster starts.)
+          # Raised in #54, when tests/conftest.py dropped and recreated the
+          # full schema before every test (~361 locks per cycle) and that
+          # exhausted the default pool (64 * max_connections) mid-run with
+          # "out of shared memory". Since #55 the schema is created once per
+          # run and each test only rolls back its own transaction, so the
+          # default would do; 1024 is kept as harmless headroom for the one
+          # drop_all+create_all at session start. (initdb -c writes straight
+          # into postgresql.conf, since max_locks_per_transaction can't be
+          # changed after the postmaster starts.)
           POSTGRES_INITDB_ARGS: "-c max_locks_per_transaction=1024"
         ports:
           - 5432:5432

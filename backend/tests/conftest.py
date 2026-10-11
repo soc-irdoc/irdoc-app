@@ -8,7 +8,8 @@ import os
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 # ─── SQLite dialect shims (only active when using SQLite) ─────────────────────
 # PostgreSQL-specific column types (JSONB, UUID, ARRAY, INET) are not understood
@@ -102,7 +103,19 @@ from app.main import app, application  # noqa: E402
 TEST_DB_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
 test_engine = create_async_engine(TEST_DB_URL, echo=False)
-TestSessionLocal = async_sessionmaker(bind=test_engine, expire_on_commit=False, autoflush=False)
+
+if "sqlite" in TEST_DB_URL:
+    # pysqlite (and so aiosqlite) starts and ends transactions on its own and
+    # doesn't support SAVEPOINT properly that way, which the per-test rollback
+    # below relies on. Turn its handling off and let SQLAlchemy emit BEGIN -
+    # the documented SQLAlchemy recipe for SQLite savepoints.
+    @event.listens_for(test_engine.sync_engine, "connect")
+    def _sqlite_no_driver_transactions(dbapi_connection, connection_record):
+        dbapi_connection.isolation_level = None
+
+    @event.listens_for(test_engine.sync_engine, "begin")
+    def _sqlite_emit_begin(conn):
+        conn.exec_driver_sql("BEGIN")
 
 
 @pytest.fixture(autouse=True)
@@ -115,20 +128,46 @@ def reset_rate_limiter():
     yield
 
 
-@pytest_asyncio.fixture(autouse=True)
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db():
+    """Create the schema once for the whole run (#55).
+
+    It used to be dropped and recreated around every test: ~361 locks per
+    cycle on PostgreSQL, enough to exhaust its shared lock table in CI (#54),
+    and a large share of the suite's run time. Tests are isolated by rolling
+    back their transaction instead (see db_session).
+    """
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+    await test_engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def db_session() -> AsyncSession:
-    async with TestSessionLocal() as session:
-        yield session
+    """A session inside a transaction that is rolled back after the test.
+
+    The session joins an outer transaction on a dedicated connection with
+    join_transaction_mode="create_savepoint", so commit() and rollback() in
+    tests and in app code only release or roll back a SAVEPOINT. Nothing a
+    test writes outlives it, and no DDL runs per test.
+    """
+    async with test_engine.connect() as conn:
+        outer = await conn.begin()
+        session = AsyncSession(
+            bind=conn,
+            join_transaction_mode="create_savepoint",
+            expire_on_commit=False,
+            autoflush=False,
+        )
+        try:
+            yield session
+        finally:
+            await session.close()
+            await outer.rollback()
 
 
 @pytest_asyncio.fixture

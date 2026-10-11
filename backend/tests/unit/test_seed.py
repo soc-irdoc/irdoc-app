@@ -22,8 +22,8 @@ from app.models.user import User
 from app.services import auth_service
 
 
-async def test_seed_creates_no_org_or_admin_user(db_session):
-    seed_module.AsyncSessionLocal = lambda: db_session
+async def test_seed_creates_no_org_or_admin_user(db_session, monkeypatch):
+    monkeypatch.setattr(seed_module, "AsyncSessionLocal", lambda: db_session)
     await seed_module.seed()
     await db_session.commit()
 
@@ -32,8 +32,8 @@ async def test_seed_creates_no_org_or_admin_user(db_session):
     assert not await auth_service.setup_complete(db_session)
 
 
-async def test_seed_still_creates_system_templates(db_session):
-    seed_module.AsyncSessionLocal = lambda: db_session
+async def test_seed_still_creates_system_templates(db_session, monkeypatch):
+    monkeypatch.setattr(seed_module, "AsyncSessionLocal", lambda: db_session)
     await seed_module.seed()
     await db_session.commit()
 
@@ -48,8 +48,8 @@ async def test_seed_still_creates_system_templates(db_session):
     assert len(report_templates) == 3
 
 
-async def test_seed_is_idempotent(db_session):
-    seed_module.AsyncSessionLocal = lambda: db_session
+async def test_seed_is_idempotent(db_session, monkeypatch):
+    monkeypatch.setattr(seed_module, "AsyncSessionLocal", lambda: db_session)
     await seed_module.seed()
     await db_session.commit()
     await seed_module.seed()  # second run (e.g. container restart) must not duplicate templates
@@ -61,13 +61,13 @@ async def test_seed_is_idempotent(db_session):
     assert len(incident_templates) == 4
 
 
-async def test_duplicate_system_template_is_rejected(db_session):
+async def test_duplicate_system_template_is_rejected(db_session, monkeypatch):
     """Regression for #93: concurrent seeds left every system template twice.
 
     The partial unique index must reject a second system copy while still
     allowing an org's own template to reuse a system template's name.
     """
-    seed_module.AsyncSessionLocal = lambda: db_session
+    monkeypatch.setattr(seed_module, "AsyncSessionLocal", lambda: db_session)
     await seed_module.seed()
     await db_session.commit()
 
