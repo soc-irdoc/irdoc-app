@@ -11,6 +11,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.1.7-alpha] - 2026-10-11
+
 ### Fixed
 
 - **IOCs tab crashed** ("Minified React error #130" in the browser console) when an incident had an IOC whose type isn't one of the built-in ones, such as the `other` IOCs in the demo data. These IOCs now show with a generic tag icon. Introduced in 0.1.6-alpha. (#112)
@@ -238,7 +240,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.6-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.7-alpha...main
+[0.1.7-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.6-alpha...v0.1.7-alpha
 [0.1.6-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.5-alpha...v0.1.6-alpha
 [0.1.5-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.4-alpha...v0.1.5-alpha
 [0.1.4-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.3-alpha...v0.1.4-alpha
