@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.severity import SEVERITIES
 from app.core.security import get_current_user
+from app.core.severity import SEVERITIES
 from app.models.audit import AuditLog
 from app.models.incident import Incident
 from app.models.integration import OrgIntegration
