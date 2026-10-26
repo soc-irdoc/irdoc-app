@@ -4,6 +4,7 @@ security-headers snippet shipped in the frontend image.
 Runs the real frontend/nginx/irdoc-nginx-migrate.sh (the script both upgrade
 paths run inside the frontend image) against nginx configs from past releases.
 """
+import os
 import re
 import shutil
 import subprocess
@@ -17,6 +18,7 @@ from installer.core.ssl import SECURITY_HEADERS_SNIPPET, generate_nginx_conf
 REPO_ROOT = Path(__file__).parent.parent.parent
 SCRIPT = REPO_ROOT / "frontend" / "nginx" / "irdoc-nginx-migrate.sh"
 SNIPPET = REPO_ROOT / "frontend" / "nginx" / "irdoc-security-headers.conf"
+SELECT_SCRIPT = REPO_ROOT / "frontend" / "nginx" / "90-irdoc-select-conf.sh"
 FIXTURES = Path(__file__).parent / "fixtures" / "nginx"
 
 INCLUDE = f"include {SECURITY_HEADERS_SNIPPET};"
@@ -141,15 +143,90 @@ def test_frontend_image_ships_snippet_and_script():
     assert "nginx/irdoc-nginx-migrate.sh /usr/local/bin/irdoc-nginx-migrate" in dockerfile
 
 
+def test_frontend_image_ships_default_config_and_selector():
+    """#131: the default config comes from the image, so it always matches the
+    snippet that image ships."""
+    dockerfile = (REPO_ROOT / "frontend" / "Dockerfile").read_text(encoding="utf-8")
+    assert "nginx/default.conf /etc/nginx/irdoc/default.conf" in dockerfile
+    assert "nginx/90-irdoc-select-conf.sh /docker-entrypoint.d/90-irdoc-select-conf.sh" in dockerfile
+
+
+def test_prod_compose_mounts_the_local_dir_not_a_tracked_file():
+    """#114: nothing tracked in git is the live nginx config any more."""
+    compose = (REPO_ROOT / "docker" / "docker-compose.prod.yml").read_text(encoding="utf-8")
+    assert "./nginx/local:/etc/nginx/irdoc-local:ro" in compose
+    assert "./nginx/nginx.conf:" not in compose
+
+
 @pytest.mark.parametrize("path", [
     "docker/nginx/nginx.conf",
-    "docker/nginx/nginx.demo-https.conf",
-    "frontend/nginx.conf",
+    "docker/nginx/examples/demo-https.conf",
+    "frontend/nginx/default.conf",
 ])
 def test_tracked_configs_use_the_snippet(path):
     conf = (REPO_ROOT / path).read_text(encoding="utf-8")
     assert INCLUDE in conf
     assert not MOVED_HEADERS.search(conf)
+
+
+def test_tracked_nginx_conf_is_frozen():
+    """docker/nginx/nginx.conf is no longer used, but installs from before
+    #114 may have edited it. Changing it upstream would make their `git pull`
+    fail again, so it must stay one of the shipped versions."""
+    assert nginx_core.is_shipped_default(REPO_ROOT / "docker" / "nginx" / "nginx.conf")
+
+
+def test_upgrade_sh_knows_the_same_shipped_configs():
+    script = (REPO_ROOT / "docker" / "upgrade.sh").read_text(encoding="utf-8")
+    listed = re.search(r'^SHIPPED_NGINX_SHA256="([^"]*)"', script, re.MULTILINE).group(1)
+    assert set(listed.split()) == nginx_core.SHIPPED_NGINX_CONF_SHA256
+
+
+def test_edited_tracked_conf_is_adopted(tmp_path):
+    (tmp_path / "nginx.conf").write_text("server { listen 443 ssl; }\n")
+
+    assert nginx_core.adopt_edited_conf(tmp_path) is True
+    assert (tmp_path / "local" / "nginx.conf").read_text() == "server { listen 443 ssl; }\n"
+
+
+def test_shipped_tracked_conf_is_not_adopted(tmp_path):
+    # CRLF, as a Windows checkout may have it: still the shipped file.
+    shipped = (REPO_ROOT / "docker" / "nginx" / "nginx.conf").read_bytes().replace(b"\r", b"")
+    (tmp_path / "nginx.conf").write_bytes(shipped.replace(b"\n", b"\r\n"))
+
+    assert nginx_core.adopt_edited_conf(tmp_path) is False
+    assert not (tmp_path / "local" / "nginx.conf").exists()
+
+
+def test_existing_local_conf_is_never_overwritten(tmp_path):
+    (tmp_path / "nginx.conf").write_text("edited")
+    (tmp_path / "local").mkdir()
+    (tmp_path / "local" / "nginx.conf").write_text("mine")
+
+    assert nginx_core.adopt_edited_conf(tmp_path) is False
+    assert (tmp_path / "local" / "nginx.conf").read_text() == "mine"
+
+
+def _select(tmp_path, with_local: bool) -> subprocess.CompletedProcess:
+    (tmp_path / "default.conf").write_text("default")
+    if with_local:
+        (tmp_path / "local.conf").write_text("local")
+    env = {
+        "PATH": os.environ.get("PATH", ""),
+        "IRDOC_NGINX_LOCAL": str(tmp_path / "local.conf"),
+        "IRDOC_NGINX_DEFAULT": str(tmp_path / "default.conf"),
+        "IRDOC_NGINX_TARGET": str(tmp_path / "target.conf"),
+    }
+    return subprocess.run(["sh", str(SELECT_SCRIPT)], capture_output=True, text=True, env=env)
+
+
+@needs_sh
+@pytest.mark.parametrize("with_local, served", [(True, "local"), (False, "default")])
+def test_entrypoint_serves_local_config_else_the_default(tmp_path, with_local, served):
+    result = _select(tmp_path, with_local)
+
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "target.conf").read_text() == served
 
 
 def test_migrate_args_mount_the_nginx_dir(tmp_path):

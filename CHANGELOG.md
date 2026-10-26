@@ -11,6 +11,15 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Changed
+
+- **Your own nginx config now lives in `docker/nginx/local/nginx.conf`.** The frontend image ships its own default config (plain HTTP), and installs that need something else, such as HTTPS or custom certificate paths, put a full config in `docker/nginx/local/nginx.conf`. That folder is not tracked by git, so editing it no longer makes `git pull` fail on upgrade. The installer wizard writes its generated config there. `docker/nginx/nginx.conf` is no longer used. If you edited it, `upgrade.sh` and the wizard move your edits to `local/nginx.conf` and put the original back. The demo HTTPS config moved to `docker/nginx/examples/demo-https.conf`. (Refs #114)
+- **`upgrade.sh` keeps `VERSION` in `docker/.env` up to date.** It now updates `VERSION` in `docker/.env` to the version you upgrade to, so a later `docker compose up -d` doesn't go back to the old images. It also warns when the checked-out release doesn't match the version you are upgrading to. (Refs #131)
+
+### Fixed
+
+- **Frontend kept restarting on a fresh install** with `open() "/etc/nginx/snippets/irdoc-security-headers.conf" failed`. This happened when the checked-out config was newer than the frontend image, for example with an old `VERSION` in a reused `docker/.env` or an outdated cached `latest` image. The default config now comes from the image itself, so the two always match. (Refs #131)
+
 ## [0.1.7-alpha] - 2026-10-11
 
 ### Fixed

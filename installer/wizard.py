@@ -361,10 +361,13 @@ async def review_confirm():
     })
     write_env(DOCKER_DIR / ".env", env_content)
 
-    # Write nginx.conf
+    # Write the install's own nginx config. It goes in the git-ignored
+    # nginx/local/, never the tracked nginx/nginx.conf, so `git pull` can't
+    # conflict with it (#114).
     nginx_conf = generate_nginx_conf(state.https_mode or "behind_lb")
-    nginx_path = DOCKER_DIR / "nginx" / "nginx.conf"
-    nginx_path.write_text(nginx_conf)
+    nginx_path = nginx_core.local_dir(DOCKER_DIR / "nginx") / nginx_core.CONF_NAME
+    nginx_path.parent.mkdir(parents=True, exist_ok=True)
+    nginx_path.write_text(nginx_conf, newline="\n")
 
     # Write SSL certs if applicable
     if state.cert_pem and state.key_pem:
@@ -582,36 +585,47 @@ async def upgrade_progress_stream():
                     yield "data: __FAIL__Migration failed\n\n"
                     return
 
-            # Step: Move an old nginx.conf to the image's security headers (#57).
-            # Best effort: if it can't be done, the existing config still works.
+            # Step: Bring the install's own nginx config up to date. An edited
+            # tracked nginx.conf moves to the git-ignored nginx/local/ (#114),
+            # then an old local file is switched to the image's security
+            # headers (#57). Best effort: if it can't be done, the existing
+            # config still works.
             yield "data: __STEP__Updating nginx config\n\n"
             nginx_dir = DOCKER_DIR / "nginx"
+            local_dir = nginx_core.local_dir(nginx_dir)
+            nginx_changed = nginx_core.adopt_edited_conf(nginx_dir)
+            if nginx_changed:
+                yield "data: Moved your edited nginx/nginx.conf to nginx/local/nginx.conf.\n\n"
             nginx_patched = False
-            async for line in run_compose(nginx_core.migrate_args(nginx_dir), env_override=version_env):
-                if "__EXIT__" in line:
-                    code = _exit_code(line)
-                    nginx_patched = code == nginx_core.MIGRATE_UPDATED
-                    if code not in (nginx_core.MIGRATE_UPDATED, nginx_core.MIGRATE_UNCHANGED):
-                        yield "data: nginx.conf not updated (this image can't do it); keeping the existing config.\n\n"
-                    continue
-                yield line
+            if (local_dir / nginx_core.CONF_NAME).exists():
+                async for line in run_compose(nginx_core.migrate_args(local_dir), env_override=version_env):
+                    if "__EXIT__" in line:
+                        code = _exit_code(line)
+                        nginx_patched = code == nginx_core.MIGRATE_UPDATED
+                        if code not in (nginx_core.MIGRATE_UPDATED, nginx_core.MIGRATE_UNCHANGED):
+                            yield "data: nginx/local/nginx.conf not updated (this image can't do it); keeping the existing config.\n\n"
+                        continue
+                    yield line
+            nginx_changed = nginx_changed or nginx_patched
 
             # Step: Start containers
             yield "data: __STEP__Starting containers\n\n"
             async for line in run_compose(["up", "-d", "--remove-orphans"], env_override=version_env):
                 yield line
 
-            if nginx_patched and await _nginx_config_ok():
-                # The container may not have been recreated (same image), so
-                # make sure the running nginx picks up the updated file.
-                async for line in run_compose(["exec", "-T", "frontend", "nginx", "-s", "reload"]):
-                    yield line
-            elif nginx_patched:
-                backup = nginx_core.restore_backup(nginx_dir)
-                restored = backup.name if backup else "nothing"
-                yield f"data: Updated nginx.conf was rejected by nginx; restored {restored}.\n\n"
+            if nginx_changed:
+                # The frontend copies its config at start-up, and `up -d` only
+                # recreates it when the image changed: restart to pick it up.
                 async for line in run_compose(["restart", "frontend"], env_override=version_env):
                     yield line
+                if not await _nginx_config_ok():
+                    backup = nginx_core.restore_backup(local_dir) if nginx_patched else None
+                    if backup is not None:
+                        yield f"data: Updated nginx.conf was rejected by nginx; restored {backup.name}.\n\n"
+                        async for line in run_compose(["restart", "frontend"], env_override=version_env):
+                            yield line
+                    else:
+                        yield "data: nginx rejects nginx/local/nginx.conf; check the frontend logs.\n\n"
 
             # Step: Health check
             yield "data: __STEP__Health check\n\n"

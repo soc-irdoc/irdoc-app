@@ -165,7 +165,10 @@ async def test_review_confirm_writes_env_file(client, tmp_path, monkeypatch):
     resp = await client.post("/review/confirm", follow_redirects=False)
     assert resp.status_code in (302, 307)
     assert (tmp_path / ".env").exists()
-    assert (tmp_path / "nginx" / "nginx.conf").exists()
+    # The install's own config goes in the git-ignored nginx/local/, never the
+    # tracked nginx/nginx.conf (#114).
+    assert (tmp_path / "nginx" / "local" / "nginx.conf").exists()
+    assert not (tmp_path / "nginx" / "nginx.conf").exists()
 
 
 @pytest.mark.asyncio
