@@ -56,7 +56,8 @@ function renderAt(path: string) {
 }
 
 function lastParams() {
-  return useIncidentsMock.mock.calls.at(-1)?.[0]
+  const calls = useIncidentsMock.mock.calls
+  return calls[calls.length - 1]?.[0]
 }
 
 describe('IncidentListPage', () => {
