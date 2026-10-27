@@ -90,6 +90,7 @@ async def update_incident(
     incident = await incident_service.get_incident(db, incident_id, str(current_user.org_id))
 
     # Capture significant field values before the service modifies them
+    old_title = incident.title
     old_status = incident.status
     old_severity = incident.severity
     old_assigned_to = incident.assigned_to
@@ -107,6 +108,10 @@ async def update_incident(
         user_id=str(current_user.id),
         request=request,
     )
+
+    if data.title is not None and data.title != old_title:
+        await audit_service.log(action="incident.title_changed",
+            diff={"from": old_title, "to": data.title}, **audit_kwargs)
 
     if data.status is not None and data.status != old_status:
         await audit_service.log(action="incident.status_changed",

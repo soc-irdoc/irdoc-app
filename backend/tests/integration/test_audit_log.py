@@ -103,6 +103,49 @@ async def test_update_incident_status_writes_audit(client: AsyncClient, auth_hea
 
 
 @pytest.mark.asyncio
+async def test_rename_incident_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    """#125: renaming is audited with the old and new title."""
+    create_resp = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Phising campaign", "severity": "high"},
+        headers=auth_headers,
+    )
+    incident_id = create_resp.json()["data"]["id"]
+
+    resp = await client.put(
+        f"/api/v1/incidents/{incident_id}",
+        json={"title": "  Phishing campaign  "},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["data"]["title"] == "Phishing campaign"
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "incident.title_changed")
+    )
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.diff == {"from": "Phising campaign", "to": "Phishing campaign"}
+
+
+@pytest.mark.asyncio
+async def test_unchanged_title_writes_no_rename_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    create_resp = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Same", "severity": "high"},
+        headers=auth_headers,
+    )
+    incident_id = create_resp.json()["data"]["id"]
+
+    await client.put(f"/api/v1/incidents/{incident_id}", json={"title": "Same"}, headers=auth_headers)
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "incident.title_changed")
+    )
+    assert result.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio
 async def test_delete_incident_writes_high_risk_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     create_resp = await client.post(
         "/api/v1/incidents",

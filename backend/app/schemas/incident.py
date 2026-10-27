@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 
 from app.core.severity import Severity
 
@@ -32,15 +32,19 @@ class ExternalRefCreate(BaseModel):
     external_url: str | None = None
 
 
+# Surrounding whitespace is stripped; a blank title is rejected (#125).
+IncidentTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+
+
 class IncidentCreate(BaseModel):
-    title: str
+    title: IncidentTitle
     severity: Severity = "high"
     template_id: str | None = None
     assigned_to: str | None = None
 
 
 class IncidentUpdate(BaseModel):
-    title: str | None = None
+    title: IncidentTitle | None = None
     severity: Severity | None = None
     status: Literal["open", "contained", "closed", "monitoring"] | None = None
     executive_summary: str | None = None

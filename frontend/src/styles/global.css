@@ -221,6 +221,16 @@ textarea.form-input {
   color: var(--text-primary);
 }
 
+/* Incident title rename pencil (#125): shown on hover or keyboard focus */
+.editable-title-pen {
+  flex-shrink: 0;
+  opacity: 0;
+}
+.editable-title:hover .editable-title-pen,
+.editable-title-pen:focus-visible {
+  opacity: 1;
+}
+
 /* ── CHIP / BADGE ──────────────────────────────────────── */
 .chip {
   display: inline-flex;

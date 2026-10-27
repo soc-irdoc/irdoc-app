@@ -14,6 +14,7 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 ### Added
 
 - **Session timeouts.** You are now signed out after 60 minutes without activity, and must sign in again 12 hours after signing in, however active you are. Before, a session renewed itself indefinitely, so you could stay signed in for days. Admins can change both limits for the organisation in Org Settings → Sessions; `SESSION_IDLE_TIMEOUT_MINUTES` and `SESSION_MAX_HOURS` set the server defaults. You get a warning a minute before an inactivity sign-out. Everyone has to sign in once after upgrading. (Refs #123)
+- **Rename incidents.** Click the title in the incident header (or the pencil next to it) to rename the incident. Press Enter to save or Escape to cancel. Renames are recorded in the audit log with the old and new title. Analysts and above can rename. Blank titles are rejected. (Refs #125)
 - **Sign out everywhere.** Settings → Profile → Sessions ends your sessions on every browser and device. Changing your password now also signs out your other sessions. (Refs #123)
 
 ### Changed

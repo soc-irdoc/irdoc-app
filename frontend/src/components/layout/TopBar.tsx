@@ -11,6 +11,7 @@ import { useOrgUsers } from '@/hooks/useOrgUsers'
 import { usePermission } from '@/lib/permissions'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
+import { EditableTitle } from './EditableTitle'
 import {
   FaArrowLeft, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
   FaTrashCan,
@@ -94,6 +95,17 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const deleteIncident = useDeleteIncident()
   const canDelete = usePermission('senior_analyst')
+  const canEdit = usePermission('analyst')
+
+  async function handleTitleSave(title: string) {
+    try {
+      await updateIncident.mutateAsync({ title })
+      addToast('Incident renamed', 'success')
+    } catch (err) {
+      addToast('Failed to rename incident', 'error')
+      throw err
+    }
+  }
 
   async function handleSeverityChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const severity = e.target.value as Severity
@@ -193,20 +205,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
         </span>
 
         {/* Title */}
-        <h1
-          style={{
-            fontSize: 17,
-            fontWeight: 800,
-            flex: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {incident.title}
-        </h1>
+        <EditableTitle title={incident.title} canEdit={canEdit} onSave={handleTitleSave} />
 
         {/* External refs */}
         {incident.external_refs?.map((ref) => (

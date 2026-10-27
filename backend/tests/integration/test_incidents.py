@@ -67,6 +67,24 @@ async def test_update_incident(client: AsyncClient, auth_headers):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("title", ["", "   "])
+async def test_blank_title_rejected(client: AsyncClient, auth_headers, title):
+    """#125: an incident can be renamed, but never to nothing."""
+    create = await client.post(
+        "/api/v1/incidents",
+        json={"title": "Keep Me", "severity": "high"},
+        headers=auth_headers,
+    )
+    iid = create.json()["data"]["id"]
+
+    response = await client.put(f"/api/v1/incidents/{iid}", json={"title": title}, headers=auth_headers)
+    assert response.status_code == 422
+
+    create = await client.post("/api/v1/incidents", json={"title": title}, headers=auth_headers)
+    assert create.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_filter_by_status(client: AsyncClient, auth_headers):
     await client.post("/api/v1/incidents", json={"title": "Open", "severity": "high"}, headers=auth_headers)
     r2 = await client.post("/api/v1/incidents", json={"title": "Closed", "severity": "medium"}, headers=auth_headers)
