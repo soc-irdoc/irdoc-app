@@ -11,9 +11,11 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.1.8-alpha] - 2026-10-27
+
 ### Added
 
-- **Session timeouts.** You are now signed out after 60 minutes without activity, and must sign in again 12 hours after signing in, however active you are. Before, a session renewed itself indefinitely, so you could stay signed in for days. Admins can change both limits for the organisation in Org Settings → Sessions; `SESSION_IDLE_TIMEOUT_MINUTES` and `SESSION_MAX_HOURS` set the server defaults. You get a warning a minute before an inactivity sign-out. Everyone has to sign in once after upgrading. (Refs #123)
+- **Session timeouts.** You are now signed out after 60 minutes without activity, and must sign in again 12 hours after signing in, however active you are. Before, a session renewed itself indefinitely, so you could stay signed in for days. Admins can change both limits for the organisation in Org Settings → Sessions; `SESSION_IDLE_TIMEOUT_MINUTES` and `SESSION_MAX_HOURS` set the server defaults. You get a warning a minute before an inactivity sign-out. Everyone has to sign in once after upgrading. (#123)
 - **Final disposition.** Closing an incident now asks how the investigation ended:
   - True Positive - Remediated / Contained
   - True Positive - Accepted Risk
@@ -22,22 +24,26 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
   - False Positive - Tuning Required
   - Unknown - Inconclusive
 
-  An incident can't be closed without one. The API returns `422 disposition_required`. The disposition shows as a second badge under the status in the incidents list, next to the status in the incident header (where you can change it), as "Outcome" on the Summary page, and on generated reports. A new "Disposition" stat is available for report templates. Reopening an incident keeps its disposition. Changes are recorded in the audit log. Incidents closed before upgrading have no disposition. (Refs #124)
-- **Incidents list: pages.** The list loads one page at a time: 25 incidents by default, or 50 or 100. Below the list are "Showing 26 to 50 of 132", previous/next and page numbers. Filtering, searching and paging happen on the server, so totals and pages stay correct. Changing the filter, search or page size goes back to page 1. The page, filter, search and sort are kept in the URL, so refreshing or sharing the link opens the same view, and "back" from an incident returns to it. The API's default page size is now 25 and its maximum 100. An unknown `status` filter now returns an error instead of an empty list. (Refs #127)
-- **Incidents list: sorting.** Click a column header to sort by Severity, ID, Title, Created, Owner or Status. Click again to reverse. Severity sorts by level and Status by workflow order (Open, Contained, Monitoring, Closed), across all pages. The first click on Severity puts the most severe first, and on Created the newest first. Unassigned incidents sort last by Owner. The default is newest first. (Refs #128)
-- **Rename incidents.** Click the title in the incident header (or the pencil next to it) to rename the incident. Press Enter to save or Escape to cancel. Renames are recorded in the audit log with the old and new title. Analysts and above can rename. Blank titles are rejected. (Refs #125)
-- **Sign out everywhere.** Settings → Profile → Sessions ends your sessions on every browser and device. Changing your password now also signs out your other sessions. (Refs #123)
+  An incident can't be closed without one. The API returns `422 disposition_required`. The disposition shows as a second badge under the status in the incidents list, next to the status in the incident header (where you can change it), as "Outcome" on the Summary page, and on generated reports. A new "Disposition" stat is available for report templates. Reopening an incident keeps its disposition. Changes are recorded in the audit log. Incidents closed before upgrading have no disposition. (#124)
+- **Incidents list: pages.** The list loads one page at a time: 25 incidents by default, or 50 or 100. Below the list are "Showing 26 to 50 of 132", previous/next and page numbers. Filtering, searching and paging happen on the server, so totals and pages stay correct. Changing the filter, search or page size goes back to page 1. The page, filter, search and sort are kept in the URL, so refreshing or sharing the link opens the same view, and "back" from an incident returns to it. The API's default page size is now 25 and its maximum 100. An unknown `status` filter now returns an error instead of an empty list. (#127)
+- **Incidents list: sorting.** Click a column header to sort by Severity, ID, Title, Created, Owner or Status. Click again to reverse. Severity sorts by level and Status by workflow order (Open, Contained, Monitoring, Closed), across all pages. The first click on Severity puts the most severe first, and on Created the newest first. Unassigned incidents sort last by Owner. The default is newest first. (#128)
+- **Rename incidents.** Click the title in the incident header (or the pencil next to it) to rename the incident. Press Enter to save or Escape to cancel. Renames are recorded in the audit log with the old and new title. Analysts and above can rename. Blank titles are rejected. (#125)
+- **Sign out everywhere.** Settings → Profile → Sessions ends your sessions on every browser and device. Changing your password now also signs out your other sessions. (#123)
 
 ### Changed
 
-- **Your own nginx config now lives in `docker/nginx/local/nginx.conf`.** The frontend image ships its own default config (plain HTTP), and installs that need something else, such as HTTPS or custom certificate paths, put a full config in `docker/nginx/local/nginx.conf`. That folder is not tracked by git, so editing it no longer makes `git pull` fail on upgrade. The installer wizard writes its generated config there. `docker/nginx/nginx.conf` is no longer used. If you edited it, `upgrade.sh` and the wizard move your edits to `local/nginx.conf` and put the original back. The demo HTTPS config moved to `docker/nginx/examples/demo-https.conf`. (Refs #114)
-- **Incidents list columns line up.** Every row uses the same columns, under a header row: severity, ID, title with its age below, owner, status, actions. Badges have a fixed width. Long titles and owner names are cut off with "…", and the full text shows on hover. On narrow screens the owner shows as an avatar only, and on phones each row stacks. (Refs #126)
-- **`upgrade.sh` keeps `VERSION` in `docker/.env` up to date.** It now updates `VERSION` in `docker/.env` to the version you upgrade to, so a later `docker compose up -d` doesn't go back to the old images. It also warns when the checked-out release doesn't match the version you are upgrading to. (Refs #131)
+- **Your own nginx config now lives in `docker/nginx/local/nginx.conf`.** The frontend image ships its own default config (plain HTTP), and installs that need something else, such as HTTPS or custom certificate paths, put a full config in `docker/nginx/local/nginx.conf`. That folder is not tracked by git, so editing it no longer makes `git pull` fail on upgrade. The installer wizard writes its generated config there. `docker/nginx/nginx.conf` is no longer used. If you edited it, `upgrade.sh` and the wizard move your edits to `local/nginx.conf` and put the original back. The demo HTTPS config moved to `docker/nginx/examples/demo-https.conf`. (#114)
+- **Incidents list columns line up.** Every row uses the same columns, under a header row: severity, ID, title with its age below, owner, status, actions. Badges have a fixed width. Long titles and owner names are cut off with "…", and the full text shows on hover. On narrow screens the owner shows as an avatar only, and on phones each row stacks. (#126)
+- **`upgrade.sh` keeps `VERSION` in `docker/.env` up to date.** It now updates `VERSION` in `docker/.env` to the version you upgrade to, so a later `docker compose up -d` doesn't go back to the old images. It also warns when the checked-out release doesn't match the version you are upgrading to. (#131)
 
 ### Fixed
 
-- **Frontend kept restarting on a fresh install** with `open() "/etc/nginx/snippets/irdoc-security-headers.conf" failed`. This happened when the checked-out config was newer than the frontend image, for example with an old `VERSION` in a reused `docker/.env` or an outdated cached `latest` image. The default config now comes from the image itself, so the two always match. (Refs #131)
-- **Signing in with Entra ID set a session cookie without the `Secure` flag**, even when `COOKIE_SECURE=true`. It now follows `COOKIE_SECURE` like every other sign-in. (Refs #123)
+- **Frontend kept restarting on a fresh install** with `open() "/etc/nginx/snippets/irdoc-security-headers.conf" failed`. This happened when the checked-out config was newer than the frontend image, for example with an old `VERSION` in a reused `docker/.env` or an outdated cached `latest` image. The default config now comes from the image itself, so the two always match. (#131)
+- **Signing in with Entra ID set a session cookie without the `Secure` flag**, even when `COOKIE_SECURE=true`. It now follows `COOKIE_SECURE` like every other sign-in. (#123)
+
+### Security
+
+- **Dependencies updated for new security advisories:** Pillow 13.0.0, Brotli 1.2.1, certifi 2026.10.23, dnspython 2.9.0 and opentelemetry-api 1.45.1 in the backend, and follow-redirects 1.16.2 in the frontend. None of them are used directly; they come in through WeasyPrint and other libraries.
 
 ## [0.1.7-alpha] - 2026-10-11
 
@@ -268,7 +274,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.7-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.8-alpha...main
+[0.1.8-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.7-alpha...v0.1.8-alpha
 [0.1.7-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.6-alpha...v0.1.7-alpha
 [0.1.6-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.5-alpha...v0.1.6-alpha
 [0.1.5-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.4-alpha...v0.1.5-alpha
