@@ -173,6 +173,9 @@ export function OrgSettingsPage() {
   const [allowRegistration, setAllowRegistration] = useState(true)
   const [logoUrl, setLogoUrl] = useState('')
   const [accentColor, setAccentColor] = useState('#6366f1')
+  // Session timeouts (#123): '' = server default
+  const [idleMinutes, setIdleMinutes] = useState('')
+  const [maxHours, setMaxHours] = useState('')
 
   // Team
   const currentUser = useAuthStore((s) => s.user)
@@ -199,13 +202,23 @@ export function OrgSettingsPage() {
       setAllowRegistration(org.allow_registration)
       if (org.logo_url !== undefined) setLogoUrl(org.logo_url)
       if (org.accent_color !== undefined) setAccentColor(org.accent_color)
+      setIdleMinutes(org.session_idle_minutes ? String(org.session_idle_minutes) : '')
+      setMaxHours(org.session_max_hours ? String(org.session_max_hours) : '')
     }
   }, [org])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     try {
-      await updateOrg.mutateAsync({ name, allow_registration: allowRegistration, logo_url: logoUrl, accent_color: accentColor })
+      await updateOrg.mutateAsync({
+        name,
+        allow_registration: allowRegistration,
+        logo_url: logoUrl,
+        accent_color: accentColor,
+        // Empty field: back to the server default (0 removes the override).
+        session_idle_minutes: idleMinutes ? Number(idleMinutes) : 0,
+        session_max_hours: maxHours ? Number(maxHours) : 0,
+      })
       addToast('Organisation settings saved', 'success')
     } catch {
       addToast('Failed to save settings', 'error')
@@ -765,6 +778,46 @@ export function OrgSettingsPage() {
                   </div>
                 </div>
               </label>
+            </div>
+          </div>
+
+          {/* Session timeouts (#123) */}
+          <div style={cardStyle}>
+            <div style={cardHeaderStyle}>Sessions</div>
+            <div style={{ padding: 20 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                Users are signed out after a period of inactivity, and must sign in again once a session reaches its
+                maximum length, however active they are. Leave a field empty to use the server default. Changes apply
+                to signed-in users at their next token refresh.
+              </p>
+              <div style={{ marginTop: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={labelStyle} htmlFor="session-idle">Idle timeout (minutes)</label>
+                  <input
+                    id="session-idle"
+                    type="number"
+                    min={5}
+                    max={1440}
+                    className="form-input"
+                    placeholder={`Default: ${org?.session_defaults?.idle_minutes ?? 60}`}
+                    value={idleMinutes}
+                    onChange={(e) => setIdleMinutes(e.target.value)}
+                  />
+                </div>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={labelStyle} htmlFor="session-max">Maximum session length (hours)</label>
+                  <input
+                    id="session-max"
+                    type="number"
+                    min={1}
+                    max={720}
+                    className="form-input"
+                    placeholder={`Default: ${org?.session_defaults?.max_hours ?? 12}`}
+                    value={maxHours}
+                    onChange={(e) => setMaxHours(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

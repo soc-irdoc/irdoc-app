@@ -16,7 +16,6 @@ from jose import jwt as _jose_jwt
 from jose.exceptions import JWTError as _JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.limiter import limiter
 from app.core.security import decode_token
@@ -28,7 +27,7 @@ from app.schemas.auth import (
     MFAVerifyRequest,
     UserOut,
 )
-from app.services import auth_service, mfa_service
+from app.services import mfa_service, session_service
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -36,14 +35,6 @@ if TYPE_CHECKING:
 router = APIRouter(prefix="/auth/mfa", tags=["mfa"])
 
 _bearer = HTTPBearer(auto_error=True)
-
-REFRESH_COOKIE_NAME = "refresh_token"
-COOKIE_SETTINGS = {
-    "httponly": True,
-    "samesite": "strict",
-    "secure": settings.COOKIE_SECURE,
-    "max_age": 60 * 60 * 24 * 30,
-}
 
 
 async def _get_user_for_setup(
@@ -169,8 +160,7 @@ async def complete_mfa_setup(
     user.last_otp_counter = counter
     await db.commit()
 
-    access_token, refresh_token = auth_service.issue_tokens(user, mfa_verified=True)
-    response.set_cookie(REFRESH_COOKIE_NAME, refresh_token, **COOKIE_SETTINGS)
+    access_token, session = await session_service.open_session(db, response, user, mfa_verified=True)
 
     user_out = UserOut.model_validate(user)
     result = MFASetupCompleteResponse(
@@ -178,7 +168,7 @@ async def complete_mfa_setup(
         backup_codes=plain_codes,
         user=user_out,
     )
-    return {"data": result.model_dump(), "meta": {}, "error": None}
+    return {"data": result.model_dump(), "meta": {"session": session}, "error": None}
 
 
 @router.post("/verify")
@@ -212,12 +202,11 @@ async def verify_mfa(
         user.last_otp_counter = counter
         await db.commit()
 
-    access_token, refresh_token = auth_service.issue_tokens(user, mfa_verified=True)
-    response.set_cookie(REFRESH_COOKIE_NAME, refresh_token, **COOKIE_SETTINGS)
+    access_token, session = await session_service.open_session(db, response, user, mfa_verified=True)
 
     user_out = UserOut.model_validate(user)
     result = LoginResponse(access_token=access_token, user=user_out)
-    return {"data": result.model_dump(), "meta": {}, "error": None}
+    return {"data": result.model_dump(), "meta": {"session": session}, "error": None}
 
 
 @router.post("/backup-codes/regenerate")

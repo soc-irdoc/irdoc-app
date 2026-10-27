@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import AnyHttpUrl, BaseModel, field_validator
+from pydantic import AnyHttpUrl, BaseModel, Field, field_validator
 
 # ── User management ───────────────────────────────────────────────────────────
 
@@ -75,6 +75,16 @@ class OrgSettingsUpdate(BaseModel):
     mfa_required: bool | None = None
     logo_url: AnyHttpUrl | None = None
     accent_color: str | None = None
+    # Session timeouts (#123); 0 goes back to the server default.
+    session_idle_minutes: int | None = Field(None, ge=0, le=1440)
+    session_max_hours: int | None = Field(None, ge=0, le=720)
+
+    @field_validator("session_idle_minutes")
+    @classmethod
+    def idle_at_least_five_minutes(cls, v: int | None) -> int | None:
+        if v is not None and 0 < v < 5:
+            raise ValueError("Idle timeout must be at least 5 minutes")
+        return v
 
 
 # ── Storage config ────────────────────────────────────────────────────────────

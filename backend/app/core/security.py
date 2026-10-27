@@ -2,7 +2,9 @@
 JWT auth + API key auth + password hashing.
 
 Access token:  15-min JWT, stored in Zustand (memory only)
-Refresh token: 30-day JWT, stored in HttpOnly SameSite=Strict cookie
+Refresh token: JWT in an HttpOnly SameSite=Strict cookie; its lifetime is the
+               session's idle timeout, capped by the absolute session lifetime
+               (see app/services/session_service.py)
 API keys:      irp_key_{random_32_hex} - argon2id hashed in DB, never stored plain
 """
 import hashlib
@@ -48,8 +50,8 @@ def needs_rehash(hashed: str) -> bool:
 
 # ─── JWT ───────────────────────────────────────────────────────────────────────
 
-def create_access_token(subject: str, org_id: str) -> str:
-    expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+def create_access_token(subject: str, org_id: str, expires_at: datetime | None = None) -> str:
+    expire = expires_at or datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return jwt.encode(
         {"sub": subject, "org": org_id, "exp": expire, "type": "access"},
         settings.SECRET_KEY,
@@ -57,9 +59,24 @@ def create_access_token(subject: str, org_id: str) -> str:
     )
 
 
-def create_refresh_token(subject: str, org_id: str, mfa_verified: bool = False) -> str:
-    expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    payload: dict = {"sub": subject, "org": org_id, "exp": expire, "type": "refresh"}
+def create_refresh_token(
+    subject: str,
+    org_id: str,
+    *,
+    expires_at: datetime,
+    auth_time: datetime,
+    token_version: int,
+    mfa_verified: bool = False,
+) -> str:
+    """Issued by app.services.session_service, which decides the lifetimes (#123)."""
+    payload: dict = {
+        "sub": subject,
+        "org": org_id,
+        "exp": expires_at,
+        "type": "refresh",
+        "auth_time": int(auth_time.timestamp()),
+        "tv": token_version,
+    }
     if mfa_verified:
         payload["mfa_verified"] = True
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)

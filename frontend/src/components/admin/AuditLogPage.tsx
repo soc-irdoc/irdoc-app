@@ -21,6 +21,7 @@ const ACTION_LABELS: Record<string, string> = {
   'incident.comment_added': 'Comment Added',
   'user.login': 'User Login',
   'user.logout': 'User Logout',
+  'user.logout_all': 'Signed Out Everywhere',
   'user.created': 'User Created',
   'user.invited': 'User Invited',
   'user.role_changed': 'Role Changed',

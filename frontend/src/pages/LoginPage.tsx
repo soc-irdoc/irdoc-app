@@ -18,8 +18,14 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const sessionExpired = searchParams.get('reason') === 'session_expired'
-  const [error, setError] = useState(sessionExpired ? 'Your session expired. Please log in again.' : '')
+  const reason = searchParams.get('reason')
+  const [error, setError] = useState(
+    reason === 'idle'
+      ? 'You were signed out after a period of inactivity. Please log in again.'
+      : reason === 'session_expired'
+        ? 'Your session expired. Please log in again.'
+        : '',
+  )
   const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(null)
   const [mfaSetupToken, setMfaSetupToken] = useState<string | null>(null)
 

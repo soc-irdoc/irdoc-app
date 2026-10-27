@@ -1,8 +1,9 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
-import { scheduleTokenRefresh } from '@/lib/apiClient'
+import { cancelTokenTimers, refreshSession, scheduleTokenRefresh } from '@/lib/apiClient'
+import { startActivityTracking, stopActivityTracking } from '@/lib/activity'
+import { disconnectSocket } from '@/lib/websocket'
 import { useThemeStore } from '@/stores/themeStore'
 import { ToastContainer } from '@/components/common/Toast'
 import { LoginPage } from '@/pages/LoginPage'
@@ -30,6 +31,8 @@ function ProtectedRoute({ children, isRestoring }: { children: React.ReactNode; 
 
 export function App() {
   const { setAuth } = useAuthStore()
+  const signedIn = useAuthStore((s) => s.user !== null)
+  const accessToken = useAuthStore((s) => s.accessToken)
   const { theme } = useThemeStore()
   const [isRestoring, setIsRestoring] = useState(true)
 
@@ -37,12 +40,10 @@ export function App() {
   useEffect(() => {
     async function tryRestore() {
       try {
-        // Use plain axios (not apiClient) to avoid the 401 interceptor triggering
-        // a full-page redirect here, which would cause an infinite reload loop.
-        const refreshRes = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
-        const token = refreshRes.data.data.access_token
-        setAuth(refreshRes.data.user, token)
-        scheduleTokenRefresh(token)
+        // refreshSession uses plain axios (not apiClient), so a 401 here can't
+        // trigger the interceptor's full-page redirect and a reload loop.
+        const { token, user } = await refreshSession()
+        setAuth(user, token)
       } catch {
         // No session - user will be redirected to login by ProtectedRoute
       } finally {
@@ -51,6 +52,26 @@ export function App() {
     }
     tryRestore()
   }, [setAuth])
+
+  // Every new access token (login, MFA, refresh) gets its proactive refresh.
+  useEffect(() => {
+    if (accessToken) scheduleTokenRefresh(accessToken)
+    else cancelTokenTimers()
+  }, [accessToken])
+
+  // Sign this tab out after the session's idle timeout (#123). The cookie is
+  // left alone: another tab may still be in use, and the server expires an
+  // idle cookie by itself.
+  useEffect(() => {
+    if (!signedIn) return
+    startActivityTracking(() => {
+      cancelTokenTimers()
+      disconnectSocket()
+      useAuthStore.getState().clearAuth()
+      window.location.href = '/login?reason=idle'
+    })
+    return stopActivityTracking
+  }, [signedIn])
 
   // Apply theme on mount
   useEffect(() => {

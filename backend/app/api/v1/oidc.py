@@ -22,21 +22,14 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.feature_flags import check_feature
 from app.models.organization import Organization
-from app.services import auth_service, sso_service
+from app.services import auth_service, session_service, sso_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth/oidc", tags=["oidc"])
 
-REFRESH_COOKIE_NAME = "refresh_token"
 STATE_COOKIE_NAME = "oidc_state"
 
-REFRESH_COOKIE_SETTINGS = {
-    "httponly": True,
-    "samesite": "strict",
-    "secure": False,
-    "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
-}
 
 # OAuth2 error codes that Azure may legitimately return - anything else is mapped
 # to "server_error" to prevent reflected injection.
@@ -265,15 +258,14 @@ async def oidc_callback(
         logger.error("User provisioning during OIDC callback failed: %s", exc)
         raise HTTPException(status_code=500, detail="Failed to provision user account")
 
-    _, refresh_token = auth_service.issue_tokens(user)
-
     # Deliver session via httpOnly refresh cookie only - no token in the URL.
     # The frontend's existing tryRestore() calls POST /auth/refresh with the cookie
     # and receives a fresh access token, so no additional frontend changes are needed.
+    # The cookie follows COOKIE_SECURE like every other session cookie (#123).
     redirect_response = RedirectResponse(
         url=f"{base}/",
         status_code=status.HTTP_302_FOUND,
     )
-    redirect_response.set_cookie(REFRESH_COOKIE_NAME, refresh_token, **REFRESH_COOKIE_SETTINGS)
+    await session_service.open_session(db, redirect_response, user)
     redirect_response.delete_cookie(STATE_COOKIE_NAME)
     return redirect_response

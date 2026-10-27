@@ -1,5 +1,6 @@
 """
-Auth service: JWT lifecycle, password management, setup flow.
+Auth service: password management, setup flow. Tokens and cookies are issued
+by session_service.
 """
 from datetime import UTC, datetime
 
@@ -8,8 +9,6 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
-    create_access_token,
-    create_refresh_token,
     hash_password,
     needs_rehash,
     verify_password,
@@ -40,14 +39,6 @@ async def authenticate(db: AsyncSession, email: str, password: str) -> User:
     user.last_seen = datetime.now(UTC)
     await db.flush()
     return user
-
-
-def issue_tokens(user: User, mfa_verified: bool = False) -> tuple[str, str]:
-    """Returns (access_token, refresh_token)."""
-    org_id = str(user.org_id) if user.org_id else ""
-    access = create_access_token(str(user.id), org_id)
-    refresh = create_refresh_token(str(user.id), org_id, mfa_verified=mfa_verified)
-    return access, refresh
 
 
 async def register_user(

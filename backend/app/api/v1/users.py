@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.core.security import hash_password
@@ -17,18 +16,9 @@ from app.schemas.admin import (
     UserOut,
     UserRoleUpdate,
 )
-from app.services import audit_service, auth_service, email_service, invite_service
+from app.services import audit_service, email_service, invite_service, session_service
 
 router = APIRouter(prefix="/users", tags=["users"])
-
-# Reuse the same cookie settings as auth.py
-REFRESH_COOKIE_NAME = "refresh_token"
-COOKIE_SETTINGS = {
-    "httponly": True,
-    "samesite": "strict",
-    "secure": settings.COOKIE_SECURE,
-    "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
-}
 
 
 @router.get("")
@@ -344,8 +334,7 @@ async def accept_invite(
             detail="User creation failed",
         )
 
-    access, refresh = auth_service.issue_tokens(user)
-    response.set_cookie(REFRESH_COOKIE_NAME, refresh, **COOKIE_SETTINGS)
+    access, session = await session_service.open_session(db, response, user)
 
     await audit_service.log(
         db,
@@ -363,6 +352,7 @@ async def accept_invite(
     return {
         "data": TokenResponse(access_token=access),
         "user": AuthUserOut.model_validate(user),
+        "meta": {"session": session},
         "error": None,
     }
 

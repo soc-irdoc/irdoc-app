@@ -52,6 +52,22 @@ export function useLogout() {
   })
 }
 
+/** End every session of the current user, this one included (#123). */
+export function useLogoutAll() {
+  const clearAuth = useAuthStore((s) => s.clearAuth)
+
+  return useMutation({
+    mutationFn: async () => {
+      await apiClient.post('/auth/logout-all')
+    },
+    onSettled: () => {
+      cancelTokenTimers()
+      disconnectSocket()
+      clearAuth()
+    },
+  })
+}
+
 export function useChangePassword() {
   return useMutation({
     mutationFn: async (payload: { current_password: string; new_password: string }) => {

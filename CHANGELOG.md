@@ -11,6 +11,11 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Added
+
+- **Session timeouts.** You are now signed out after 60 minutes without activity, and must sign in again 12 hours after signing in, however active you are. Before, a session renewed itself indefinitely, so you could stay signed in for days. Admins can change both limits for the organisation in Org Settings → Sessions; `SESSION_IDLE_TIMEOUT_MINUTES` and `SESSION_MAX_HOURS` set the server defaults. You get a warning a minute before an inactivity sign-out. Everyone has to sign in once after upgrading. (Refs #123)
+- **Sign out everywhere.** Settings → Profile → Sessions ends your sessions on every browser and device. Changing your password now also signs out your other sessions. (Refs #123)
+
 ### Changed
 
 - **Your own nginx config now lives in `docker/nginx/local/nginx.conf`.** The frontend image ships its own default config (plain HTTP), and installs that need something else, such as HTTPS or custom certificate paths, put a full config in `docker/nginx/local/nginx.conf`. That folder is not tracked by git, so editing it no longer makes `git pull` fail on upgrade. The installer wizard writes its generated config there. `docker/nginx/nginx.conf` is no longer used. If you edited it, `upgrade.sh` and the wizard move your edits to `local/nginx.conf` and put the original back. The demo HTTPS config moved to `docker/nginx/examples/demo-https.conf`. (Refs #114)
@@ -19,6 +24,7 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 ### Fixed
 
 - **Frontend kept restarting on a fresh install** with `open() "/etc/nginx/snippets/irdoc-security-headers.conf" failed`. This happened when the checked-out config was newer than the frontend image, for example with an old `VERSION` in a reused `docker/.env` or an outdated cached `latest` image. The default config now comes from the image itself, so the two always match. (Refs #131)
+- **Signing in with Entra ID set a session cookie without the `Secure` flag**, even when `COOKIE_SECURE=true`. It now follows `COOKIE_SECURE` like every other sign-in. (Refs #123)
 
 ## [0.1.7-alpha] - 2026-10-11
 
