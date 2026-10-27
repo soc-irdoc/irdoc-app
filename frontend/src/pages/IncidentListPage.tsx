@@ -436,7 +436,7 @@ export function IncidentListPage() {
         </div>
 
         {/* Incident list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 24px 24px' }}>
+        <div className="incident-list" style={{ flex: 1, overflowY: 'auto', padding: '12px 24px 24px' }}>
           {isLoading ? (
             <div className="flex justify-center py-16">
               <LoadingSpinner />
