@@ -40,7 +40,7 @@ WORKDIR /app
 # fallback pip/setuptools wheels ensurepip bundles into the interpreter
 # distribution - dead weight we never invoke (no `ensurepip` calls at
 # runtime) that Trivy still flags at their old, unrelated CVE'd versions.
-RUN pip install --no-cache-dir --upgrade pip==26.2.0 \
+RUN pip install --no-cache-dir --upgrade pip==26.2.2 \
     && rm -rf /usr/local/lib/python3.12/ensurepip/_bundled
 COPY requirements.lock.txt .
 RUN pip install --no-cache-dir --require-hashes -r requirements.lock.txt
