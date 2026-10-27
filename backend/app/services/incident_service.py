@@ -39,7 +39,7 @@ _RICH_TEXT_ATTRS: dict[str, list[str]] = {
 _RICH_TEXT_FIELDS = {"executive_summary", "notes", "lessons_learned", "actions_todo"}
 
 _MUTABLE_FIELDS = {
-    "title", "status", "severity", "assigned_to",
+    "title", "status", "disposition", "severity", "assigned_to",
     "executive_summary", "notes", "lessons_learned", "actions_todo",
     "affected_users", "attack_vector", "timeline_start", "timeline_end",
 }
@@ -198,6 +198,14 @@ async def list_incidents(
 async def update_incident(
     db: AsyncSession, incident: Incident, data: IncidentUpdate
 ) -> Incident:
+    # Closing records how the investigation ended (#124). Checked before any
+    # change is applied; reopening keeps the disposition.
+    if data.status == "closed" and not (data.disposition or incident.disposition):
+        raise HTTPException(
+            status_code=422,
+            detail="disposition_required",
+        )
+
     update_data = data.model_dump(exclude_none=True)
     for key, value in update_data.items():
         if key == "metadata":

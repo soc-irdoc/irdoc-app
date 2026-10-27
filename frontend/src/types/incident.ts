@@ -1,5 +1,13 @@
 export type Severity = 'critical' | 'high' | 'medium' | 'low'
 export type IncidentStatus = 'open' | 'contained' | 'closed' | 'monitoring'
+// Final disposition, required to close an incident (#124)
+export type Disposition =
+  | 'tp_remediated'
+  | 'tp_accepted_risk'
+  | 'tp_third_party'
+  | 'fp_benign'
+  | 'fp_tuning_required'
+  | 'inconclusive'
 
 export interface UserBrief {
   id: string
@@ -23,6 +31,7 @@ export interface Incident {
   title: string
   severity: Severity
   status: IncidentStatus
+  disposition: Disposition | null
   assigned_to: string | null
   assigned_user: UserBrief | null
   executive_summary: string | null
@@ -60,6 +69,7 @@ export interface UpdateIncidentPayload {
   title?: string
   severity?: Severity
   status?: IncidentStatus
+  disposition?: Disposition
   executive_summary?: string | null
   notes?: string | null
   lessons_learned?: string | null
@@ -97,4 +107,41 @@ export const STATUS_COLORS: Record<IncidentStatus, string> = {
   contained: 'chip-yellow',
   closed: 'chip-green',
   monitoring: 'chip-blue',
+}
+
+export const DISPOSITIONS: Disposition[] = [
+  'tp_remediated',
+  'tp_accepted_risk',
+  'tp_third_party',
+  'fp_benign',
+  'fp_tuning_required',
+  'inconclusive',
+]
+
+export const DISPOSITION_LABELS: Record<Disposition, string> = {
+  tp_remediated: 'True Positive - Remediated / Contained',
+  tp_accepted_risk: 'True Positive - Accepted Risk',
+  tp_third_party: 'True Positive - Third Party Handled',
+  fp_benign: 'False Positive - Benign',
+  fp_tuning_required: 'False Positive - Tuning Required',
+  inconclusive: 'Unknown - Inconclusive',
+}
+
+// Compact form for badges (list rows, header)
+export const DISPOSITION_SHORT_LABELS: Record<Disposition, string> = {
+  tp_remediated: 'TP - REMEDIATED',
+  tp_accepted_risk: 'TP - ACCEPTED RISK',
+  tp_third_party: 'TP - THIRD PARTY',
+  fp_benign: 'FP - BENIGN',
+  fp_tuning_required: 'FP - TUNING',
+  inconclusive: 'INCONCLUSIVE',
+}
+
+export const DISPOSITION_COLORS: Record<Disposition, string> = {
+  tp_remediated: 'chip-green',
+  tp_accepted_risk: 'chip-yellow',
+  tp_third_party: 'chip-blue',
+  fp_benign: 'chip-muted',
+  fp_tuning_required: 'chip-purple',
+  inconclusive: 'chip-muted',
 }

@@ -28,6 +28,7 @@ _FIXED_SECTIONS = [
             "fields": [
                 "incident.severity",
                 "incident.status",
+                "incident.disposition",  # shown only once set (#124)
                 "analyst.full_name",
                 "incident.opened_at",
                 "generated_at",

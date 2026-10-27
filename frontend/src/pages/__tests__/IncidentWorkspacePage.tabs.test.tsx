@@ -29,6 +29,7 @@ const mockIncident: Incident = {
   title: 'Test incident',
   severity: 'high',
   status: 'open',
+  disposition: null,
   assigned_to: null,
   assigned_user: null,
   executive_summary: null,

@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, StringConstraints
 
+from app.core.disposition import Disposition
 from app.core.severity import Severity
 
 
@@ -47,6 +48,7 @@ class IncidentUpdate(BaseModel):
     title: IncidentTitle | None = None
     severity: Severity | None = None
     status: Literal["open", "contained", "closed", "monitoring"] | None = None
+    disposition: Disposition | None = None
     executive_summary: str | None = None
     notes: str | None = None
     lessons_learned: str | None = None
@@ -64,6 +66,7 @@ class IncidentOut(BaseModel):
     title: str
     severity: str
     status: str
+    disposition: str | None = None
     template_id: UUID | None
     assigned_to: UUID | None
     assigned_user: UserBrief | None = None

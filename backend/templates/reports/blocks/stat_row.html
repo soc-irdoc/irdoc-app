@@ -1,6 +1,7 @@
 {% set stat_map = {
   'severity': (p.severity_label, 'Severity'),
   'status': (p.status_label, 'Status'),
+  'disposition': (p.disposition_label or '-', 'Disposition'),
   'duration': (p.duration_str, 'Duration'),
   'affected_users': (p.incident.affected_users | string, 'Affected Users'),
   'ioc_count': (p.ioc_count | string, 'IOCs'),

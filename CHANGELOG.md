@@ -14,6 +14,15 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 ### Added
 
 - **Session timeouts.** You are now signed out after 60 minutes without activity, and must sign in again 12 hours after signing in, however active you are. Before, a session renewed itself indefinitely, so you could stay signed in for days. Admins can change both limits for the organisation in Org Settings → Sessions; `SESSION_IDLE_TIMEOUT_MINUTES` and `SESSION_MAX_HOURS` set the server defaults. You get a warning a minute before an inactivity sign-out. Everyone has to sign in once after upgrading. (Refs #123)
+- **Final disposition.** Closing an incident now asks how the investigation ended:
+  - True Positive - Remediated / Contained
+  - True Positive - Accepted Risk
+  - True Positive - Third Party Handled
+  - False Positive - Benign
+  - False Positive - Tuning Required
+  - Unknown - Inconclusive
+
+  An incident can't be closed without one. The API returns `422 disposition_required`. The disposition shows as a second badge under the status in the incidents list, next to the status in the incident header (where you can change it), as "Outcome" on the Summary page, and on generated reports. A new "Disposition" stat is available for report templates. Reopening an incident keeps its disposition. Changes are recorded in the audit log. Incidents closed before upgrading have no disposition. (Refs #124)
 - **Rename incidents.** Click the title in the incident header (or the pencil next to it) to rename the incident. Press Enter to save or Escape to cancel. Renames are recorded in the audit log with the old and new title. Analysts and above can rename. Blank titles are rejected. (Refs #125)
 - **Sign out everywhere.** Settings → Profile → Sessions ends your sessions on every browser and device. Changing your password now also signs out your other sessions. (Refs #123)
 

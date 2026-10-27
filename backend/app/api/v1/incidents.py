@@ -92,6 +92,7 @@ async def update_incident(
     # Capture significant field values before the service modifies them
     old_title = incident.title
     old_status = incident.status
+    old_disposition = incident.disposition
     old_severity = incident.severity
     old_assigned_to = incident.assigned_to
 
@@ -116,6 +117,10 @@ async def update_incident(
     if data.status is not None and data.status != old_status:
         await audit_service.log(action="incident.status_changed",
             diff={"from": old_status, "to": data.status}, **audit_kwargs)
+
+    if data.disposition is not None and data.disposition != old_disposition:
+        await audit_service.log(action="incident.disposition_changed",
+            diff={"from": old_disposition, "to": data.disposition}, **audit_kwargs)
 
     if data.severity is not None and data.severity != old_severity:
         await audit_service.log(action="incident.severity_changed",

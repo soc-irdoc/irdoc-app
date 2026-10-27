@@ -23,6 +23,12 @@
       <div class="meta-value">{{ p.status_label }}</div>
     </div>
     {% endif %}
+    {% if 'incident.disposition' in show_fields and p.disposition_label %}
+    <div class="meta-item">
+      <div class="meta-label">Disposition</div>
+      <div class="meta-value">{{ p.disposition_label }}</div>
+    </div>
+    {% endif %}
     {% if 'incident.affected_users' in show_fields %}
     <div class="meta-item">
       <div class="meta-label">Affected Users</div>

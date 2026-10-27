@@ -5,7 +5,10 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { RichTextEditor } from '@/components/common/RichTextEditor'
 import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 import { useUIStore } from '@/stores/uiStore'
-import { SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS, STATUS_LABELS, type UpdateIncidentPayload } from '@/types/incident'
+import {
+  DISPOSITION_COLORS, DISPOSITION_LABELS, SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS, STATUS_LABELS,
+  type UpdateIncidentPayload,
+} from '@/types/incident'
 import { formatDateTime, formatRelative } from '@/lib/utils'
 import apiClient from '@/lib/apiClient'
 import { getSocket } from '@/lib/websocket'
@@ -24,6 +27,7 @@ const CHIP_COLOR_VARS: Record<string, string> = {
   'chip-yellow': 'var(--yellow)',
   'chip-blue': 'var(--blue)',
   'chip-green': 'var(--green)',
+  'chip-purple': 'var(--purple)',
   'chip-muted': 'var(--text-muted)',
 }
 
@@ -364,6 +368,12 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
       >
         <StatCard title="Severity" value={SEVERITY_LABELS[incident.severity]} color={CHIP_COLOR_VARS[SEVERITY_COLORS[incident.severity]]} />
         <StatCard title="Status" value={STATUS_LABELS[incident.status]} color={CHIP_COLOR_VARS[STATUS_COLORS[incident.status]]} />
+        {/* Final disposition (#124) */}
+        <StatCard
+          title="Outcome"
+          value={incident.disposition ? DISPOSITION_LABELS[incident.disposition] : 'Not set'}
+          color={incident.disposition ? CHIP_COLOR_VARS[DISPOSITION_COLORS[incident.disposition]] : undefined}
+        />
       </div>
 
       {/* Incident details */}

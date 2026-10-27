@@ -39,6 +39,7 @@ const TASK_FILTER_OPTIONS = [
 const STAT_OPTIONS = [
   { value: 'severity', label: 'Severity' },
   { value: 'status', label: 'Status' },
+  { value: 'disposition', label: 'Disposition' },
   { value: 'duration', label: 'Duration' },
   { value: 'affected_users', label: 'Affected Users' },
   { value: 'ioc_count', label: 'IOC Count' },

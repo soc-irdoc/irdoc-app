@@ -123,7 +123,8 @@ export const BLOCK_LIBRARY: {
     icon: FaFileLines,
     description: 'Title page with incident metadata',
     defaultConfig: {
-      fields: ['incident.title', 'incident.ref', 'incident.severity', 'incident.status', 'generated_at'],
+      // incident.disposition is only shown once set (#124)
+      fields: ['incident.title', 'incident.ref', 'incident.severity', 'incident.status', 'incident.disposition', 'generated_at'],
       watermark: 'CONFIDENTIAL',
     },
   },

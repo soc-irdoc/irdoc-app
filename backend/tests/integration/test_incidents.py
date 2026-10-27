@@ -89,7 +89,9 @@ async def test_filter_by_status(client: AsyncClient, auth_headers):
     await client.post("/api/v1/incidents", json={"title": "Open", "severity": "high"}, headers=auth_headers)
     r2 = await client.post("/api/v1/incidents", json={"title": "Closed", "severity": "medium"}, headers=auth_headers)
     iid = r2.json()["data"]["id"]
-    await client.put(f"/api/v1/incidents/{iid}", json={"status": "closed"}, headers=auth_headers)
+    await client.put(
+        f"/api/v1/incidents/{iid}", json={"status": "closed", "disposition": "fp_benign"}, headers=auth_headers
+    )
 
     response = await client.get("/api/v1/incidents?status=closed", headers=auth_headers)
     assert response.json()["meta"]["total"] == 1
@@ -289,3 +291,85 @@ async def test_filter_by_legacy_severity(client: AsyncClient, auth_headers):
         r = await client.get(f"/api/v1/incidents?severity={value}", headers=auth_headers)
         titles = [i["title"] for i in r.json()["data"]]
         assert titles == ["Crit"]
+
+
+# ── Final disposition (#124) ─────────────────────────────────────────────────
+
+async def _new_incident(client: AsyncClient, auth_headers) -> str:
+    create = await client.post(
+        "/api/v1/incidents", json={"title": "Dispose Me", "severity": "high"}, headers=auth_headers
+    )
+    return create.json()["data"]["id"]
+
+
+@pytest.mark.asyncio
+async def test_closing_requires_a_disposition(client: AsyncClient, auth_headers):
+    iid = await _new_incident(client, auth_headers)
+
+    response = await client.put(f"/api/v1/incidents/{iid}", json={"status": "closed"}, headers=auth_headers)
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "disposition_required"
+    get = await client.get(f"/api/v1/incidents/{iid}", headers=auth_headers)
+    assert get.json()["data"]["status"] == "open"
+
+
+@pytest.mark.asyncio
+async def test_close_with_disposition(client: AsyncClient, auth_headers):
+    iid = await _new_incident(client, auth_headers)
+
+    response = await client.put(
+        f"/api/v1/incidents/{iid}",
+        json={"status": "closed", "disposition": "fp_benign"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "closed"
+    assert data["disposition"] == "fp_benign"
+    assert data["closed_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_reopen_keeps_the_disposition_and_closing_again_needs_none(client: AsyncClient, auth_headers):
+    iid = await _new_incident(client, auth_headers)
+    await client.put(
+        f"/api/v1/incidents/{iid}",
+        json={"status": "closed", "disposition": "tp_remediated"},
+        headers=auth_headers,
+    )
+
+    reopened = await client.put(f"/api/v1/incidents/{iid}", json={"status": "open"}, headers=auth_headers)
+    assert reopened.json()["data"]["disposition"] == "tp_remediated"
+
+    closed = await client.put(f"/api/v1/incidents/{iid}", json={"status": "closed"}, headers=auth_headers)
+    assert closed.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_disposition_can_be_set_before_closing_and_changed(client: AsyncClient, auth_headers):
+    iid = await _new_incident(client, auth_headers)
+
+    first = await client.put(
+        f"/api/v1/incidents/{iid}", json={"disposition": "inconclusive"}, headers=auth_headers
+    )
+    second = await client.put(
+        f"/api/v1/incidents/{iid}", json={"disposition": "tp_third_party"}, headers=auth_headers
+    )
+
+    assert first.status_code == 200
+    assert second.json()["data"]["disposition"] == "tp_third_party"
+
+
+@pytest.mark.asyncio
+async def test_unknown_disposition_rejected(client: AsyncClient, auth_headers):
+    iid = await _new_incident(client, auth_headers)
+
+    response = await client.put(
+        f"/api/v1/incidents/{iid}",
+        json={"status": "closed", "disposition": "probably_fine"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422

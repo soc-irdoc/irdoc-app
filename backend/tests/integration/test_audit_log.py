@@ -321,3 +321,25 @@ async def test_create_timeline_entry_writes_audit(client: AsyncClient, auth_head
     assert entry is not None
     assert entry.actor_label == "admin@test.com"
     assert "Timeline Test" in (entry.entity_label or "")
+
+
+@pytest.mark.asyncio
+async def test_disposition_change_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
+    """#124: the final disposition is audited like status and severity."""
+    create_resp = await client.post(
+        "/api/v1/incidents", json={"title": "Audited", "severity": "low"}, headers=auth_headers
+    )
+    incident_id = create_resp.json()["data"]["id"]
+
+    await client.put(
+        f"/api/v1/incidents/{incident_id}",
+        json={"status": "closed", "disposition": "fp_tuning_required"},
+        headers=auth_headers,
+    )
+
+    result = await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "incident.disposition_changed")
+    )
+    entry = result.scalar_one_or_none()
+    assert entry is not None
+    assert entry.diff == {"from": None, "to": "fp_tuning_required"}

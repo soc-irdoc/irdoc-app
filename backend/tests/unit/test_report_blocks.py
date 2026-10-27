@@ -137,3 +137,43 @@ def test_task_list_keeps_state_and_has_inline_checkbox_css():
     assert 'li[data-type="taskItem"] { display: flex;' in html
     assert 'li[data-type="taskItem"] > label > input { display: none; }' in html
     assert 'li[data-checked="true"] > label > span {' in html
+
+
+# ── Final disposition (#124) ─────────────────────────────────────────────────
+
+def _cover_payload(disposition_label):
+    return SimpleNamespace(
+        incident=SimpleNamespace(incident_ref="INC-2026-0001", title="Phishing", affected_users=0),
+        severity_label="High",
+        status_label="Closed",
+        disposition_label=disposition_label,
+        generated_at=datetime(2026, 10, 27, tzinfo=timezone.utc),
+        duration_str="1 hour",
+        ioc_count=0,
+        entry_count=0,
+        contained_at_str=None,
+        closed_at_str=None,
+    )
+
+
+def test_cover_shows_disposition_once_set():
+    p = _cover_payload("False Positive - Benign")
+    html = _render({"type": "cover", "fields": ["incident.disposition"]}, p)
+    assert "Disposition" in html
+    assert "False Positive - Benign" in html
+
+
+def test_cover_hides_disposition_when_not_set():
+    html = _render({"type": "cover", "fields": ["incident.disposition"]}, _cover_payload(None))
+    assert "Disposition" not in html
+
+
+def test_stat_row_disposition():
+    p = _cover_payload("True Positive - Accepted Risk")
+    p.incident.opened_at = datetime(2026, 10, 27, tzinfo=timezone.utc)
+    html = _render({"type": "stat_row", "stats": ["disposition"]}, p)
+    assert "True Positive - Accepted Risk" in html
+
+    p.disposition_label = None
+    html = _render({"type": "stat_row", "stats": ["disposition"]}, p)
+    assert "Disposition" in html

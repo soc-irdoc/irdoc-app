@@ -11,6 +11,9 @@ import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { usePermission } from '@/lib/permissions'
 import {
+  DISPOSITION_COLORS,
+  DISPOSITION_LABELS,
+  DISPOSITION_SHORT_LABELS,
   SEVERITIES,
   SEVERITY_LABELS,
   SEVERITY_COLORS,
@@ -159,10 +162,21 @@ function IncidentCard({
       {/* Assignee */}
       <AssigneeDisplay incident={incident} onPickUp={handlePickUp} />
 
-      {/* Status */}
-      <span className={`chip ${STATUS_COLORS[incident.status]}`} style={{ flexShrink: 0 }}>
-        {STATUS_LABELS[incident.status]}
-      </span>
+      {/* Status, with the final disposition below it (#124) */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+        <span className={`chip ${STATUS_COLORS[incident.status]}`}>
+          {STATUS_LABELS[incident.status]}
+        </span>
+        {incident.disposition && (
+          <span
+            className={`chip ${DISPOSITION_COLORS[incident.disposition]}`}
+            title={DISPOSITION_LABELS[incident.disposition]}
+            style={{ fontSize: 9 }}
+          >
+            {DISPOSITION_SHORT_LABELS[incident.disposition]}
+          </span>
+        )}
+      </div>
 
       {canDelete && (
         <button
