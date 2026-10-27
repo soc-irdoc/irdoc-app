@@ -212,6 +212,8 @@ def build_payload(
         iocs_by_type={"ip": iocs},
         severity_label="Critical",
         status_label="Open",
+        # Fuzzed too: the cover and stat_row blocks render it (#124)
+        disposition_label=analyst_name,
         external_refs=[],
         contained_at_str=None,
         closed_at_str=None,

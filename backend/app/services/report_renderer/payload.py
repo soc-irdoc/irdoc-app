@@ -75,10 +75,11 @@ class ReportPayload:
     severity_label: str
     status_label: str
     external_refs: list["IncidentExternalRef"]
-    # Final disposition (#124), or None when not set
-    disposition_label: str | None
     contained_at_str: str | None
     closed_at_str: str | None
+
+    # Final disposition (#124), or None when not set
+    disposition_label: str | None = None
 
     # AI-generated (populated before rendering if blocks require it)
     ai_executive_summary: str | None = None
