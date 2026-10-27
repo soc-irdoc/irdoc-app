@@ -20,17 +20,9 @@ from app.schemas.auth import (
     UpdateProfileRequest,
     UserOut,
 )
-from app.services import audit_service, auth_service
+from app.services import audit_service, auth_service, session_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-REFRESH_COOKIE_NAME = "refresh_token"
-COOKIE_SETTINGS = {
-    "httponly": True,
-    "samesite": "strict",
-    "secure": settings.COOKIE_SECURE,
-    "max_age": settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
-}
 
 PROFILE_SAFE_FIELDS = {"full_name", "timezone", "theme"}
 
@@ -46,9 +38,12 @@ async def setup_status(db: AsyncSession = Depends(get_db)):
 async def setup(data: SetupRequest, response: Response, db: AsyncSession = Depends(get_db)):
     """First-run: create default org + admin user."""
     user = await auth_service.perform_setup(db, data.email, data.full_name, data.password, data.org_name)
-    access, refresh = auth_service.issue_tokens(user)
-    response.set_cookie(REFRESH_COOKIE_NAME, refresh, **COOKIE_SETTINGS)
-    return {"data": TokenResponse(access_token=access), "user": UserOut.model_validate(user)}
+    access, session = await session_service.open_session(db, response, user)
+    return {
+        "data": TokenResponse(access_token=access),
+        "user": UserOut.model_validate(user),
+        "meta": {"session": session},
+    }
 
 
 @router.post("/register", status_code=201)
@@ -69,9 +64,12 @@ async def register(data: RegisterRequest, response: Response, db: AsyncSession =
             detail="No default organization. Complete setup first.",
         )
     user = await auth_service.register_user(db, data.email, data.full_name, data.password, str(org.id))
-    access, refresh = auth_service.issue_tokens(user)
-    response.set_cookie(REFRESH_COOKIE_NAME, refresh, **COOKIE_SETTINGS)
-    return {"data": TokenResponse(access_token=access), "user": UserOut.model_validate(user)}
+    access, session = await session_service.open_session(db, response, user)
+    return {
+        "data": TokenResponse(access_token=access),
+        "user": UserOut.model_validate(user),
+        "meta": {"session": session},
+    }
 
 
 @router.post("/login")
@@ -110,8 +108,7 @@ async def login(data: LoginRequest, request: Request, response: Response, db: As
         }
     # ── Normal login ─────────────────────────────────────────────────────────
 
-    access, refresh = auth_service.issue_tokens(user)
-    response.set_cookie(REFRESH_COOKIE_NAME, refresh, **COOKIE_SETTINGS)
+    access, session = await session_service.open_session(db, response, user)
     await audit_service.log(
         db,
         org_id=str(user.org_id),
@@ -129,7 +126,7 @@ async def login(data: LoginRequest, request: Request, response: Response, db: As
             access_token=access,
             user=UserOut.model_validate(user),
         ).model_dump(),
-        "meta": {},
+        "meta": {"session": session},
         "error": None,
     }
 
@@ -157,10 +154,14 @@ async def refresh_token(
             detail="MFA verification required",
         )
 
-    mfa_verified = bool(payload.get("mfa_verified", False))
-    access, new_refresh = auth_service.issue_tokens(user, mfa_verified=mfa_verified)
-    response.set_cookie(REFRESH_COOKIE_NAME, new_refresh, **COOKIE_SETTINGS)
-    return {"data": TokenResponse(access_token=access), "user": UserOut.model_validate(user)}
+    # Idle timeout, absolute lifetime and revocation (#123).
+    policy = await session_service.get_policy(db, user.org_id)
+    access, session = session_service.continue_session(response, user, policy, payload)
+    return {
+        "data": TokenResponse(access_token=access),
+        "user": UserOut.model_validate(user),
+        "meta": {"session": session},
+    }
 
 
 @router.post("/logout")
@@ -170,11 +171,36 @@ async def logout(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    response.delete_cookie(REFRESH_COOKIE_NAME)
+    session_service.end_session(response)
     await audit_service.log(
         db,
         org_id=str(current_user.org_id),
         action="user.logout",
+        entity_type="auth",
+        entity_id=str(current_user.id),
+        actor_label=current_user.email,
+        entity_label=current_user.email,
+        user_id=str(current_user.id),
+        request=request,
+    )
+    await db.commit()
+    return {"data": {"ok": True}}
+
+
+@router.post("/logout-all")
+async def logout_all(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Sign out everywhere: end every session of the current user (#123)."""
+    session_service.revoke_all_sessions(current_user)
+    session_service.end_session(response)
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        action="user.logout_all",
         entity_type="auth",
         entity_id=str(current_user.id),
         actor_label=current_user.email,
@@ -207,8 +233,16 @@ async def update_me(
 @router.post("/change-password")
 async def change_password(
     data: ChangePasswordRequest,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     await auth_service.change_password(db, current_user, data.current_password, data.new_password)
+    # A new password ends the user's other sessions; this one carries on with
+    # a fresh cookie (#123).
+    session_service.revoke_all_sessions(current_user)
+    await db.flush()
+    await session_service.open_session(
+        db, response, current_user, mfa_verified=bool(current_user.mfa_enabled)
+    )
     return {"data": {"ok": True}}

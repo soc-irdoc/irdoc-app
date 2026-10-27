@@ -212,10 +212,64 @@ jobs:
       - name: Run tests
         run: python -m pytest installer/tests -v
 
+  # ── nginx configs load in the frontend image ──────────────────────────────
+  # `nginx -t` inside the image that will ship, for its built-in default and
+  # for every config an install may put in docker/nginx/local/ (wizard output,
+  # examples). Catches a config that needs a file the image lacks (#131).
+  test-nginx-config:
+    name: nginx config — Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: installer/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r installer/requirements.txt
+
+      - name: Build frontend image
+        run: docker build -t irdoc-frontend:ci frontend
+
+      - name: Collect configs
+        run: |
+          mkdir -p "$RUNNER_TEMP/ssl" "$RUNNER_TEMP/confs"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=ci \
+            -keyout "$RUNNER_TEMP/ssl/key.pem" -out "$RUNNER_TEMP/ssl/cert.pem"
+          for mode in behind_lb import selfsigned; do
+            python -c "import sys; from installer.core.ssl import generate_nginx_conf; print(generate_nginx_conf(sys.argv[1]))" \
+              "$mode" > "$RUNNER_TEMP/confs/wizard-$mode.conf"
+          done
+          cp docker/nginx/examples/*.conf "$RUNNER_TEMP/confs/"
+
+      - name: nginx -t
+        run: |
+          check() {
+            # $1: a local config dir to mount, or empty for the image default
+            mount=()
+            [ -n "$1" ] && mount=(-v "$1:/etc/nginx/irdoc-local:ro")
+            docker run --rm --add-host irdoc-backend:127.0.0.1 \
+              -v "$RUNNER_TEMP/ssl:/etc/nginx/ssl:ro" "${mount[@]}" \
+              --entrypoint sh irdoc-frontend:ci \
+              -c '/docker-entrypoint.d/90-irdoc-select-conf.sh && nginx -t'
+          }
+          echo "--- image default"; check ""
+          for conf in "$RUNNER_TEMP"/confs/*.conf; do
+            echo "--- $(basename "$conf")"
+            dir=$(mktemp -d); cp "$conf" "$dir/nginx.conf"
+            check "$dir"
+          done
+
   # ── Build & Push Docker images (on merge to main) ─────────────────────────
   build-and-push:
     name: Build & Push Docker Images
-    needs: [test-backend, test-frontend, test-installer]
+    needs: [test-backend, test-frontend, test-installer, test-nginx-config]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     # Safety net: without this, a hung step (see the frontend arm64/QEMU

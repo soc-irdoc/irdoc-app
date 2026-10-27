@@ -291,6 +291,9 @@ async def _create_incident(db, org_id: str, users: dict[str, User], templates: d
         title=scenario["title"],
         severity=severity,
         status=status_,
+        # Closing requires a final disposition (#124); every closed demo
+        # incident ended with the threat dealt with.
+        disposition=scenario.get("disposition", "tp_remediated") if status_ == "closed" else None,
         template_id=template.id,
         assigned_to=assigned_user.id,
         created_by=users["admin"].id,

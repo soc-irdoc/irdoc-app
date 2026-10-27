@@ -44,10 +44,16 @@ async def take_snapshot(snapshot_dir: Path, version_from: str, version_to: str) 
     # 2b. Backup nginx.conf - the upgrade may switch it to the image's security
     # headers snippet (#57), which an older image doesn't have, so a rollback
     # must put the old file back too.
+    # Since #114 the live config is nginx/local/nginx.conf; the tracked file is
+    # kept too, as the upgrade may move an edited one over.
     nginx_src = docker_dir / "nginx" / "nginx.conf"
     if nginx_src.exists():
         shutil.copy2(nginx_src, snapshot_dir / "nginx.conf.bak")
         files_recorded.append("nginx.conf.bak")
+    local_src = docker_dir / "nginx" / "local" / "nginx.conf"
+    if local_src.exists():
+        shutil.copy2(local_src, snapshot_dir / "nginx.local.conf.bak")
+        files_recorded.append("nginx.local.conf.bak")
 
     # 3. pg_dump via docker exec
     dump_path = snapshot_dir / "dump.sql"
@@ -115,6 +121,15 @@ async def restore_snapshot(snapshot_dir: Path) -> None:
     if nginx_bak.exists():
         with open(nginx_bak, "rb") as src, open(docker_dir / "nginx" / "nginx.conf", "wb") as dst:
             shutil.copyfileobj(src, dst)
+    # The local config: put back what the snapshot had, and drop one the
+    # upgrade created (an edited tracked file it moved over).
+    local_conf = docker_dir / "nginx" / "local" / "nginx.conf"
+    local_bak = snapshot_dir / "nginx.local.conf.bak"
+    if local_bak.exists():
+        local_conf.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(local_bak, local_conf)
+    elif nginx_bak.exists() and local_conf.exists():
+        local_conf.unlink()
 
     # Restore database: start a temporary postgres container to restore into
     dump_path = snapshot_dir / "dump.sql"

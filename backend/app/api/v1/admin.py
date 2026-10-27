@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings as app_settings
 from app.core.database import get_db
 from app.core.feature_flags import check_feature
 from app.core.permissions import require_permission
@@ -53,6 +54,11 @@ async def get_org(
             "slug": org.slug,
             "plan": org.plan,
             "settings": org.settings or {},
+            # Server defaults, for orgs without their own session timeouts.
+            "session_defaults": {
+                "idle_minutes": app_settings.SESSION_IDLE_TIMEOUT_MINUTES,
+                "max_hours": app_settings.SESSION_MAX_HOURS,
+            },
         },
         "error": None,
     }
@@ -96,9 +102,20 @@ async def update_org(
     if data.accent_color is not None:
         settings_patch["accent_color"] = data.accent_color
         changes["accent_color"] = data.accent_color
+    # Session timeouts (#123): 0 removes the override (server default again).
+    # Applies to existing sessions at their next refresh.
+    for key in ("session_idle_minutes", "session_max_hours"):
+        value = getattr(data, key)
+        if value is None:
+            continue
+        if value == 0:
+            settings_patch.pop(key, None)
+        else:
+            settings_patch[key] = value
+        changes[key] = value
 
-    if settings_patch:
-        org.settings = settings_patch
+    # Unconditionally: removing the last override leaves it empty.
+    org.settings = settings_patch
 
     await db.flush()
     await db.commit()
@@ -122,6 +139,11 @@ async def update_org(
             "slug": org.slug,
             "plan": org.plan,
             "settings": org.settings or {},
+            # Server defaults, for orgs without their own session timeouts.
+            "session_defaults": {
+                "idle_minutes": app_settings.SESSION_IDLE_TIMEOUT_MINUTES,
+                "max_hours": app_settings.SESSION_MAX_HOURS,
+            },
         },
         "error": None,
     }

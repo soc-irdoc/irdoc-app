@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
-import { useUIStore } from '@/stores/uiStore'
+import { applySessionMeta, hasActivitySince } from '@/lib/activity'
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -17,53 +17,51 @@ function getTokenExpiry(token: string): number | null {
   }
 }
 
-let expiryWarningTimer: ReturnType<typeof setTimeout> | null = null
 let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null
+// When the current access token was received. A refresh is only made for a
+// user who did something since then, so an idle session isn't kept alive
+// by timers or background requests (#123).
+let tokenReceivedAt = Date.now()
 
 export function cancelTokenTimers() {
-  if (expiryWarningTimer) { clearTimeout(expiryWarningTimer); expiryWarningTimer = null }
   if (proactiveRefreshTimer) { clearTimeout(proactiveRefreshTimer); proactiveRefreshTimer = null }
 }
 
-// Schedule a warning toast 2 min before expiry and a silent proactive refresh at 1 min before.
-// Called every time we receive a new access token.
+/** POST /auth/refresh with the cookie; applies the new token and session limits. */
+export async function refreshSession() {
+  // Plain axios, not apiClient: a 401 here must not re-enter the interceptor.
+  const res = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
+  const token: string = res.data.data.access_token
+  applySessionMeta(res.data.meta?.session)
+  useAuthStore.getState().setToken(token)
+  scheduleTokenRefresh(token)
+  return { token, user: res.data.user }
+}
+
+// Silently refresh 1 min before the access token expires, if the user was
+// active since it was issued. Called every time we receive a new access token.
 export function scheduleTokenRefresh(token: string) {
-  if (expiryWarningTimer) clearTimeout(expiryWarningTimer)
   if (proactiveRefreshTimer) clearTimeout(proactiveRefreshTimer)
+  tokenReceivedAt = Date.now()
 
   const expiresAt = getTokenExpiry(token)
   if (!expiresAt) return
 
-  const now = Date.now()
-  const warnAt = expiresAt - 2 * 60 * 1000   // 2 min before expiry
-  const refreshAt = expiresAt - 1 * 60 * 1000 // 1 min before expiry
+  const refreshAt = expiresAt - 1 * 60 * 1000
+  const delay = refreshAt - Date.now()
+  if (delay <= 0) return
 
-  if (warnAt > now) {
-    expiryWarningTimer = setTimeout(() => {
-      useUIStore.getState().addToast(
-        'Your session expires soon. Save your work - you may be asked to log in again.',
-        'info',
-      )
-    }, warnAt - now)
-  }
-
-  if (refreshAt > now) {
-    proactiveRefreshTimer = setTimeout(async () => {
-      try {
-        const res = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
-        // Cancel the expiry warning - refresh succeeded, no warning needed
-        if (expiryWarningTimer) {
-          clearTimeout(expiryWarningTimer)
-          expiryWarningTimer = null
-        }
-        const newToken = res.data.data.access_token
-        useAuthStore.getState().setToken(newToken)
-        scheduleTokenRefresh(newToken)
-      } catch {
-        // Refresh failed silently - the next API call will handle the 401
-      }
-    }, refreshAt - now)
-  }
+  proactiveRefreshTimer = setTimeout(async () => {
+    proactiveRefreshTimer = null
+    // Idle since the last token: let it expire. The next request after the
+    // user comes back refreshes it (if the session is still alive).
+    if (!hasActivitySince(tokenReceivedAt)) return
+    try {
+      await refreshSession()
+    } catch {
+      // Refresh failed silently - the next API call will handle the 401
+    }
+  }, delay)
 }
 
 // Inject access token on every request, but never override an explicitly-set
@@ -91,7 +89,11 @@ function rejectQueue(err: unknown) {
 
 // 401 interceptor - attempt token refresh, then retry
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Login, MFA, invite acceptance... carry the session limits (#123).
+    applySessionMeta(response.data?.meta?.session)
+    return response
+  },
   async (error) => {
     const original = error.config
 
@@ -107,6 +109,13 @@ apiClient.interceptors.response.use(
       if (original.url?.includes('/auth/')) {
         useAuthStore.getState().clearAuth()
         window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      // A background request (polling, refetch) while the user is away must
+      // not keep the session alive: fail it, and leave signing out to the
+      // idle timer (#123).
+      if (!hasActivitySince(tokenReceivedAt)) {
         return Promise.reject(error)
       }
 
@@ -126,10 +135,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const res = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true })
-        const newToken = res.data.data.access_token
-        useAuthStore.getState().setToken(newToken)
-        scheduleTokenRefresh(newToken)
+        const { token: newToken } = await refreshSession()
         processQueue(newToken)
         original.headers.Authorization = `Bearer ${newToken}`
         return apiClient(original)

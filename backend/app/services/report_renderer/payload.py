@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
+from app.core.disposition import DISPOSITION_LABELS
 from app.core.severity import SEVERITY_LABELS
 
 if TYPE_CHECKING:
@@ -76,6 +77,9 @@ class ReportPayload:
     external_refs: list["IncidentExternalRef"]
     contained_at_str: str | None
     closed_at_str: str | None
+
+    # Final disposition (#124), or None when not set
+    disposition_label: str | None = None
 
     # AI-generated (populated before rendering if blocks require it)
     ai_executive_summary: str | None = None
@@ -189,6 +193,7 @@ async def build_report_payload(
         severity_label=SEVERITY_LABELS.get(incident.severity, incident.severity.upper()),
         status_label=STATUS_LABELS.get(incident.status, incident.status.capitalize()),
         external_refs=external_refs,
+        disposition_label=DISPOSITION_LABELS.get(incident.disposition) if incident.disposition else None,
         contained_at_str=_fmt_dt(incident.contained_at),
         closed_at_str=_fmt_dt(incident.closed_at),
         ai_recommendations=incident.ai_recommendations,

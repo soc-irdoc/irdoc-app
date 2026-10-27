@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,6 +32,8 @@ class User(Base):
     mfa_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_otp_counter: Mapped[int | None] = mapped_column(BigInteger, nullable=True)  # replay protection
     auth_provider: Mapped[str] = mapped_column(String(20), server_default="local", default="local", nullable=False)
+    # Bumped to end every session of this user (#123); see session_service.
+    token_version: Mapped[int] = mapped_column(Integer, server_default="0", default=0, nullable=False)
 
     # Relationships
     organization: Mapped["Organization"] = relationship("Organization", back_populates="users", lazy="noload")  # noqa: F821

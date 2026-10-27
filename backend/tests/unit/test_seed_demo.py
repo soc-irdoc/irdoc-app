@@ -12,6 +12,7 @@ from sqlalchemy import select
 
 import seed as seed_module
 import seed_demo as seed_demo_module
+from app.core.disposition import DISPOSITIONS
 from app.core.severity import SEVERITIES
 from app.models.incident import Incident
 from app.models.organization import Organization
@@ -61,6 +62,9 @@ async def test_seed_demo_creates_incidents_across_all_statuses_and_categories(db
 
     # Closed incidents should have all their seeded tasks marked done.
     closed = [i for i in incidents if i.status == "closed"]
+    # The API requires a disposition to close (#124); demo data must match.
+    assert all(i.disposition in DISPOSITIONS for i in closed)
+    assert all(i.disposition is None for i in incidents if i.status != "closed")
     assert closed, "expected at least one closed demo incident"
     closed_tasks = (
         await db_session.execute(select(Task).where(Task.incident_id == closed[0].id))

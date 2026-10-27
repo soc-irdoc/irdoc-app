@@ -1,10 +1,16 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 
+from app.core.disposition import Disposition
 from app.core.severity import Severity
+from app.core.status import IncidentStatus
+
+# Columns the incidents list can sort by (#128)
+IncidentSort = Literal["severity", "ref", "title", "owner", "status", "created"]
+SortOrder = Literal["asc", "desc"]
 
 
 class UserBrief(BaseModel):
@@ -32,17 +38,22 @@ class ExternalRefCreate(BaseModel):
     external_url: str | None = None
 
 
+# Surrounding whitespace is stripped; a blank title is rejected (#125).
+IncidentTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+
+
 class IncidentCreate(BaseModel):
-    title: str
+    title: IncidentTitle
     severity: Severity = "high"
     template_id: str | None = None
     assigned_to: str | None = None
 
 
 class IncidentUpdate(BaseModel):
-    title: str | None = None
+    title: IncidentTitle | None = None
     severity: Severity | None = None
-    status: Literal["open", "contained", "closed", "monitoring"] | None = None
+    status: IncidentStatus | None = None
+    disposition: Disposition | None = None
     executive_summary: str | None = None
     notes: str | None = None
     lessons_learned: str | None = None
@@ -60,6 +71,7 @@ class IncidentOut(BaseModel):
     title: str
     severity: str
     status: str
+    disposition: str | None = None
     template_id: UUID | None
     assigned_to: UUID | None
     assigned_user: UserBrief | None = None

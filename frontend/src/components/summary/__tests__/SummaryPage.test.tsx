@@ -44,6 +44,19 @@ describe('SummaryPage', () => {
     expect(screen.getByTestId('stat-severity').style.borderTop).toContain('var(--crimson)')
   })
 
+  it('shows the final disposition as the outcome (#124)', () => {
+    Object.assign(incident, { disposition: null })
+    const { unmount } = renderPage()
+    expect(within(screen.getByTestId('stat-outcome')).getByText('Not set')).toBeInTheDocument()
+    unmount()
+
+    Object.assign(incident, { disposition: 'tp_accepted_risk' })
+    renderPage()
+    const outcome = within(screen.getByTestId('stat-outcome')).getByText('True Positive - Accepted Risk')
+    expect(outcome.style.color).toBe('var(--yellow)')
+    Object.assign(incident, { disposition: null })
+  })
+
   it('greys out AI cards and their Generate buttons when AI is disabled (#68)', () => {
     renderPage()
     for (const label of ['AI Summary', 'AI Recommendations']) {

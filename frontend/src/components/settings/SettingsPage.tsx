@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
-import { useChangePassword } from '@/hooks/useAuth'
+import { useChangePassword, useLogoutAll } from '@/hooks/useAuth'
 import { APIKeysSection } from './APIKeysSection'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { Button } from '@/components/common/Button'
@@ -87,6 +87,7 @@ export function SettingsPage() {
   const setUser = useAuthStore((s) => s.setUser)
   const { theme, toggle } = useThemeStore()
   const changePassword = useChangePassword()
+  const logoutAll = useLogoutAll()
 
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -266,6 +267,16 @@ export function SettingsPage() {
             </div>
           </form>
         )}
+
+        {/* Sign out everywhere (#123) */}
+        <SettingsRow
+          title="Sessions"
+          description="Sign out of IRDoc on every browser and device, including this one"
+        >
+          <Button variant="ghost" size="sm" loading={logoutAll.isPending} onClick={() => logoutAll.mutate()}>
+            Sign out everywhere
+          </Button>
+        </SettingsRow>
       </SettingsSection>
 
       {/* Appearance */}

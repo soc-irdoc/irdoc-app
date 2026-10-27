@@ -2,7 +2,7 @@ from functools import lru_cache
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 
-from pydantic import AnyHttpUrl, field_validator, model_validator
+from pydantic import AnyHttpUrl, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -28,7 +28,12 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "CHANGE_ME_generate_with_openssl_rand_hex_32"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    # Unused since 0.1.8: sessions follow the two settings below (#123).
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    # Sign out after this long without user activity...
+    SESSION_IDLE_TIMEOUT_MINUTES: int = Field(60, ge=5, le=1440)
+    # ...and this long after sign-in, however active. Orgs can override both.
+    SESSION_MAX_HOURS: int = Field(12, ge=1, le=720)
     COOKIE_SECURE: bool = False
 
     # Storage

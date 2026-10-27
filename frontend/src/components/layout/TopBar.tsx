@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Incident, Severity, IncidentStatus } from '@/types/incident'
-import { SEVERITIES, SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS } from '@/types/incident'
+import type { Disposition, Incident, Severity, IncidentStatus } from '@/types/incident'
+import {
+  DISPOSITIONS, DISPOSITION_COLORS, DISPOSITION_LABELS, DISPOSITION_SHORT_LABELS,
+  SEVERITIES, SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS,
+} from '@/types/incident'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
 import { copyToClipboard } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
@@ -9,8 +12,11 @@ import { useAuthStore } from '@/stores/authStore'
 import { useUpdateIncident, useDeleteIncident } from '@/hooks/useIncident'
 import { useOrgUsers } from '@/hooks/useOrgUsers'
 import { usePermission } from '@/lib/permissions'
+import { lastListPath } from '@/lib/incidentListQuery'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
+import { EditableTitle } from './EditableTitle'
+import { CloseIncidentModal } from './CloseIncidentModal'
 import {
   FaArrowLeft, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
   FaTrashCan,
@@ -92,8 +98,20 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
   const updateIncident = useUpdateIncident(incident.id)
   const { data: orgUsers = [] } = useOrgUsers()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showCloseModal, setShowCloseModal] = useState(false)
   const deleteIncident = useDeleteIncident()
   const canDelete = usePermission('senior_analyst')
+  const canEdit = usePermission('analyst')
+
+  async function handleTitleSave(title: string) {
+    try {
+      await updateIncident.mutateAsync({ title })
+      addToast('Incident renamed', 'success')
+    } catch (err) {
+      addToast('Failed to rename incident', 'error')
+      throw err
+    }
+  }
 
   async function handleSeverityChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const severity = e.target.value as Severity
@@ -106,10 +124,35 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
 
   async function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const status = e.target.value as IncidentStatus
+    // Closing needs a final disposition (#124): ask for it first, unless the
+    // incident already has one (closed before and reopened).
+    if (status === 'closed' && !incident.disposition) {
+      setShowCloseModal(true)
+      return
+    }
     try {
       await updateIncident.mutateAsync({ status })
     } catch {
       addToast('Failed to update status', 'error')
+    }
+  }
+
+  async function handleCloseConfirm(disposition: Disposition) {
+    try {
+      await updateIncident.mutateAsync({ status: 'closed', disposition })
+      setShowCloseModal(false)
+      addToast('Incident closed', 'success')
+    } catch {
+      addToast('Failed to close incident', 'error')
+    }
+  }
+
+  async function handleDispositionChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const disposition = e.target.value as Disposition
+    try {
+      await updateIncident.mutateAsync({ disposition })
+    } catch {
+      addToast('Failed to update disposition', 'error')
     }
   }
 
@@ -126,7 +169,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
     try {
       await deleteIncident.mutateAsync(incident.id)
       addToast('Incident deleted', 'success')
-      navigate('/incidents')
+      navigate(lastListPath())
     } catch {
       addToast('Failed to delete incident', 'error')
     }
@@ -153,7 +196,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
         {/* Back */}
         <button
           className="icon-btn"
-          onClick={() => navigate('/incidents')}
+          onClick={() => navigate(lastListPath())}
           aria-label="Back to incidents"
           title="Back to incidents"
           style={{ fontSize: 16 }}
@@ -193,20 +236,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
         </span>
 
         {/* Title */}
-        <h1
-          style={{
-            fontSize: 17,
-            fontWeight: 800,
-            flex: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {incident.title}
-        </h1>
+        <EditableTitle title={incident.title} canEdit={canEdit} onSave={handleTitleSave} />
 
         {/* External refs */}
         {incident.external_refs?.map((ref) => (
@@ -227,6 +257,24 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           <option value="monitoring">MONITORING</option>
           <option value="closed">CLOSED</option>
         </select>
+
+        {/* Final disposition (#124): once closed, or set before */}
+        {(incident.disposition || incident.status === 'closed') && (
+          <select
+            className={`chip ${incident.disposition ? DISPOSITION_COLORS[incident.disposition] : 'chip-muted'}`}
+            value={incident.disposition ?? ''}
+            onChange={handleDispositionChange}
+            disabled={updateIncident.isPending}
+            aria-label="Change disposition"
+            title={incident.disposition ? DISPOSITION_LABELS[incident.disposition] : 'No disposition set'}
+            style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6, flexShrink: 0, maxWidth: 180 }}
+          >
+            {!incident.disposition && <option value="" disabled>NO DISPOSITION</option>}
+            {DISPOSITIONS.map((d) => (
+              <option key={d} value={d}>{DISPOSITION_SHORT_LABELS[d]}</option>
+            ))}
+          </select>
+        )}
 
         {/* Assignee */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
@@ -324,6 +372,14 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           </button>
         ))}
       </div>
+
+      <CloseIncidentModal
+        open={showCloseModal}
+        incidentRef={incident.incident_ref}
+        loading={updateIncident.isPending}
+        onConfirm={handleCloseConfirm}
+        onClose={() => setShowCloseModal(false)}
+      />
 
       <Modal open={showDeleteModal} title="Delete Incident" onClose={() => setShowDeleteModal(false)}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

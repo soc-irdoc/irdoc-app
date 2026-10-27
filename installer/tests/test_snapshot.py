@@ -48,3 +48,52 @@ async def test_snapshot_saves_and_restores_nginx_conf(tmp_path, monkeypatch):
     (snap / "dump.sql").unlink()  # skip the database part of the restore
     await snapshot.restore_snapshot(snap)
     assert conf.read_text() == "original"
+
+
+@pytest.mark.asyncio
+async def test_snapshot_saves_and_restores_local_nginx_conf(tmp_path, monkeypatch):
+    """#114: the live config is nginx/local/nginx.conf; a rollback restores it."""
+    import installer.core.snapshot as snapshot
+
+    repo = tmp_path / "repo"
+    (repo / "docker" / "nginx" / "local").mkdir(parents=True)
+    local = repo / "docker" / "nginx" / "local" / "nginx.conf"
+    local.write_text("original")
+    monkeypatch.setattr(snapshot, "_REPO_ROOT", repo)
+
+    pg_dump = MagicMock(returncode=0)
+    pg_dump.communicate = AsyncMock(return_value=(b"-- dump", b""))
+    with patch.object(snapshot.asyncio, "create_subprocess_exec", AsyncMock(return_value=pg_dump)):
+        snap = await snapshot.take_snapshot(tmp_path / "snap", "1.0.0", "1.1.0")
+
+    assert "nginx.local.conf.bak" in json.loads((snap / "snapshot.json").read_text())["files"]
+    local.write_text("patched")
+    (snap / "dump.sql").unlink()
+    await snapshot.restore_snapshot(snap)
+    assert local.read_text() == "original"
+
+
+@pytest.mark.asyncio
+async def test_rollback_drops_local_conf_the_upgrade_created(tmp_path, monkeypatch):
+    """An upgrade that moved an edited tracked nginx.conf into local/ is undone:
+    the tracked file comes back and the local copy goes."""
+    import installer.core.snapshot as snapshot
+
+    repo = tmp_path / "repo"
+    nginx = repo / "docker" / "nginx"
+    nginx.mkdir(parents=True)
+    (nginx / "nginx.conf").write_text("edited")
+    monkeypatch.setattr(snapshot, "_REPO_ROOT", repo)
+
+    pg_dump = MagicMock(returncode=0)
+    pg_dump.communicate = AsyncMock(return_value=(b"-- dump", b""))
+    with patch.object(snapshot.asyncio, "create_subprocess_exec", AsyncMock(return_value=pg_dump)):
+        snap = await snapshot.take_snapshot(tmp_path / "snap", "1.0.0", "1.1.0")
+
+    (nginx / "local").mkdir()
+    (nginx / "local" / "nginx.conf").write_text("edited")
+    (nginx / "nginx.conf").write_text("shipped")
+    (snap / "dump.sql").unlink()
+    await snapshot.restore_snapshot(snap)
+    assert (nginx / "nginx.conf").read_text() == "edited"
+    assert not (nginx / "local" / "nginx.conf").exists()

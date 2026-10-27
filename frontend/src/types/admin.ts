@@ -27,6 +27,10 @@ export interface OrgSettings {
   mfa_required?: boolean
   logo_url?: string
   accent_color?: string
+  // Session timeouts (#123); unset means the server default. Send 0 to reset.
+  session_idle_minutes?: number
+  session_max_hours?: number
+  session_defaults?: { idle_minutes: number; max_hours: number }
 }
 
 export interface StorageConfigOut {
