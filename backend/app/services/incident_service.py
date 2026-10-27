@@ -6,17 +6,19 @@ from datetime import UTC, datetime
 
 import bleach
 from fastapi import HTTPException, status
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import case, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.severity import normalize_severity
+from app.core.severity import SEVERITIES, normalize_severity
+from app.core.status import STATUSES
 from app.models.attachment import Attachment
 from app.models.incident import Incident, IncidentExternalRef
 from app.models.ioc import IOC
 from app.models.task import Task
 from app.models.template import IncidentTemplate
 from app.models.timeline import TimelineEntry
+from app.models.user import User
 from app.schemas.incident import IncidentCreate, IncidentStats, IncidentUpdate
 
 _RICH_TEXT_TAGS = [
@@ -169,6 +171,8 @@ async def list_incidents(
     search: str | None = None,
     page: int = 1,
     per_page: int = 50,
+    sort: str = "created",
+    order: str = "desc",
 ) -> tuple[list[Incident], int]:
     query = (
         select(Incident)
@@ -190,9 +194,52 @@ async def list_incidents(
     count_q = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_q)).scalar() or 0
 
-    query = query.order_by(Incident.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    query = _apply_sort(query, sort, order)
+    query = query.offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     return list(result.scalars().all()), total
+
+
+def _rank(column, ordered_values: tuple[str, ...]):
+    """Position of the value in ordered_values (unknown values last)."""
+    return case(
+        {value: i for i, value in enumerate(ordered_values)},
+        value=column,
+        else_=len(ordered_values),
+    )
+
+
+def _apply_sort(query, sort: str, order: str):
+    """Sort the incidents list over the whole result, before paging (#128).
+
+    Severity sorts by level and status by workflow order, not alphabetically.
+    Ascending severity means most severe first, like ascending status means
+    the start of the workflow first. Unassigned incidents sort last by owner
+    in both directions. created_at and id break ties so pages are stable.
+    """
+    descending = order == "desc"
+    if sort == "severity":
+        # SEVERITIES runs critical -> low; "desc" (most severe first) is rank asc.
+        key = _rank(Incident.severity, SEVERITIES)
+        keys = [key.asc() if descending else key.desc()]
+    elif sort == "status":
+        key = _rank(Incident.status, STATUSES)
+        keys = [key.desc() if descending else key.asc()]
+    elif sort == "ref":
+        keys = [Incident.incident_ref.desc() if descending else Incident.incident_ref.asc()]
+    elif sort == "title":
+        key = func.lower(Incident.title)
+        keys = [key.desc() if descending else key.asc()]
+    elif sort == "owner":
+        query = query.outerjoin(User, Incident.assigned_to == User.id)
+        name = func.lower(User.full_name)
+        keys = [
+            case((Incident.assigned_to.is_(None), 1), else_=0),
+            name.desc() if descending else name.asc(),
+        ]
+    else:  # created
+        keys = [Incident.created_at.desc() if descending else Incident.created_at.asc()]
+    return query.order_by(*keys, Incident.created_at.desc(), Incident.id)
 
 
 async def update_incident(

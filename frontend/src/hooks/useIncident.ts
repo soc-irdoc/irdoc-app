@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
 import type { Incident, CreateIncidentPayload, UpdateIncidentPayload, IncidentStats } from '@/types/incident'
 import type { ApiResponse } from '@/types/api'
@@ -8,6 +8,8 @@ export function useIncidents(params?: {
   search?: string
   page?: number
   per_page?: number
+  sort?: string
+  order?: 'asc' | 'desc'
 }) {
   return useQuery({
     queryKey: ['incidents', params],
@@ -15,6 +17,8 @@ export function useIncidents(params?: {
       const res = await apiClient.get<ApiResponse<Incident[]>>('/incidents', { params })
       return res.data
     },
+    // Keep showing the current page while the next one loads (#127).
+    placeholderData: keepPreviousData,
   })
 }
 

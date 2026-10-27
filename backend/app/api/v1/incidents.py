@@ -3,14 +3,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.permissions import require_permission
+from app.core.status import IncidentStatus
 from app.schemas.common import Meta
 from app.schemas.incident import (
     ExternalRefCreate,
     ExternalRefOut,
     IncidentCreate,
     IncidentOut,
+    IncidentSort,
     IncidentStats,
     IncidentUpdate,
+    SortOrder,
 )
 from app.services import audit_service, incident_service
 from app.sio import publish_ws
@@ -20,11 +23,14 @@ router = APIRouter(prefix="/incidents", tags=["incidents"])
 
 @router.get("")
 async def list_incidents(
-    status: str | None = Query(None),
+    status: IncidentStatus | None = Query(None),
     severity: str | None = Query(None),
     search: str | None = Query(None),
     page: int = Query(1, ge=1),
-    per_page: int = Query(50, ge=1, le=200),
+    per_page: int = Query(25, ge=1, le=100),
+    # Server-side sorting over the whole filtered result (#128)
+    sort: IncidentSort = Query("created"),
+    order: SortOrder = Query("desc"),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("incidents.read")),
 ):
@@ -36,6 +42,8 @@ async def list_incidents(
         search=search,
         page=page,
         per_page=per_page,
+        sort=sort,
+        order=order,
     )
     return {
         "data": [IncidentOut.model_validate(i) for i in incidents],

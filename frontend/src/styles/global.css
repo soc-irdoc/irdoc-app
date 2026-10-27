@@ -634,3 +634,117 @@ select.form-input {
   height: 0;
   font-style: italic;
 }
+
+/* ── INCIDENTS LIST (#126) ─────────────────────────────── */
+/* One grid template shared by the header and every row, so each column
+   lines up across rows whatever the badge widths or name lengths. */
+.incident-grid {
+  display: grid;
+  grid-template-columns: 104px 124px minmax(0, 1fr) 180px 156px 40px;
+  align-items: center;
+  column-gap: 16px;
+}
+
+.incident-list-header {
+  padding: 8px 20px;
+  margin-bottom: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.incident-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.incident-sort-btn:hover,
+.incident-sort-btn[data-active='true'] {
+  color: var(--text-primary);
+}
+
+.incident-row {
+  padding: 14px 20px;
+  margin-bottom: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.incident-row:hover,
+.incident-row:focus-visible {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  outline: none;
+}
+
+.incident-cell-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Fixed-width badges with centred text, so columns don't shift */
+.incident-grid .chip-fixed {
+  min-width: 88px;
+  justify-content: center;
+}
+
+.incident-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Narrower screens: the owner column shows the avatar only */
+@media (max-width: 1000px) {
+  .incident-grid {
+    grid-template-columns: 104px 124px minmax(0, 1fr) 40px 156px 40px;
+  }
+  .incident-owner-name,
+  .incident-pickup-label {
+    display: none;
+  }
+}
+
+/* Phones: each row stacks into badges / title / owner + status; no header */
+@media (max-width: 640px) {
+  .incident-list-header {
+    display: none;
+  }
+  .incident-grid {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "sev ref actions"
+      "title title title"
+      "owner owner status";
+    row-gap: 8px;
+  }
+  .incident-cell-sev { grid-area: sev; }
+  .incident-cell-ref { grid-area: ref; }
+  .incident-cell-title { grid-area: title; }
+  .incident-cell-owner { grid-area: owner; }
+  .incident-cell-status { grid-area: status; align-items: flex-end; }
+  .incident-cell-actions { grid-area: actions; }
+  .incident-owner-name,
+  .incident-pickup-label {
+    display: inline;
+  }
+}

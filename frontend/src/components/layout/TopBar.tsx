@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useUpdateIncident, useDeleteIncident } from '@/hooks/useIncident'
 import { useOrgUsers } from '@/hooks/useOrgUsers'
 import { usePermission } from '@/lib/permissions'
+import { lastListPath } from '@/lib/incidentListQuery'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
 import { EditableTitle } from './EditableTitle'
@@ -168,7 +169,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
     try {
       await deleteIncident.mutateAsync(incident.id)
       addToast('Incident deleted', 'success')
-      navigate('/incidents')
+      navigate(lastListPath())
     } catch {
       addToast('Failed to delete incident', 'error')
     }
@@ -195,7 +196,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
         {/* Back */}
         <button
           className="icon-btn"
-          onClick={() => navigate('/incidents')}
+          onClick={() => navigate(lastListPath())}
           aria-label="Back to incidents"
           title="Back to incidents"
           style={{ fontSize: 16 }}
