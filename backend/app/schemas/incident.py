@@ -1,9 +1,5 @@
 from datetime import datetime
 from typing import Annotated, Literal
-
-# Columns the incidents list can sort by (#128)
-IncidentSort = Literal["severity", "ref", "title", "owner", "status", "created"]
-SortOrder = Literal["asc", "desc"]
 from uuid import UUID
 
 from pydantic import BaseModel, StringConstraints
@@ -11,6 +7,10 @@ from pydantic import BaseModel, StringConstraints
 from app.core.disposition import Disposition
 from app.core.severity import Severity
 from app.core.status import IncidentStatus
+
+# Columns the incidents list can sort by (#128)
+IncidentSort = Literal["severity", "ref", "title", "owner", "status", "created"]
+SortOrder = Literal["asc", "desc"]
 
 
 class UserBrief(BaseModel):
