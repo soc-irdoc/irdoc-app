@@ -76,20 +76,36 @@ async def limit_webhook_body_size(request: Request, call_next):
 
 
 # ─── Security Headers Middleware ────────────────────────────────────────────────
+_APP_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob:; "
+    "connect-src 'self' ws: wss:; "
+    "frame-ancestors 'none';"
+)
+# Stored attachments under /api/v1/files/ may be framed by the app itself - the
+# PDF preview is an <iframe> (#137). Nothing else may frame them, and they get
+# no scripts at all. object-src 'self' lets the browser's PDF viewer load.
+# Must match the /api/v1/files/ values in frontend/nginx/irdoc-security-headers.conf:
+# the browser enforces both copies.
+_FILES_CSP = (
+    "default-src 'none'; "
+    "style-src 'unsafe-inline'; "
+    "img-src 'self' data:; "
+    "object-src 'self'; "
+    "frame-ancestors 'self';"
+)
+
+
 @application.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
+    is_file = request.url.path.startswith("/api/v1/files/")
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN" if is_file else "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data: blob:; "
-        "connect-src 'self' ws: wss:; "
-        "frame-ancestors 'none';"
-    )
+    response.headers["Content-Security-Policy"] = _FILES_CSP if is_file else _APP_CSP
     if settings.COOKIE_SECURE:
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"

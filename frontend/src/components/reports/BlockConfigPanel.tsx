@@ -49,6 +49,19 @@ const STAT_OPTIONS = [
   { value: 'closed_at', label: 'Closed At' },
 ]
 
+// Fields cover.html can show; title and ref are always on the cover. When a
+// block has no `fields`, cover.html falls back to COVER_DEFAULT_FIELDS.
+const COVER_FIELD_OPTIONS = [
+  { value: 'incident.severity', label: 'Severity' },
+  { value: 'incident.status', label: 'Status' },
+  { value: 'incident.disposition', label: 'Disposition' },
+  { value: 'incident.affected_users', label: 'Affected Users' },
+  { value: 'analyst.full_name', label: 'Lead Analyst' },
+  { value: 'incident.opened_at', label: 'Opened At' },
+  { value: 'generated_at', label: 'Generated At' },
+]
+const COVER_DEFAULT_FIELDS = ['incident.severity', 'incident.status', 'incident.disposition', 'generated_at']
+
 // The incident Summary tab fields. Keep in sync with SUMMARY_FIELDS in
 // backend/app/services/report_renderer/fields.py.
 const SECTION_FIELD_OPTIONS = [
@@ -112,6 +125,14 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
             value={block.watermark ?? 'CONFIDENTIAL'}
             onChange={(e) => onChange({ watermark: e.target.value })}
             placeholder="e.g. CONFIDENTIAL"
+          />
+        </div>
+        <div style={rowStyle}>
+          <span style={labelStyle}>Fields to show</span>
+          <ChipChecklist
+            options={COVER_FIELD_OPTIONS}
+            selected={block.fields ?? COVER_DEFAULT_FIELDS}
+            onChange={(fields) => onChange({ fields })}
           />
         </div>
       </div>
@@ -197,45 +218,14 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
   }
 
   if (type === 'stat_row') {
-    const current = block.stats ?? []
     return (
       <div style={rowStyle}>
         <span style={labelStyle}>Stats to show</span>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-          {STAT_OPTIONS.map((s) => {
-            const checked = current.includes(s.value)
-            return (
-              <label
-                key={s.value}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  color: 'var(--text-primary)',
-                  padding: '3px 8px',
-                  background: checked ? 'var(--accent-dim)' : 'var(--bg-base)',
-                  border: `1px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
-                  borderRadius: '4px',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => {
-                    const next = e.target.checked
-                      ? [...current, s.value]
-                      : current.filter((v) => v !== s.value)
-                    onChange({ stats: next })
-                  }}
-                  style={{ width: '12px', height: '12px' }}
-                />
-                {s.label}
-              </label>
-            )
-          })}
-        </div>
+        <ChipChecklist
+          options={STAT_OPTIONS}
+          selected={block.stats ?? []}
+          onChange={(stats) => onChange({ stats })}
+        />
       </div>
     )
   }
@@ -412,6 +402,47 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
   return (
     <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
       No configuration for this block type.
+    </div>
+  )
+}
+
+function ChipChecklist({ options, selected, onChange }: {
+  options: { value: string; label: string }[]
+  selected: string[]
+  onChange: (next: string[]) => void
+}) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+      {options.map((o) => {
+        const checked = selected.includes(o.value)
+        return (
+          <label
+            key={o.value}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: 'var(--text-primary)',
+              padding: '3px 8px',
+              background: checked ? 'var(--accent-dim)' : 'var(--bg-base)',
+              border: `1px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
+              borderRadius: '4px',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => onChange(e.target.checked
+                ? [...selected, o.value]
+                : selected.filter((v) => v !== o.value))}
+              style={{ width: '12px', height: '12px' }}
+            />
+            {o.label}
+          </label>
+        )
+      })}
     </div>
   )
 }

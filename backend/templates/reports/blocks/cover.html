@@ -10,7 +10,9 @@
   <div class="incident-ref">{{ p.incident.incident_ref }}</div>
   <h1>{{ p.incident.title }}</h1>
   <div class="cover-meta">
-    {% set show_fields = block.get('fields', ['incident.severity', 'incident.status', 'generated_at']) %}
+    {% set show_fields = block.get('fields', ['incident.severity', 'incident.status', 'incident.disposition', 'generated_at']) %}
+    {# Closed without a disposition (closed before 0.1.8 made it required): say so rather than omit it (#140) #}
+    {% set disposition = p.disposition_label or ('Not recorded' if p.incident.status == 'closed' else none) %}
     {% if 'incident.severity' in show_fields %}
     <div class="meta-item">
       <div class="meta-label">Severity</div>
@@ -23,10 +25,10 @@
       <div class="meta-value">{{ p.status_label }}</div>
     </div>
     {% endif %}
-    {% if 'incident.disposition' in show_fields and p.disposition_label %}
+    {% if 'incident.disposition' in show_fields and disposition %}
     <div class="meta-item">
       <div class="meta-label">Disposition</div>
-      <div class="meta-value">{{ p.disposition_label }}</div>
+      <div class="meta-value">{{ disposition }}</div>
     </div>
     {% endif %}
     {% if 'incident.affected_users' in show_fields %}

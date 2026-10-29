@@ -98,3 +98,32 @@ async def test_webhook_accepts_legacy_severity(client: AsyncClient, api_key_head
         headers=api_key_headers,
     )
     assert response.status_code == 201
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("url", [
+    "javascript:alert(document.cookie)",
+    "JavaScript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "//evil.example.com/x",
+    "not a url",
+])
+async def test_webhook_rejects_non_http_external_url(client: AsyncClient, api_key_headers, url):
+    # external_url is rendered as a link in the UI: http(s) only
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "x", "external_source": "jira", "external_ref": "SEC-1", "external_url": url},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_webhook_accepts_https_external_url(client: AsyncClient, api_key_headers):
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "x", "external_source": "jira", "external_ref": "SEC-1",
+              "external_url": "https://jira.example.com/browse/SEC-1"},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 201

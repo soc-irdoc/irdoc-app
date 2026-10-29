@@ -94,3 +94,21 @@ def test_ai_narrative_shown_when_summary_present():
     p = _make_payload()
     p.ai_executive_summary = "AI generated text."
     assert _section("text_block")["has_data"](p) is True
+
+
+def _stats(p):
+    return _section("stat_row")["block"](p, "CONFIDENTIAL")["stats"]
+
+
+def test_stat_row_disposition_once_set_or_closed():
+    # #140: closed incidents' reports show the final disposition
+    p = _make_payload(disposition_label=None)
+    p.incident.status = "open"
+    assert "disposition" not in _stats(p)
+
+    p.incident.status = "closed"
+    assert "disposition" in _stats(p)
+
+    p = _make_payload(disposition_label="False Positive - Benign")
+    p.incident.status = "open"
+    assert "disposition" in _stats(p)

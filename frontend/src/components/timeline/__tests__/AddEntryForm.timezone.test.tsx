@@ -17,6 +17,9 @@ const mutateAsync = vi.fn().mockResolvedValue({ id: 'entry-1' })
 vi.mock('@/hooks/useTimeline', () => ({
   useCreateTimelineEntry: () => ({ mutateAsync, isPending: false }),
 }))
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+}))
 vi.mock('@/hooks/useAssets', () => ({
   useAssets: () => ({ data: [] }),
   useLinkAssetsToEntry: () => ({ mutateAsync: vi.fn() }),

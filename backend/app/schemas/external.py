@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from app.core.severity import Severity
+from app.schemas.incident import ExternalUrl
 
 
 class ExternalIncidentCreate(BaseModel):
@@ -10,7 +11,7 @@ class ExternalIncidentCreate(BaseModel):
     template: str = "blank"          # matches incident_template.slug
     external_ref: str | None = None  # e.g. "SDP-2026-4421"
     external_source: str | None = None  # e.g. "servicedesk_plus"
-    external_url: str | None = None  # deep-link to original ticket
+    external_url: ExternalUrl = None  # deep-link to original ticket (http/https only)
     description: str | None = None  # pre-populates first timeline entry
     reported_by: str | None = None  # email of original reporter
 

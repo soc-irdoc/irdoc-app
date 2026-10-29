@@ -190,8 +190,12 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
 
   // Reports only store the template id; fall back to the report type for
   // older reports and for templates that have since been deleted.
-  const reportTemplateName = (r: { report_template_id: string | null; report_type: string }) =>
-    reportTemplates.find((t) => t.id === r.report_template_id)?.name ?? r.report_type
+  // report_type is always "pdf" (the format), never a template name (#141).
+  const reportTemplateName = (r: { report_template_id: string | null }) =>
+    r.report_template_id
+      ? reportTemplates.find((t) => t.id === r.report_template_id)?.name
+        ?? (loadingTemplates ? '…' : 'Deleted template')
+      : 'Base Template'
 
   // Listen for report:ready and report:sharepoint_synced WebSocket events
   useEffect(() => {
@@ -241,8 +245,9 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-          Reports
+        {/* Same header as the other incident tabs (Summary, Timeline, IOCs) - #144 */}
+        <h2 style={{ fontSize: 18, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)', marginBottom: 4 }}>
+          <FaFileLines size={24} aria-hidden="true" /> Reports
         </h2>
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
           Generate PDF incident reports using your report templates.

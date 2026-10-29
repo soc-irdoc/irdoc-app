@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Annotated, Literal
+from urllib.parse import urlsplit
 from uuid import UUID
 
-from pydantic import BaseModel, StringConstraints
+from pydantic import AfterValidator, BaseModel, StringConstraints
 
 from app.core.disposition import Disposition
 from app.core.severity import Severity
@@ -22,6 +23,21 @@ class UserBrief(BaseModel):
     model_config = {"from_attributes": True}
 
 
+def _http_url(value: str | None) -> str | None:
+    """External ticket links are rendered as <a href>: http(s) only, never
+    javascript:/data: (the webhook takes them from any API-key holder)."""
+    if value is None:
+        return None
+    value = value.strip()
+    parts = urlsplit(value)
+    if parts.scheme.lower() not in ("http", "https") or not parts.netloc:
+        raise ValueError("external_url must be an http(s) URL")
+    return value
+
+
+ExternalUrl = Annotated[str | None, AfterValidator(_http_url)]
+
+
 class ExternalRefOut(BaseModel):
     id: UUID
     external_source: str
@@ -35,7 +51,7 @@ class ExternalRefOut(BaseModel):
 class ExternalRefCreate(BaseModel):
     external_source: str
     external_ref: str
-    external_url: str | None = None
+    external_url: ExternalUrl = None
 
 
 # Surrounding whitespace is stripped; a blank title is rejected (#125).

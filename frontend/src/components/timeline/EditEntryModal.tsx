@@ -7,6 +7,7 @@ import { useUpdateTimelineEntry } from '@/hooks/useTimeline'
 import { useAssets, useLinkAssetsToEntry, useUnlinkAssetFromEntry, useEntryAssets } from '@/hooks/useAssets'
 import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
+import { uploadErrorMessage } from '@/lib/utils'
 import { ASSET_TYPE_ICONS, type Asset, type AssetType } from '@/types/asset'
 import type { TimelineEntry, EntryType, UpdateTimelineEntryPayload, Attachment } from '@/types/timeline'
 import { FaBox, FaDesktop, FaXmark } from 'react-icons/fa6'
@@ -148,8 +149,8 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
           await apiClient.post(`/incidents/${incidentId}/attachments`, fd, {
             headers: { 'Content-Type': 'multipart/form-data' },
           })
-        } catch {
-          addToast(`Failed to upload ${file.name}`, 'error')
+        } catch (err) {
+          addToast(`Failed to upload ${file.name}: ${uploadErrorMessage(err)}`, 'error')
         }
       }
 

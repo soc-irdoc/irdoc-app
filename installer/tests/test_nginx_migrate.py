@@ -119,8 +119,7 @@ def test_missing_file_is_an_error(tmp_path):
 def test_snippet_csp_allows_what_the_spa_needs():
     """The CSP the issue was about: data:/blob: images must be allowed, while
     the parts that matter stay locked down."""
-    csp = next(line for line in SNIPPET.read_text(encoding="utf-8").splitlines()
-               if line.startswith("add_header Content-Security-Policy"))
+    csp = _snippet_csps()[0]
     assert "img-src 'self' data: blob:" in csp  # logo / pasted image previews (#57)
     assert "style-src 'self' 'unsafe-inline'" in csp  # TipTap injects a <style> tag
     assert "font-src 'self'" in csp  # fonts are self-hosted
@@ -130,6 +129,31 @@ def test_snippet_csp_allows_what_the_spa_needs():
     assert "frame-ancestors 'none'" in csp
     # No third-party origins - installs are frequently air-gapped.
     assert "http://" not in csp and "https://" not in csp
+
+
+def _snippet_csps():
+    """[app CSP, /api/v1/files/ CSP] - both set into $irdoc_csp (#137)."""
+    return [line.strip() for line in SNIPPET.read_text(encoding="utf-8").splitlines()
+            if line.strip().startswith("set $irdoc_csp ")]
+
+
+def test_snippet_lets_only_the_app_frame_stored_files():
+    """The PDF preview frames /api/v1/files/ (#137); the rest stays DENY."""
+    text = SNIPPET.read_text(encoding="utf-8")
+    app_csp, files_csp = _snippet_csps()
+    assert "frame-ancestors 'none'" in app_csp
+    assert "frame-ancestors 'self'" in files_csp
+    assert "default-src 'none'" in files_csp  # no scripts in served files
+    assert "script-src" not in files_csp
+    assert "if ($uri ~ ^/api/v1/files/)" in text
+    assert "add_header Content-Security-Policy $irdoc_csp always;" in text
+    assert "add_header X-Frame-Options $irdoc_frame_options always;" in text
+
+    # Must match the backend, or the browser enforces the stricter copy
+    main_py = (REPO_ROOT / "backend" / "app" / "main.py").read_text(encoding="utf-8")
+    block = main_py[main_py.index("_FILES_CSP = ("):]
+    backend_csp = "".join(re.findall(r'"([^"]*)"', block[:block.index(")")]))
+    assert f'"{backend_csp}"' in files_csp
 
 
 def test_snippet_has_no_hsts():

@@ -40,7 +40,10 @@ _FIXED_SECTIONS = [
         "has_data": lambda p: True,
         "block": lambda p, classification: {
             "type": "stat_row",
-            "stats": ["severity", "status", "duration", "affected_users", "ioc_count", "entry_count"],
+            "stats": ["severity", "status"]
+            # Disposition once there is one to report: set, or closed without it (#140)
+            + (["disposition"] if p.disposition_label or p.incident.status == "closed" else [])
+            + ["duration", "affected_users", "ioc_count", "entry_count"],
         },
     },
     {

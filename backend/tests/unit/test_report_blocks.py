@@ -141,9 +141,11 @@ def test_task_list_keeps_state_and_has_inline_checkbox_css():
 
 # ── Final disposition (#124) ─────────────────────────────────────────────────
 
-def _cover_payload(disposition_label):
+def _cover_payload(disposition_label, status="closed"):
     return SimpleNamespace(
-        incident=SimpleNamespace(incident_ref="INC-2026-0001", title="Phishing", affected_users=0),
+        incident=SimpleNamespace(
+            incident_ref="INC-2026-0001", title="Phishing", affected_users=0, status=status,
+        ),
         severity_label="High",
         status_label="Closed",
         disposition_label=disposition_label,
@@ -163,9 +165,23 @@ def test_cover_shows_disposition_once_set():
     assert "False Positive - Benign" in html
 
 
-def test_cover_hides_disposition_when_not_set():
-    html = _render({"type": "cover", "fields": ["incident.disposition"]}, _cover_payload(None))
+def test_cover_hides_disposition_while_open_and_not_set():
+    html = _render({"type": "cover", "fields": ["incident.disposition"]}, _cover_payload(None, "open"))
     assert "Disposition" not in html
+
+
+def test_cover_flags_closed_incident_without_disposition():
+    # Closed before 0.1.8 made a disposition required (#140)
+    html = _render({"type": "cover", "fields": ["incident.disposition"]}, _cover_payload(None))
+    assert "Disposition" in html
+    assert "Not recorded" in html
+
+
+def test_cover_shows_disposition_by_default():
+    # Custom templates' cover blocks carry no field list (#140)
+    p = _cover_payload("True Positive - Remediated")
+    html = _render({"type": "cover"}, p)
+    assert "True Positive - Remediated" in html
 
 
 def test_stat_row_disposition():
