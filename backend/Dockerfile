@@ -35,15 +35,22 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 WORKDIR /app
 
 # ── Python dependencies ─────────────────────────────────────────────────────────
-# Base image ships an outdated pip with several known CVEs; upgrade before
-# the hash-pinned install (pip itself isn't in the lock file). Also strip the
-# fallback pip/setuptools wheels ensurepip bundles into the interpreter
-# distribution - dead weight we never invoke (no `ensurepip` calls at
-# runtime) that Trivy still flags at their old, unrelated CVE'd versions.
-RUN pip install --no-cache-dir --upgrade pip==26.2.2 \
-    && rm -rf /usr/local/lib/python3.12/ensurepip/_bundled
-COPY requirements.lock.txt .
-RUN pip install --no-cache-dir --require-hashes -r requirements.lock.txt
+# Base image ships an outdated pip with several known CVEs; upgrade it
+# (hash-pinned, requirements-pip.txt) before the hash-pinned install - pip
+# itself isn't in the lock file. Also strip the fallback pip/setuptools wheels
+# ensurepip bundles into the interpreter distribution - dead weight we never
+# invoke (no `ensurepip` calls at runtime) that Trivy still flags at their
+# old, unrelated CVE'd versions.
+#
+# pip is removed again once the install is done (same layer, so it never ships
+# in a lower one): nothing installs packages at runtime, and pip vendors its own
+# msgpack/urllib3/setuptools copies that Trivy flags whenever they lag behind
+# (the app's own urllib3 is in the lock file and stays).
+COPY requirements-pip.txt requirements.lock.txt ./
+RUN pip install --no-cache-dir --require-hashes -r requirements-pip.txt \
+    && rm -rf /usr/local/lib/python3.12/ensurepip/_bundled \
+    && pip install --no-cache-dir --require-hashes -r requirements.lock.txt \
+    && python -m pip uninstall -y pip
 
 # ── Release version ─────────────────────────────────────────────────────────────
 # CI passes the repo's VERSION file here; a local `docker compose build` leaves
