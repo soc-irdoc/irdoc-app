@@ -245,8 +245,9 @@ export default function ReportPage({ incidentId, incidentUpdatedAt }: Props) {
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-          Reports
+        {/* Same header as the other incident tabs (Summary, Timeline, IOCs) - #144 */}
+        <h2 style={{ fontSize: 18, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)', marginBottom: 4 }}>
+          <FaFileLines size={24} aria-hidden="true" /> Reports
         </h2>
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
           Generate PDF incident reports using your report templates.
