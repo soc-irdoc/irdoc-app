@@ -339,6 +339,10 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
             style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 4 }}
             title="PDF preview"
           />
+          {/* Fallback for browsers or proxies that still won't render it inline (#137) */}
+          <div style={{ marginTop: 8, fontSize: 12, textAlign: 'right' }}>
+            <a href={pdfPreviewUrl} target="_blank" rel="noopener noreferrer">Open in new tab</a>
+          </div>
         </Modal>
       )}
 
