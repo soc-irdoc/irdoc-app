@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCreateTimelineEntry } from '@/hooks/useTimeline'
 import { useAssets, useLinkAssetsToEntry } from '@/hooks/useAssets'
 import { AttachmentZone } from './AttachmentZone'
 import { Button } from '@/components/common/Button'
 import { useUIStore } from '@/stores/uiStore'
-import { formatNowDate, formatNowTime } from '@/lib/utils'
+import { formatNowDate, formatNowTime, uploadErrorMessage } from '@/lib/utils'
 import type { EntryType } from '@/types/timeline'
 import { ASSET_TYPE_ICONS, ASSET_TYPE_LABELS, type AssetType } from '@/types/asset'
 import { FaBox, FaChevronDown, FaChevronUp, FaDesktop } from 'react-icons/fa6'
@@ -26,6 +27,7 @@ interface AddEntryFormProps {
 
 export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
   const addToast = useUIStore((s) => s.addToast)
+  const qc = useQueryClient()
   const createEntry = useCreateTimelineEntry(incidentId)
   const { data: allAssets = [] } = useAssets(incidentId)
   const linkAssets = useLinkAssetsToEntry(incidentId)
@@ -92,6 +94,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       // Upload attachments if any - track successes and failures for a consolidated toast
       let uploadedCount = 0
       let failedCount = 0
+      const failures: string[] = []
       if (files.length > 0 && entry?.id) {
         const { default: apiClient } = await import('@/lib/apiClient')
         for (const file of files) {
@@ -103,10 +106,16 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
               headers: { 'Content-Type': 'multipart/form-data' },
             })
             uploadedCount++
-          } catch {
+          } catch (err) {
             failedCount++
+            failures.push(`${file.name}: ${uploadErrorMessage(err)}`)
           }
         }
+        // The create mutation refetched the timeline before these uploads
+        // existed; refetch again or the entry shows no attachments until the
+        // page is reloaded (#138).
+        qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+        qc.invalidateQueries({ queryKey: ['incident-stats', incidentId] })
       }
 
       // Link selected assets to the entry
@@ -136,7 +145,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         addToast(`Entry added. ${uploadedCount} attachment${uploadedCount !== 1 ? 's' : ''} uploaded.`, 'success')
       } else {
         addToast(
-          `Entry added. ${uploadedCount} of ${files.length} attachment${files.length !== 1 ? 's' : ''} uploaded - ${failedCount} failed.`,
+          `Entry added. ${uploadedCount} of ${files.length} attachment${files.length !== 1 ? 's' : ''} uploaded - ${failedCount} failed (${failures.join('; ')}).`,
           'error',
         )
       }

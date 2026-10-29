@@ -11,6 +11,22 @@ export function getErrorMessage(err: unknown, fallback: string): string {
 }
 
 /**
+ * Why a file upload failed, for the toast: the backend's `detail` when it sent
+ * one, else the HTTP status (a proxy in front of IRDoc answers 413 etc. with
+ * an HTML page), else a network error. A bare "failed" left #139 undiagnosable.
+ */
+export function uploadErrorMessage(err: unknown): string {
+  if (isAxiosError(err)) {
+    const detail = err.response?.data?.detail
+    if (typeof detail === 'string') return detail
+    if (err.response?.status === 413) return 'file too large for the server or a proxy in front of it (HTTP 413)'
+    if (err.response) return `HTTP ${err.response.status}`
+    return 'network error or connection reset'
+  }
+  return 'unknown error'
+}
+
+/**
  * Message for a failed login. Only a backend `detail` string means the
  * credentials themselves were rejected; a 502 while the backend restarts, the
  * login rate limit, or an unreachable server must not read as a wrong password.
