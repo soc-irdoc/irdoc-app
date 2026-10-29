@@ -11,6 +11,30 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.1.9-alpha] - 2026-10-29
+
+### Changed
+
+- **Failed uploads say why.** When an attachment fails to upload, the message now gives the reason, for example "file too large for the server or a proxy in front of it (HTTP 413)", instead of only "failed". This applies when adding and when editing an entry. (#139)
+- **Report template builder: choose the cover page fields.** The Cover Page block has a new "Fields to show" picker: Severity, Status, Disposition, Affected Users, Lead Analyst, Opened At and Generated At. (#140)
+- **The Reports tab title** now matches the other incident tabs: the tab's icon next to the title, in the same font. (#144)
+- **External ticket links must be web addresses.** The inbound webhook (`POST /api/v1/external/incidents`) and external references now only accept an `external_url` starting with `http://` or `https://`. Anything else is rejected with `422`. Existing links that aren't web addresses are shown as plain text instead of as a link.
+- **The backend image no longer contains pip.** Nothing installs Python packages while IRDoc runs. pip carried its own copies of several libraries that security scanners kept flagging. If you used `docker exec … pip` for troubleshooting, use `python -c "import importlib.metadata as m; print(m.version('package'))"` instead.
+
+### Fixed
+
+- **The incidents list and the incident page were blank** (a black page, with `TypeError: Cannot read properties of undefined (reading 'external_source')` in the browser console) as soon as any incident had an external ticket reference. This affected every incident created through the inbound webhook / an API key with an external reference, and blanked the incidents list for everyone in the organisation. (#145)
+- **Attachments didn't show after adding an entry.** The entry appeared without its files until you refreshed the page or edited and saved the entry, and the edit dialog showed no attachments. The files were saved correctly; the list was refreshed before they had finished uploading. (#138)
+- **PDF previews didn't load** ("refused to connect"). IRDoc told the browser never to show its pages inside a frame, including your own uploaded files. Stored files may now be framed by IRDoc itself; everything else still can't be. The preview also has an "Open in new tab" link. (#137)
+- **Reports for closed incidents left out the final disposition** when none had been recorded, which is the case for incidents closed before 0.1.8. They now show "Not recorded". The Base Template's stat row includes the disposition. Custom templates show it on the cover by default, and older templates can add it with the new cover field picker. (#140)
+- **Base Template reports were listed as "pdf"** in the report history. They now read "Base Template", and reports whose template has been deleted read "Deleted template". (#141)
+- **Changing a report template's colour or company name lost the unsaved layout.** Those settings save right away, and the save reloaded the template over your unsaved blocks. Changing the colour and the company name in quick succession could also lose the colour change. (#142)
+
+### Security
+
+- **Stored ticket links could hold `javascript:` URLs.** Anyone with an API key could set an external ticket link that ran script when clicked. IRDoc's content security policy already blocked this in current browsers; the API now rejects such links and the UI never makes them clickable.
+- **Dependencies updated for new advisories:** Mako 1.4.2 and tornado 6.6 in the backend, plus pip 26.2.2 during the image build (its bundled certifi), after which pip is removed.
+
 ## [0.1.8-alpha] - 2026-10-27
 
 ### Added
@@ -274,7 +298,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.8-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.9-alpha...main
+[0.1.9-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.8-alpha...v0.1.9-alpha
 [0.1.8-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.7-alpha...v0.1.8-alpha
 [0.1.7-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.6-alpha...v0.1.7-alpha
 [0.1.6-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.5-alpha...v0.1.6-alpha
