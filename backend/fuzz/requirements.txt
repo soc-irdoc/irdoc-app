@@ -13,6 +13,10 @@
 # headers that the ClusterFuzzLite build image has no reason to carry) to a
 # build that doesn't need any of it.
 #
+# build.sh installs the hash-pinned requirements.lock.txt; regenerate it with
+# Python 3.11 (base-builder-python's) after changing this file:
+#   pip-compile --generate-hashes --strip-extras --output-file=requirements.lock.txt requirements.txt
+#
 # Versions are pinned to match backend/requirements.txt exactly, so this
 # fuzz target keeps exercising the same dependency versions the app
 # actually ships. atheris itself is installed in .clusterfuzzlite/Dockerfile

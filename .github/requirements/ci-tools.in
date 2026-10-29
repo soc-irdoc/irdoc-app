@@ -1,0 +1,8 @@
+# Tools CI installs into their own venv (kept apart from the backend lock so
+# their dependencies never clash with the app's pins). Lock with:
+#   pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file=ci-tools.lock.txt ci-tools.in
+# (Python 3.12, as in CI). pip-tools must match the version that generated
+# backend/requirements.lock.txt - see the lock-sync step in ci.yml.
+pip-audit
+ruff
+pip-tools==7.6.1

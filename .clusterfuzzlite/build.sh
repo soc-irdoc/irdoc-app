@@ -51,7 +51,8 @@
 PROJECT_DIR="$SRC/irdoc-app"
 BACKEND_DIR="$PROJECT_DIR/backend"
 
-pip3 install -q -r "$BACKEND_DIR/fuzz/requirements.txt"
+# Hash-pinned lock of fuzz/requirements.txt (Python 3.11, the base image's).
+pip3 install -q --require-hashes -r "$BACKEND_DIR/fuzz/requirements.lock.txt"
 
 for fuzzer in $(find "$BACKEND_DIR/fuzz" -name '*_fuzzer.py'); do
   fuzzer_basename=$(basename -s .py "$fuzzer")

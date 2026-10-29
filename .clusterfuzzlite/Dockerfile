@@ -3,13 +3,19 @@
 # Base image and the "copy the already-checked-out repo in, don't git clone
 # it yourself" pattern follow the current ClusterFuzzLite Python guidance:
 # https://google.github.io/clusterfuzzlite/build-integration/python-lang/
-FROM gcr.io/oss-fuzz-base/base-builder-python
+#
+# Pinned by digest (Scorecard Pinned-Dependencies); refresh it now and then with
+#   docker buildx imagetools inspect gcr.io/oss-fuzz-base/base-builder-python
+# Its Python (3.11) is the one the hashed requirement files here are locked for.
+FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:21f6fab17ace4dc76e1c56de91ee95d3d03da021df94b41056ba036f6c6f55e9
 
 # Atheris (the libFuzzer-based Python fuzzing engine) is expected to already
 # be present on base-builder-python, but install it explicitly rather than
 # depend on whatever happens to be baked into the base image at any given
 # time.
-RUN pip3 install atheris==3.0.0
+# Hash-pinned: requirements-atheris.txt, locked from requirements-atheris.in.
+COPY .clusterfuzzlite/requirements-atheris.txt /tmp/
+RUN pip3 install --require-hashes -r /tmp/requirements-atheris.txt
 
 # app.core.config.Settings raises at import time if SECRET_KEY is unset or
 # shorter than 32 chars (see backend/app/core/config.py's
