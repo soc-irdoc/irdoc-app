@@ -9,10 +9,12 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 
 interface ExternalRefBadgeProps {
-  ref: IncidentExternalRef
+  // Not `ref`: React 18 reserves it and never passes it to a function
+  // component, which crashed every page showing an external ref (#145).
+  externalRef: IncidentExternalRef
 }
 
-export function ExternalRefBadge({ ref }: ExternalRefBadgeProps) {
+export function ExternalRefBadge({ externalRef: ref }: ExternalRefBadgeProps) {
   const label = SOURCE_LABELS[ref.external_source] ?? ref.external_source
 
   if (ref.external_url) {

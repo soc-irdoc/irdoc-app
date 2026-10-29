@@ -240,7 +240,7 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
 
         {/* External refs */}
         {incident.external_refs?.map((ref) => (
-          <ExternalRefBadge key={ref.id} ref={ref} />
+          <ExternalRefBadge key={ref.id} externalRef={ref} />
         ))}
 
         {/* Status */}

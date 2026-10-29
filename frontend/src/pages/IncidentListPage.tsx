@@ -141,7 +141,7 @@ function IncidentRow({
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, overflow: 'hidden' }}>
           {incident.external_refs?.map((ref) => (
-            <ExternalRefBadge key={ref.id} ref={ref} />
+            <ExternalRefBadge key={ref.id} externalRef={ref} />
           ))}
           <span
             style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
