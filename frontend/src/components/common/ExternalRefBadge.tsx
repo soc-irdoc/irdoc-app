@@ -14,13 +14,26 @@ interface ExternalRefBadgeProps {
   externalRef: IncidentExternalRef
 }
 
+// The URL comes from whoever called the webhook: link only to http(s), never
+// javascript:/data: (the backend also rejects those; this covers stored rows).
+function safeHttpUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null
+  } catch {
+    return null
+  }
+}
+
 export function ExternalRefBadge({ externalRef: ref }: ExternalRefBadgeProps) {
   const label = SOURCE_LABELS[ref.external_source] ?? ref.external_source
+  const href = safeHttpUrl(ref.external_url)
 
-  if (ref.external_url) {
+  if (href) {
     return (
       <a
-        href={ref.external_url}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         className="chip chip-blue"

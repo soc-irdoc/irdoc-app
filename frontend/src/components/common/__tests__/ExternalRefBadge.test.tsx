@@ -25,4 +25,12 @@ describe('ExternalRefBadge', () => {
     render(<ExternalRefBadge externalRef={{ ...extRef, external_url: 'https://jira.example.com/SEC-42' }} />)
     expect(screen.getByRole('link')).toHaveAttribute('href', 'https://jira.example.com/SEC-42')
   })
+
+  it.each(['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'not a url'])(
+    'renders %s as plain text, not a link', (url) => {
+      render(<ExternalRefBadge externalRef={{ ...extRef, external_url: url }} />)
+      expect(screen.queryByRole('link')).toBeNull()
+      expect(screen.getByText('Jira-SEC-42')).toBeInTheDocument()
+    },
+  )
 })
