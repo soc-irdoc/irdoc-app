@@ -1,9 +1,15 @@
+# Version-update PRs are switched off (open-pull-requests-limit: 0): they were
+# mostly noise, and dependency bumps are done by hand in release branches,
+# with pip-audit / npm audit / Trivy in CI and code scanning flagging what
+# needs it. The file stays so Scorecard's Dependency-Update-Tool check still
+# finds it; raise a limit to turn an ecosystem back on.
 version: 2
 updates:
   - package-ecosystem: "pip"
     directory: "/backend"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
     groups:
       python-dependencies:
         patterns:
@@ -13,6 +19,7 @@ updates:
     directory: "/frontend"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
     groups:
       npm-dependencies:
         patterns:
@@ -22,13 +29,16 @@ updates:
     directory: "/backend"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "docker"
     directory: "/frontend"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
