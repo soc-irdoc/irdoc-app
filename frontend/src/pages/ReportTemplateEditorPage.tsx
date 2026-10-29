@@ -53,36 +53,45 @@ export default function ReportTemplateEditorPage() {
   const logoInputRef = useRef<HTMLInputElement>(null)
   const brandDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Load remote template into local state
+  // Load remote template into local state - once per template. The brand
+  // controls auto-save, and each save refetches `remote`; re-hydrating then
+  // replaced unsaved blocks with the last saved layout (#142).
+  const hydratedId = useRef<string | null>(null)
   useEffect(() => {
-    if (remote) {
-      setName(remote.name)
-      setDestination(remote.destination)
-      setBlocks(hydrateBlocks(remote.schema_json))
-      setPrimaryColour(remote.primary_colour ?? '#F97316')
-      setCompanyName(remote.company_name ?? '')
-      setLogoPreview(remote.logo_data_uri ?? null)
-      setDirty(false)
-    }
+    if (!remote || hydratedId.current === remote.id) return
+    hydratedId.current = remote.id
+    setName(remote.name)
+    setDestination(remote.destination)
+    setBlocks(hydrateBlocks(remote.schema_json))
+    setPrimaryColour(remote.primary_colour ?? '#F97316')
+    setCompanyName(remote.company_name ?? '')
+    setLogoPreview(remote.logo_data_uri ?? null)
+    setDirty(false)
   }, [remote])
+
+  // Colour and company name share one debounced save; queuing both keeps a
+  // quick second change from cancelling the first one's save.
+  const pendingBrand = useRef<{ primary_colour?: string; company_name?: string }>({})
+  const queueBrandSave = useCallback((patch: { primary_colour?: string; company_name?: string }, delay: number) => {
+    if (!templateId || isNew) return
+    pendingBrand.current = { ...pendingBrand.current, ...patch }
+    if (brandDebounceRef.current) clearTimeout(brandDebounceRef.current)
+    brandDebounceRef.current = setTimeout(() => {
+      const brand = pendingBrand.current
+      pendingBrand.current = {}
+      updateTemplate.mutate(brand)
+    }, delay)
+  }, [templateId, isNew, updateTemplate])
 
   const handleBrandColourChange = useCallback((colour: string) => {
     setPrimaryColour(colour)
-    if (!templateId || isNew) return
-    if (brandDebounceRef.current) clearTimeout(brandDebounceRef.current)
-    brandDebounceRef.current = setTimeout(() => {
-      updateTemplate.mutate({ primary_colour: colour })
-    }, 600)
-  }, [templateId, isNew, updateTemplate])
+    queueBrandSave({ primary_colour: colour }, 600)
+  }, [queueBrandSave])
 
   const handleCompanyNameChange = useCallback((value: string) => {
     setCompanyName(value)
-    if (!templateId || isNew) return
-    if (brandDebounceRef.current) clearTimeout(brandDebounceRef.current)
-    brandDebounceRef.current = setTimeout(() => {
-      updateTemplate.mutate({ company_name: value })
-    }, 800)
-  }, [templateId, isNew, updateTemplate])
+    queueBrandSave({ company_name: value }, 800)
+  }, [queueBrandSave])
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
