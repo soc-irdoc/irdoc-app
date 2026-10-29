@@ -48,4 +48,20 @@ describe('BlockConfigPanel', () => {
     fireEvent.click(screen.getByLabelText('Show uploader'))
     expect(onChange).toHaveBeenCalledWith({ show_uploader: true })
   })
+
+  it('lets a pre-0.1.8 cover block add Disposition, keeping its other fields (#140)', () => {
+    const onChange = vi.fn()
+    const fields = ['incident.title', 'incident.ref', 'incident.severity', 'incident.status', 'generated_at']
+    render(<BlockConfigPanel block={block({ type: 'cover', fields })} onChange={onChange} />)
+    const disposition = screen.getByRole('checkbox', { name: 'Disposition' })
+    expect(disposition).not.toBeChecked()
+    fireEvent.click(disposition)
+    expect(onChange).toHaveBeenCalledWith({ fields: [...fields, 'incident.disposition'] })
+  })
+
+  it('shows the template default fields for a cover block without a list', () => {
+    render(<BlockConfigPanel block={block({ type: 'cover' })} onChange={vi.fn()} />)
+    expect(screen.getByRole('checkbox', { name: 'Disposition' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Lead Analyst' })).not.toBeChecked()
+  })
 })
