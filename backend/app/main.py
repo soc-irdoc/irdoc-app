@@ -179,6 +179,7 @@ from app.api.v1 import (  # noqa: E402
     audit,
     auth,
     backup,
+    backup_remote,
     dashboard,
     evidence,
     external,
@@ -238,6 +239,7 @@ application.include_router(mfa.router, prefix=API_PREFIX)
 application.include_router(dashboard.router, prefix=API_PREFIX)
 # Backup
 application.include_router(backup.router, prefix=API_PREFIX)
+application.include_router(backup_remote.router, prefix=API_PREFIX)
 application.include_router(smtp.router, prefix=API_PREFIX)
 application.include_router(ai_config.router, prefix=API_PREFIX)
 application.include_router(version.router, prefix=API_PREFIX)

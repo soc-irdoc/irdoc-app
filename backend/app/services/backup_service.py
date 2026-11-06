@@ -18,7 +18,6 @@ import logging
 import os
 import re
 import tarfile
-import types
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
@@ -28,10 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.backup import BackupConfig, BackupRecord
-from app.models.storage import StorageConfig
 from app.services import backup_crypto
-from app.services.integration_service import decrypt_config
-from app.services.storage.resolver import get_storage_backend_from_config
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +36,10 @@ SCHEMA_VERSION = "011"
 _FILENAME_RE = re.compile(r"^irdoc_backup_[0-9A-Za-z]+\.enc$")
 
 _CONFIG_FIELDS = {"enabled", "schedule", "retention_days", "destination"}
+
+
+class RemoteUploadError(Exception):
+    """The local backup was written, but copying it to the remote failed."""
 
 
 # ---------------------------------------------------------------------------
@@ -154,35 +154,36 @@ def _add_bytes(tar: tarfile.TarFile, name: str, data: bytes) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Cloud upload / delete
+# Remote destinations (cloud / SFTP / SMB, #151)
 # ---------------------------------------------------------------------------
-async def _get_cloud_backend(db: AsyncSession):
-    """Return an instantiated storage backend for the org's StorageConfig, or None."""
-    result = await db.execute(select(StorageConfig))
-    storage_config = result.scalars().first()
-    if storage_config is None:
-        return None
-    decrypted_cfg = decrypt_config(storage_config.config)
-    backend_obj = types.SimpleNamespace(
-        backend=storage_config.backend, config=decrypted_cfg
-    )
-    return get_storage_backend_from_config(backend_obj)
-
-
 async def upload_remote_copy(db: AsyncSession, destination: str, path: Path) -> None:
     """(Re)upload a local backup file to its remote destination."""
-    if destination == "cloud":
-        backend = await _get_cloud_backend(db)
-        if backend is None:
-            raise RuntimeError("no cloud storage is configured")
-        await backend.store(path.read_bytes(), f"backups/{path.name}")
-        return
-    raise ValueError(f"unknown backup destination '{destination}'")
+    from app.services import backup_destinations
+    dest = await backup_destinations.resolve_destination(db, destination)
+    await dest.upload(path, path.name)
 
 
 # ---------------------------------------------------------------------------
 # Retention
 # ---------------------------------------------------------------------------
+async def _run_remote_retention(db: AsyncSession, config: BackupConfig, cutoff: datetime,
+                                old_records: list[BackupRecord]) -> None:
+    """Delete expired backups on the remote. Only exact irdoc_backup_*.enc names are touched."""
+    from app.services import backup_destinations
+    try:
+        dest = await backup_destinations.resolve_destination(db, config.destination)
+        names = await dest.list_backups()
+        if names is None:  # cloud can't list: go by the records
+            names = [r.filename for r in old_records if r.destination == config.destination]
+        for name in backup_destinations.expired_backups(names, cutoff):
+            try:
+                await dest.delete(name)
+            except Exception:  # noqa: BLE001 - retention is best effort
+                logger.warning("Backup retention: could not delete remote %s", name, exc_info=True)
+    except Exception:  # noqa: BLE001 - never fail a backup because of retention
+        logger.warning("Backup retention on %s failed", config.destination, exc_info=True)
+
+
 async def _run_retention(db: AsyncSession, config: BackupConfig) -> None:
     cutoff = datetime.now(UTC) - timedelta(days=config.retention_days)
 
@@ -199,25 +200,14 @@ async def _run_retention(db: AsyncSession, config: BackupConfig) -> None:
                 enc_file.unlink(missing_ok=True)
                 enc_file.with_suffix(".json").unlink(missing_ok=True)
 
-    # Old DB records (and cloud objects for those records)
-    result = await db.execute(
+    old_records = list((await db.execute(
         select(BackupRecord).where(BackupRecord.created_at < cutoff)
-    )
-    old_records = result.scalars().all()
+    )).scalars().all())
 
-    cloud_backend = None
-    if config.destination == "cloud":
-        try:
-            cloud_backend = await _get_cloud_backend(db)
-        except Exception:
-            cloud_backend = None
+    if config.destination != "local":
+        await _run_remote_retention(db, config, cutoff, old_records)
 
     for record in old_records:
-        if cloud_backend is not None and record.destination == "cloud":
-            try:
-                await cloud_backend.delete(f"backups/{record.filename}")
-            except Exception:
-                pass
         await db.delete(record)
     await db.commit()
 
@@ -244,15 +234,21 @@ async def run_backup(db: AsyncSession) -> BackupRecord:
 
         BACKUP_DIR.mkdir(parents=True, exist_ok=True)
         enc_path = BACKUP_DIR / filename
-        enc_path.write_bytes(encrypted)
+        # Write-then-rename so a crash never leaves a half-written backup.
+        part_path = enc_path.with_name(filename + ".part")
+        part_path.write_bytes(encrypted)
+        os.replace(part_path, enc_path)
         enc_path.with_suffix(".json").write_text(json.dumps(manifest, indent=2))
 
-        # Attempt cloud upload BEFORE committing the success record so that a
-        # failed upload never produces a contradictory committed success record.
-        if config.destination == "cloud":
-            backend = await _get_cloud_backend(db)
-            if backend is not None:
-                await backend.store(encrypted, f"backups/{filename}")
+        # The local copy is always written first and kept (#151). Upload BEFORE
+        # committing the success record so a failed upload never leaves a
+        # contradictory success record; the failure path below records the
+        # remote error and keeps the local file.
+        if config.destination != "local":
+            try:
+                await upload_remote_copy(db, config.destination, enc_path)
+            except Exception as exc:
+                raise RemoteUploadError(f"Remote upload ({config.destination}) failed: {exc}") from exc
 
         record = BackupRecord(
             filename=filename,
@@ -283,9 +279,11 @@ async def run_backup(db: AsyncSession) -> BackupRecord:
         if config is not None:
             config.last_backup_status = "failed"
             config.last_backup_error = str(exc)
+        local_kept = isinstance(exc, RemoteUploadError) and (BACKUP_DIR / filename).is_file()
         failed_record = BackupRecord(
             filename=filename,
-            size_bytes=None,
+            size_bytes=(BACKUP_DIR / filename).stat().st_size if local_kept else None,
+            key_fingerprint=backup_crypto.active_fingerprint() if local_kept else None,
             destination=config.destination if config else "local",
             status="failed",
             error=str(exc),

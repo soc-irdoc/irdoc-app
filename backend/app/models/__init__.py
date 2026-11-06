@@ -6,7 +6,7 @@ from app.models.api_key import APIKey  # noqa: F401
 from app.models.asset import Asset, AssetLink, AssetTimelineLink  # noqa: F401
 from app.models.attachment import Attachment  # noqa: F401
 from app.models.audit import AuditLog  # noqa: F401
-from app.models.backup import BackupConfig, BackupRecord  # noqa: F401
+from app.models.backup import BackupConfig, BackupRecord, BackupRemoteConfig  # noqa: F401
 from app.models.graph import GraphEdge  # noqa: F401
 from app.models.incident import Incident, IncidentExternalRef  # noqa: F401
 from app.models.integration import OrgIntegration  # noqa: F401

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.permissions import require_permission
-from app.services import backup_crypto
+from app.services import backup_crypto, backup_destinations
 from app.services.backup_service import (
     count_backups_needing_rekey,
     get_local_backup_path,
@@ -20,7 +20,7 @@ from app.services.backup_service import (
 router = APIRouter(prefix="/admin/backup", tags=["backup"])
 
 VALID_SCHEDULES = {"6h", "daily", "weekly", "monthly"}
-VALID_DESTINATIONS = {"local", "cloud"}
+VALID_DESTINATIONS = set(backup_destinations.DESTINATIONS)  # local, cloud, sftp, smb (#151)
 
 
 class BackupConfigUpdate(BaseModel):
@@ -86,6 +86,18 @@ async def set_backup_config(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"destination must be one of {sorted(VALID_DESTINATIONS)}",
         )
+    if data.destination in backup_destinations.REMOTE_KINDS:
+        row = await backup_destinations.get_remote_config(db, data.destination)
+        if row is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Configure the {data.destination.upper()} destination before selecting it",
+            )
+        if data.destination == "sftp" and not row.host_key:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Pin the SFTP server's host key (Test connection) before selecting SFTP",
+            )
 
     patch = data.model_dump(exclude_none=True)
     cfg = await update_config(db, **patch)
