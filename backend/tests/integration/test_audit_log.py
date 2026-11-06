@@ -67,7 +67,7 @@ async def test_category_filter_high_risk(db_session: AsyncSession, admin_user):
 async def test_create_incident_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     resp = await client.post(
         "/api/v1/incidents",
-        json={"title": "Ransomware Alert", "severity": "critical"},
+        json={"source": "other", "title": "Ransomware Alert", "severity": "critical"},
         headers=auth_headers,
     )
     assert resp.status_code == 201
@@ -83,7 +83,7 @@ async def test_create_incident_writes_audit(client: AsyncClient, auth_headers, d
 async def test_update_incident_status_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     create_resp = await client.post(
         "/api/v1/incidents",
-        json={"title": "Test Inc", "severity": "high"},
+        json={"source": "other", "title": "Test Inc", "severity": "high"},
         headers=auth_headers,
     )
     incident_id = create_resp.json()["data"]["id"]
@@ -107,7 +107,7 @@ async def test_rename_incident_writes_audit(client: AsyncClient, auth_headers, d
     """#125: renaming is audited with the old and new title."""
     create_resp = await client.post(
         "/api/v1/incidents",
-        json={"title": "Phising campaign", "severity": "high"},
+        json={"source": "other", "title": "Phising campaign", "severity": "high"},
         headers=auth_headers,
     )
     incident_id = create_resp.json()["data"]["id"]
@@ -132,7 +132,7 @@ async def test_rename_incident_writes_audit(client: AsyncClient, auth_headers, d
 async def test_unchanged_title_writes_no_rename_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     create_resp = await client.post(
         "/api/v1/incidents",
-        json={"title": "Same", "severity": "high"},
+        json={"source": "other", "title": "Same", "severity": "high"},
         headers=auth_headers,
     )
     incident_id = create_resp.json()["data"]["id"]
@@ -149,7 +149,7 @@ async def test_unchanged_title_writes_no_rename_audit(client: AsyncClient, auth_
 async def test_delete_incident_writes_high_risk_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     create_resp = await client.post(
         "/api/v1/incidents",
-        json={"title": "To Delete", "severity": "low"},
+        json={"source": "other", "title": "To Delete", "severity": "low"},
         headers=auth_headers,
     )
     incident_id = create_resp.json()["data"]["id"]
@@ -301,7 +301,7 @@ async def test_reactivate_user_writes_audit(client: AsyncClient, auth_headers, d
 async def test_create_timeline_entry_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     create_resp = await client.post(
         "/api/v1/incidents",
-        json={"title": "Timeline Test", "severity": "medium"},
+        json={"source": "other", "title": "Timeline Test", "severity": "medium"},
         headers=auth_headers,
     )
     assert create_resp.status_code == 201
@@ -327,7 +327,7 @@ async def test_create_timeline_entry_writes_audit(client: AsyncClient, auth_head
 async def test_disposition_change_writes_audit(client: AsyncClient, auth_headers, db_session: AsyncSession):
     """#124: the final disposition is audited like status and severity."""
     create_resp = await client.post(
-        "/api/v1/incidents", json={"title": "Audited", "severity": "low"}, headers=auth_headers
+        "/api/v1/incidents", json={"source": "other", "title": "Audited", "severity": "low"}, headers=auth_headers
     )
     incident_id = create_resp.json()["data"]["id"]
 

@@ -1,7 +1,10 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.incident_source import IncidentSource
 from app.core.permissions import require_permission
 from app.core.status import IncidentStatus
 from app.schemas.common import Meta
@@ -26,6 +29,8 @@ async def list_incidents(
     status: IncidentStatus | None = Query(None),
     severity: str | None = Query(None),
     search: str | None = Query(None),
+    # An IncidentSource value, or "none" for incidents with no source (#147)
+    source: Literal[IncidentSource, "none"] | None = Query(None),
     page: int = Query(1, ge=1),
     per_page: int = Query(25, ge=1, le=100),
     # Server-side sorting over the whole filtered result (#128)
@@ -40,6 +45,7 @@ async def list_incidents(
         status_filter=status,
         severity_filter=severity,
         search=search,
+        source_filter=source,
         page=page,
         per_page=per_page,
         sort=sort,
@@ -70,7 +76,7 @@ async def create_incident(
         entity_id=str(incident.id),
         actor_label=current_user.email,
         entity_label=f"{incident.incident_ref} - {incident.title}",
-        diff={"title": incident.title, "severity": incident.severity},
+        diff={"title": incident.title, "severity": incident.severity, "source": incident.source},
         user_id=str(current_user.id),
         request=request,
     )
@@ -101,6 +107,7 @@ async def update_incident(
     old_title = incident.title
     old_status = incident.status
     old_disposition = incident.disposition
+    old_source = incident.source
     old_severity = incident.severity
     old_assigned_to = incident.assigned_to
 
@@ -129,6 +136,10 @@ async def update_incident(
     if data.disposition is not None and data.disposition != old_disposition:
         await audit_service.log(action="incident.disposition_changed",
             diff={"from": old_disposition, "to": data.disposition}, **audit_kwargs)
+
+    if data.source is not None and data.source != old_source:
+        await audit_service.log(action="incident.source_changed",
+            diff={"from": old_source, "to": data.source}, **audit_kwargs)
 
     if data.severity is not None and data.severity != old_severity:
         await audit_service.log(action="incident.severity_changed",

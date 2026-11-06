@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
 import { Pagination } from '@/components/common/Pagination'
+import { SourceSelect } from '@/components/incident/SourceSelect'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { usePermission } from '@/lib/permissions'
@@ -15,11 +16,15 @@ import {
   DISPOSITION_COLORS,
   DISPOSITION_LABELS,
   DISPOSITION_SHORT_LABELS,
+  INCIDENT_SOURCES,
+  INCIDENT_SOURCE_LABELS,
+  SOURCE_NOT_RECORDED,
   SEVERITIES,
   SEVERITY_LABELS,
   SEVERITY_COLORS,
   STATUS_LABELS,
   STATUS_COLORS,
+  type IncidentSource,
   type Severity,
   type IncidentStatus,
   type Incident,
@@ -34,6 +39,7 @@ import {
   type IncidentListQuery,
   type IncidentSortKey,
   type SortOrder,
+  type SourceFilter,
 } from '@/lib/incidentListQuery'
 import { formatDateTime, formatRelative } from '@/lib/utils'
 import { FaArrowDown, FaArrowUp, FaBolt, FaHandPointUp, FaTrashCan } from 'react-icons/fa6'
@@ -171,6 +177,15 @@ function IncidentRow({
             {DISPOSITION_SHORT_LABELS[incident.disposition]}
           </span>
         )}
+        {!incident.source && (
+          <span
+            className="chip chip-yellow"
+            title="What triggered this investigation was not recorded. Set it from the incident header."
+            style={{ fontSize: 9, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >
+            NO SOURCE
+          </span>
+        )}
       </div>
 
       {/* Actions */}
@@ -285,6 +300,7 @@ export function IncidentListPage() {
   const [newTitle, setNewTitle] = useState('')
   const [newSeverity, setNewSeverity] = useState<Severity>('high')
   const [newTemplateId, setNewTemplateId] = useState('')
+  const [newSource, setNewSource] = useState<IncidentSource | ''>('')
 
   const { data, isLoading, isFetching } = useIncidents(toApiParams(query))
   const incidents = data?.data ?? []
@@ -346,24 +362,26 @@ export function IncidentListPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!newTitle.trim()) return
+    if (!newTitle.trim() || !newSource) return
     try {
       const incident = await createIncident.mutateAsync({
         title: newTitle.trim(),
         severity: newSeverity,
+        source: newSource,
         template_id: newTemplateId || undefined,
       })
       setShowCreate(false)
       setNewTitle('')
       setNewSeverity('high')
       setNewTemplateId('')
+      setNewSource('')
       navigate(`/incidents/${incident.id}/timeline`)
     } catch {
       addToast('Failed to create incident', 'error')
     }
   }
 
-  const filtered = query.status !== 'all' || query.search !== ''
+  const filtered = query.status !== 'all' || query.search !== '' || query.source !== 'all'
 
   return (
     <AppShell>
@@ -433,6 +451,21 @@ export function IncidentListPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             style={{ maxWidth: 240 }}
           />
+          <div className="select-wrap" style={{ maxWidth: 240 }}>
+            <select
+              className="form-input"
+              aria-label="Filter by source"
+              value={query.source}
+              onChange={(e) => updateQuery({ source: e.target.value as SourceFilter })}
+              style={{ fontFamily: 'Syne, sans-serif' }}
+            >
+              <option value="all">All sources</option>
+              <option value="none">{SOURCE_NOT_RECORDED}</option>
+              {INCIDENT_SOURCES.map((s) => (
+                <option key={s} value={s}>{INCIDENT_SOURCE_LABELS[s]}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Incident list */}
@@ -575,6 +608,24 @@ export function IncidentListPage() {
 
           <div>
             <label
+              htmlFor="new-incident-source"
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: 6,
+                display: 'block',
+              }}
+            >
+              Source
+            </label>
+            <SourceSelect id="new-incident-source" value={newSource} onChange={setNewSource} required />
+          </div>
+
+          <div>
+            <label
               style={{
                 fontSize: 11,
                 fontWeight: 600,
@@ -606,7 +657,7 @@ export function IncidentListPage() {
             <Button variant="ghost" type="button" onClick={() => setShowCreate(false)}>
               Cancel
             </Button>
-            <Button variant="accent" type="submit" loading={createIncident.isPending} disabled={!newTitle.trim()}>
+            <Button variant="accent" type="submit" loading={createIncident.isPending} disabled={!newTitle.trim() || !newSource}>
               Create Incident
             </Button>
           </div>

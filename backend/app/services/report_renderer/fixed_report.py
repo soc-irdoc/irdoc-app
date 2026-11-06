@@ -29,6 +29,7 @@ _FIXED_SECTIONS = [
                 "incident.severity",
                 "incident.status",
                 "incident.disposition",  # shown only once set (#124)
+                "incident.source",  # investigation trigger (#147)
                 "analyst.full_name",
                 "incident.opened_at",
                 "generated_at",

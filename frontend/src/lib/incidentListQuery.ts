@@ -2,7 +2,10 @@
 // lives in the URL, so a refresh or a shared link opens the same view
 // (#127, #128). Defaults are left out of the URL to keep it short.
 
-import type { IncidentStatus } from '@/types/incident'
+import { INCIDENT_SOURCES, type IncidentSource, type IncidentStatus } from '@/types/incident'
+
+/** 'none' = incidents with no source recorded yet (#147). */
+export type SourceFilter = IncidentSource | 'none' | 'all'
 
 export type IncidentSortKey = 'severity' | 'ref' | 'title' | 'owner' | 'status' | 'created'
 export type SortOrder = 'asc' | 'desc'
@@ -12,6 +15,7 @@ export interface IncidentListQuery {
   perPage: number
   status: IncidentStatus | 'all'
   search: string
+  source: SourceFilter
   sort: IncidentSortKey
   order: SortOrder
 }
@@ -23,6 +27,7 @@ export const DEFAULT_QUERY: IncidentListQuery = {
   perPage: 25,
   status: 'all',
   search: '',
+  source: 'all',
   sort: 'created',
   order: 'desc',
 }
@@ -47,12 +52,17 @@ export function parseListQuery(params: URLSearchParams): IncidentListQuery {
   const status = params.get('status') as IncidentStatus | null
   const sort = params.get('sort') as IncidentSortKey | null
   const order = params.get('order')
+  const source = params.get('source')
   const validSort = sort && SORT_KEYS.includes(sort) ? sort : DEFAULT_QUERY.sort
   return {
     page: page >= 1 ? page : DEFAULT_QUERY.page,
     perPage: (PAGE_SIZES as readonly number[]).includes(perPage) ? perPage : DEFAULT_QUERY.perPage,
     status: status && STATUSES.includes(status) ? status : 'all',
     search: params.get('q') ?? '',
+    source:
+      source === 'none' || INCIDENT_SOURCES.includes(source as IncidentSource)
+        ? (source as SourceFilter)
+        : 'all',
     sort: validSort,
     order: order === 'asc' || order === 'desc' ? order : FIRST_CLICK_ORDER[validSort],
   }
@@ -62,6 +72,7 @@ export function toSearchParams(q: IncidentListQuery): URLSearchParams {
   const params = new URLSearchParams()
   if (q.status !== 'all') params.set('status', q.status)
   if (q.search) params.set('q', q.search)
+  if (q.source !== 'all') params.set('source', q.source)
   if (q.sort !== DEFAULT_QUERY.sort || q.order !== DEFAULT_QUERY.order) {
     params.set('sort', q.sort)
     params.set('order', q.order)
@@ -76,6 +87,7 @@ export function toApiParams(q: IncidentListQuery) {
   return {
     status: q.status !== 'all' ? q.status : undefined,
     search: q.search || undefined,
+    source: q.source !== 'all' ? q.source : undefined,
     page: q.page,
     per_page: q.perPage,
     sort: q.sort,

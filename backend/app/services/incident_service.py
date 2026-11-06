@@ -41,7 +41,7 @@ _RICH_TEXT_ATTRS: dict[str, list[str]] = {
 _RICH_TEXT_FIELDS = {"executive_summary", "notes", "lessons_learned", "actions_todo"}
 
 _MUTABLE_FIELDS = {
-    "title", "status", "disposition", "severity", "assigned_to",
+    "title", "status", "disposition", "source", "severity", "assigned_to",
     "executive_summary", "notes", "lessons_learned", "actions_todo",
     "affected_users", "attack_vector", "timeline_start", "timeline_end",
 }
@@ -113,6 +113,7 @@ async def create_incident(
         incident_ref=ref,
         title=data.title,
         severity=data.severity,
+        source=data.source,
         template_id=data.template_id,
         assigned_to=data.assigned_to,
         created_by=created_by,
@@ -169,6 +170,7 @@ async def list_incidents(
     status_filter: str | None = None,
     severity_filter: str | None = None,
     search: str | None = None,
+    source_filter: str | None = None,
     page: int = 1,
     per_page: int = 50,
     sort: str = "created",
@@ -183,6 +185,11 @@ async def list_incidents(
         query = query.where(Incident.status == status_filter)
     if severity_filter:
         query = query.where(Incident.severity == normalize_severity(severity_filter))
+    if source_filter == "none":
+        # "Not recorded": the backfill worklist for incidents older than #147.
+        query = query.where(Incident.source.is_(None))
+    elif source_filter:
+        query = query.where(Incident.source == source_filter)
     if search:
         term = search.strip().replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
         pattern = f"%{term}%"
@@ -245,13 +252,20 @@ def _apply_sort(query, sort: str, order: str):
 async def update_incident(
     db: AsyncSession, incident: Incident, data: IncidentUpdate
 ) -> Incident:
-    # Closing records how the investigation ended (#124). Checked before any
-    # change is applied; reopening keeps the disposition.
-    if data.status == "closed" and not (data.disposition or incident.disposition):
-        raise HTTPException(
-            status_code=422,
-            detail="disposition_required",
-        )
+    # Closing records how the investigation ended (#124) and what started it
+    # (#147, for incidents created before Source existed). Checked before any
+    # change is applied; reopening keeps both.
+    if data.status == "closed":
+        missing = []
+        if not (data.disposition or incident.disposition):
+            missing.append("disposition")
+        if not (data.source or incident.source):
+            missing.append("source")
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail="_and_".join(missing) + "_required",
+            )
 
     update_data = data.model_dump(exclude_none=True)
     for key, value in update_data.items():

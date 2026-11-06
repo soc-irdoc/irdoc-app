@@ -30,6 +30,7 @@ const mockIncident: Incident = {
   severity: 'high',
   status: 'open',
   disposition: null,
+  source: 'siem_alert',
   assigned_to: null,
   assigned_user: null,
   executive_summary: null,

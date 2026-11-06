@@ -15,7 +15,7 @@ describe('CloseIncidentModal', () => {
     expect(close).toBeEnabled()
     fireEvent.click(close)
 
-    expect(onConfirm).toHaveBeenCalledWith('fp_tuning_required')
+    expect(onConfirm).toHaveBeenCalledWith({ disposition: 'fp_tuning_required' })
   })
 
   it('offers all six dispositions', () => {
@@ -33,5 +33,40 @@ describe('CloseIncidentModal', () => {
 
     expect(onClose).toHaveBeenCalled()
     expect(onConfirm).not.toHaveBeenCalled()
+  })
+
+  // #147: incidents created before Source existed are asked for it on close.
+  it('asks only for the source when the disposition is already set', () => {
+    const onConfirm = vi.fn()
+    render(
+      <CloseIncidentModal
+        open incidentRef="INC-2026-0001" needDisposition={false} needSource
+        onConfirm={onConfirm} onClose={vi.fn()}
+      />,
+    )
+    expect(screen.queryAllByRole('radio')).toHaveLength(0)
+    const close = screen.getByRole('button', { name: 'Close incident' })
+    expect(close).toBeDisabled()
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'user_reported' } })
+    fireEvent.click(close)
+
+    expect(onConfirm).toHaveBeenCalledWith({ source: 'user_reported' })
+  })
+
+  it('needs both when both are missing', () => {
+    const onConfirm = vi.fn()
+    render(
+      <CloseIncidentModal open incidentRef="INC-2026-0001" needSource onConfirm={onConfirm} onClose={vi.fn()} />,
+    )
+    const close = screen.getByRole('button', { name: 'Close incident' })
+
+    fireEvent.click(screen.getByLabelText('False Positive - Benign'))
+    expect(close).toBeDisabled()
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'siem_alert' } })
+    expect(close).toBeEnabled()
+    fireEvent.click(close)
+
+    expect(onConfirm).toHaveBeenCalledWith({ disposition: 'fp_benign', source: 'siem_alert' })
   })
 })

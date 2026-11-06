@@ -50,6 +50,21 @@ _CLOSURE_HOURS = {"critical": 24, "high": 48, "medium": 72, "low": 120}
 
 # 20 incidents, 5 per system template category, cycling through all 4 statuses
 # so every status/category combination is represented at least once.
+# Plausible investigation triggers per category (#147); one is picked per
+# scenario deterministically so reseeding gives the same mix.
+_DEMO_SOURCES = {
+    "phishing": ("user_reported", "email_security", "user_reported", "siem_alert"),
+    "credential-compromise": ("external_notification", "threat_intel", "siem_alert", "threat_hunting"),
+    "malware-infection": ("edr_xdr_alert", "edr_xdr_alert", "network_alert", "threat_hunting"),
+    "suspicious-login": ("siem_alert", "cloud_alert", "user_reported", "siem_alert"),
+}
+
+
+def _demo_source(scenario: dict) -> str:
+    choices = _DEMO_SOURCES.get(scenario["template_slug"], ("other",))
+    return scenario.get("source") or choices[len(scenario["title"]) % len(choices)]
+
+
 INCIDENT_SCENARIOS = [
     # ── phishing ─────────────────────────────────────────────────────────────
     {
@@ -294,6 +309,7 @@ async def _create_incident(db, org_id: str, users: dict[str, User], templates: d
         # Closing requires a final disposition (#124); every closed demo
         # incident ended with the threat dealt with.
         disposition=scenario.get("disposition", "tp_remediated") if status_ == "closed" else None,
+        source=_demo_source(scenario),
         template_id=template.id,
         assigned_to=assigned_user.id,
         created_by=users["admin"].id,
