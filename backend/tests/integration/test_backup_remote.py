@@ -220,3 +220,28 @@ async def test_saving_a_new_host_without_a_password_drops_the_old_one(client, au
                      headers=auth_headers)
     r = await client.put(f"{URL}/smb", json={"server": "other", "share": "b", "username": "u"}, headers=auth_headers)
     assert r.json()["data"]["password_set"] is False
+
+
+@pytest.mark.asyncio
+async def test_a_different_host_key_for_the_same_host_gets_no_saved_secret(client, auth_headers, monkeypatch, db_session):
+    """Security: a new key for the same address may be a MITM; it must not receive the saved password."""
+    await client.put(f"{URL}/sftp", json={**SFTP, "host_key": HOST_KEY}, headers=auth_headers)
+    other_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBz7zW1b1Jxk3Qk2m4xvJ0w9bD2gQ0c8fZkqvVv5nH1a"
+    seen = []
+
+    class Recorder:
+        async def test(self):
+            return TestResult(ok=True)
+
+    def build(kind, cfg, host_key=None):
+        seen.append((cfg["password"] or None, host_key))
+        return Recorder()
+    monkeypatch.setattr(backup_destinations, "build_destination", build)
+
+    await client.post(f"{URL}/sftp/test", json={**SFTP, "password": "", "host_key": other_key}, headers=auth_headers)
+    await client.post(f"{URL}/sftp/test", json={**SFTP, "password": "", "host_key": HOST_KEY}, headers=auth_headers)
+    assert seen == [(None, other_key), ("s3cret", HOST_KEY)]
+
+    # Re-pinning without retyping the password drops it rather than reusing it.
+    r = await client.put(f"{URL}/sftp", json={**SFTP, "password": "", "host_key": other_key}, headers=auth_headers)
+    assert r.json()["data"]["password_set"] is False

@@ -74,10 +74,23 @@ def _same_identity(kind: str, stored: dict, merged: dict) -> bool:
     return bool(stored) and all((stored.get(k) or None) == (merged.get(k) or None) for k in _IDENTITY[kind])
 
 
-def _merge(kind: str, data: BaseModel, stored: dict) -> dict:
-    """New settings, keeping stored secrets the request left empty (same server and account only)."""
+def _new_host_key(kind: str, data: BaseModel, row: BackupRemoteConfig | None) -> bool:
+    """The request brings an SFTP host key other than the pinned one."""
+    key = getattr(data, "host_key", None) if kind == "sftp" else None
+    if not key:
+        return False
+    return row is None or row.host_key_fingerprint != _fingerprint(key)
+
+
+def _merge(kind: str, data: BaseModel, stored: dict, row: BackupRemoteConfig | None) -> dict:
+    """New settings, keeping stored secrets the request left empty.
+
+    Only for the same server, account and (SFTP) pinned host key: a new key
+    for the same address could be a man-in-the-middle, so it never receives
+    the saved credentials. They must be typed in again.
+    """
     merged = data.model_dump(exclude={"host_key"})
-    if _same_identity(kind, stored, merged):
+    if _same_identity(kind, stored, merged) and not _new_host_key(kind, data, row):
         for key in backup_destinations.SECRET_FIELDS[kind]:
             if not merged.get(key):
                 merged[key] = stored.get(key)
@@ -134,7 +147,7 @@ async def put_remote_config(
     data = _parse(kind, body)
     row = await backup_destinations.get_remote_config(db, kind)
     stored = decrypt_config(row.config) if row else {}
-    merged = _merge(kind, data, stored)
+    merged = _merge(kind, data, stored, row)
 
     if row is None:
         row = BackupRemoteConfig(kind=kind, config={})
@@ -188,7 +201,7 @@ async def test_remote_config(
     data = _parse(kind, body)
     row = await backup_destinations.get_remote_config(db, kind)
     stored = decrypt_config(row.config) if row else {}
-    merged = _merge(kind, data, stored)
+    merged = _merge(kind, data, stored, row)
 
     host_key = None
     if kind == "sftp":
