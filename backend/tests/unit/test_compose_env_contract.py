@@ -54,6 +54,13 @@ def test_prod_compose_defaults_load_into_settings(monkeypatch):
     Settings(_env_file=None)  # must not raise
 
 
+def test_backup_keys_reach_backend_worker_and_beat():
+    """#149: the backup key must be injected, and empty must mean "fall back"."""
+    env = resolved_backend_env()
+    assert env["BACKUP_ENCRYPTION_KEY"] == ""
+    assert env["BACKUP_LEGACY_SECRET_KEYS"] == ""
+
+
 def test_ai_backend_default_is_a_valid_literal():
     """Regression: AI_BACKEND was `${AI_BACKEND:-}`, crash-looping the whole stack."""
     value = resolved_backend_env()["AI_BACKEND"]

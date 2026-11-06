@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.permissions import require_permission
+from app.services import backup_crypto
 from app.services.backup_service import (
+    count_backups_needing_rekey,
     get_local_backup_path,
     get_or_create_config,
     list_records,
@@ -39,6 +41,10 @@ def _config_to_dict(cfg) -> dict:
         "last_backup_status": cfg.last_backup_status,
         "last_backup_error": cfg.last_backup_error,
         "last_backup_size_bytes": cfg.last_backup_size_bytes,
+        # Backup encryption key (#149)
+        "key_fingerprint": backup_crypto.active_fingerprint(),
+        "key_source": backup_crypto.active_key_source(),
+        "legacy_backup_count": count_backups_needing_rekey(),
     }
 
 
@@ -50,6 +56,7 @@ def _record_to_dict(rec) -> dict:
         "destination": rec.destination,
         "status": rec.status,
         "error": rec.error,
+        "key_fingerprint": rec.key_fingerprint,
         "created_at": rec.created_at.isoformat() if rec.created_at else None,
     }
 

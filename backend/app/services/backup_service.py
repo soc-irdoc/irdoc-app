@@ -6,33 +6,30 @@ Produces an encrypted, self-contained backup bundle containing:
   - a tar archive of the storage directory
   - a JSON manifest
 
-The bundle is AES-256-GCM encrypted (key derived from SECRET_KEY via HKDF) and
+The bundle is AES-256-GCM encrypted with BACKUP_ENCRYPTION_KEY (see
+backup_crypto; falls back to a key derived from SECRET_KEY) and
 written to /app/backups. Optionally uploaded to the org's configured cloud storage.
 """
 import asyncio
-import functools
 import gzip
 import io
 import json
 import logging
 import os
 import re
-import secrets
 import tarfile
 import types
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.backup import BackupConfig, BackupRecord
 from app.models.storage import StorageConfig
+from app.services import backup_crypto
 from app.services.integration_service import decrypt_config
 from app.services.storage.resolver import get_storage_backend_from_config
 
@@ -79,22 +76,8 @@ async def update_config(db: AsyncSession, **kwargs) -> BackupConfig:
 # ---------------------------------------------------------------------------
 # Crypto helpers
 # ---------------------------------------------------------------------------
-@functools.lru_cache(maxsize=None)
-def _derive_key() -> bytes:
-    hkdf = HKDF(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=b"irdoc-backup-v1",
-        info=b"backup-encryption-key",
-    )
-    return hkdf.derive(settings.SECRET_KEY.encode())
-
-
 def _encrypt(plaintext: bytes) -> bytes:
-    key = _derive_key()
-    nonce = secrets.token_bytes(12)
-    ciphertext = AESGCM(key).encrypt(nonce, plaintext, None)
-    return nonce + ciphertext
+    return backup_crypto.encrypt(plaintext)
 
 
 # ---------------------------------------------------------------------------
@@ -186,6 +169,17 @@ async def _get_cloud_backend(db: AsyncSession):
     return get_storage_backend_from_config(backend_obj)
 
 
+async def upload_remote_copy(db: AsyncSession, destination: str, path: Path) -> None:
+    """(Re)upload a local backup file to its remote destination."""
+    if destination == "cloud":
+        backend = await _get_cloud_backend(db)
+        if backend is None:
+            raise RuntimeError("no cloud storage is configured")
+        await backend.store(path.read_bytes(), f"backups/{path.name}")
+        return
+    raise ValueError(f"unknown backup destination '{destination}'")
+
+
 # ---------------------------------------------------------------------------
 # Retention
 # ---------------------------------------------------------------------------
@@ -244,6 +238,9 @@ async def run_backup(db: AsyncSession) -> BackupRecord:
         storage_archive = _archive_storage()
         bundle, manifest = _build_bundle(db_dump, storage_archive, timestamp)
         encrypted = _encrypt(bundle)
+        key_fp = backup_crypto.active_fingerprint()
+        manifest["format_version"] = backup_crypto.FORMAT_V2
+        manifest["key_fingerprint"] = key_fp
 
         BACKUP_DIR.mkdir(parents=True, exist_ok=True)
         enc_path = BACKUP_DIR / filename
@@ -262,6 +259,7 @@ async def run_backup(db: AsyncSession) -> BackupRecord:
             size_bytes=len(encrypted),
             destination=config.destination,
             status="success",
+            key_fingerprint=key_fp,
         )
         db.add(record)
 
@@ -305,6 +303,26 @@ async def list_records(db: AsyncSession) -> list[BackupRecord]:
         select(BackupRecord).order_by(BackupRecord.created_at.desc())
     )
     return list(result.scalars().all())
+
+
+def count_backups_needing_rekey() -> int:
+    """Local backup files not encrypted with the active key (#149).
+
+    Read from the file headers rather than the DB, so it is right for files
+    made before key fingerprints were recorded.
+    """
+    if not BACKUP_DIR.is_dir():
+        return 0
+    count = 0
+    for path in BACKUP_DIR.glob("irdoc_backup_*.enc"):
+        if not _FILENAME_RE.match(path.name):
+            continue
+        try:
+            if backup_crypto.needs_rekey(backup_crypto.read_header(path)):
+                count += 1
+        except (OSError, backup_crypto.BackupKeyError):
+            count += 1
+    return count
 
 
 def get_local_backup_path(filename: str) -> Path:

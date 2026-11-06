@@ -106,6 +106,17 @@ const fieldLabel = (text: string) => (
   </label>
 )
 
+const BANNER_STYLE: React.CSSProperties = {
+  marginBottom: 16,
+  padding: '10px 14px',
+  borderRadius: 8,
+  border: '1px solid var(--yellow)',
+  background: 'var(--yellow-dim)',
+  color: 'var(--text-primary)',
+  fontSize: 12,
+  lineHeight: 1.5,
+}
+
 export function BackupsPage() {
   const { data: config } = useBackupConfig()
   const { data: records } = useBackupRecords()
@@ -183,6 +194,22 @@ export function BackupsPage() {
       </div>
 
       <div style={{ maxWidth: 640 }}>
+        {/* Backup encryption key warnings (#149) */}
+        {config?.key_source === 'secret_key_fallback' && (
+          <div role="alert" className="backup-key-banner" style={BANNER_STYLE}>
+            <strong>No dedicated backup key.</strong> Backups are encrypted with a key derived from
+            SECRET_KEY, so rotating SECRET_KEY makes them unreadable. Set <code>BACKUP_ENCRYPTION_KEY</code> in
+            docker/.env (<code>openssl rand -hex 32</code>), restart, and keep a copy off this host.
+          </div>
+        )}
+        {config && config.key_source === 'dedicated' && config.legacy_backup_count > 0 && (
+          <div role="status" className="backup-key-banner" style={BANNER_STYLE}>
+            {config.legacy_backup_count} backup{config.legacy_backup_count > 1 ? 's are' : ' is'} encrypted with
+            the old key (SECRET_KEY). Run <code>python -m app.cli.backup rekey</code> in the backend container,
+            or keep SECRET_KEY unchanged until {config.legacy_backup_count > 1 ? 'they expire' : 'it expires'}.
+          </div>
+        )}
+
         {/* Card 1 - Configuration */}
         <SectionCard title="Configuration">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -467,7 +494,12 @@ export function BackupsPage() {
               lineHeight: 1.5,
             }}
           >
-            Backups are AES-256-GCM encrypted. Keep your .env - you need SECRET_KEY to decrypt them.
+            Backups are AES-256-GCM encrypted
+            {config?.key_fingerprint && (
+              <> with key <code title="First 8 bytes of SHA-256 of BACKUP_ENCRYPTION_KEY">{config.key_fingerprint}</code></>
+            )}
+            . Keep a copy of {config?.key_source === 'dedicated' ? 'BACKUP_ENCRYPTION_KEY' : 'SECRET_KEY'} off
+            this host: you need it to restore them.
           </p>
         </SectionCard>
       </div>

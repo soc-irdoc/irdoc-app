@@ -43,7 +43,7 @@ def verify_file_hash(self, attachment_id: str):
         from sqlalchemy import select
 
         from app.models.attachment import Attachment
-        from app.services.storage.resolver import get_storage_backend
+        from app.services.attachment_service import backend_for_attachment
         from app.workers.db import WorkerSessionLocal as AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
@@ -53,7 +53,7 @@ def verify_file_hash(self, attachment_id: str):
                 logger.warning("verify_file_hash: attachment %s not found", attachment_id)
                 return
 
-            backend = get_storage_backend()
+            backend = await backend_for_attachment(db, attachment)
             try:
                 data = await backend.retrieve(attachment.stored_path)
             except FileNotFoundError:

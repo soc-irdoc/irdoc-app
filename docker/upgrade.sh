@@ -89,6 +89,43 @@ if [ -f "${ENV_FILE}" ] && grep -q '^VERSION=' "${ENV_FILE}"; then
     echo "docker/.env: VERSION ${current} -> ${VERSION}"
   fi
 fi
+# Backups get their own key from 0.1.10 (#149). Add one if this install has
+# none; until then the backend falls back to the SECRET_KEY-derived key, so
+# existing backups keep working either way.
+if [ -f "${ENV_FILE}" ] && ! grep -q '^BACKUP_ENCRYPTION_KEY=[0-9a-fA-F]\{64\}$' "${ENV_FILE}"; then
+  if command -v python3 >/dev/null 2>&1; then
+    backup_key=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
+  elif command -v openssl >/dev/null 2>&1; then
+    backup_key=$(openssl rand -hex 32)
+  else
+    backup_key=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
+  fi
+  if grep -q '^BACKUP_ENCRYPTION_KEY=' "${ENV_FILE}"; then
+    sed -i.bak "s/^BACKUP_ENCRYPTION_KEY=.*/BACKUP_ENCRYPTION_KEY=${backup_key}/" "${ENV_FILE}" && rm -f "${ENV_FILE}.bak"
+  else
+    printf '\n# Encrypts backups (added by upgrade.sh). Keep a copy OFF this host.\nBACKUP_ENCRYPTION_KEY=%s\n' \
+      "${backup_key}" >> "${ENV_FILE}"
+  fi
+  fingerprint=""
+  if command -v python3 >/dev/null 2>&1; then
+    fingerprint=$(python3 -c 'import hashlib,sys; print(hashlib.sha256(bytes.fromhex(sys.argv[1])).hexdigest()[:16])' "${backup_key}")
+  fi
+  cat <<EOF
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ A dedicated backup encryption key was added to docker/.env               │
+  │ (BACKUP_ENCRYPTION_KEY${fingerprint:+, fingerprint ${fingerprint}}).
+  │                                                                          │
+  │ Store a copy somewhere OFF this server. Without it, new backups can't    │
+  │ be restored. Existing backups still use SECRET_KEY; to move them to the  │
+  │ new key run:                                                             │
+  │   docker compose -f docker-compose.prod.yml exec backend \\               │
+  │     python -m app.cli.backup rekey                                       │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+EOF
+  unset backup_key
+fi
 # The config files come from this checkout and the images from VERSION: they
 # must be the same release (#131).
 repo_version=$(tr -d '[:space:]' < "${SCRIPT_DIR}/../VERSION" 2>/dev/null || true)

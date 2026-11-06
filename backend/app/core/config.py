@@ -36,6 +36,14 @@ class Settings(BaseSettings):
     SESSION_MAX_HOURS: int = Field(12, ge=1, le=720)
     COOKIE_SECURE: bool = False
 
+    # Backups (#149). Dedicated AES-256 key for backup files: 64 hex chars
+    # (openssl rand -hex 32). Unset or empty = fall back to the key derived
+    # from SECRET_KEY, as before 0.1.10.
+    BACKUP_ENCRYPTION_KEY: str = ""
+    # Previous SECRET_KEY values, comma-separated, so backups made before a
+    # SECRET_KEY rotation can still be decrypted.
+    BACKUP_LEGACY_SECRET_KEYS: Annotated[list[str], NoDecode] = []
+
     # Storage
     STORAGE_BACKEND: Literal["local", "s3", "azure_blob", "gcs"] = "local"
     STORAGE_PATH: str = "/app/storage"
@@ -71,6 +79,30 @@ class Settings(BaseSettings):
                 "SECRET_KEY must be set to a cryptographically random value "
                 "(openssl rand -hex 32). Refusing to start with the default."
             )
+        return v
+
+    @field_validator("BACKUP_ENCRYPTION_KEY")
+    @classmethod
+    def check_backup_key(cls, v: str) -> str:
+        v = v.strip()
+        if v:
+            try:
+                raw = bytes.fromhex(v)
+            except ValueError:
+                raw = b""
+            if len(raw) != 32:
+                raise ValueError(
+                    "BACKUP_ENCRYPTION_KEY must be 64 hex characters (openssl rand -hex 32), or empty."
+                )
+        return v.lower()
+
+    @field_validator("BACKUP_LEGACY_SECRET_KEYS", mode="before")
+    @classmethod
+    def parse_legacy_keys(cls, v: str | list[str] | None) -> list[str]:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return [k.strip() for k in v.split(",") if k.strip()]
         return v
 
     @field_validator("CORS_ORIGINS", mode="before")

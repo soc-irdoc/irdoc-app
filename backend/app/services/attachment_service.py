@@ -169,6 +169,33 @@ async def get_attachment_url(attachment: Attachment, expires_in: int = 3600) -> 
     return await backend.get_url(attachment.stored_path, expires_in)
 
 
+async def backend_for_attachment(db: AsyncSession, attachment: Attachment):
+    """The storage backend an attachment was written to.
+
+    Local files use the env-configured backend. Cloud files use the
+    StorageConfig row for that backend (the active one if several), so an
+    install that switched backends can still read older files.
+    """
+    name = attachment.storage_backend or "local"
+    if name == "local":
+        return get_storage_backend()
+    import types
+
+    from app.models.storage import StorageConfig
+    from app.services.integration_service import decrypt_config
+    from app.services.storage.resolver import get_storage_backend_from_config
+
+    rows = (await db.execute(
+        select(StorageConfig).where(StorageConfig.backend == name).order_by(StorageConfig.is_active.desc())
+    )).scalars().all()
+    if not rows:
+        raise LookupError(f"No storage configuration for backend '{name}'")
+    row = rows[0]
+    return get_storage_backend_from_config(
+        types.SimpleNamespace(backend=row.backend, config=decrypt_config(row.config))
+    )
+
+
 async def get_text_preview(attachment: Attachment) -> tuple[str, bool]:
     """First TEXT_PREVIEW_MAX_BYTES of a text attachment, decoded as UTF-8.
 
