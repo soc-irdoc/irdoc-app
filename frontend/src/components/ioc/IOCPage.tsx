@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIOCs, useCreateIOC, useUpdateIOC, useDeleteIOC, useBulkImportIOCs } from '@/hooks/useIOCs'
 import { detectIOCs } from '@/lib/iocDetector'
@@ -236,7 +237,8 @@ function IOCRow({
   return (
     <>
       <tr
-        style={{ cursor: 'pointer' }}
+        id={`ioc-${ioc.id}`}
+        style={{ cursor: 'pointer', scrollMarginTop: 48 }}
         onClick={() => setExpanded((v) => !v)}
         onMouseEnter={(e) => {
           e.currentTarget.querySelectorAll('td').forEach(
@@ -368,6 +370,24 @@ export function IOCPage({ incidentId }: IOCPageProps) {
   const qc = useQueryClient()
   const { data: iocs = [], isLoading } = useIOCs(incidentId)
   const createIOC = useCreateIOC(incidentId)
+
+  // ?ioc=<id> (e.g. from the Evidence register, #150): show that IOC.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const focusIocId = searchParams.get('ioc')
+  useEffect(() => {
+    if (!focusIocId || isLoading) return
+    const el = document.getElementById(`ioc-${focusIocId}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('entry-highlight')
+    const t = setTimeout(() => {
+      el.classList.remove('entry-highlight')
+      const next = new URLSearchParams(searchParams)
+      next.delete('ioc')
+      setSearchParams(next, { replace: true })
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [focusIocId, isLoading, iocs, searchParams, setSearchParams])
 
   // Listen for enrichment results and update cache directly from the event payload
   useEffect(() => {

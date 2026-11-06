@@ -19,7 +19,7 @@ import { Button } from '@/components/common/Button'
 import { EditableTitle } from './EditableTitle'
 import { CloseIncidentModal, type CloseIncidentChoice } from './CloseIncidentModal'
 import {
-  FaArrowLeft, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
+  FaArrowLeft, FaBoxArchive, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
   FaTrashCan,
 } from 'react-icons/fa6'
 
@@ -33,6 +33,7 @@ const SECTIONS = [
   { key: 'timeline', label: 'Timeline', icon: FaTimeline },
   { key: 'iocs',     label: 'IOCs',     icon: FaMagnifyingGlass },
   { key: 'assets',   label: 'Assets',   icon: FaDesktop },
+  { key: 'evidence', label: 'Evidence', icon: FaBoxArchive },
   { key: 'summary',  label: 'Summary',  icon: FaChartColumn },
   { key: 'reports',  label: 'Reports',  icon: FaFileLines },
   { key: 'graph',    label: 'Graph',    icon: FaCircleNodes },

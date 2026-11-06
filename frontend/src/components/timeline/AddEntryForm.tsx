@@ -115,6 +115,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         // existed; refetch again or the entry shows no attachments until the
         // page is reloaded (#138).
         qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+        qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
         qc.invalidateQueries({ queryKey: ['incident-stats', incidentId] })
       }
 

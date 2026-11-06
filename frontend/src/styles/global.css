@@ -755,3 +755,13 @@ select.form-input {
     display: inline;
   }
 }
+
+/* Briefly marks the item a link jumped to (Evidence register, #150) */
+.entry-highlight {
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--accent);
+  transition: box-shadow 0.3s ease;
+}
+tr.entry-highlight td {
+  background: var(--accent-dim) !important;
+}

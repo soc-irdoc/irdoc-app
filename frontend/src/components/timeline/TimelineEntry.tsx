@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDeleteTimelineEntry, usePinTimelineEntry } from '@/hooks/useTimeline'
 import { ENTRY_TYPE_CONFIG } from '@/types/timeline'
 import type { TimelineEntry as TEntry, Attachment } from '@/types/timeline'
 import { formatDateTime, formatRelative, isImageMime } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
-import { Modal } from '@/components/common/Modal'
+import { ImageLightbox } from '@/components/common/ImageLightbox'
+import { PdfPreviewModal } from '@/components/common/PdfPreviewModal'
 import { FaImage, FaPaperclip, FaPen, FaThumbtack, FaTrashCan } from 'react-icons/fa6'
 
 interface TimelineEntryProps {
@@ -40,6 +41,8 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null)
   const [loadingAttachmentId, setLoadingAttachmentId] = useState<string | null>(null)
+  const closeLightbox = useCallback(() => setLightboxUrl(null), [])
+  const closePdf = useCallback(() => setPdfPreviewUrl(null), [])
 
   const config = ENTRY_TYPE_CONFIG[entry.entry_type]
   const dotStyle = DOT_STYLES[entry.entry_type] ?? DOT_STYLES.note
@@ -93,8 +96,9 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
   return (
     <>
       <div
+        id={`entry-${entry.id}`}
         className="animate-slide-in"
-        style={{ display: 'flex', gap: 20, marginBottom: 20, position: 'relative' }}
+        style={{ display: 'flex', gap: 20, marginBottom: 20, position: 'relative', scrollMarginTop: 16 }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -302,49 +306,8 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
         </div>
       </div>
 
-      {/* Image Lightbox */}
-      {lightboxUrl && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Image preview"
-          tabIndex={0}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            background: 'rgba(0,0,0,0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'zoom-out',
-          }}
-          onClick={() => setLightboxUrl(null)}
-          onKeyDown={(e) => { if (e.key === 'Escape') setLightboxUrl(null) }}
-        >
-          <img
-            src={lightboxUrl}
-            alt="Attachment preview"
-            style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain' }}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
-
-      {/* PDF Preview Modal */}
-      {pdfPreviewUrl && (
-        <Modal open={!!pdfPreviewUrl} onClose={() => setPdfPreviewUrl(null)} title="Document Preview" size="lg">
-          <iframe
-            src={pdfPreviewUrl}
-            style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 4 }}
-            title="PDF preview"
-          />
-          {/* Fallback for browsers or proxies that still won't render it inline (#137) */}
-          <div style={{ marginTop: 8, fontSize: 12, textAlign: 'right' }}>
-            <a href={pdfPreviewUrl} target="_blank" rel="noopener noreferrer">Open in new tab</a>
-          </div>
-        </Modal>
-      )}
+      <ImageLightbox url={lightboxUrl} onClose={closeLightbox} />
+      <PdfPreviewModal url={pdfPreviewUrl} onClose={closePdf} />
 
     </>
   )
