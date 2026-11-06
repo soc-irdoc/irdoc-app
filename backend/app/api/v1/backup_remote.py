@@ -61,12 +61,26 @@ def _parse(kind: str, body: dict) -> BaseModel:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
 
+# Stored secrets are only reused for the same server and account. Otherwise
+# pointing the settings at another host and pressing Test would send the
+# saved password to that host.
+_IDENTITY = {
+    "sftp": ("host", "port", "username"),
+    "smb": ("server", "port", "username", "domain"),
+}
+
+
+def _same_identity(kind: str, stored: dict, merged: dict) -> bool:
+    return bool(stored) and all((stored.get(k) or None) == (merged.get(k) or None) for k in _IDENTITY[kind])
+
+
 def _merge(kind: str, data: BaseModel, stored: dict) -> dict:
-    """New settings, keeping stored secrets the request left empty."""
+    """New settings, keeping stored secrets the request left empty (same server and account only)."""
     merged = data.model_dump(exclude={"host_key"})
-    for key in backup_destinations.SECRET_FIELDS[kind]:
-        if not merged.get(key):
-            merged[key] = stored.get(key)
+    if _same_identity(kind, stored, merged):
+        for key in backup_destinations.SECRET_FIELDS[kind]:
+            if not merged.get(key):
+                merged[key] = stored.get(key)
     return merged
 
 

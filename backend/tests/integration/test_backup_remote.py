@@ -190,3 +190,33 @@ async def test_cloud_destination_fails_loudly_without_cloud_storage(db_session):
     from app.services.backup_destinations.cloud import load_cloud_backend
     with pytest.raises(backup_destinations.RemoteBackupError, match="no cloud storage"):
         await load_cloud_backend(db_session)
+
+
+@pytest.mark.asyncio
+async def test_stored_secret_is_not_sent_to_a_different_host(client, auth_headers, monkeypatch):
+    """Security: re-pointing the settings must not reuse the saved password."""
+    await client.put(f"{URL}/sftp", json={**SFTP, "host_key": HOST_KEY}, headers=auth_headers)
+    seen = []
+
+    class Recorder:
+        async def test(self):
+            return TestResult(ok=True)
+
+    def build(kind, cfg, host_key=None):
+        seen.append(cfg)
+        return Recorder()
+    monkeypatch.setattr(backup_destinations, "build_destination", build)
+
+    for change in ({"host": "attacker.example.com"}, {"port": 2222}, {"username": "root"}):
+        await client.post(f"{URL}/sftp/test", json={**SFTP, "password": "", **change}, headers=auth_headers)
+    await client.post(f"{URL}/sftp/test", json={**SFTP, "password": ""}, headers=auth_headers)
+
+    assert [c["password"] or None for c in seen] == [None, None, None, "s3cret"]
+
+
+@pytest.mark.asyncio
+async def test_saving_a_new_host_without_a_password_drops_the_old_one(client, auth_headers, db_session):
+    await client.put(f"{URL}/smb", json={"server": "nas", "share": "b", "username": "u", "password": "pw"},
+                     headers=auth_headers)
+    r = await client.put(f"{URL}/smb", json={"server": "other", "share": "b", "username": "u"}, headers=auth_headers)
+    assert r.json()["data"]["password_set"] is False
