@@ -3,6 +3,7 @@ Attachment service: stream upload, SHA-256 (ALWAYS computed), StorageBackend del
 SHA-256 is stored unconditionally - forensic integrity guarantee.
 """
 import hashlib
+import os
 import uuid
 
 from fastapi import HTTPException, UploadFile, status
@@ -33,14 +34,53 @@ _MIME_TO_EXT: dict[str, str] = {
     "application/x-zip-compressed": ".zip",
     "application/vnd.ms-excel": ".xls",
     "application/msword": ".doc",
+    "text/plain": ".txt",
+    "text/csv": ".csv",
+    "application/json": ".json",
 }
 
+# Text formats recognised by extension *and* content (#150). filetype only
+# knows binary signatures, so without this every text file is stored as
+# application/octet-stream and can't be previewed safely.
+_TEXT_EXT_TO_MIME: dict[str, str] = {
+    ".txt": "text/plain",
+    ".log": "text/plain",
+    ".csv": "text/csv",
+    ".json": "application/json",
+}
+_TEXT_SNIFF_BYTES = 8192
 
-def _get_actual_mime(data: bytes) -> str:
-    """Detect MIME type from actual file bytes (first 2048 bytes)."""
+# Stored MIME types the evidence register may render as plain text.
+TEXT_PREVIEW_MIMES = frozenset({"text/plain", "text/csv", "application/json"})
+TEXT_PREVIEW_MAX_BYTES = 1024 * 1024
+
+
+def _looks_like_text(data: bytes) -> bool:
+    head = data[:_TEXT_SNIFF_BYTES]
+    if b"\x00" in head:
+        return False
+    try:
+        head.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        # A multi-byte character cut off at the sniff boundary is still text.
+        return exc.start >= len(head) - 3 and len(data) > _TEXT_SNIFF_BYTES
+    return True
+
+
+def _get_actual_mime(data: bytes, filename: str | None = None) -> str:
+    """Detect MIME type from actual file bytes (first 2048 bytes).
+
+    Plain-text formats have no signature: they are recognised only when the
+    extension is a known text one and the content really is UTF-8 text.
+    """
     import filetype
     kind = filetype.guess(data[:2048])
-    return kind.mime if kind else "application/octet-stream"
+    if kind:
+        return kind.mime
+    ext = os.path.splitext(filename or "")[1].lower()
+    if ext in _TEXT_EXT_TO_MIME and _looks_like_text(data):
+        return _TEXT_EXT_TO_MIME[ext]
+    return "application/octet-stream"
 
 
 def _validate_mime(mime_type: str) -> None:
@@ -79,7 +119,7 @@ async def upload_attachment(
     sha256 = hasher.hexdigest()
 
     # Detect MIME from actual file bytes - reject content-type spoofing
-    actual_mime = _get_actual_mime(data)
+    actual_mime = _get_actual_mime(data, file.filename)
     _validate_mime(actual_mime)
 
     # Use a safe extension derived from detected MIME, not the original filename
@@ -127,6 +167,21 @@ async def get_attachment(db: AsyncSession, attachment_id: str, incident_id: str)
 async def get_attachment_url(attachment: Attachment, expires_in: int = 3600) -> str:
     backend = get_storage_backend()
     return await backend.get_url(attachment.stored_path, expires_in)
+
+
+async def get_text_preview(attachment: Attachment) -> tuple[str, bool]:
+    """First TEXT_PREVIEW_MAX_BYTES of a text attachment, decoded as UTF-8.
+
+    Only for the allowlisted stored MIME types, never from the file name.
+    """
+    if attachment.mime_type not in TEXT_PREVIEW_MIMES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Preview not available for this file type",
+        )
+    data = await get_storage_backend().retrieve(attachment.stored_path)
+    truncated = len(data) > TEXT_PREVIEW_MAX_BYTES
+    return data[:TEXT_PREVIEW_MAX_BYTES].decode("utf-8", errors="replace"), truncated
 
 
 async def delete_attachment(db: AsyncSession, attachment: Attachment) -> None:

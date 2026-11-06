@@ -180,6 +180,7 @@ from app.api.v1 import (  # noqa: E402
     auth,
     backup,
     dashboard,
+    evidence,
     external,
     features,
     graph,
@@ -208,6 +209,7 @@ application.include_router(api_keys.router, prefix=API_PREFIX)
 application.include_router(incidents.router, prefix=API_PREFIX)
 application.include_router(timeline.router, prefix=API_PREFIX)
 application.include_router(attachments.router, prefix=API_PREFIX)
+application.include_router(evidence.router, prefix=API_PREFIX)
 application.include_router(iocs.router, prefix=API_PREFIX)
 application.include_router(tasks.router, prefix=API_PREFIX)
 application.include_router(templates.router, prefix=API_PREFIX)
