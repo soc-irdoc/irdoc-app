@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
-import type { BackupConfig, BackupConfigUpdate, BackupRecord } from '@/types/backup'
+import type {
+  BackupConfig, BackupConfigUpdate, BackupRecord, RemoteBackupConfig, RemoteBackupKind, RemoteTestResult,
+  SFTPConfigPayload, SMBConfigPayload,
+} from '@/types/backup'
 import type { ApiResponse } from '@/types/api'
 
 export function useBackupConfig() {
@@ -58,5 +61,38 @@ export function useTriggerBackup() {
       qc.invalidateQueries({ queryKey: ['backup-config'] })
       qc.invalidateQueries({ queryKey: ['backup-records'] })
     },
+  })
+}
+
+// SFTP / SMB destination settings (#151)
+export function useRemoteBackupConfig(kind: RemoteBackupKind) {
+  return useQuery({
+    queryKey: ['backup-remote', kind],
+    queryFn: async () => {
+      const res = await apiClient.get<ApiResponse<RemoteBackupConfig>>(`/admin/backup/remote/${kind}`)
+      return res.data.data
+    },
+  })
+}
+
+export function useSaveRemoteBackupConfig(kind: RemoteBackupKind) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: SFTPConfigPayload | SMBConfigPayload) => {
+      const res = await apiClient.put<ApiResponse<RemoteBackupConfig>>(`/admin/backup/remote/${kind}`, payload)
+      return res.data.data
+    },
+    onSuccess: (data) => qc.setQueryData(['backup-remote', kind], data),
+  })
+}
+
+export function useTestRemoteBackupConfig(kind: RemoteBackupKind) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: SFTPConfigPayload | SMBConfigPayload) => {
+      const res = await apiClient.post<ApiResponse<RemoteTestResult>>(`/admin/backup/remote/${kind}/test`, payload)
+      return res.data.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['backup-remote', kind] }),
   })
 }

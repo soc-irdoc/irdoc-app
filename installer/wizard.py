@@ -70,6 +70,8 @@ class WizardState(BaseModel):
     db_password: str = ""
     redis_password: str = ""
     secret_key: str = ""
+    backup_encryption_key: str = ""
+    backup_legacy_secret_keys: str = ""
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
     license_key: str = ""
@@ -119,6 +121,8 @@ async def on_startup():
         state.db_password = existing.get("DB_PASSWORD", "")
         state.redis_password = existing.get("REDIS_PASSWORD", "")
         state.secret_key = existing.get("SECRET_KEY", "")
+        state.backup_encryption_key = existing.get("BACKUP_ENCRYPTION_KEY", "")
+        state.backup_legacy_secret_keys = existing.get("BACKUP_LEGACY_SECRET_KEYS", "")
         state.base_url = existing.get("BASE_URL", "")
         state.cors_origins = existing.get("CORS_ORIGINS", "")
         state.license_key = existing.get("LICENSE_KEY", "")
@@ -272,6 +276,8 @@ async def core_config_page(request: Request):
         state.db_password = secrets["db_password"]
         state.redis_password = secrets["redis_password"]
         state.secret_key = secrets["secret_key"]
+    if not state.backup_encryption_key:
+        state.backup_encryption_key = generate_secrets()["backup_encryption_key"]
     if not state.base_url:
         prefix = "http" if state.https_mode == "behind_lb" else "https"
         state.base_url = f"{prefix}://{socket.getfqdn()}"
@@ -289,6 +295,7 @@ async def save_core_config(
     db_password: str = Form(...),
     redis_password: str = Form(...),
     secret_key: str = Form(...),
+    backup_encryption_key: str = Form(""),
     access_token_expire_minutes: int = Form(15),
     refresh_token_expire_days: int = Form(30),
     license_key: str = Form(""),
@@ -298,6 +305,8 @@ async def save_core_config(
     state.db_password = db_password
     state.redis_password = redis_password
     state.secret_key = secret_key
+    if backup_encryption_key.strip():
+        state.backup_encryption_key = backup_encryption_key.strip().lower()
     state.access_token_expire_minutes = access_token_expire_minutes
     state.refresh_token_expire_days = refresh_token_expire_days
     state.license_key = license_key
@@ -352,6 +361,8 @@ async def review_confirm():
         "db_password": state.db_password,
         "redis_password": state.redis_password,
         "secret_key": state.secret_key,
+        "backup_encryption_key": state.backup_encryption_key,
+        "backup_legacy_secret_keys": state.backup_legacy_secret_keys,
         "base_url": state.base_url,
         "cors_origins": state.cors_origins,
         "access_token_expire_minutes": state.access_token_expire_minutes,

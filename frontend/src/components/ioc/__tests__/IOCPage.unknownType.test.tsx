@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { IOCPage } from '../IOCPage'
 
 // seed_demo.py stores IOCs of type "other", which isn't in IOCType (#112).
@@ -24,7 +25,9 @@ describe('IOCPage', () => {
   it('renders an IOC whose type has no icon instead of crashing (#112)', () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <IOCPage incidentId="i1" />
+        <MemoryRouter>
+          <IOCPage incidentId="i1" />
+        </MemoryRouter>
       </QueryClientProvider>,
     )
     expect(screen.getByText('app-id: 7e2c1a9d')).toBeTruthy()

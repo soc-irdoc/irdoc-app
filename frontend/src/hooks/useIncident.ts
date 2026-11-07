@@ -6,6 +6,7 @@ import type { ApiResponse } from '@/types/api'
 export function useIncidents(params?: {
   status?: string
   search?: string
+  source?: string
   page?: number
   per_page?: number
   sort?: string

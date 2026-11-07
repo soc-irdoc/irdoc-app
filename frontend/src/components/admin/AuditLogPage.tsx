@@ -24,6 +24,7 @@ const ACTION_LABELS: Record<string, string> = {
   'user.logout_all': 'Signed Out Everywhere',
   'incident.title_changed': 'Incident Renamed',
   'incident.disposition_changed': 'Disposition Changed',
+  'incident.source_changed': 'Source Changed',
   'user.created': 'User Created',
   'user.invited': 'User Invited',
   'user.role_changed': 'Role Changed',

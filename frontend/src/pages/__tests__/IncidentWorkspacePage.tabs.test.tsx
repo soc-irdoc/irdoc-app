@@ -10,6 +10,7 @@ import type { Incident } from '@/types/incident'
 vi.mock('@/components/timeline/TimelinePage', () => ({ TimelinePage: () => <div>TIMELINE_CONTENT</div> }))
 vi.mock('@/components/ioc/IOCPage', () => ({ IOCPage: () => <div>IOCS_CONTENT</div> }))
 vi.mock('@/components/assets/AssetsPage', () => ({ AssetsPage: () => <div>ASSETS_CONTENT</div> }))
+vi.mock('@/components/evidence/EvidencePage', () => ({ EvidencePage: () => <div>EVIDENCE_CONTENT</div> }))
 vi.mock('@/components/summary/SummaryPage', () => ({ SummaryPage: () => <div>SUMMARY_CONTENT</div> }))
 vi.mock('@/components/reports/ReportPage', () => ({ default: () => <div>REPORTS_CONTENT</div> }))
 vi.mock('@/components/graph/InvestigationGraph', () => ({ default: () => <div>GRAPH_CONTENT</div> }))
@@ -30,6 +31,7 @@ const mockIncident: Incident = {
   severity: 'high',
   status: 'open',
   disposition: null,
+  source: 'siem_alert',
   assigned_to: null,
   assigned_user: null,
   executive_summary: null,
@@ -93,6 +95,16 @@ describe('IncidentWorkspacePage tab switching', () => {
       expect(screen.getByText('ASSETS_CONTENT')).toBeInTheDocument()
     })
     expect(screen.queryByText('TIMELINE_CONTENT')).not.toBeInTheDocument()
+  })
+
+  it('opens the Evidence register tab (#150)', async () => {
+    renderAt('/incidents/64ca4067-f783-47fb-815e-4199636091cc/timeline')
+
+    fireEvent.click(screen.getByRole('button', { name: /Evidence/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('EVIDENCE_CONTENT')).toBeInTheDocument()
+    })
   })
 
   it('switches tab content when clicking Reports after landing on Timeline', async () => {

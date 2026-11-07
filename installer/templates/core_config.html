@@ -8,13 +8,15 @@
   db_password: '{{ state.db_password }}',
   redis_password: '{{ state.redis_password }}',
   secret_key: '{{ state.secret_key }}',
-  show_db: false, show_redis: false, show_sk: false,
+  backup_encryption_key: '{{ state.backup_encryption_key }}',
+  show_db: false, show_redis: false, show_sk: false, show_bk: false,
   async regenerate() {
     const r = await fetch('/api/generate-secrets');
     const d = await r.json();
     this.db_password = d.db_password;
     this.redis_password = d.redis_password;
     this.secret_key = d.secret_key;
+    {% if state.mode != 'reconfigure' %}this.backup_encryption_key = d.backup_encryption_key;{% endif %}
   }
 }">
 
@@ -47,6 +49,16 @@
       <input :type="show_sk ? 'text' : 'password'" name="secret_key" x-model="secret_key" class="font-mono" required>
       <button type="button" class="btn btn-outline btn-sm" @click="show_sk = !show_sk">&#x1F441;</button>
     </div>
+  </div>
+
+  <div class="mt-4">
+    <label>Backup Encryption Key</label>
+    <div class="flex gap-2">
+      <input :type="show_bk ? 'text' : 'password'" name="backup_encryption_key" x-model="backup_encryption_key"
+             class="font-mono" pattern="[0-9a-fA-F]{64}" title="64 hex characters (openssl rand -hex 32)" required>
+      <button type="button" class="btn btn-outline btn-sm" @click="show_bk = !show_bk">&#x1F441;</button>
+    </div>
+    <p class="field-hint">Encrypts backups. <strong>Store a copy somewhere off this server</strong>: without it, backups can't be restored.{% if state.mode == 'reconfigure' %} Changing it makes existing backups need the old key.{% endif %}</p>
   </div>
 
   <div class="mt-4">

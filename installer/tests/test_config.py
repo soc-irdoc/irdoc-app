@@ -6,9 +6,14 @@ import pytest
 from installer.core.config import generate_secrets, assemble_env, read_existing_env, write_env
 
 
-def test_generate_secrets_returns_three_keys():
+def test_generate_secrets_returns_all_keys():
     s = generate_secrets()
-    assert set(s.keys()) == {"db_password", "redis_password", "secret_key"}
+    assert set(s.keys()) == {"db_password", "redis_password", "secret_key", "backup_encryption_key"}
+
+
+def test_backup_key_is_64_hex_chars():
+    key = generate_secrets()["backup_encryption_key"]
+    assert len(key) == 64 and bytes.fromhex(key)
 
 
 def test_generate_secrets_are_strong():
@@ -93,3 +98,29 @@ def test_write_env_creates_file_with_restricted_permissions(tmp_path):
     if platform.system() != "Windows":
         mode = stat.S_IMODE(os.stat(path).st_mode)
         assert mode == 0o600
+
+
+# ── Backup encryption key (#149) ────────────────────────────────────────────
+
+_BASE = {
+    "db_password": "x", "redis_password": "y", "secret_key": "z",
+    "base_url": "https://x.com", "access_token_expire_minutes": 15,
+    "refresh_token_expire_days": 30, "license_key": "",
+}
+
+
+def test_assemble_env_writes_the_given_backup_key():
+    content = assemble_env({**_BASE, "backup_encryption_key": "ab" * 32})
+    assert f"BACKUP_ENCRYPTION_KEY={'ab' * 32}" in content
+
+
+def test_assemble_env_never_writes_an_empty_backup_key():
+    content = assemble_env(_BASE)
+    line = next(l for l in content.splitlines() if l.startswith("BACKUP_ENCRYPTION_KEY="))
+    assert len(line.split("=", 1)[1]) == 64
+
+
+def test_assemble_env_carries_legacy_secret_keys_over():
+    content = assemble_env({**_BASE, "backup_encryption_key": "ab" * 32, "backup_legacy_secret_keys": "old1,old2"})
+    assert "BACKUP_LEGACY_SECRET_KEYS=old1,old2" in content
+    assert "BACKUP_LEGACY_SECRET_KEYS" not in assemble_env(_BASE)

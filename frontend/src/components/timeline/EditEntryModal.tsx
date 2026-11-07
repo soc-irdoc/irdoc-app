@@ -156,6 +156,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
 
       // Refresh timeline to reflect attachment changes made during edit
       qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
       addToast('Entry updated', 'success')
       onClose()
     } catch {

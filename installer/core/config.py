@@ -9,6 +9,9 @@ def generate_secrets() -> dict:
         "db_password": secrets.token_urlsafe(24),
         "redis_password": secrets.token_urlsafe(24),
         "secret_key": secrets.token_hex(32),
+        # Encrypts backups only (#149), so SECRET_KEY can be rotated without
+        # orphaning them.
+        "backup_encryption_key": secrets.token_hex(32),
     }
 
 
@@ -29,6 +32,8 @@ def assemble_env(state: dict) -> str:
         "",
         "# ─── Security ───────────────────────────────────────────────────────────────",
         f"SECRET_KEY={state['secret_key']}",
+        "# Encrypts backups. Keep a copy OFF this host: without it, backups can't be restored.",
+        f"BACKUP_ENCRYPTION_KEY={state.get('backup_encryption_key') or secrets.token_hex(32)}",
         f"ACCESS_TOKEN_EXPIRE_MINUTES={state['access_token_expire_minutes']}",
         f"REFRESH_TOKEN_EXPIRE_DAYS={state['refresh_token_expire_days']}",
         "",
@@ -38,6 +43,11 @@ def assemble_env(state: dict) -> str:
         f"LICENSE_KEY={state.get('license_key', '')}",
         f"VERSION={state.get('version', 'latest')}",
     ]
+    legacy_keys = state.get("backup_legacy_secret_keys", "").strip()
+    if legacy_keys:
+        # Old SECRET_KEYs still needed to decrypt backups made before 0.1.10.
+        at = next(i for i, line in enumerate(lines) if line.startswith("BACKUP_ENCRYPTION_KEY=")) + 1
+        lines.insert(at, f"BACKUP_LEGACY_SECRET_KEYS={legacy_keys}")
     cors_origins = state.get("cors_origins", "").strip()
     if cors_origins:
         # Additional origins besides base_url — e.g. when analysts reach this

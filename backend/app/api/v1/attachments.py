@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.core.permissions import require_permission
 from app.core.security import verify_file_token
 from app.schemas.attachment import AttachmentOut, AttachmentURLResponse
+from app.schemas.evidence import TextPreviewOut
 from app.services import attachment_service, incident_service, report_regen_service
 from app.services.storage.resolver import get_storage_backend
 
@@ -48,6 +49,24 @@ async def get_attachment_url(
     attachment = await attachment_service.get_attachment(db, attachment_id, incident_id)
     url = await attachment_service.get_attachment_url(attachment)
     return {"data": AttachmentURLResponse(url=url, expires_in=3600), "error": None}
+
+
+@router.get("/incidents/{incident_id}/attachments/{attachment_id}/text")
+async def get_attachment_text(
+    incident_id: str,
+    attachment_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("attachments.read")),
+):
+    """Plain-text preview (#150), returned as JSON so the browser never renders it as HTML.
+
+    Served by the API rather than a storage URL because cloud backends give
+    cross-origin URLs that the app's CSP (connect-src 'self') won't fetch.
+    """
+    await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+    attachment = await attachment_service.get_attachment(db, attachment_id, incident_id)
+    text, truncated = await attachment_service.get_text_preview(attachment)
+    return {"data": TextPreviewOut(text=text, truncated=truncated), "error": None}
 
 
 @router.delete("/incidents/{incident_id}/attachments/{attachment_id}", status_code=204)

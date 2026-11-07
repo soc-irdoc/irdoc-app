@@ -31,6 +31,12 @@
       <div class="meta-value">{{ disposition }}</div>
     </div>
     {% endif %}
+    {% if 'incident.source' in show_fields %}
+    <div class="meta-item">
+      <div class="meta-label">Source</div>
+      <div class="meta-value">{{ p.source_label or 'Not recorded' }}</div>
+    </div>
+    {% endif %}
     {% if 'incident.affected_users' in show_fields %}
     <div class="meta-item">
       <div class="meta-label">Affected Users</div>

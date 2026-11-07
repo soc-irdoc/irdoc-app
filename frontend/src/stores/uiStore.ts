@@ -8,6 +8,22 @@ export interface Toast {
   type: ToastType
 }
 
+export interface ToastOptions {
+  /** Milliseconds before auto-dismiss. `Infinity` keeps the toast until the user closes it. */
+  duration?: number
+}
+
+/** Errors stay until dismissed so the reason can be read (#139); the rest fade out. */
+export const DEFAULT_TOAST_DURATION: Record<ToastType, number> = {
+  success: 4000,
+  info: 4000,
+  warning: 6000,
+  error: Infinity,
+}
+
+/** Oldest toasts are dropped beyond this, so persistent errors can't pile up off-screen. */
+export const MAX_TOASTS = 5
+
 export interface PresenceUser {
   id: string
   full_name: string
@@ -16,7 +32,7 @@ export interface PresenceUser {
 
 interface UIStore {
   toasts: Toast[]
-  addToast: (message: string, type?: ToastType) => void
+  addToast: (message: string, type?: ToastType, opts?: ToastOptions) => void
   removeToast: (id: string) => void
   activeModal: string | null
   openModal: (name: string) => void
@@ -29,12 +45,19 @@ interface UIStore {
 
 export const useUIStore = create<UIStore>((set) => ({
   toasts: [],
-  addToast: (message, type = 'info') => {
+  addToast: (message, type = 'info', opts) => {
     const id = Math.random().toString(36).slice(2)
-    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }))
-    setTimeout(() => {
-      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
-    }, 4000)
+    set((state) => {
+      // An identical message already on screen is replaced, not stacked.
+      const others = state.toasts.filter((t) => !(t.message === message && t.type === type))
+      return { toasts: [...others, { id, message, type }].slice(-MAX_TOASTS) }
+    })
+    const duration = opts?.duration ?? DEFAULT_TOAST_DURATION[type]
+    if (Number.isFinite(duration)) {
+      setTimeout(() => {
+        set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }))
+      }, duration)
+    }
   },
   removeToast: (id) =>
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),

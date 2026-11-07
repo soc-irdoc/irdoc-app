@@ -8,6 +8,7 @@ import { TasksPanel } from '@/components/layout/TasksPanel'
 import { TimelinePage } from '@/components/timeline/TimelinePage'
 import { IOCPage } from '@/components/ioc/IOCPage'
 import { AssetsPage } from '@/components/assets/AssetsPage'
+import { EvidencePage } from '@/components/evidence/EvidencePage'
 import { SummaryPage } from '@/components/summary/SummaryPage'
 import ReportPage from '@/components/reports/ReportPage'
 import { PageLoader } from '@/components/common/LoadingSpinner'
@@ -15,9 +16,9 @@ import { lazy, Suspense } from 'react'
 
 const InvestigationGraph = lazy(() => import('@/components/graph/InvestigationGraph'))
 
-type Section = 'timeline' | 'iocs' | 'assets' | 'summary' | 'reports' | 'graph'
+type Section = 'timeline' | 'iocs' | 'assets' | 'evidence' | 'summary' | 'reports' | 'graph'
 
-const VALID_SECTIONS: Section[] = ['timeline', 'iocs', 'assets', 'summary', 'reports', 'graph']
+const VALID_SECTIONS: Section[] = ['timeline', 'iocs', 'assets', 'evidence', 'summary', 'reports', 'graph']
 
 export function IncidentWorkspacePage() {
   const { id, section } = useParams<{ id: string; section?: string }>()
@@ -102,6 +103,7 @@ export function IncidentWorkspacePage() {
             {activeSection === 'timeline' && <TimelinePage incidentId={incident.id} />}
             {activeSection === 'iocs'     && <IOCPage incidentId={incident.id} />}
             {activeSection === 'assets'   && <AssetsPage incidentId={incident.id} />}
+            {activeSection === 'evidence' && <EvidencePage incidentId={incident.id} />}
             {activeSection === 'summary'  && <SummaryPage incidentId={incident.id} />}
             {activeSection === 'reports'  && <ReportPage incidentId={incident.id} incidentUpdatedAt={incident.updated_at} />}
             {activeSection === 'graph' && (

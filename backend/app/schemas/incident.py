@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import AfterValidator, BaseModel, StringConstraints
 
 from app.core.disposition import Disposition
+from app.core.incident_source import IncidentSource
 from app.core.severity import Severity
 from app.core.status import IncidentStatus
 
@@ -61,6 +62,7 @@ IncidentTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_leng
 class IncidentCreate(BaseModel):
     title: IncidentTitle
     severity: Severity = "high"
+    source: IncidentSource
     template_id: str | None = None
     assigned_to: str | None = None
 
@@ -70,6 +72,7 @@ class IncidentUpdate(BaseModel):
     severity: Severity | None = None
     status: IncidentStatus | None = None
     disposition: Disposition | None = None
+    source: IncidentSource | None = None
     executive_summary: str | None = None
     notes: str | None = None
     lessons_learned: str | None = None
@@ -88,6 +91,7 @@ class IncidentOut(BaseModel):
     severity: str
     status: str
     disposition: str | None = None
+    source: str | None = None
     template_id: UUID | None
     assigned_to: UUID | None
     assigned_user: UserBrief | None = None

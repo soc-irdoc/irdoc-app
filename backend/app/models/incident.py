@@ -21,6 +21,8 @@ class Incident(Base):
     status: Mapped[str] = mapped_column(String(20), default="open")
     # Final disposition (app.core.disposition), required to close (#124).
     disposition: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    # What triggered the investigation (app.core.incident_source), #147.
+    source: Mapped[str | None] = mapped_column(String(40), nullable=True)
     template_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("incident_templates.id"), nullable=True
     )

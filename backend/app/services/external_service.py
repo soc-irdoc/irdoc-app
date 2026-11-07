@@ -31,6 +31,7 @@ async def create_from_webhook(
     incident_data = IncidentCreate(
         title=payload.title,
         severity=payload.severity,
+        source=payload.source,
     )
 
     # Match template by slug if provided
@@ -46,6 +47,7 @@ async def create_from_webhook(
             incident_data = IncidentCreate(
                 title=payload.title,
                 severity=payload.severity,
+                source=payload.source,
                 template_id=str(template.id),
             )
 

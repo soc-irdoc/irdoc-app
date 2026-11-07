@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Disposition, Incident, Severity, IncidentStatus } from '@/types/incident'
+import type { Disposition, Incident, IncidentSource, Severity, IncidentStatus } from '@/types/incident'
 import {
   DISPOSITIONS, DISPOSITION_COLORS, DISPOSITION_LABELS, DISPOSITION_SHORT_LABELS,
+  INCIDENT_SOURCES, INCIDENT_SOURCE_LABELS, INCIDENT_SOURCE_SHORT_LABELS,
   SEVERITIES, SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS,
 } from '@/types/incident'
 import { ExternalRefBadge } from '@/components/common/ExternalRefBadge'
@@ -16,9 +17,9 @@ import { lastListPath } from '@/lib/incidentListQuery'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
 import { EditableTitle } from './EditableTitle'
-import { CloseIncidentModal } from './CloseIncidentModal'
+import { CloseIncidentModal, type CloseIncidentChoice } from './CloseIncidentModal'
 import {
-  FaArrowLeft, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
+  FaArrowLeft, FaBoxArchive, FaChartColumn, FaCircleNodes, FaDesktop, FaFileLines, FaMagnifyingGlass, FaTimeline,
   FaTrashCan,
 } from 'react-icons/fa6'
 
@@ -32,6 +33,7 @@ const SECTIONS = [
   { key: 'timeline', label: 'Timeline', icon: FaTimeline },
   { key: 'iocs',     label: 'IOCs',     icon: FaMagnifyingGlass },
   { key: 'assets',   label: 'Assets',   icon: FaDesktop },
+  { key: 'evidence', label: 'Evidence', icon: FaBoxArchive },
   { key: 'summary',  label: 'Summary',  icon: FaChartColumn },
   { key: 'reports',  label: 'Reports',  icon: FaFileLines },
   { key: 'graph',    label: 'Graph',    icon: FaCircleNodes },
@@ -124,9 +126,9 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
 
   async function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const status = e.target.value as IncidentStatus
-    // Closing needs a final disposition (#124): ask for it first, unless the
-    // incident already has one (closed before and reopened).
-    if (status === 'closed' && !incident.disposition) {
+    // Closing needs a final disposition (#124) and a source (#147): ask for
+    // whichever is missing first (reopened incidents usually have both).
+    if (status === 'closed' && (!incident.disposition || !incident.source)) {
       setShowCloseModal(true)
       return
     }
@@ -137,9 +139,9 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
     }
   }
 
-  async function handleCloseConfirm(disposition: Disposition) {
+  async function handleCloseConfirm(choice: CloseIncidentChoice) {
     try {
-      await updateIncident.mutateAsync({ status: 'closed', disposition })
+      await updateIncident.mutateAsync({ status: 'closed', ...choice })
       setShowCloseModal(false)
       addToast('Incident closed', 'success')
     } catch {
@@ -153,6 +155,15 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
       await updateIncident.mutateAsync({ disposition })
     } catch {
       addToast('Failed to update disposition', 'error')
+    }
+  }
+
+  async function handleSourceChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const source = e.target.value as IncidentSource
+    try {
+      await updateIncident.mutateAsync({ source })
+    } catch {
+      addToast('Failed to update source', 'error')
     }
   }
 
@@ -276,6 +287,23 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
           </select>
         )}
 
+        {/* What triggered the investigation (#147). Editable in any status,
+            so incidents closed before it existed can be backfilled. */}
+        <select
+          className={`chip ${incident.source ? 'chip-blue' : 'chip-yellow'}`}
+          value={incident.source ?? ''}
+          onChange={handleSourceChange}
+          disabled={updateIncident.isPending}
+          aria-label="Change source"
+          title={incident.source ? `Source: ${INCIDENT_SOURCE_LABELS[incident.source]}` : 'Source not recorded'}
+          style={{ cursor: 'pointer', appearance: 'none', paddingRight: 6, flexShrink: 0, maxWidth: 160 }}
+        >
+          {!incident.source && <option value="" disabled>NO SOURCE</option>}
+          {INCIDENT_SOURCES.map((s) => (
+            <option key={s} value={s}>{INCIDENT_SOURCE_SHORT_LABELS[s]}</option>
+          ))}
+        </select>
+
         {/* Assignee */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {incident.assigned_user && (
@@ -376,6 +404,8 @@ export function TopBar({ incident, activeSection, onSectionChange }: TopBarProps
       <CloseIncidentModal
         open={showCloseModal}
         incidentRef={incident.incident_ref}
+        needDisposition={!incident.disposition}
+        needSource={!incident.source}
         loading={updateIncident.isPending}
         onConfirm={handleCloseConfirm}
         onClose={() => setShowCloseModal(false)}

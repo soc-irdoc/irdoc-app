@@ -6,7 +6,8 @@ import { RichTextEditor } from '@/components/common/RichTextEditor'
 import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
 import { useUIStore } from '@/stores/uiStore'
 import {
-  DISPOSITION_COLORS, DISPOSITION_LABELS, SEVERITY_COLORS, SEVERITY_LABELS, STATUS_COLORS, STATUS_LABELS,
+  DISPOSITION_COLORS, DISPOSITION_LABELS, INCIDENT_SOURCE_LABELS, SEVERITY_COLORS, SEVERITY_LABELS, SOURCE_NOT_RECORDED,
+  STATUS_COLORS, STATUS_LABELS,
   type UpdateIncidentPayload,
 } from '@/types/incident'
 import { formatDateTime, formatRelative } from '@/lib/utils'
@@ -373,6 +374,11 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
           title="Outcome"
           value={incident.disposition ? DISPOSITION_LABELS[incident.disposition] : 'Not set'}
           color={incident.disposition ? CHIP_COLOR_VARS[DISPOSITION_COLORS[incident.disposition]] : undefined}
+        />
+        {/* What triggered the investigation (#147) */}
+        <StatCard
+          title="Source"
+          value={incident.source ? INCIDENT_SOURCE_LABELS[incident.source] : SOURCE_NOT_RECORDED}
         />
       </div>
 

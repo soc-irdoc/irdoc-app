@@ -54,6 +54,9 @@ logs/
 # ignore temp folder
 --temp/
 .superpowers/
+
+# Floorplan codebase map (local only, never committed)
+floorplan/
 verify_screenshots/
 CLAUDE*.md
 graphify-out/

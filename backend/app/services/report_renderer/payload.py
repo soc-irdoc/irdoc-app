@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from app.core.disposition import DISPOSITION_LABELS
+from app.core.incident_source import INCIDENT_SOURCE_LABELS
 from app.core.severity import SEVERITY_LABELS
 
 if TYPE_CHECKING:
@@ -80,6 +81,8 @@ class ReportPayload:
 
     # Final disposition (#124), or None when not set
     disposition_label: str | None = None
+    # What triggered the investigation (#147), or None when not recorded
+    source_label: str | None = None
 
     # AI-generated (populated before rendering if blocks require it)
     ai_executive_summary: str | None = None
@@ -194,6 +197,7 @@ async def build_report_payload(
         status_label=STATUS_LABELS.get(incident.status, incident.status.capitalize()),
         external_refs=external_refs,
         disposition_label=DISPOSITION_LABELS.get(incident.disposition) if incident.disposition else None,
+        source_label=INCIDENT_SOURCE_LABELS.get(incident.source) if incident.source else None,
         contained_at_str=_fmt_dt(incident.contained_at),
         closed_at_str=_fmt_dt(incident.closed_at),
         ai_recommendations=incident.ai_recommendations,

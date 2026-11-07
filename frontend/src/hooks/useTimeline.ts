@@ -29,6 +29,7 @@ export function useCreateTimelineEntry(incidentId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
       qc.invalidateQueries({ queryKey: ['incident-stats', incidentId] })
     },
   })
@@ -46,6 +47,7 @@ export function useUpdateTimelineEntry(incidentId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
     },
   })
 }
@@ -58,6 +60,7 @@ export function useDeleteTimelineEntry(incidentId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
       qc.invalidateQueries({ queryKey: ['incident-stats', incidentId] })
     },
   })
@@ -75,6 +78,7 @@ export function usePinTimelineEntry(incidentId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
     },
   })
 }
@@ -95,6 +99,7 @@ export function useUploadAttachment(incidentId: string, entryId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
     },
   })
 }

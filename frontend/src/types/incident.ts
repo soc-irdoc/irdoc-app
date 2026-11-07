@@ -9,6 +9,20 @@ export type Disposition =
   | 'fp_tuning_required'
   | 'inconclusive'
 
+// What triggered the investigation (#147). Required on create; null on
+// incidents created before it existed ("Not recorded").
+export type IncidentSource =
+  | 'user_reported'
+  | 'siem_alert'
+  | 'edr_xdr_alert'
+  | 'threat_hunting'
+  | 'threat_intel'
+  | 'network_alert'
+  | 'email_security'
+  | 'cloud_alert'
+  | 'external_notification'
+  | 'other'
+
 export interface UserBrief {
   id: string
   full_name: string
@@ -32,6 +46,7 @@ export interface Incident {
   severity: Severity
   status: IncidentStatus
   disposition: Disposition | null
+  source: IncidentSource | null
   assigned_to: string | null
   assigned_user: UserBrief | null
   executive_summary: string | null
@@ -61,6 +76,7 @@ export interface IncidentStats {
 export interface CreateIncidentPayload {
   title: string
   severity: Severity
+  source: IncidentSource
   template_id?: string
   assigned_to?: string
 }
@@ -70,6 +86,7 @@ export interface UpdateIncidentPayload {
   severity?: Severity
   status?: IncidentStatus
   disposition?: Disposition
+  source?: IncidentSource
   executive_summary?: string | null
   notes?: string | null
   lessons_learned?: string | null
@@ -144,4 +161,46 @@ export const DISPOSITION_COLORS: Record<Disposition, string> = {
   fp_benign: 'chip-muted',
   fp_tuning_required: 'chip-purple',
   inconclusive: 'chip-muted',
+}
+
+export const INCIDENT_SOURCES: IncidentSource[] = [
+  'user_reported',
+  'siem_alert',
+  'edr_xdr_alert',
+  'threat_hunting',
+  'threat_intel',
+  'network_alert',
+  'email_security',
+  'cloud_alert',
+  'external_notification',
+  'other',
+]
+
+export const INCIDENT_SOURCE_LABELS: Record<IncidentSource, string> = {
+  user_reported: 'User Reported / Requested',
+  siem_alert: 'SIEM Alert',
+  edr_xdr_alert: 'EDR / XDR Alert',
+  threat_hunting: 'Threat Hunting (IOC / IOA)',
+  threat_intel: 'Threat Intelligence',
+  network_alert: 'Network Security Alert (IDS/IPS, NDR, Firewall)',
+  email_security: 'Email Security / Phishing Report',
+  cloud_alert: 'Cloud Security Alert',
+  external_notification: 'External Notification',
+  other: 'Other',
+}
+
+export const SOURCE_NOT_RECORDED = 'Not recorded'
+
+// Compact form for the workspace header chip
+export const INCIDENT_SOURCE_SHORT_LABELS: Record<IncidentSource, string> = {
+  user_reported: 'USER REPORTED',
+  siem_alert: 'SIEM',
+  edr_xdr_alert: 'EDR / XDR',
+  threat_hunting: 'THREAT HUNT',
+  threat_intel: 'THREAT INTEL',
+  network_alert: 'NETWORK',
+  email_security: 'EMAIL SECURITY',
+  cloud_alert: 'CLOUD',
+  external_notification: 'EXTERNAL',
+  other: 'OTHER',
 }

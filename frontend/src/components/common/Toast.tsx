@@ -11,7 +11,8 @@ export function ToastContainer() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="animate-slide-in flex items-center gap-3 px-4 py-3 rounded-card min-w-[280px] max-w-sm"
+          role={toast.type === 'error' ? 'alert' : 'status'}
+          className="animate-slide-in flex items-start gap-3 px-4 py-3 rounded-card min-w-[280px] max-w-sm"
           style={{
             background: 'var(--bg-elevated)',
             border: `1px solid ${
@@ -29,7 +30,7 @@ export function ToastContainer() {
             : <FaCircleInfo size={16} aria-hidden="true" />
           }
           <p
-            className="flex-1 text-sm font-medium"
+            className="flex-1 text-sm font-medium break-words whitespace-pre-line max-h-48 overflow-y-auto"
             style={{ color: 'var(--text-primary)' }}
           >
             {toast.message}
@@ -37,7 +38,7 @@ export function ToastContainer() {
           <button
             className="icon-btn"
             onClick={() => removeToast(toast.id)}
-            aria-label="Dismiss"
+            aria-label="Dismiss notification"
           >
             <FaXmark size={14} aria-hidden="true" />
           </button>

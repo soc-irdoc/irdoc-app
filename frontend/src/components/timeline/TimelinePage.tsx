@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTimeline } from '@/hooks/useTimeline'
 import { AddEntryForm } from './AddEntryForm'
 import { TimelineEntryCard } from './TimelineEntry'
@@ -31,10 +32,14 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
   useEffect(() => {
     const socket = getSocket()
 
+    const refresh = () => {
+      qc.invalidateQueries({ queryKey: ['timeline', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
+    }
     const handlers: Array<[string, () => void]> = [
-      ['timeline:entry:added', () => qc.invalidateQueries({ queryKey: ['timeline', incidentId] })],
-      ['timeline:entry:updated', () => qc.invalidateQueries({ queryKey: ['timeline', incidentId] })],
-      ['timeline:entry:deleted', () => qc.invalidateQueries({ queryKey: ['timeline', incidentId] })],
+      ['timeline:entry:added', refresh],
+      ['timeline:entry:updated', refresh],
+      ['timeline:entry:deleted', refresh],
     ]
     handlers.forEach(([event, handler]) => socket.on(event, handler))
 
@@ -42,6 +47,28 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
       handlers.forEach(([event, handler]) => socket.off(event, handler))
     }
   }, [incidentId, qc])
+
+  // ?entry=<id> (e.g. from the Evidence register, #150): show that entry.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const focusEntryId = searchParams.get('entry')
+  useEffect(() => {
+    if (!focusEntryId || isLoading) return
+    const el = document.getElementById(`entry-${focusEntryId}`)
+    if (!el) {
+      // Hidden by the type filter: clear it and try again on the next render.
+      if (typeFilter !== 'all') setTypeFilter('all')
+      return
+    }
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    el.classList.add('entry-highlight')
+    const t = setTimeout(() => {
+      el.classList.remove('entry-highlight')
+      const next = new URLSearchParams(searchParams)
+      next.delete('entry')
+      setSearchParams(next, { replace: true })
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [focusEntryId, isLoading, entries, typeFilter, searchParams, setSearchParams])
 
   // Keyboard shortcut: N → focus add entry
   useEffect(() => {

@@ -6,6 +6,9 @@ import {
   useTriggerBackup,
 } from '@/hooks/useBackup'
 import type { BackupConfig, BackupConfigUpdate } from '@/types/backup'
+import { isAxiosError } from 'axios'
+import { useUIStore } from '@/stores/uiStore'
+import { RemoteBackupDestination } from './RemoteBackupDestination'
 import apiClient from '@/lib/apiClient'
 
 function SectionCard({
@@ -106,7 +109,19 @@ const fieldLabel = (text: string) => (
   </label>
 )
 
+const BANNER_STYLE: React.CSSProperties = {
+  marginBottom: 16,
+  padding: '10px 14px',
+  borderRadius: 8,
+  border: '1px solid var(--yellow)',
+  background: 'var(--yellow-dim)',
+  color: 'var(--text-primary)',
+  fontSize: 12,
+  lineHeight: 1.5,
+}
+
 export function BackupsPage() {
+  const addToast = useUIStore((s) => s.addToast)
   const { data: config } = useBackupConfig()
   const { data: records } = useBackupRecords()
   const updateConfig = useUpdateBackupConfig()
@@ -116,7 +131,7 @@ export function BackupsPage() {
   const [schedule, setSchedule] = useState<BackupConfigUpdate['schedule']>('daily')
   const [retentionValue, setRetentionValue] = useState(30)
   const [retentionUnit, setRetentionUnit] = useState<RetentionUnit>('days')
-  const [destination, setDestination] = useState<'local' | 'cloud'>('local')
+  const [destination, setDestination] = useState<BackupConfig['destination']>('local')
 
   useEffect(() => {
     if (!config) return
@@ -129,12 +144,17 @@ export function BackupsPage() {
   }, [config])
 
   async function handleSave() {
-    await updateConfig.mutateAsync({
-      enabled,
-      schedule,
-      retention_days: retentionToDays(retentionValue, retentionUnit),
-      destination,
-    })
+    try {
+      await updateConfig.mutateAsync({
+        enabled,
+        schedule,
+        retention_days: retentionToDays(retentionValue, retentionUnit),
+        destination,
+      })
+    } catch (err) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null
+      addToast(`Could not save backup settings${typeof detail === 'string' ? `: ${detail}` : ''}`, 'error')
+    }
   }
 
   const isRunning =
@@ -183,6 +203,22 @@ export function BackupsPage() {
       </div>
 
       <div style={{ maxWidth: 640 }}>
+        {/* Backup encryption key warnings (#149) */}
+        {config?.key_source === 'secret_key_fallback' && (
+          <div role="alert" className="backup-key-banner" style={BANNER_STYLE}>
+            <strong>No dedicated backup key.</strong> Backups are encrypted with a key derived from
+            SECRET_KEY, so rotating SECRET_KEY makes them unreadable. Set <code>BACKUP_ENCRYPTION_KEY</code> in
+            docker/.env (<code>openssl rand -hex 32</code>), restart, and keep a copy off this host.
+          </div>
+        )}
+        {config && config.key_source === 'dedicated' && config.legacy_backup_count > 0 && (
+          <div role="status" className="backup-key-banner" style={BANNER_STYLE}>
+            {config.legacy_backup_count} backup{config.legacy_backup_count > 1 ? 's are' : ' is'} encrypted with
+            the old key (SECRET_KEY). Run <code>python -m app.cli.backup rekey</code> in the backend container,
+            or keep SECRET_KEY unchanged until {config.legacy_backup_count > 1 ? 'they expire' : 'it expires'}.
+          </div>
+        )}
+
         {/* Card 1 - Configuration */}
         <SectionCard title="Configuration">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -270,6 +306,26 @@ export function BackupsPage() {
                     </span>
                   </div>
                 </label>
+                {/* #151: fully separate from the evidence store */}
+                {([
+                  ['sftp', 'SFTP', 'An SSH server, with a pinned host key'],
+                  ['smb', 'SMB', 'A NAS or file server share (SMB 3)'],
+                ] as const).map(([value, label, hint]) => (
+                  <label key={value} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="backup_destination"
+                      value={value}
+                      checked={destination === value}
+                      onChange={() => setDestination(value)}
+                      style={{ accentColor: 'var(--accent)', marginTop: 2 }}
+                    />
+                    <div>
+                      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{label}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 6 }}>{hint}</span>
+                    </div>
+                  </label>
+                ))}
               </div>
 
               {destination === 'cloud' && (
@@ -286,6 +342,14 @@ export function BackupsPage() {
                 >
                   Make sure cloud storage is configured before enabling cloud backups.
                 </div>
+              )}
+              {(destination === 'sftp' || destination === 'smb') && (
+                <>
+                  <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-muted)' }}>
+                    A local copy is always kept. Save and test these settings, then save the configuration below.
+                  </p>
+                  <RemoteBackupDestination kind={destination} />
+                </>
               )}
             </div>
 
@@ -441,7 +505,8 @@ export function BackupsPage() {
                       </span>
                     </td>
                     <td style={{ padding: '8px 8px', borderBottom: '1px solid var(--border)' }}>
-                      {record.status === 'success' && record.destination === 'local' ? (
+                      {/* Every destination keeps the local copy, so it can always be downloaded. */}
+                      {record.status === 'success' ? (
                         <button
                           className="btn btn-ghost"
                           style={{ fontSize: 11, padding: '3px 10px' }}
@@ -449,8 +514,6 @@ export function BackupsPage() {
                         >
                           Download
                         </button>
-                      ) : record.status === 'success' ? (
-                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Cloud</span>
                       ) : null}
                     </td>
                   </tr>
@@ -467,7 +530,12 @@ export function BackupsPage() {
               lineHeight: 1.5,
             }}
           >
-            Backups are AES-256-GCM encrypted. Keep your .env - you need SECRET_KEY to decrypt them.
+            Backups are AES-256-GCM encrypted
+            {config?.key_fingerprint && (
+              <> with key <code title="First 8 bytes of SHA-256 of BACKUP_ENCRYPTION_KEY">{config.key_fingerprint}</code></>
+            )}
+            . Keep a copy of {config?.key_source === 'dedicated' ? 'BACKUP_ENCRYPTION_KEY' : 'SECRET_KEY'} off
+            this host: you need it to restore them.
           </p>
         </SectionCard>
       </div>

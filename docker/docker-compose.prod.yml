@@ -8,6 +8,10 @@ x-backend-env: &backend-env
   DATABASE_URL: ${DATABASE_URL}
   REDIS_URL: ${REDIS_URL}
   SECRET_KEY: ${SECRET_KEY}
+  # Dedicated backup key (#149). Empty = fall back to the SECRET_KEY-derived
+  # key; the installer and upgrade.sh generate it.
+  BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+  BACKUP_LEGACY_SECRET_KEYS: ${BACKUP_LEGACY_SECRET_KEYS:-}
   STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
   STORAGE_PATH: /app/storage
   BASE_URL: ${BASE_URL}

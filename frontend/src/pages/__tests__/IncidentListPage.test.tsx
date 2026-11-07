@@ -5,10 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // #126-#128: the list is paged and sorted on the server, from URL state.
 const useIncidentsMock = vi.fn()
+const createMock = vi.fn()
 
 vi.mock('@/hooks/useIncident', () => ({
   useIncidents: (params: unknown) => useIncidentsMock(params),
-  useCreateIncident: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCreateIncident: () => ({ mutateAsync: createMock, isPending: false }),
   useIncidentTemplates: () => ({ data: [] }),
   useUpdateIncident: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteIncident: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -29,6 +30,7 @@ function incident(n: number) {
     severity: 'high',
     status: 'open',
     disposition: null,
+    source: 'siem_alert',
     assigned_to: null,
     assigned_user: null,
     external_refs: [],
@@ -120,5 +122,32 @@ describe('IncidentListPage', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Per page' }), { target: { value: '100' } })
 
     await waitFor(() => expect(lastParams()).toMatchObject({ per_page: 100, page: 1 }))
+  })
+
+  // #147: every new incident records what triggered it.
+  it('needs a source before an incident can be created', async () => {
+    createMock.mockResolvedValue({ id: 'new' })
+    renderAt('/incidents')
+
+    fireEvent.click(screen.getByRole('button', { name: /new incident/i }))
+    fireEvent.change(screen.getByPlaceholderText(/phishing campaign/i), { target: { value: 'Odd login' } })
+    const create = screen.getByRole('button', { name: 'Create Incident' })
+    expect(create).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Source'), { target: { value: 'cloud_alert' } })
+    fireEvent.click(create)
+
+    await waitFor(() => expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Odd login', source: 'cloud_alert' }),
+    ))
+  })
+
+  it('filters by source, including incidents with none recorded', async () => {
+    renderAt('/incidents')
+
+    fireEvent.change(screen.getByLabelText('Filter by source'), { target: { value: 'none' } })
+
+    await waitFor(() => expect(lastParams()).toMatchObject({ source: 'none', page: 1 }))
+    expect(location).toContain('source=none')
   })
 })

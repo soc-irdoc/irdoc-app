@@ -10,13 +10,20 @@ describe('incident list query', () => {
   })
 
   it('round-trips through the URL', () => {
-    const q = { page: 3, perPage: 50, status: 'contained' as const, search: 'phish', sort: 'severity' as const, order: 'desc' as const }
+    const q = { page: 3, perPage: 50, status: 'contained' as const, search: 'phish', source: 'none' as const, sort: 'severity' as const, order: 'desc' as const }
     expect(parseListQuery(toSearchParams(q))).toEqual(q)
   })
 
   it('ignores invalid values', () => {
     const q = parseListQuery(new URLSearchParams('page=-2&per_page=7&status=archived&sort=bogus&order=up'))
     expect(q).toEqual(DEFAULT_QUERY)
+  })
+
+  it('filters by source, including incidents without one (#147)', () => {
+    expect(parseListQuery(new URLSearchParams('source=siem_alert')).source).toBe('siem_alert')
+    expect(parseListQuery(new URLSearchParams('source=none')).source).toBe('none')
+    expect(parseListQuery(new URLSearchParams('source=bogus')).source).toBe('all')
+    expect(toApiParams({ ...DEFAULT_QUERY, source: 'none' }).source).toBe('none')
   })
 
   it('uses the natural first direction when only a sort is given', () => {
@@ -26,7 +33,7 @@ describe('incident list query', () => {
 
   it('maps to API params', () => {
     expect(toApiParams({ ...DEFAULT_QUERY, status: 'open', search: 'x' })).toEqual({
-      status: 'open', search: 'x', page: 1, per_page: 25, sort: 'created', order: 'desc',
+      status: 'open', search: 'x', source: undefined, page: 1, per_page: 25, sort: 'created', order: 'desc',
     })
     expect(toApiParams(DEFAULT_QUERY).status).toBeUndefined()
   })
