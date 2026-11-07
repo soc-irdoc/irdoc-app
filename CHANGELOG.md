@@ -11,6 +11,43 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.1.10-alpha] - 2026-11-07
+
+### Added
+
+- **Incident Source.** Every incident now records what triggered the investigation:
+  - User Reported / Requested
+  - SIEM Alert
+  - EDR / XDR Alert
+  - Threat Hunting (IOC / IOA)
+  - Threat Intelligence
+  - Network Security Alert (IDS/IPS, NDR, Firewall)
+  - Email Security / Phishing Report
+  - Cloud Security Alert
+  - External Notification
+  - Other
+
+  Source is required when creating an incident, and closing an incident asks for it if it's missing (the API returns `422 source_required`, or `disposition_and_source_required` when the Outcome is missing too). It shows as a chip in the incident header, where it can be changed in any status including closed, on the Summary page, on report covers and in the AI assistant's context. Changes are recorded in the audit log as `incident.source_changed`. Incidents created before upgrading have no source and show "Not recorded". The incidents list has a "Not recorded" source filter to find them, and marks them with a "NO SOURCE" chip. Incidents from the inbound webhook get "SIEM Alert" unless the request sends `source`. (#147)
+- **Evidence tab.** A read-only Evidence Register in the incident workspace lists every file collected for the incident: where it came from (the timeline entry, with a link to it, or the incident itself), type, size, SHA-256, who uploaded it and when, and the assets linked to its entry. Files whose SHA-256 matches a hash IOC are marked "MATCHES IOC". Filter by name or hash, source and type, hide screenshots, sort any column, and export the filtered list to CSV (recorded in the audit log as `evidence.exported`). Images, PDFs and plain-text files can be previewed; text is always shown as plain text. An IOCs view lists the incident's IOCs with their matching files. (#150)
+- **SFTP and SMB backup destinations.** Admin → Backups can now copy each backup to an SFTP server or to an SMB 3 file share, configured separately from Admin → Storage so backups can live away from the evidence they protect. SFTP requires you to confirm and pin the server's host key, and refuses any other key afterwards. SMB requires SMB 3 and encrypts the transfer by default. Passwords and private keys are stored encrypted and never shown again. A failed upload marks the backup as failed and keeps the local copy. Retention also deletes old backups at the destination, touching only IRDoc's own backup files. (#151)
+- **Backup tools** in the backend container: `python -m app.cli.backup decrypt` decrypts a backup, `rekey` re-encrypts older backups with the new backup key, and `verify` rechecks every stored attachment against the SHA-256 recorded at upload. (#149)
+
+### Changed
+
+- **Backups have their own encryption key**, `BACKUP_ENCRYPTION_KEY` in `docker/.env`, instead of a key derived from `SECRET_KEY`. Changing `SECRET_KEY` no longer makes backups unreadable. Each backup records the key it was made with, and Admin → Backups shows that key's fingerprint. New installs from the installer wizard get a key, and `upgrade.sh` adds one to existing installs (the wizard's upgrade flow doesn't, so add it by hand there). Without it, backups keep using the `SECRET_KEY`-derived key and the Backups page shows a warning. Backups made before 0.1.10 still restore with the `SECRET_KEY` they were made with; `BACKUP_LEGACY_SECRET_KEYS` lists older `SECRET_KEY` values. (#149)
+- **API: creating an incident requires `source`.** `POST /api/v1/incidents` without it returns `422`. The inbound webhook is unchanged. (#147)
+- **Error messages stay on screen** until you close them, instead of disappearing after 4 seconds. Warnings stay 6 seconds. At most five messages show at once, and repeated messages aren't stacked. (#139)
+- **Text files keep their type.** `.txt`, `.log`, `.csv` and `.json` uploads are now stored as text, so they can be previewed. Files uploaded before stay as they are. (#150)
+
+### Fixed
+
+- **Backups with the Cloud destination could report success without uploading anything** when no cloud storage was configured, ignored which storage backend was active, and with a local storage backend put backups inside later backups. A Cloud backup now fails with a clear error unless an S3, Azure Blob or GCS backend is active. (#151)
+- **The automatic hash check after an upload looked in the wrong storage.** It always read from the backend set by `STORAGE_BACKEND`, not the one configured in Admin → Storage, so with S3, Azure Blob or GCS it logged "file not found" instead of checking the file. It now reads each file from the backend it was stored on. (#149)
+
+### Security
+
+- **Dependencies updated for new advisories:** pyasn1 0.6.5 in the backend.
+
 ## [0.1.9-alpha] - 2026-10-29
 
 ### Changed
@@ -298,7 +335,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.9-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.10-alpha...main
+[0.1.10-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.9-alpha...v0.1.10-alpha
 [0.1.9-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.8-alpha...v0.1.9-alpha
 [0.1.8-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.7-alpha...v0.1.8-alpha
 [0.1.7-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.6-alpha...v0.1.7-alpha
