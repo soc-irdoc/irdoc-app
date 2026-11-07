@@ -505,7 +505,8 @@ export function BackupsPage() {
                       </span>
                     </td>
                     <td style={{ padding: '8px 8px', borderBottom: '1px solid var(--border)' }}>
-                      {record.status === 'success' && record.destination === 'local' ? (
+                      {/* Every destination keeps the local copy, so it can always be downloaded. */}
+                      {record.status === 'success' ? (
                         <button
                           className="btn btn-ghost"
                           style={{ fontSize: 11, padding: '3px 10px' }}
@@ -513,8 +514,6 @@ export function BackupsPage() {
                         >
                           Download
                         </button>
-                      ) : record.status === 'success' ? (
-                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Cloud</span>
                       ) : null}
                     </td>
                   </tr>
