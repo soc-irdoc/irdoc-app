@@ -4,6 +4,7 @@ The server's host key must be pinned: the admin confirms its fingerprint
 after the first "Test connection", and every later connection refuses any
 other key. There is no "accept any host key" mode.
 """
+import asyncio
 import posixpath
 import secrets
 from dataclasses import dataclass
@@ -38,7 +39,10 @@ async def fetch_host_key(host: str, port: int) -> tuple[str, str]:
     """The server's host key as (OpenSSH public key line, SHA256 fingerprint)."""
     asyncssh = _asyncssh()
     try:
-        key = await asyncssh.get_server_host_key(host, port, connect_timeout=CONNECT_TIMEOUT)
+        # get_server_host_key takes no timeout argument of its own.
+        key = await asyncio.wait_for(asyncssh.get_server_host_key(host, port), CONNECT_TIMEOUT)
+    except TimeoutError as exc:
+        raise RemoteBackupError(f"Could not reach {host}:{port}: timed out after {CONNECT_TIMEOUT}s") from exc
     except (OSError, asyncssh.Error) as exc:
         raise RemoteBackupError(f"Could not reach {host}:{port}: {exc}") from exc
     if key is None:
