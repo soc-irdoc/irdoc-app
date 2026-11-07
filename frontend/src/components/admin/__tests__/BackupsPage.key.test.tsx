@@ -18,7 +18,7 @@ function base(over: Partial<BackupConfig> = {}): BackupConfig {
   return {
     id: 'c', enabled: true, schedule: 'daily', retention_days: 90, destination: 'local',
     last_backup_at: null, last_backup_status: null, last_backup_error: null, last_backup_size_bytes: null,
-    key_fingerprint: 'ab12cd34ef567890', key_source: 'dedicated', legacy_backup_count: 0,
+    key_fingerprint: '0000111122223333', key_source: 'dedicated', legacy_backup_count: 0,
     ...over,
   }
 }
@@ -28,7 +28,7 @@ describe('BackupsPage encryption key', () => {
   it('shows the key fingerprint', () => {
     config = base()
     render(<BackupsPage />)
-    expect(screen.getByText('ab12cd34ef567890')).toBeInTheDocument()
+    expect(screen.getByText('0000111122223333')).toBeInTheDocument()
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
