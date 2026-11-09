@@ -66,11 +66,25 @@ def _sanitize_html(value: str) -> str:
                         protocols=["http", "https", "data"], strip=True)
 
 
+def format_ref(year: int, n: int) -> str:
+    """The canonical incident reference: INC-YYYY-NNNN (at least 4 digits)."""
+    return f"INC-{year}-{n:04d}"
+
+
+async def ref_exists(db: AsyncSession, ref: str) -> Incident | None:
+    """The incident holding `ref`, in any org (incident_ref is globally unique)."""
+    result = await db.execute(select(Incident).where(Incident.incident_ref == ref))
+    return result.scalar_one_or_none()
+
+
 async def generate_ref(db: AsyncSession, org_id: str) -> str:
     """
     Generates INC-YYYY-NNNN. Thread-safe via DB sequence.
     Uses a PostgreSQL sequence per org per year.
     Falls back to a count-based approach for SQLite (test environments).
+
+    Numbers already taken (e.g. set by a webhook caller's incident_number,
+    #156) are skipped, so the counter never collides with them.
     """
     from sqlalchemy.exc import OperationalError
 
@@ -83,8 +97,9 @@ async def generate_ref(db: AsyncSession, org_id: str) -> str:
         await db.execute(
             text(f"CREATE SEQUENCE IF NOT EXISTS {seq_name} START 1")
         )
-        result = await db.execute(text(f"SELECT nextval('{seq_name}')"))
-        n = result.scalar()
+
+        async def next_n() -> int:
+            return (await db.execute(text(f"SELECT nextval('{seq_name}')"))).scalar()
     except OperationalError:
         # SQLite fallback (test environments): use row count for uniqueness.
         # Do NOT rollback - the failed DDL statement does not taint the session.
@@ -94,9 +109,16 @@ async def generate_ref(db: AsyncSession, org_id: str) -> str:
                 Incident.incident_ref.like(f"{prefix}%")
             )
         )
-        n = (count_result.scalar() or 0) + 1
+        counter = [count_result.scalar() or 0]
 
-    return f"INC-{year}-{n:04d}"
+        async def next_n() -> int:
+            counter[0] += 1
+            return counter[0]
+
+    ref = format_ref(year, await next_n())
+    while await ref_exists(db, ref):
+        ref = format_ref(year, await next_n())
+    return ref
 
 
 async def create_incident(
@@ -106,8 +128,10 @@ async def create_incident(
     created_by: str | None = None,
     created_via: str = "ui",
     created_by_key_id: str | None = None,
+    incident_ref: str | None = None,
 ) -> Incident:
-    ref = await generate_ref(db, org_id)
+    """`incident_ref` overrides the generated reference; the caller checks it is free."""
+    ref = incident_ref or await generate_ref(db, org_id)
     incident = Incident(
         org_id=org_id,
         incident_ref=ref,
