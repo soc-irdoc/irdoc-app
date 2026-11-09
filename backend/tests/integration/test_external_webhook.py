@@ -127,3 +127,140 @@ async def test_webhook_accepts_https_external_url(client: AsyncClient, api_key_h
         headers=api_key_headers,
     )
     assert response.status_code == 201
+
+
+# --- incident_number: the ticket's number becomes the incident's (#156) ---
+
+def _ref(n: str) -> str:
+    from datetime import UTC, datetime
+    return f"INC-{datetime.now(UTC).year}-{n}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("number,expected", [
+    ("123456", "123456"),
+    (123456, "123456"),   # JSON number
+    ("42", "0042"),       # padded like generated refs
+    ("007", "0007"),
+])
+async def test_webhook_incident_number_sets_ref(client: AsyncClient, api_key_headers, number, expected):
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Ticket", "incident_number": number},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 201, response.text
+    assert response.json()["incident_ref"] == _ref(expected)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("number", ["12a", "", "0", "000", "-5", -5, "1" * 22, "12 34", True])
+async def test_webhook_incident_number_validation(client: AsyncClient, api_key_headers, number):
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Ticket", "incident_number": number},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_webhook_incident_number_max_length_fits(client: AsyncClient, api_key_headers):
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Ticket", "incident_number": "9" * 21},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 201, response.text
+    assert len(response.json()["incident_ref"]) == 30
+
+
+@pytest.mark.asyncio
+async def test_webhook_incident_number_duplicate_409(
+    client: AsyncClient, api_key_headers, db_session: AsyncSession
+):
+    from sqlalchemy import func, select
+
+    from app.models.incident import Incident
+
+    first = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Ticket", "incident_number": "555"},
+        headers=api_key_headers,
+    )
+    assert first.status_code == 201
+    second = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Retry", "incident_number": "0555"},  # same number, normalised
+        headers=api_key_headers,
+    )
+    assert second.status_code == 409
+    detail = second.json()["detail"]
+    assert detail["incident_ref"] == _ref("0555")
+    assert detail["incident_id"] == first.json()["incident_id"]  # same org: link to it
+
+    count = await db_session.scalar(
+        select(func.count()).select_from(Incident).where(Incident.incident_ref == _ref("0555"))
+    )
+    assert count == 1
+
+
+@pytest.mark.asyncio
+async def test_webhook_incident_number_duplicate_other_org_hides_id(
+    client: AsyncClient, api_key_headers, db_session: AsyncSession
+):
+    from app.models.incident import Incident
+    from app.models.organization import Organization
+
+    other = Organization(name="Other Org", slug="other-org-156")
+    db_session.add(other)
+    await db_session.flush()
+    db_session.add(Incident(org_id=other.id, incident_ref=_ref("0777"), title="Theirs"))
+    await db_session.flush()
+
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Ticket", "incident_number": "777"},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 409
+    assert "incident_id" not in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_webhook_incident_number_without_external_ref_has_no_badge(
+    client: AsyncClient, api_key_headers, db_session: AsyncSession
+):
+    from sqlalchemy import func, select
+
+    from app.models.incident import IncidentExternalRef
+
+    response = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Ticket", "incident_number": "123456"},
+        headers=api_key_headers,
+    )
+    assert response.status_code == 201
+    count = await db_session.scalar(
+        select(func.count()).select_from(IncidentExternalRef)
+        .where(IncidentExternalRef.incident_id == response.json()["incident_id"])
+    )
+    assert count == 0
+
+
+@pytest.mark.asyncio
+async def test_generated_refs_skip_numbers_taken_by_webhook(client: AsyncClient, api_key_headers):
+    taken = await client.post(
+        "/api/v1/external/incidents",
+        json={"title": "Ticket", "incident_number": "2"},
+        headers=api_key_headers,
+    )
+    assert taken.status_code == 201
+    refs = {taken.json()["incident_ref"]}
+    for _ in range(3):
+        r = await client.post(
+            "/api/v1/external/incidents", json={"title": "Auto"}, headers=api_key_headers
+        )
+        assert r.status_code == 201, r.text
+        refs.add(r.json()["incident_ref"])
+    assert len(refs) == 4  # no collisions with INC-YYYY-0002

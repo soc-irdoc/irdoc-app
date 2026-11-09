@@ -11,6 +11,10 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Added
+
+- **Use the ticket number as the incident number.** The inbound webhook (`POST /api/v1/external/incidents`) accepts an optional `incident_number`, so ticket 123456 in your service desk becomes `INC-2026-123456` in IRDoc. It must be digits only (up to 21) and is padded to 4 digits like generated numbers (`42` → `INC-2026-0042`). It can be sent as a string or a JSON number. If that number already exists this year, the request is rejected with `409` and nothing is created; the response links the existing incident. Incidents created in IRDoc keep their automatic numbers, which now skip any number already used by the webhook. It is separate from `external_ref`: send that too if you also want the external-ref badge. (#156)
+
 ## [0.1.10-alpha] - 2026-11-07
 
 ### Added
