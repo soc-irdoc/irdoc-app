@@ -22,7 +22,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.feature_flags import check_feature
 from app.models.organization import Organization
-from app.services import auth_service, session_service, sso_service
+from app.services import session_service, sso_service
 
 logger = logging.getLogger(__name__)
 
@@ -224,35 +224,30 @@ async def oidc_callback(
             detail="OIDC token missing email - ensure the 'email' scope is consented in your App Registration",
         )
 
-    # Role from group object IDs mapped in config
-    groups: list[str] = claims.get("groups", [])
-    role = "analyst"
-    for group in groups:
-        if group in (cfg.role_mappings or {}):
-            role = cfg.role_mappings[group]
-            break
+    # Role from the mapped group / app-role / user object IDs (#172)
+    mapped_role = sso_service.resolve_sso_role(claims, cfg.role_mappings)
+    if cfg.role_mappings and mapped_role is None:
+        if "_claim_names" in claims and "groups" in claims.get("_claim_names", {}):
+            logger.warning(
+                "SSO sign-in for %s: the user is in too many groups for Entra to put them in the "
+                "token (group overage), so group role mappings cannot match. Map an app role or "
+                "the user's object ID instead, or limit the groups claim to assigned groups.",
+                email,
+            )
+        elif "groups" not in claims:
+            logger.warning(
+                "SSO sign-in for %s: role mappings are configured but the ID token has no "
+                "'groups' claim. Enable Groups under App Registration → Token configuration.",
+                email,
+            )
+        else:
+            logger.info("SSO sign-in for %s: no role mapping matched the token's groups/roles/oid", email)
 
     # Provision user
     try:
-        existing = await auth_service.get_user_by_email(db, email)
-        if existing:
-            if full_name and existing.full_name != full_name:
-                existing.full_name = full_name
-                initials = "".join(p[0].upper() for p in full_name.split()[:2])
-                existing.avatar_initials = initials or full_name[:2].upper()
-            existing.auth_provider = "oidc"
-            user = existing
-        else:
-            temp_password = secrets.token_urlsafe(32)
-            user = await auth_service.register_user(
-                db,
-                email=email,
-                full_name=full_name,
-                password=temp_password,
-                org_id=str(org.id),
-                role=role,
-            )
-            user.auth_provider = "oidc"
+        user = await sso_service.provision_oidc_user(
+            db, org=org, email=email, full_name=full_name, mapped_role=mapped_role,
+        )
         await db.commit()
     except Exception as exc:
         logger.error("User provisioning during OIDC callback failed: %s", exc)

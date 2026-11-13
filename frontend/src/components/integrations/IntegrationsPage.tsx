@@ -499,7 +499,9 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
               {subCard('Role Mappings',
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-                    Map Azure AD group Object IDs to IRDoc roles. Unmapped users receive the Analyst role by default.
+                    Map Entra group Object IDs, app role values, or a user&apos;s Object ID to IRDoc roles. Mappings are
+                    applied on every sign-in; if several match, the most privileged role wins. New users with no match
+                    get the Analyst role, and existing users with no match keep their current role.
                     To include group claims, enable <strong>Groups</strong> in your App Registration → Token configuration.
                   </p>
                   {roleMappings.map((mapping, i) => (
@@ -508,7 +510,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                         type="text"
                         className="form-input"
                         style={{ flex: 1 }}
-                        placeholder="Azure AD group Object ID (GUID)"
+                        placeholder="Group / user Object ID (GUID) or app role"
                         value={mapping.group}
                         onChange={(e) => setRoleMappings((prev) => prev.map((m, idx) => idx === i ? { ...m, group: e.target.value } : m))}
                       />
