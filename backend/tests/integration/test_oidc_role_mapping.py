@@ -109,3 +109,40 @@ async def test_existing_user_keeps_manual_role_when_nothing_matches(db_session: 
         db_session, org=org, email="senior@test.com", full_name="Doe, Jane", mapped_role=None,
     )
     assert user.role == "senior_analyst"
+
+
+@pytest.mark.asyncio
+async def test_last_admin_is_not_demoted_by_a_mapping(db_session: AsyncSession, admin_user):
+    admin, org = admin_user  # the only admin in the org
+
+    user = await provision_oidc_user(
+        db_session, org=org, email=admin.email, full_name="Test Admin", mapped_role="analyst",
+    )
+    assert user.role == "admin"
+
+
+@pytest.mark.asyncio
+async def test_admin_is_demoted_when_another_admin_remains(db_session: AsyncSession, admin_user):
+    _, org = admin_user
+    await _make_user(db_session, org, "second.admin@test.com", "admin")
+
+    user = await provision_oidc_user(
+        db_session, org=org, email="second.admin@test.com", full_name="Doe, Jane", mapped_role="analyst",
+    )
+    assert user.role == "analyst"
+
+
+@pytest.mark.asyncio
+async def test_role_is_not_synced_onto_a_user_in_another_org(db_session: AsyncSession, admin_user):
+    from app.models.organization import Organization
+
+    _, org = admin_user
+    other = Organization(name="Other Org", slug="other")
+    db_session.add(other)
+    await db_session.flush()
+    await _make_user(db_session, other, "outsider@test.com", "viewer")
+
+    user = await provision_oidc_user(
+        db_session, org=org, email="outsider@test.com", full_name="Doe, Jane", mapped_role="admin",
+    )
+    assert user.role == "viewer"

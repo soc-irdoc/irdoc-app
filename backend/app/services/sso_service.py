@@ -147,19 +147,46 @@ async def provision_oidc_user(
         user.avatar_initials = initials or full_name[:2].upper()
     user.auth_provider = "oidc"
 
-    if mapped_role and user.role != mapped_role:
-        old_role = user.role
-        user.role = mapped_role
-        logger.info("SSO role mapping changed %s from %s to %s", email, old_role, mapped_role)
-        await audit_service.log(
-            db,
-            org_id=str(user.org_id),
-            user_id=str(user.id),
-            actor_label="SSO",
-            action="user.role_changed",
-            entity_type="user",
-            entity_id=str(user.id),
-            entity_label=email,
-            diff={"old_role": old_role, "new_role": mapped_role, "via": "sso"},
-        )
+    if not mapped_role or user.role == mapped_role:
+        return user
+
+    # Only sync roles onto accounts in the org this SSO config belongs to
+    if str(user.org_id) != str(org.id):
+        logger.warning("SSO role mapping skipped for %s: account belongs to another org", email)
+        return user
+
+    # Same invariant as the manual role endpoint: never demote the last admin
+    if user.role == "admin" and mapped_role != "admin":
+        from sqlalchemy import func
+
+        from app.models.user import User
+
+        admin_count = (await db.execute(
+            select(func.count()).select_from(User).where(
+                User.org_id == user.org_id,
+                User.role == "admin",
+                User.is_active == True,  # noqa: E712
+            )
+        )).scalar() or 0
+        if admin_count <= 1:
+            logger.warning(
+                "SSO role mapping would demote %s, the last admin, to %s - keeping admin",
+                email, mapped_role,
+            )
+            return user
+
+    old_role = user.role
+    user.role = mapped_role
+    logger.info("SSO role mapping changed %s from %s to %s", email, old_role, mapped_role)
+    await audit_service.log(
+        db,
+        org_id=str(user.org_id),
+        user_id=str(user.id),
+        actor_label="SSO",
+        action="user.role_changed",
+        entity_type="user",
+        entity_id=str(user.id),
+        entity_label=email,
+        diff={"old_role": old_role, "new_role": mapped_role, "via": "sso"},
+    )
     return user
