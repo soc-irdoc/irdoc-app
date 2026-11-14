@@ -7,6 +7,7 @@ import { useUpdateTimelineEntry } from '@/hooks/useTimeline'
 import { useAssets, useLinkAssetsToEntry, useUnlinkAssetFromEntry, useEntryAssets } from '@/hooks/useAssets'
 import { useIOCs, useIOCLinks, useSetIOCLink } from '@/hooks/useIOCs'
 import { IOCPicker } from './IOCPicker'
+import { TimeSpentInput } from './TimeSpentInput'
 import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
 import { uploadErrorMessage } from '@/lib/utils'
@@ -66,6 +67,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
   const [time, setTime] = useState('')
   const [description, setDescription] = useState('')
   const [source, setSource] = useState('')
+  const [timeSpent, setTimeSpent] = useState<number | null>(null)
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<Set<string>>(new Set())
   const [localLinkedAssetIds, setLocalLinkedAssetIds] = useState<Set<string>>(new Set())
@@ -81,6 +83,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
     setTime(`${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`)
     setDescription(entry.description)
     setSource(entry.source ?? '')
+    setTimeSpent(entry.time_spent_minutes ?? null)
     setNewFiles([])
     setRemovedAttachmentIds(new Set())
     // Deliberately keyed on entry?.id only: re-init the form when a *different*
@@ -169,6 +172,8 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
       occurred_at,
       description: description.trim(),
       source: source.trim() || undefined,
+      // Always sent, so clearing the field clears it on the server (#165)
+      time_spent_minutes: timeSpent,
     }
 
     try {
@@ -310,6 +315,11 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
             </div>
           </div>
         )}
+
+        {/* Effort (#165) */}
+        <div style={{ marginTop: 12, marginBottom: 12 }}>
+          <TimeSpentInput id="edit-entry-time-spent" value={timeSpent} onChange={setTimeSpent} />
+        </div>
 
         {/* New attachment upload */}
         <AttachmentZone files={newFiles} onFilesChange={setNewFiles} />

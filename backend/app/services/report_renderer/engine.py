@@ -77,6 +77,10 @@ def _build_jinja_env() -> jinja2.Environment:
     env.filters["format_dt"] = format_dt
     env.filters["filesize"] = filesize
     env.filters["sanitize_html"] = sanitize_html
+    # Time Spent block (#165)
+    from app.services.report_renderer.time_charts import format_minutes, type_label
+    env.filters["minutes"] = format_minutes
+    env.filters["entry_type_label"] = type_label
     env.globals["resolve_field"] = resolve_field
     env.globals["is_supported_field"] = is_supported_field
     return env

@@ -11,6 +11,7 @@ const incident = {
 }
 const aiState = { enabled: false, disabled: true }
 
+const timelineEntries = vi.hoisted(() => [] as Array<{ time_spent_minutes?: number | null }>)
 vi.mock('@/hooks/useIncident', () => ({
   useIncident: () => ({ data: incident, isLoading: false }),
   useUpdateIncident: () => ({ mutateAsync: vi.fn(), mutate: vi.fn() }),
@@ -20,6 +21,7 @@ vi.mock('@/hooks/useAiConfig', async (orig) => ({
   useAiStatus: () => aiState,
 }))
 vi.mock('@/components/common/RichTextEditor', () => ({ RichTextEditor: () => <div /> }))
+vi.mock('@/hooks/useTimeline', () => ({ useTimeline: () => ({ data: timelineEntries }) }))
 vi.mock('@/lib/websocket', () => ({ getSocket: () => ({ on: vi.fn(), off: vi.fn() }) }))
 
 function renderPage() {

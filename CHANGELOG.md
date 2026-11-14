@@ -13,6 +13,12 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ### Added
 
+- **Time spent.** Timeline entries have an optional **Time spent** field: type the minutes or click 5m / 15m / 30m / 1h. Left empty, the entry counts as "not tracked", not as 0. The time shows on the entry, and the Summary tab totals it. A new **Time Spent** report block (also in the standard report when there is data) shows:
+  - the effort: a table of entries with their time, a total, and a chart by entry type;
+  - an activity window chart: when each kind of work happened, from the first to the last entry of each type, with when the incident was opened, contained and closed.
+
+  The activity window comes from entry times. It shows when work happened, not how long it took, and is never added to the effort. Each part can be switched off in the report template editor. (#165)
+
 - **Link IOCs to the timeline entries they were seen in.** When adding or editing a timeline entry, pick the incident's IOCs under **Link IOCs**, the same way assets are linked. On the IOCs page, expand an IOC to tick the entries it was seen in; IOCs with links show a "SEEN IN n" chip. The Evidence tab now uses these links: the IOC view lists each IOC's entries, with a link to each and a count of their files, and file rows show chips for the IOCs linked to their entry (hidden from roles that can't read IOCs). Links are recorded in the audit log as `ioc.linked` / `ioc.unlinked`. API: `POST` / `DELETE /api/v1/incidents/{id}/iocs/{ioc_id}/links/{entry_id}`, and `GET /api/v1/incidents/{id}/ioc-links`. (#152)
 
 - **Set the source of many incidents at once.** In the incidents list, tick incidents (or the whole page), then choose **Set source…**. By default only incidents with no source recorded are changed, and the dialog says how many will change before you confirm. Tick "Also replace sources that are already set" to overwrite. Each change is recorded in the audit log as `incident.source_changed`, like a single edit. This is the quick way to work through the "Not recorded" filter after upgrading. API: `POST /api/v1/incidents/bulk/source` with `ids` (up to 500), `source` and `overwrite`. (#153)

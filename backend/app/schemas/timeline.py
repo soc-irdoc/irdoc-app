@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# Whole minutes, 0 to 24 hours; strict so "ten" or 2.5 are refused (#165)
+TimeSpent = Annotated[int, Field(ge=0, le=1440, strict=True)]
 
 
 class TimelineEntryCreate(BaseModel):
@@ -12,6 +15,8 @@ class TimelineEntryCreate(BaseModel):
     source: str = "manual"
     is_pinned: bool = False
     metadata: dict = {}
+    # Optional effort in minutes, up to 24 hours (#165)
+    time_spent_minutes: TimeSpent | None = None
 
 
 class TimelineEntryUpdate(BaseModel):
@@ -21,6 +26,8 @@ class TimelineEntryUpdate(BaseModel):
     source: str | None = None
     is_pinned: bool | None = None
     metadata: dict | None = None
+    # Sent as null to clear (the service applies it only when present).
+    time_spent_minutes: TimeSpent | None = None
 
 
 class AttachmentBrief(BaseModel):
@@ -43,6 +50,7 @@ class TimelineEntryOut(BaseModel):
     source: str
     is_pinned: bool
     metadata: dict
+    time_spent_minutes: int | None = None
     created_at: datetime
     updated_at: datetime
     attachments: list[AttachmentBrief] = []

@@ -28,6 +28,7 @@ async def create_entry(
         source=data.source,
         is_pinned=data.is_pinned,
         metadata_=data.metadata,
+        time_spent_minutes=data.time_spent_minutes,
     )
     db.add(entry)
     await db.flush()
@@ -76,7 +77,11 @@ async def get_entry(
 async def update_entry(
     db: AsyncSession, entry: TimelineEntry, data: TimelineEntryUpdate
 ) -> TimelineEntry:
-    for key, value in data.model_dump(exclude_none=True).items():
+    updates = data.model_dump(exclude_none=True)
+    # time_spent_minutes can be cleared: an explicit null counts (#165).
+    if "time_spent_minutes" in data.model_fields_set:
+        updates["time_spent_minutes"] = data.time_spent_minutes
+    for key, value in updates.items():
         if key == "metadata":
             entry.metadata_ = value
         else:

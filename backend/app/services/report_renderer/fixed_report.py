@@ -62,6 +62,15 @@ _FIXED_SECTIONS = [
         "block": lambda p, classification: {"type": "timeline"},
     },
     {
+        # Effort entered on entries, or at least two entries to draw the
+        # activity windows (#165)
+        "type": "time_spent",
+        "has_data": lambda p: bool(
+            (p.time_effort and p.time_effort.tracked_entries) or p.time_activity_svg
+        ),
+        "block": lambda p, classification: {"type": "time_spent"},
+    },
+    {
         "type": "ioc_table",
         "has_data": lambda p: len(p.iocs) > 0,
         "block": lambda p, classification: {"type": "ioc_table"},

@@ -4,6 +4,7 @@ import { useCreateTimelineEntry } from '@/hooks/useTimeline'
 import { useAssets, useLinkAssetsToEntry } from '@/hooks/useAssets'
 import { useIOCs, useSetIOCLink } from '@/hooks/useIOCs'
 import { IOCPicker } from './IOCPicker'
+import { TimeSpentInput } from './TimeSpentInput'
 import { AttachmentZone } from './AttachmentZone'
 import { Button } from '@/components/common/Button'
 import { useUIStore } from '@/stores/uiStore'
@@ -41,6 +42,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
   const [time, setTime] = useState(formatNowTime())
   const [description, setDescription] = useState('')
   const [source, setSource] = useState('')
+  const [timeSpent, setTimeSpent] = useState<number | null>(null)
   const [files, setFiles] = useState<File[]>([])
   const [focused, setFocused] = useState(false)
   // Live mode: date/time follow the clock so "happening now" entries need no
@@ -95,6 +97,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         occurred_at,
         description: description.trim(),
         source: source.trim() || undefined,
+        time_spent_minutes: timeSpent ?? undefined,
       })
 
       // Upload attachments if any - track successes and failures for a consolidated toast
@@ -150,6 +153,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       // Reset form
       setDescription('')
       setSource('')
+      setTimeSpent(null)
       setFiles([])
       resumeLive()
       setSelectedAssetIds(new Set())
@@ -321,6 +325,11 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         />
       </div>
 
+      {/* Effort (#165) */}
+      <div style={{ marginBottom: 10 }}>
+        <TimeSpentInput id="new-entry-time-spent" value={timeSpent} onChange={setTimeSpent} />
+      </div>
+
       {/* Attachment zone */}
       <AttachmentZone files={files} onFilesChange={setFiles} />
 
@@ -446,6 +455,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
           onClick={() => {
             setDescription('')
             setSource('')
+            setTimeSpent(null)
             setFiles([])
             setSelectedAssetIds(new Set())
             setSelectedIocIds(new Set())
