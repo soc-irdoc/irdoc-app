@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # BASE_URL is https, off otherwise (#157). Set true/false to override,
     # e.g. false for a deliberately plain-HTTP install behind an https URL.
     COOKIE_SECURE: bool | None = None
+    # Take the client IP from the X-Real-IP header nginx sets (#160). Turn off
+    # only if port 8000 is reachable without going through IRDoc's nginx.
+    TRUST_X_REAL_IP: bool = True
 
     # Backups (#149). Dedicated AES-256 key for backup files: 64 hex chars
     # (openssl rand -hex 32). Unset or empty = fall back to the key derived

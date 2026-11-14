@@ -247,6 +247,12 @@ application.include_router(version.router, prefix=API_PREFIX)
 # ── Combined ASGI app (Socket.io + FastAPI) ─────────────────────────────────
 import socketio as _sio_lib  # noqa: E402
 
+from app.core.real_ip import RealIPMiddleware  # noqa: E402
 from app.sio import sio  # noqa: E402
 
-app = _sio_lib.ASGIApp(sio, other_asgi_app=application)
+# Outermost, so the rate limiter, audit log and Socket.IO all see the real
+# client address instead of the nginx container's (#160).
+app = RealIPMiddleware(
+    _sio_lib.ASGIApp(sio, other_asgi_app=application),
+    trust=settings.TRUST_X_REAL_IP,
+)
