@@ -20,6 +20,13 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
   The load-balancer templates trust `X-Forwarded-For` only from the addresses you list, so the audit log shows real client IPs. `lb-terminate.conf` passes on the load balancer's `X-Forwarded-Proto`. `demo-https.conf` has been renamed to `https.conf`; the old name stays for this release only. The installer generates the same configs. (#160)
 
+- **Installer: load balancer setup.** The HTTPS step asks whether IRDoc sits behind a load balancer that terminates TLS (forwards HTTP to port 80) or re-encrypts (HTTPS to port 443). It then asks for:
+  - the public `https://` URL users type, which becomes `BASE_URL`;
+  - the addresses the load balancer connects from, the only ones trusted to report client IPs;
+  - for re-encryption, a certificate for this server: self-signed, with the server name, public name and server IP pre-filled, or imported.
+
+  The final page lists the pool port, the health-check URL and the firewall rule (ports 80/443 only from the load balancer). Load balancer installs now get an `https://` `BASE_URL` and Secure cookies; the old option wrote an `http://` one. (#161)
+
 ### Fixed
 
 - **SSO role mappings now take effect.** Previously a mapping was only used the first time someone signed in, so anyone whose account already existed stayed an Analyst whatever the mapping said. Now:

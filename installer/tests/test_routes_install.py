@@ -24,10 +24,14 @@ async def test_https_mode_page_loads(client):
 
 @pytest.mark.asyncio
 async def test_set_behind_lb_mode(client):
-    resp = await client.post("/https-mode/set", data={"mode": "behind_lb"}, follow_redirects=False)
+    # The pre-0.2 mode name still works; it now needs the public URL and the
+    # load balancer's addresses (#161).
+    resp = await client.post("/https-mode/set", data={
+        "mode": "behind_lb", "public_url": "https://irdoc.test", "lb_subnets": "10.0.0.0/8",
+    }, follow_redirects=False)
     assert resp.status_code in (302, 307)
     from installer.wizard import state
-    assert state.https_mode == "behind_lb"
+    assert state.https_mode == "lb_terminate"
 
 
 @pytest.mark.asyncio
@@ -203,8 +207,10 @@ async def test_install_flow_state_accumulates(client):
     state.admin_email = None
 
     # Step 2: set HTTPS mode
-    await client.post("/https-mode/set", data={"mode": "behind_lb"})
-    assert state.https_mode == "behind_lb"
+    await client.post("/https-mode/set", data={
+        "mode": "lb_terminate", "public_url": "https://irdoc.test", "lb_subnets": "10.0.0.0/8",
+    })
+    assert state.https_mode == "lb_terminate"
 
     # Step 3-4: configure secrets
     await client.post("/core-config", data={

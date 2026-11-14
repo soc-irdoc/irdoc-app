@@ -10,8 +10,28 @@
 </div>
 {% endif %}
 
-{% if not show_selfsigned %}
-<div x-data="{ selected: '' }">
+{% if lb_error %}
+<div class="card error mt-2">
+  <strong>Load balancer settings:</strong> {{ lb_error }}
+</div>
+{% endif %}
+
+{% if lb_import %}
+<!-- Re-encrypting load balancer: import this server's certificate (#161) -->
+<div class="card mt-4">
+  <strong>Certificate for this server</strong>
+  <p class="text-sm text-muted mt-1">The load balancer connects to this server over HTTPS on port 443 with this certificate.</p>
+  <form method="post" action="/https-mode/upload-pfx" enctype="multipart/form-data">
+    <input type="hidden" name="for_lb" value="1">
+    <label class="mt-4">PFX / P12 file</label>
+    <input type="file" name="pfx_file" accept=".pfx,.p12" required>
+    <label class="mt-4">Passphrase</label>
+    <input type="password" name="passphrase" placeholder="Certificate passphrase" required>
+    <button type="submit" class="btn btn-primary mt-4">Upload &amp; Verify</button>
+  </form>
+</div>
+{% elif not show_selfsigned %}
+<div x-data="{ selected: '{{ lb_mode or '' }}' }">
 
   <!-- Card A: Import PFX -->
   <div class="card mt-4" :class="selected === 'import' ? 'selected' : ''" @click="selected = 'import'" style="cursor:pointer">
@@ -25,10 +45,16 @@
     <p class="text-sm text-muted mt-1">Browser will show a warning, but traffic is encrypted. Fine for internal use.</p>
   </div>
 
-  <!-- Card C: Behind LB -->
-  <div class="card" :class="selected === 'behind_lb' ? 'selected' : ''" @click="selected = 'behind_lb'" style="cursor:pointer">
-    <strong>Behind Load Balancer (AVI / F5 / etc.)</strong>
-    <p class="text-sm text-muted mt-1">TLS is terminated at your load balancer. The app receives plain HTTP internally.</p>
+  <!-- Card C: Load balancer terminates TLS (#161) -->
+  <div class="card" :class="selected === 'lb_terminate' ? 'selected' : ''" @click="selected = 'lb_terminate'" style="cursor:pointer">
+    <strong>Behind a load balancer that terminates TLS</strong>
+    <p class="text-sm text-muted mt-1">Avi, F5, HAProxy, a cloud LB, ... handles HTTPS and forwards plain HTTP to this server on port 80.</p>
+  </div>
+
+  <!-- Card D: Load balancer re-encrypts (#161) -->
+  <div class="card" :class="selected === 'lb_reencrypt' ? 'selected' : ''" @click="selected = 'lb_reencrypt'" style="cursor:pointer">
+    <strong>Behind a load balancer that re-encrypts</strong>
+    <p class="text-sm text-muted mt-1">The load balancer handles HTTPS and opens a new HTTPS connection to this server on port 443.</p>
   </div>
 
   <!-- Import PFX form (shown when import selected) -->
@@ -50,15 +76,32 @@
     </form>
   </div>
 
-  <!-- Behind LB: submit directly -->
-  <div x-show="selected === 'behind_lb'" class="mt-4">
-    <div class="card warning">
-      <strong>Important:</strong> Your load balancer must forward
-      <code>X-Forwarded-Proto: https</code> and <code>X-Forwarded-For</code> headers to this server.
-    </div>
-    <form method="post" action="/https-mode/set" class="mt-2">
-      <input type="hidden" name="mode" value="behind_lb">
-      <button type="submit" class="btn btn-primary">Continue →</button>
+  <!-- Load balancer details (both LB modes) -->
+  <div x-show="selected === 'lb_terminate' || selected === 'lb_reencrypt'" class="card mt-4">
+    <form method="post" action="/https-mode/set">
+      <input type="hidden" name="mode" :value="selected">
+
+      <label>Public URL</label>
+      <input type="text" name="public_url" value="{{ lb_public_url or state.public_url }}" placeholder="https://irdoc.example.com" required>
+      <p class="field-hint">The https:// address users type, which points at the load balancer. IrDoc uses it for links, cookies and allowed origins.</p>
+
+      <label class="mt-4">Load balancer addresses</label>
+      <input type="text" name="lb_subnets" value="{{ lb_subnets_raw or state.lb_subnets | join(', ') }}" placeholder="10.20.0.0/24, 10.20.1.5" required>
+      <p class="field-hint">IP addresses or subnets the load balancer connects to this server from (its SNAT / service-engine addresses), comma-separated. Only these are trusted to say who the client is, so the audit log and login rate limit see real client IPs.</p>
+
+      <div x-show="selected === 'lb_terminate'" class="card warning mt-4">
+        The load balancer must send <code>X-Forwarded-For</code> and <code>X-Forwarded-Proto: https</code>.
+      </div>
+
+      <div x-show="selected === 'lb_reencrypt'" class="mt-4">
+        <label>Certificate for this server</label>
+        <select name="lb_cert">
+          <option value="selfsigned">Generate a self-signed certificate (fine if the load balancer doesn't validate it)</option>
+          <option value="import">Import a certificate (PFX / P12)</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-4">Continue →</button>
     </form>
   </div>
 
@@ -67,12 +110,16 @@
 {% else %}
 <!-- Self-signed configuration form -->
 <form method="post" action="/https-mode/generate-selfsigned">
+  {% if for_lb %}
+  <input type="hidden" name="for_lb" value="1">
+  <p class="text-sm text-muted">The load balancer connects to this server over HTTPS on port 443 with this certificate.</p>
+  {% endif %}
   <label>Common Name (hostname)</label>
   <input type="text" name="common_name" value="{{ hostname }}" required>
   <p class="field-hint">The primary hostname or IP users will access IrDoc at.</p>
 
   <label class="mt-4">Subject Alternative Names <span class="text-muted">(optional)</span></label>
-  <input type="text" name="san" placeholder="192.168.1.10, irdoc.internal">
+  <input type="text" name="san" value="{{ san_default or '' }}" placeholder="192.168.1.10, irdoc.internal">
   <p class="field-hint">Comma-separated additional IPs or hostnames.</p>
 
   <button type="submit" class="btn btn-primary mt-6">Generate Certificate →</button>

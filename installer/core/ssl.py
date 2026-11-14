@@ -89,11 +89,13 @@ _TLS_SETTINGS = """
 """
 
 
-def _normalise_subnets(lb_subnets: list[str] | None) -> list[str]:
+def normalise_lb_subnets(lb_subnets: list[str] | None) -> list[str]:
     """Validate load-balancer addresses/subnets; a bare IP becomes a /32 or /128."""
     result = []
     for raw in lb_subnets or []:
         value = raw.strip()
+        if not value and len(lb_subnets) > 1:
+            continue  # stray comma in a list
         try:
             result.append(str(ipaddress.ip_network(value, strict=False)))
         except ValueError:
@@ -132,7 +134,7 @@ def generate_nginx_conf(mode: str, lb_subnets: list[str] | None = None) -> str:
         raise ValueError(f"Unknown nginx mode: {mode!r}")
     if mode == "behind_lb":
         mode = "lb_terminate"
-    subnets = _normalise_subnets(lb_subnets)
+    subnets = normalise_lb_subnets(lb_subnets)
 
     upstream = "upstream backend {\n    server irdoc-backend:8000;\n}\n\n"
     proto = "$scheme"

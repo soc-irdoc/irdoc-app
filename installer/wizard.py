@@ -55,7 +55,10 @@ class WizardState(BaseModel):
     mode: str = "install"          # "install" | "upgrade" | "reconfigure"
 
     # Step 2 — HTTPS
-    https_mode: Optional[str] = None  # "import" | "selfsigned" | "behind_lb"
+    # "import" | "selfsigned" | "lb_terminate" | "lb_reencrypt" (#161)
+    https_mode: Optional[str] = None
+    public_url: str = ""          # LB modes: the https:// URL users type
+    lb_subnets: list[str] = []    # LB modes: addresses the LB connects from
     cert_pem: Optional[str] = None
     key_pem: Optional[str] = None
     cert_cn: Optional[str] = None
@@ -211,36 +214,89 @@ async def prerequisites(request: Request):
 
 
 @app.get("/https-mode")
-async def https_mode_page(request: Request):
+async def https_mode_page(request: Request, lb_import: int = 0):
     hostname = socket.getfqdn()
     return templates.TemplateResponse(request, "https_mode.html",
-        _template_context(hostname=hostname))
+        _template_context(hostname=hostname, lb_import=bool(lb_import) and state.https_mode == "lb_reencrypt"))
+
+
+LB_MODES = ("lb_terminate", "lb_reencrypt")
+
+
+def _server_ip() -> str:
+    try:
+        return socket.gethostbyname(socket.getfqdn())
+    except OSError:
+        return ""
 
 
 @app.post("/https-mode/set")
-async def set_https_mode(mode: str = Form(...)):
+async def set_https_mode(
+    request: Request,
+    mode: str = Form(...),
+    public_url: str = Form(""),
+    lb_subnets: str = Form(""),
+    lb_cert: str = Form("selfsigned"),
+):
+    if mode == "behind_lb":  # pre-0.2 name
+        mode = "lb_terminate"
+    if mode in LB_MODES:
+        url = public_url.strip().rstrip("/")
+        error = None
+        if not url.lower().startswith("https://") or len(url) <= len("https://"):
+            error = "Enter the public URL users type, starting with https://"
+        subnets: list[str] = []
+        if not lb_subnets.strip():
+            # Without it every client shows up as the load balancer: one audit-log
+            # IP for everyone, and one shared login rate limit.
+            error = error or "Enter the address or subnet your load balancer connects from"
+        else:
+            try:
+                subnets = ssl_core.normalise_lb_subnets(lb_subnets.replace(";", ",").split(","))
+            except ValueError as e:
+                error = error or str(e)
+        if error:
+            return templates.TemplateResponse(request, "https_mode.html", _template_context(
+                hostname=socket.getfqdn(), lb_error=error, lb_mode=mode,
+                lb_public_url=public_url, lb_subnets_raw=lb_subnets))
+        state.https_mode = mode
+        state.public_url = url
+        state.base_url = url
+        state.lb_subnets = subnets
+        if mode == "lb_reencrypt":
+            if lb_cert == "import":
+                return RedirectResponse("/https-mode?lb_import=1", status_code=302)
+            return RedirectResponse("/https-mode/selfsigned", status_code=302)
+        return RedirectResponse("/core-config", status_code=302)
+
     state.https_mode = mode
     if mode == "selfsigned":
         return RedirectResponse("/https-mode/selfsigned", status_code=302)
-    # "behind_lb" — no cert needed, go straight to core config
     return RedirectResponse("/core-config", status_code=302)
 
 
 @app.get("/https-mode/selfsigned")
 async def selfsigned_page(request: Request):
     hostname = socket.getfqdn()
+    san_default = ""
+    for_lb = state.https_mode == "lb_reencrypt"
+    if for_lb:
+        # The LB may check the name it connects to, the public name, or the IP.
+        public_host = state.public_url.split("://", 1)[-1].split("/", 1)[0].split(":", 1)[0]
+        san_default = ", ".join(x for x in (public_host, _server_ip()) if x and x != hostname)
     return templates.TemplateResponse(request, "https_mode.html",
-        _template_context(hostname=hostname, show_selfsigned=True))
+        _template_context(hostname=hostname, show_selfsigned=True, san_default=san_default, for_lb=for_lb))
 
 
 @app.post("/https-mode/generate-selfsigned")
 async def generate_selfsigned(
     common_name: str = Form(...),
     san: str = Form(""),
+    for_lb: str = Form(""),
 ):
     san_list = [s.strip() for s in san.split(",") if s.strip()]
     cert_pem, key_pem = ssl_core.generate_self_signed(common_name, san_list)
-    state.https_mode = "selfsigned"
+    state.https_mode = "lb_reencrypt" if for_lb and state.https_mode == "lb_reencrypt" else "selfsigned"
     state.cert_pem = cert_pem
     state.key_pem = key_pem
     state.cert_cn = common_name
@@ -253,6 +309,7 @@ async def upload_pfx(
     request: Request,
     pfx_file: UploadFile = File(...),
     passphrase: str = Form(...),
+    for_lb: str = Form(""),
 ):
     pfx_bytes = await pfx_file.read()
     hostname = socket.getfqdn()
@@ -261,7 +318,7 @@ async def upload_pfx(
     except ValueError as e:
         return templates.TemplateResponse(request, "https_mode.html",
             _template_context(hostname=hostname, pfx_error=str(e)))
-    state.https_mode = "import"
+    state.https_mode = "lb_reencrypt" if for_lb and state.https_mode == "lb_reencrypt" else "import"
     state.cert_pem = cert_pem
     state.key_pem = key_pem
     state.cert_cn = cn
@@ -279,8 +336,8 @@ async def core_config_page(request: Request):
     if not state.backup_encryption_key:
         state.backup_encryption_key = generate_secrets()["backup_encryption_key"]
     if not state.base_url:
-        prefix = "http" if state.https_mode == "behind_lb" else "https"
-        state.base_url = f"{prefix}://{socket.getfqdn()}"
+        # Every mode, load balancer ones included, is reached over https (#161).
+        state.base_url = state.public_url or f"https://{socket.getfqdn()}"
     return templates.TemplateResponse(request, "core_config.html", _template_context())
 
 
@@ -375,7 +432,7 @@ async def review_confirm():
     # Write the install's own nginx config. It goes in the git-ignored
     # nginx/local/, never the tracked nginx/nginx.conf, so `git pull` can't
     # conflict with it (#114).
-    nginx_conf = generate_nginx_conf(state.https_mode or "behind_lb")
+    nginx_conf = generate_nginx_conf(state.https_mode or "lb_terminate", lb_subnets=state.lb_subnets)
     nginx_path = nginx_core.local_dir(DOCKER_DIR / "nginx") / nginx_core.CONF_NAME
     nginx_path.parent.mkdir(parents=True, exist_ok=True)
     nginx_path.write_text(nginx_conf, newline="\n")
@@ -462,13 +519,18 @@ async def deploy_stream():
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@app.get("/success")
-async def success_page(request: Request):
+def _schedule_exit() -> None:
+    """Stop the wizard shortly after the final page is served (tests stub this)."""
     def _exit():
         import time
         time.sleep(2.0)
         os.kill(os.getpid(), signal.SIGTERM)
     threading.Thread(target=_exit, daemon=True).start()
+
+
+@app.get("/success")
+async def success_page(request: Request):
+    _schedule_exit()
     return templates.TemplateResponse(request, "success.html", _template_context())
 
 
@@ -657,11 +719,7 @@ async def upgrade_progress_stream():
 
 @app.get("/upgrade/success")
 async def upgrade_success(request: Request):
-    def _exit():
-        import time
-        time.sleep(2.0)
-        os.kill(os.getpid(), signal.SIGTERM)
-    threading.Thread(target=_exit, daemon=True).start()
+    _schedule_exit()
     return templates.TemplateResponse(request, "upgrade_success.html", _template_context())
 
 
