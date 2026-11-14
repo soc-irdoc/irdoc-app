@@ -35,6 +35,7 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ### Changed
 
+- **Startup says why it can't reach the database.** The backend, worker and beat containers used to print "Waiting for PostgreSQL..." forever, hiding the reason. They now print the reason while PostgreSQL or Redis are still starting. When retrying can't help, such as a wrong password in `DATABASE_URL` / `REDIS_URL` or a missing database, they stop at once with a message saying what to fix. They give up after 5 minutes (`WAIT_FOR_SERVICES_TIMEOUT`). Passwords are never printed. A password containing a quote no longer breaks the check. (#159)
 - **Webhook: an unknown template slug is rejected.** `POST /api/v1/external/incidents` with a `template` that doesn't match any visible template now returns `422 Unknown template '<slug>'`. It used to create a blank incident without saying so. Send `"template": "blank"`, or leave `template` out, for a blank incident. (#168)
 - **Template API: unknown fields are rejected.** `POST`/`PUT /api/v1/templates/incident` return `422` for fields they don't know, instead of ignoring them. (#169)
 

@@ -23,24 +23,12 @@ fi
 
 echo "=== IRDoc Backend Starting ==="
 
-# Wait for DB to be ready (belt-and-suspenders - compose healthcheck handles primary wait)
-until python -c "
-import asyncio, sys
-import asyncpg
-async def check():
-    try:
-        conn = await asyncpg.connect('${DATABASE_URL}'.replace('+asyncpg', ''))
-        await conn.close()
-    except Exception as e:
-        print(f'DB not ready: {e}', file=sys.stderr)
-        sys.exit(1)
-asyncio.run(check())
-" 2>/dev/null; do
-    echo "Waiting for PostgreSQL..."
-    sleep 2
-done
-
-echo "PostgreSQL ready."
+# Wait for PostgreSQL and Redis (belt-and-suspenders - compose healthchecks
+# handle the primary wait). Keeps waiting while they start up, but exits
+# with a clear message when retrying can't help - a wrong password in
+# DATABASE_URL / REDIS_URL, a missing database - instead of looping forever
+# (#159). Gives up after WAIT_FOR_SERVICES_TIMEOUT seconds (default 300).
+python -m app.cli.wait_for_services
 
 # Run Alembic migrations
 echo "Running database migrations..."
