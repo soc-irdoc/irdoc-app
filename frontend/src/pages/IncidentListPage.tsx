@@ -18,6 +18,7 @@ import {
   DISPOSITION_SHORT_LABELS,
   INCIDENT_SOURCES,
   INCIDENT_SOURCE_LABELS,
+  INCIDENT_SOURCE_SHORT_LABELS,
   SOURCE_NOT_RECORDED,
   SEVERITIES,
   SEVERITY_LABELS,
@@ -158,6 +159,27 @@ function IncidentRow({
         </div>
       </div>
 
+      {/* Source: what triggered the investigation (#147, #171) */}
+      <div className="incident-cell-source" style={{ minWidth: 0 }}>
+        {incident.source ? (
+          <span
+            className="chip chip-fixed incident-truncate"
+            title={INCIDENT_SOURCE_LABELS[incident.source]}
+            style={{ fontSize: 10, maxWidth: '100%' }}
+          >
+            {INCIDENT_SOURCE_SHORT_LABELS[incident.source]}
+          </span>
+        ) : (
+          <span
+            className="chip chip-fixed chip-yellow"
+            title="What triggered this investigation was not recorded. Set it from the incident header."
+            style={{ fontSize: 10 }}
+          >
+            NO SOURCE
+          </span>
+        )}
+      </div>
+
       {/* Owner */}
       <div className="incident-cell-owner" style={{ minWidth: 0 }}>
         <AssigneeDisplay incident={incident} onPickUp={handlePickUp} />
@@ -175,15 +197,6 @@ function IncidentRow({
             style={{ fontSize: 9, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}
           >
             {DISPOSITION_SHORT_LABELS[incident.disposition]}
-          </span>
-        )}
-        {!incident.source && (
-          <span
-            className="chip chip-yellow"
-            title="What triggered this investigation was not recorded. Set it from the incident header."
-            style={{ fontSize: 9, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}
-          >
-            NO SOURCE
           </span>
         )}
       </div>
@@ -210,6 +223,7 @@ const SORT_COLUMNS: Array<{ key: IncidentSortKey; label: string }> = [
   { key: 'severity', label: 'Severity' },
   { key: 'ref', label: 'ID' },
   { key: 'title', label: 'Title' },
+  { key: 'source', label: 'Source' },
   { key: 'owner', label: 'Owner' },
   { key: 'status', label: 'Status' },
 ]

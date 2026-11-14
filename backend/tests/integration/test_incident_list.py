@@ -23,6 +23,7 @@ async def _seed(db_session, org, rows):
             status=row.get("status", "open"),
             disposition="fp_benign" if row.get("status") == "closed" else None,
             assigned_to=row.get("assigned_to"),
+            source=row.get("source"),
             created_at=start + timedelta(minutes=i),
             attack_vector=[],
             metadata_={},
@@ -170,3 +171,21 @@ async def test_sort_combines_with_filter_and_search(client: AsyncClient, auth_he
 async def test_invalid_list_params_rejected(client: AsyncClient, auth_headers, params):
     response = await client.get(URL, params=params, headers=auth_headers)
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_source_sorts_by_label_with_not_recorded_last(client: AsyncClient, auth_headers, db_session, admin_user):
+    """#171: the list has a Source column; sorting follows the labels users see."""
+    _, org = admin_user
+    await _seed(db_session, org, [
+        {"title": "none"},
+        {"title": "siem", "source": "siem_alert"},           # "SIEM Alert"
+        {"title": "cloud", "source": "cloud_alert"},         # "Cloud Security Alert"
+        {"title": "user", "source": "user_reported"},        # "User Reported / Requested"
+    ])
+
+    titles, _ = await _titles(client, auth_headers, sort="source", order="asc")
+    assert titles == ["cloud", "siem", "user", "none"]
+
+    titles, _ = await _titles(client, auth_headers, sort="source", order="desc")
+    assert titles == ["user", "siem", "cloud", "none"]

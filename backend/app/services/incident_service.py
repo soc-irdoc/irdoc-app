@@ -10,6 +10,7 @@ from sqlalchemy import case, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.incident_source import INCIDENT_SOURCE_LABELS
 from app.core.severity import SEVERITIES, normalize_severity
 from app.core.status import STATUSES
 from app.models.attachment import Attachment
@@ -231,6 +232,9 @@ async def list_incidents(
     return list(result.scalars().all()), total
 
 
+_SOURCES_BY_LABEL = tuple(sorted(INCIDENT_SOURCE_LABELS, key=lambda v: INCIDENT_SOURCE_LABELS[v].lower()))
+
+
 def _rank(column, ordered_values: tuple[str, ...]):
     """Position of the value in ordered_values (unknown values last)."""
     return case(
@@ -267,6 +271,13 @@ def _apply_sort(query, sort: str, order: str):
         keys = [
             case((Incident.assigned_to.is_(None), 1), else_=0),
             name.desc() if descending else name.asc(),
+        ]
+    elif sort == "source":
+        # By the label users see (#171); "Not recorded" last either way.
+        key = _rank(Incident.source, _SOURCES_BY_LABEL)
+        keys = [
+            case((Incident.source.is_(None), 1), else_=0),
+            key.desc() if descending else key.asc(),
         ]
     else:  # created
         keys = [Incident.created_at.desc() if descending else Incident.created_at.asc()]

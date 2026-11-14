@@ -11,7 +11,7 @@ from app.core.severity import Severity
 from app.core.status import IncidentStatus
 
 # Columns the incidents list can sort by (#128)
-IncidentSort = Literal["severity", "ref", "title", "owner", "status", "created"]
+IncidentSort = Literal["severity", "ref", "title", "owner", "status", "source", "created"]
 SortOrder = Literal["asc", "desc"]
 
 

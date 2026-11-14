@@ -29,6 +29,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 - **Keep your own compose changes across upgrades.** Put extra ports, mounts or resource limits in `docker/docker-compose.local.yml`. It is ignored by git, so `git pull` never conflicts with it. `upgrade.sh`, `backup.sh` and the installer's upgrade use it on top of `docker-compose.prod.yml` whenever it exists. Before changing anything, `upgrade.sh` and the installer's upgrade page list tracked files under `docker/` that you edited, since `git pull` can fail on them and upgrades may replace them. The top of `upgrade.sh` lists what an upgrade changes. (#162)
 
+- **Source column in the incidents list.** Each row shows what triggered the investigation, with the full name on hover, or "NO SOURCE" when it wasn't recorded. The column sorts alphabetically, with unrecorded incidents last either way. (#171)
+
 ### Fixed
 
 - **SSO role mappings now take effect.** Previously a mapping was only used the first time someone signed in, so anyone whose account already existed stayed an Analyst whatever the mapping said. Now:

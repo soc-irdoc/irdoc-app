@@ -7,7 +7,7 @@ import { INCIDENT_SOURCES, type IncidentSource, type IncidentStatus } from '@/ty
 /** 'none' = incidents with no source recorded yet (#147). */
 export type SourceFilter = IncidentSource | 'none' | 'all'
 
-export type IncidentSortKey = 'severity' | 'ref' | 'title' | 'owner' | 'status' | 'created'
+export type IncidentSortKey = 'severity' | 'ref' | 'title' | 'source' | 'owner' | 'status' | 'created'
 export type SortOrder = 'asc' | 'desc'
 
 export interface IncidentListQuery {
@@ -33,7 +33,7 @@ export const DEFAULT_QUERY: IncidentListQuery = {
 }
 
 const STATUSES: IncidentStatus[] = ['open', 'contained', 'monitoring', 'closed']
-const SORT_KEYS: IncidentSortKey[] = ['severity', 'ref', 'title', 'owner', 'status', 'created']
+const SORT_KEYS: IncidentSortKey[] = ['severity', 'ref', 'title', 'source', 'owner', 'status', 'created']
 
 // First click on a header: the order that puts the most useful rows on top.
 // Most severe and newest first; everything else A-Z / start of the workflow.
@@ -42,6 +42,7 @@ export const FIRST_CLICK_ORDER: Record<IncidentSortKey, SortOrder> = {
   created: 'desc',
   ref: 'asc',
   title: 'asc',
+  source: 'asc',
   owner: 'asc',
   status: 'asc',
 }

@@ -108,6 +108,23 @@ describe('IncidentListPage', () => {
     await waitFor(() => expect(lastParams()).toMatchObject({ sort: 'title', order: 'desc' }))
   })
 
+  it('shows the source of each incident, and NO SOURCE when none was recorded (#171)', () => {
+    useIncidentsMock.mockReturnValue({
+      data: { data: [incident(1), { ...incident(2), source: null }], meta: { page: 1, per_page: 25, total: 2 } },
+      isLoading: false,
+      isFetching: false,
+    })
+    renderAt('/incidents')
+    expect(screen.getByTitle('SIEM Alert')).toHaveTextContent('SIEM')
+    expect(screen.getAllByText('NO SOURCE')).toHaveLength(1)
+  })
+
+  it('sorts by source (#171)', async () => {
+    renderAt('/incidents')
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by source' }))
+    await waitFor(() => expect(lastParams()).toMatchObject({ sort: 'source', order: 'asc', page: 1 }))
+  })
+
   it('severity sorts most severe first on the first click', async () => {
     renderAt('/incidents')
 
