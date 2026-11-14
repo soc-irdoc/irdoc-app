@@ -89,6 +89,9 @@ _TLS_SETTINGS = """
 """
 
 
+_MIN_LB_PREFIX = {4: 8, 6: 32}
+
+
 def normalise_lb_subnets(lb_subnets: list[str] | None) -> list[str]:
     """Validate load-balancer addresses/subnets; a bare IP becomes a /32 or /128."""
     result = []
@@ -97,9 +100,17 @@ def normalise_lb_subnets(lb_subnets: list[str] | None) -> list[str]:
         if not value and len(lb_subnets) > 1:
             continue  # stray comma in a list
         try:
-            result.append(str(ipaddress.ip_network(value, strict=False)))
+            net = ipaddress.ip_network(value, strict=False)
         except ValueError:
             raise ValueError(f"Not an IP address or subnet: {raw!r}") from None
+        # A trusted range this wide (0.0.0.0/0, ::/0, ...) would let clients
+        # set their own IP again: list the load balancer's own addresses.
+        if net.prefixlen < _MIN_LB_PREFIX[net.version]:
+            raise ValueError(
+                f"{value} is too broad to trust: list the load balancer's own addresses "
+                f"(at most a /{_MIN_LB_PREFIX[net.version]} subnet)"
+            )
+        result.append(str(net))
     return result
 
 

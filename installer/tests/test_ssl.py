@@ -138,7 +138,7 @@ def test_legacy_behind_lb_no_longer_trusts_everyone():
     assert "0.0.0.0/0" not in generate_nginx_conf("behind_lb")
 
 
-@pytest.mark.parametrize("bad", ["10.0.0.0/33", "not-a-subnet", "10.0.0.0/8; evil", ""])
+@pytest.mark.parametrize("bad", ["10.0.0.0/33", "not-a-subnet", "10.0.0.0/8; evil", "", "0.0.0.0/0", "10.0.0.0/7", "::/0", "2001:db8::/31"])
 def test_invalid_lb_subnet_is_rejected(bad):
     with pytest.raises(ValueError):
         generate_nginx_conf("lb_terminate", lb_subnets=[bad])
@@ -156,3 +156,8 @@ def test_client_ip_headers_are_overwritten_not_appended(mode):
 def test_unknown_mode_is_rejected():
     with pytest.raises(ValueError):
         generate_nginx_conf("plain")
+
+
+def test_widest_accepted_lb_ranges():
+    conf = generate_nginx_conf("lb_terminate", lb_subnets=["10.0.0.0/8", "2001:db8::/32"])
+    assert "set_real_ip_from 10.0.0.0/8;" in conf and "set_real_ip_from 2001:db8::/32;" in conf
