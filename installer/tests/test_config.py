@@ -124,3 +124,22 @@ def test_assemble_env_carries_legacy_secret_keys_over():
     content = assemble_env({**_BASE, "backup_encryption_key": "ab" * 32, "backup_legacy_secret_keys": "old1,old2"})
     assert "BACKUP_LEGACY_SECRET_KEYS=old1,old2" in content
     assert "BACKUP_LEGACY_SECRET_KEYS" not in assemble_env(_BASE)
+
+
+def _env_for(base_url: str) -> list[str]:
+    state = {
+        "db_password": "x", "redis_password": "y", "secret_key": "z",
+        "base_url": base_url, "access_token_expire_minutes": 15, "refresh_token_expire_days": 30,
+    }
+    return assemble_env(state).splitlines()
+
+
+def test_https_install_gets_secure_cookies():
+    # #157: TLS installs (self-signed, imported, behind an LB) send Secure cookies
+    assert "COOKIE_SECURE=true" in _env_for("https://irdoc.example.com")
+
+
+def test_http_install_leaves_cookie_secure_unset():
+    # Unset lets the backend derive it, so a later move to https still gets Secure
+    lines = _env_for("http://10.0.0.5")
+    assert not any(line.startswith("COOKIE_SECURE=") for line in lines)

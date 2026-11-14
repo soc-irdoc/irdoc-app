@@ -39,6 +39,10 @@ def assemble_env(state: dict) -> str:
         "",
         "# ─── Application ────────────────────────────────────────────────────────────",
         f"BASE_URL={state['base_url']}",
+        # Secure session cookies (#157). Unset means "on when BASE_URL is https",
+        # so an install moved to https later still gets them.
+        "COOKIE_SECURE=true" if state["base_url"].lower().startswith("https://")
+        else "# COOKIE_SECURE=  (unset: on when BASE_URL is https)",
         "ALLOW_REGISTRATION=false",
         f"LICENSE_KEY={state.get('license_key', '')}",
         f"VERSION={state.get('version', 'latest')}",

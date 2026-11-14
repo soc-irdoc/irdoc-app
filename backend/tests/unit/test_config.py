@@ -79,3 +79,33 @@ def test_explicit_cors_origins_override_disables_localhost_widening(monkeypatch)
     s = Settings(_env_file=None)
     origins = s.get_cors_origins()
     assert origins == ["https://irdoc.example.com", "https://reports.example.com"]
+
+
+# ─── COOKIE_SECURE (#157) ────────────────────────────────────────────────────
+
+def _settings(monkeypatch, base_url: str, cookie_secure: str | None):
+    monkeypatch.setenv("SECRET_KEY", "x" * 32)
+    monkeypatch.setenv("BASE_URL", base_url)
+    if cookie_secure is None:
+        monkeypatch.delenv("COOKIE_SECURE", raising=False)
+    else:
+        monkeypatch.setenv("COOKIE_SECURE", cookie_secure)
+    return Settings(_env_file=None)
+
+
+def test_cookie_secure_follows_https_base_url(monkeypatch):
+    assert _settings(monkeypatch, "https://irdoc.example.com", None).COOKIE_SECURE is True
+
+
+def test_cookie_secure_off_for_http_base_url(monkeypatch):
+    assert _settings(monkeypatch, "http://localhost:3000", None).COOKIE_SECURE is False
+
+
+def test_empty_cookie_secure_means_derive(monkeypatch):
+    # prod compose always injects the key; empty must not crash or force False
+    assert _settings(monkeypatch, "https://irdoc.example.com", "").COOKIE_SECURE is True
+
+
+def test_explicit_cookie_secure_wins(monkeypatch):
+    assert _settings(monkeypatch, "https://irdoc.example.com", "false").COOKIE_SECURE is False
+    assert _settings(monkeypatch, "http://localhost:3000", "true").COOKIE_SECURE is True

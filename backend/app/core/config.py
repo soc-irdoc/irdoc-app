@@ -34,7 +34,10 @@ class Settings(BaseSettings):
     SESSION_IDLE_TIMEOUT_MINUTES: int = Field(60, ge=5, le=1440)
     # ...and this long after sign-in, however active. Orgs can override both.
     SESSION_MAX_HOURS: int = Field(12, ge=1, le=720)
-    COOKIE_SECURE: bool = False
+    # Secure flag on session cookies (and HSTS). Unset or empty: on when
+    # BASE_URL is https, off otherwise (#157). Set true/false to override,
+    # e.g. false for a deliberately plain-HTTP install behind an https URL.
+    COOKIE_SECURE: bool | None = None
 
     # Backups (#149). Dedicated AES-256 key for backup files: 64 hex chars
     # (openssl rand -hex 32). Unset or empty = fall back to the key derived
@@ -111,6 +114,20 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
+
+    @field_validator("COOKIE_SECURE", mode="before")
+    @classmethod
+    def _empty_cookie_secure_means_derive(cls, v):
+        # Prod compose always injects the key; an empty value means "not set".
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
+    @model_validator(mode="after")
+    def _derive_cookie_secure(self) -> "Settings":
+        if self.COOKIE_SECURE is None:
+            self.COOKIE_SECURE = str(self.BASE_URL).lower().startswith("https://")
+        return self
 
     @model_validator(mode="after")
     def _prefer_baked_version(self) -> "Settings":

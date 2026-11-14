@@ -15,6 +15,8 @@ x-backend-env: &backend-env
   STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
   STORAGE_PATH: /app/storage
   BASE_URL: ${BASE_URL}
+  # Secure session cookies (#157). Empty = on when BASE_URL is https.
+  COOKIE_SECURE: ${COOKIE_SECURE:-}
   LICENSE_KEY: ${LICENSE_KEY:-}
   # Must name a real choice: the key is always injected, so `:-` would hand the
   # backend an empty string and Settings' Literal rejects it at import time.

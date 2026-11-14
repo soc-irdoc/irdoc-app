@@ -31,6 +31,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
   - Copies of a template are named `<slug>-copy`, `<slug>-copy-2`, … instead of a random suffix. (#168, #169)
 - **Security: the webhook only uses templates of the caller's own organization.** Given a slug that existed only in another organization, the inbound webhook used that organization's template and copied its tasks into the new incident. It now considers only the caller's organization's templates and the built-in ones, and skips hidden templates. (#168)
 
+- **Security: session cookies are marked Secure on HTTPS installs.** `COOKIE_SECURE` was never passed to the containers, so setting it in `docker/.env` did nothing, and installs served over HTTPS sent session cookies without the `Secure` flag. It is now passed through. Left empty, it is on whenever `BASE_URL` starts with `https://`, which also covers installs behind a TLS-terminating load balancer. The installer writes `COOKIE_SECURE=true` for HTTPS installs. Set it to `false` only for a deliberately plain-HTTP setup. (#157)
+
 ### Changed
 
 - **Webhook: an unknown template slug is rejected.** `POST /api/v1/external/incidents` with a `template` that doesn't match any visible template now returns `422 Unknown template '<slug>'`. It used to create a blank incident without saying so. Send `"template": "blank"`, or leave `template` out, for a blank incident. (#168)
