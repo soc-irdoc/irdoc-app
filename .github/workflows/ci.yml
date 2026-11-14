@@ -249,7 +249,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/ssl" "$RUNNER_TEMP/confs"
           openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=ci \
             -keyout "$RUNNER_TEMP/ssl/key.pem" -out "$RUNNER_TEMP/ssl/cert.pem"
-          for mode in behind_lb import selfsigned; do
+          for mode in behind_lb import selfsigned lb_terminate lb_reencrypt; do
             python -c "import sys; from installer.core.ssl import generate_nginx_conf; print(generate_nginx_conf(sys.argv[1]))" \
               "$mode" > "$RUNNER_TEMP/confs/wizard-$mode.conf"
           done

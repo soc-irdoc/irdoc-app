@@ -11,6 +11,15 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Added
+
+- **nginx templates for running behind a load balancer.** `docker/nginx/examples/` now has:
+  - `lb-terminate.conf`: the load balancer handles HTTPS and forwards plain HTTP to port 80.
+  - `lb-reencrypt.conf`: the load balancer re-encrypts to port 443, with a certificate in `docker/ssl/`.
+  - `https.conf`: nginx serves HTTPS itself.
+
+  The load-balancer templates trust `X-Forwarded-For` only from the addresses you list, so the audit log shows real client IPs. `lb-terminate.conf` passes on the load balancer's `X-Forwarded-Proto`. `demo-https.conf` has been renamed to `https.conf`; the old name stays for this release only. The installer generates the same configs. (#160)
+
 ### Fixed
 
 - **SSO role mappings now take effect.** Previously a mapping was only used the first time someone signed in, so anyone whose account already existed stayed an Analyst whatever the mapping said. Now:

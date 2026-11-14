@@ -77,55 +77,121 @@ def generate_self_signed(common_name: str, san_list: list[str], days: int = 825)
 SECURITY_HEADERS_SNIPPET = "/etc/nginx/snippets/irdoc-security-headers.conf"
 
 
-def generate_nginx_conf(mode: str) -> str:
-    """Generate nginx.conf content for the given HTTPS mode."""
-    upstream = "upstream backend {\n    server irdoc-backend:8000;\n}\n\n"
+NGINX_MODES = ("import", "selfsigned", "lb_terminate", "lb_reencrypt", "behind_lb")
 
-    shared_locations = """
+_TLS_SETTINGS = """
+    ssl_certificate     /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 10m;
+"""
+
+
+def _normalise_subnets(lb_subnets: list[str] | None) -> list[str]:
+    """Validate load-balancer addresses/subnets; a bare IP becomes a /32 or /128."""
+    result = []
+    for raw in lb_subnets or []:
+        value = raw.strip()
+        try:
+            result.append(str(ipaddress.ip_network(value, strict=False)))
+        except ValueError:
+            raise ValueError(f"Not an IP address or subnet: {raw!r}") from None
+    return result
+
+
+def _real_ip_block(subnets: list[str]) -> str:
+    """Trust X-Forwarded-For only from the load balancer (#160)."""
+    if not subnets:
+        return """
+    # Client IPs: list the load balancer's addresses to see real client IPs in
+    # the audit log. Until then they show as the load balancer's address.
+    # set_real_ip_from <load balancer IP or subnet>;
+    # real_ip_header X-Forwarded-For;
+    # real_ip_recursive on;
+"""
+    lines = "".join(f"    set_real_ip_from {net};\n" for net in subnets)
+    return f"""
+    # Client IPs: trust X-Forwarded-For only from the load balancer.
+{lines}    real_ip_header X-Forwarded-For;
+    real_ip_recursive on;
+"""
+
+
+def generate_nginx_conf(mode: str, lb_subnets: list[str] | None = None) -> str:
+    """Generate nginx.conf content for one of NGINX_MODES.
+
+    - import / selfsigned: nginx serves HTTPS with the cert in docker/ssl.
+    - lb_terminate: a load balancer terminates TLS and forwards plain HTTP to
+      port 80. lb_subnets are the addresses its connections come from.
+    - lb_reencrypt: a load balancer terminates TLS and re-encrypts to port 443.
+    - behind_lb: older name for lb_terminate.
+    """
+    if mode not in NGINX_MODES:
+        raise ValueError(f"Unknown nginx mode: {mode!r}")
+    if mode == "behind_lb":
+        mode = "lb_terminate"
+    subnets = _normalise_subnets(lb_subnets)
+
+    upstream = "upstream backend {\n    server irdoc-backend:8000;\n}\n\n"
+    proto = "$scheme"
+    if mode == "lb_terminate":
+        # The LB says whether the client used https; nginx itself only sees http.
+        upstream += """map $http_x_forwarded_proto $irdoc_forwarded_proto {
+    default $scheme;
+    https   https;
+}
+
+"""
+        proto = "$irdoc_forwarded_proto"
+
+    # X-Real-IP is what the backend uses as the client IP (#160). nginx sets
+    # both headers from $remote_addr, overwriting whatever the client sent.
+    shared_locations = f"""
     root /usr/share/nginx/html;
     index index.html;
 
-    location /api/ {
+    location /api/ {{
         proxy_pass http://backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto {proto};
         client_max_body_size 55m;
-    }
+    }}
 
-    location /socket.io/ {
+    location /socket.io/ {{
         proxy_pass http://backend;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-    }
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }}
 
-    location / {
+    location / {{
         try_files $uri $uri/ /index.html;
-    }"""
+    }}"""
 
-    security_headers = f"""
+    headers = f"""
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     include {SECURITY_HEADERS_SNIPPET};"""
 
-    if mode == "behind_lb":
+    real_ip = _real_ip_block(subnets) if mode in ("lb_terminate", "lb_reencrypt") else ""
+
+    if mode == "lb_terminate":
         return upstream + f"""server {{
     listen 80;
     server_name _;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-{security_headers}
-
-    # Trust headers from upstream load balancer
-    set_real_ip_from 0.0.0.0/0;
-    real_ip_header X-Forwarded-For;
-{shared_locations}
+{headers}
+{real_ip}{shared_locations}
 }}
 """
-    else:
-        # "import" or "selfsigned" — both use the same TLS config
-        return upstream + f"""server {{
+
+    # import, selfsigned, lb_reencrypt: HTTPS on 443, port 80 redirects.
+    return upstream + f"""server {{
     listen 80;
     server_name _;
     return 301 https://$host$request_uri;
@@ -134,17 +200,8 @@ def generate_nginx_conf(mode: str) -> str:
 server {{
     listen 443 ssl;
     server_name _;
-
-    ssl_certificate     /etc/nginx/ssl/cert.pem;
-    ssl_certificate_key /etc/nginx/ssl/key.pem;
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
-    ssl_session_cache   shared:SSL:10m;
-    ssl_session_timeout 10m;
-
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-{security_headers}
-{shared_locations}
+{_TLS_SETTINGS}{headers}
+{real_ip}{shared_locations}
 }}
 """
 
