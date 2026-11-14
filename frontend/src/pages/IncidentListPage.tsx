@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useIncidents, useCreateIncident, useIncidentTemplates, useUpdateIncident, useDeleteIncident } from '@/hooks/useIncident'
+import { useIncidents, useCreateIncident, useIncidentTemplates, useUpdateIncident, useDeleteIncident, useBulkSetSource } from '@/hooks/useIncident'
 import { AppShell } from '@/components/layout/AppShell'
 import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
@@ -42,7 +42,7 @@ import {
   type SortOrder,
   type SourceFilter,
 } from '@/lib/incidentListQuery'
-import { formatDateTime, formatRelative } from '@/lib/utils'
+import { formatDateTime, formatRelative, getErrorMessage } from '@/lib/utils'
 import { FaArrowDown, FaArrowUp, FaBolt, FaHandPointUp, FaTrashCan } from 'react-icons/fa6'
 
 function AssigneeDisplay({ incident, onPickUp }: { incident: Incident; onPickUp: (e: React.MouseEvent) => void }) {
@@ -92,11 +92,17 @@ function IncidentRow({
   onOpen,
   canDelete,
   onDeleteRequest,
+  selectable,
+  selected,
+  onToggle,
 }: {
   incident: Incident
   onOpen: () => void
   canDelete: boolean
   onDeleteRequest: (incident: Incident) => void
+  selectable: boolean
+  selected: boolean
+  onToggle: (incident: Incident) => void
 }) {
   const addToast = useUIStore((s) => s.addToast)
   const currentUser = useAuthStore((s) => s.user)
@@ -122,8 +128,19 @@ function IncidentRow({
         if (e.key === 'Enter' && e.target === e.currentTarget) onOpen()
       }}
     >
-      {/* Severity */}
-      <div className="incident-cell-sev">
+      {/* Severity, with the bulk-selection checkbox (#153) */}
+      <div className="incident-cell-sev" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {selectable && (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggle(incident)}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            aria-label={`Select ${incident.incident_ref}`}
+            style={{ accentColor: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
+          />
+        )}
         <span className={`chip chip-fixed ${SEVERITY_COLORS[incident.severity]}`}>
           {SEVERITY_LABELS[incident.severity]}
         </span>
@@ -261,7 +278,15 @@ function SortButton({
 }
 
 // Column headers; click to sort, click again to reverse (#128).
-function IncidentListHeader({ query, onSort }: { query: IncidentListQuery; onSort: (column: IncidentSortKey) => void }) {
+function IncidentListHeader({
+  query,
+  onSort,
+  selection,
+}: {
+  query: IncidentListQuery
+  onSort: (column: IncidentSortKey) => void
+  selection?: { all: boolean; some: boolean; onToggleAll: () => void }
+}) {
   return (
     <div className="incident-list-header incident-grid">
       {SORT_COLUMNS.map(({ key, label }) => (
@@ -269,11 +294,22 @@ function IncidentListHeader({ query, onSort }: { query: IncidentListQuery; onSor
           key={key}
           style={{
             display: 'flex',
+            alignItems: 'center',
             gap: 10,
             minWidth: 0,
             justifyContent: key === 'status' ? 'center' : undefined,
           }}
         >
+          {key === 'severity' && selection && (
+            <input
+              type="checkbox"
+              checked={selection.all}
+              ref={(el) => { if (el) el.indeterminate = selection.some && !selection.all }}
+              onChange={selection.onToggleAll}
+              aria-label="Select all incidents on this page"
+              style={{ accentColor: 'var(--accent)', cursor: 'pointer', margin: 0 }}
+            />
+          )}
           <SortButton column={key} label={label} query={query} onSort={onSort} />
           {/* The created time sits under the title, so it sorts from here */}
           {key === 'title' && (
@@ -310,6 +346,17 @@ export function IncidentListPage() {
   const [deletingIncident, setDeletingIncident] = useState<Incident | null>(null)
   const deleteIncident = useDeleteIncident()
   const canDelete = usePermission('senior_analyst')
+  const canBulkEdit = usePermission('analyst')
+
+  // Bulk "Set source..." (#153). The selection covers the page on screen and
+  // is cleared whenever the list changes (filter, search, sort, page).
+  const [selected, setSelected] = useState<Map<string, Incident>>(new Map())
+  const [showBulkSource, setShowBulkSource] = useState(false)
+  const [bulkSource, setBulkSource] = useState<IncidentSource | ''>('')
+  const [bulkOverwrite, setBulkOverwrite] = useState(false)
+  const bulkSetSource = useBulkSetSource()
+  const listKey = searchParams.toString()
+  useEffect(() => { setSelected(new Map()) }, [listKey])
 
   const [newTitle, setNewTitle] = useState('')
   const [newSeverity, setNewSeverity] = useState<Severity>('high')
@@ -319,6 +366,45 @@ export function IncidentListPage() {
   const { data, isLoading, isFetching } = useIncidents(toApiParams(query))
   const incidents = data?.data ?? []
   const total = data?.meta?.total ?? 0
+
+  const allOnPageSelected = incidents.length > 0 && incidents.every((i) => selected.has(i.id))
+  const selectedList = [...selected.values()]
+  const bulkWillChange = selectedList.filter((i) => (bulkOverwrite ? i.source !== bulkSource : !i.source)).length
+
+  function toggleSelected(incident: Incident) {
+    setSelected((prev) => {
+      const next = new Map(prev)
+      if (next.has(incident.id)) next.delete(incident.id)
+      else next.set(incident.id, incident)
+      return next
+    })
+  }
+
+  function toggleAllOnPage() {
+    setSelected(allOnPageSelected ? new Map() : new Map(incidents.map((i) => [i.id, i])))
+  }
+
+  function openBulkSource() {
+    setBulkSource('')
+    setBulkOverwrite(false)
+    setShowBulkSource(true)
+  }
+
+  async function handleBulkSource() {
+    if (!bulkSource) return
+    try {
+      const result = await bulkSetSource.mutateAsync({
+        ids: [...selected.keys()], source: bulkSource, overwrite: bulkOverwrite,
+      })
+      const n = result.updated
+      const skippedNote = result.skipped ? ` (${result.skipped} already had one)` : ''
+      addToast(`Set source on ${n} incident${n === 1 ? '' : 's'}${skippedNote}`, 'success')
+      setShowBulkSource(false)
+      setSelected(new Map())
+    } catch (err) {
+      addToast(`Failed to set source: ${getErrorMessage(err, 'unexpected server error')}`, 'error')
+    }
+  }
 
   const { data: allTemplates = [] } = useIncidentTemplates()
   const templates = allTemplates.filter((t) => !t.is_hidden)
@@ -501,7 +587,29 @@ export function IncidentListPage() {
             />
           ) : (
             <>
-              <IncidentListHeader query={query} onSort={handleSort} />
+              {canBulkEdit && selected.size > 0 && (
+                <div
+                  role="region"
+                  aria-label="Bulk actions"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', marginBottom: 8,
+                    border: '1px solid var(--accent)', borderRadius: 8, background: 'var(--bg-elevated)', fontSize: 13,
+                  }}
+                >
+                  <span>{selected.size} selected</span>
+                  <Button variant="accent" size="sm" onClick={openBulkSource}>Set source&hellip;</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setSelected(new Map())}>Clear</Button>
+                </div>
+              )}
+              <IncidentListHeader
+                query={query}
+                onSort={handleSort}
+                selection={canBulkEdit && incidents.length > 0 ? {
+                  all: allOnPageSelected,
+                  some: selected.size > 0,
+                  onToggleAll: toggleAllOnPage,
+                } : undefined}
+              />
               {incidents.length === 0 ? (
                 <p style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
                   No incidents match these filters.
@@ -519,6 +627,9 @@ export function IncidentListPage() {
                       onOpen={() => navigate(`/incidents/${incident.id}/timeline`)}
                       canDelete={canDelete}
                       onDeleteRequest={setDeletingIncident}
+                      selectable={canBulkEdit}
+                      selected={selected.has(incident.id)}
+                      onToggle={toggleSelected}
                     />
                   ))}
                 </div>
@@ -537,6 +648,43 @@ export function IncidentListPage() {
           )}
         </div>
       </div>
+
+      <Modal open={showBulkSource} title="Set source" onClose={() => setShowBulkSource(false)}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+            What triggered the investigation, for the {selected.size} selected incident{selected.size === 1 ? '' : 's'}.
+          </p>
+          <SourceSelect id="bulk-source" value={bulkSource} onChange={setBulkSource} required />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={bulkOverwrite}
+              onChange={(e) => setBulkOverwrite(e.target.checked)}
+              style={{ accentColor: 'var(--accent)' }}
+            />
+            Also replace sources that are already set
+          </label>
+          {bulkSource && (
+            <p role="status" style={{ fontSize: 13, color: 'var(--text-primary)' }}>
+              {bulkWillChange === 0
+                ? 'None of the selected incidents would change.'
+                : `${bulkWillChange} incident${bulkWillChange === 1 ? '' : 's'} will be set to ${INCIDENT_SOURCE_LABELS[bulkSource]}.`}
+              {!bulkOverwrite && selectedList.length > bulkWillChange && bulkWillChange > 0 &&
+                ` ${selectedList.length - bulkWillChange} already have a source and stay as they are.`}
+            </p>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button variant="ghost" onClick={() => setShowBulkSource(false)}>Cancel</Button>
+            <Button
+              variant="accent"
+              onClick={handleBulkSource}
+              disabled={!bulkSource || bulkWillChange === 0 || bulkSetSource.isPending}
+            >
+              {bulkSetSource.isPending ? 'Saving...' : 'Set source'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal open={!!deletingIncident} title="Delete Incident" onClose={() => setDeletingIncident(null)}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

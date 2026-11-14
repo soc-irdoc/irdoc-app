@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/apiClient'
-import type { Incident, CreateIncidentPayload, UpdateIncidentPayload, IncidentStats } from '@/types/incident'
+import type { Incident, CreateIncidentPayload, UpdateIncidentPayload, IncidentStats, IncidentSource } from '@/types/incident'
 import type { ApiResponse } from '@/types/api'
 
 export function useIncidents(params?: {
@@ -68,6 +68,27 @@ export function useUpdateIncident(id: string) {
     onSuccess: (data) => {
       qc.setQueryData(['incident', id], data)
       qc.invalidateQueries({ queryKey: ['incidents'] })
+    },
+  })
+}
+
+export interface BulkSourceResult {
+  updated: number
+  skipped: number
+  not_found: number
+}
+
+// Set Source on many incidents at once (#153)
+export function useBulkSetSource() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { ids: string[]; source: IncidentSource; overwrite: boolean }) => {
+      const res = await apiClient.post<ApiResponse<BulkSourceResult>>('/incidents/bulk/source', payload)
+      return res.data.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incidents'] })
+      qc.invalidateQueries({ queryKey: ['incident'] })
     },
   })
 }

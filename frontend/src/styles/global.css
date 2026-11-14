@@ -641,7 +641,7 @@ select.form-input {
 .incident-grid {
   display: grid;
   /* severity, ref, title, source (#171), owner, status, actions */
-  grid-template-columns: 104px 124px minmax(0, 1fr) 128px 180px 156px 40px;
+  grid-template-columns: 128px 124px minmax(0, 1fr) 128px 180px 156px 40px;
   align-items: center;
   column-gap: 16px;
 }
@@ -723,7 +723,7 @@ select.form-input {
 /* Narrower: the owner column shows the avatar only */
 @container (max-width: 820px) {
   .incident-grid {
-    grid-template-columns: 104px 124px minmax(0, 1fr) 128px 40px 156px 40px;
+    grid-template-columns: 128px 124px minmax(0, 1fr) 128px 40px 156px 40px;
   }
   .incident-owner-name,
   .incident-pickup-label {

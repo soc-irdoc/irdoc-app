@@ -13,6 +13,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ### Added
 
+- **Set the source of many incidents at once.** In the incidents list, tick incidents (or the whole page), then choose **Set source…**. By default only incidents with no source recorded are changed, and the dialog says how many will change before you confirm. Tick "Also replace sources that are already set" to overwrite. Each change is recorded in the audit log as `incident.source_changed`, like a single edit. This is the quick way to work through the "Not recorded" filter after upgrading. API: `POST /api/v1/incidents/bulk/source` with `ids` (up to 500), `source` and `overwrite`. (#153)
+
 - **nginx templates for running behind a load balancer.** `docker/nginx/examples/` now has:
   - `lb-terminate.conf`: the load balancer handles HTTPS and forwards plain HTTP to port 80.
   - `lb-reencrypt.conf`: the load balancer re-encrypts to port 443, with a certificate in `docker/ssl/`.

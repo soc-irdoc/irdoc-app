@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // #126-#128: the list is paged and sorted on the server, from URL state.
 const useIncidentsMock = vi.fn()
 const createMock = vi.fn()
+const bulkMock = vi.fn()
 
 vi.mock('@/hooks/useIncident', () => ({
   useIncidents: (params: unknown) => useIncidentsMock(params),
@@ -13,6 +14,7 @@ vi.mock('@/hooks/useIncident', () => ({
   useIncidentTemplates: () => ({ data: [] }),
   useUpdateIncident: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteIncident: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useBulkSetSource: () => ({ mutateAsync: bulkMock, isPending: false }),
 }))
 vi.mock('@/components/layout/AppShell', () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -123,6 +125,40 @@ describe('IncidentListPage', () => {
     renderAt('/incidents')
     fireEvent.click(screen.getByRole('button', { name: 'Sort by source' }))
     await waitFor(() => expect(lastParams()).toMatchObject({ sort: 'source', order: 'asc', page: 1 }))
+  })
+
+  it('bulk-sets the source on selected incidents, only where none was recorded (#153)', async () => {
+    useIncidentsMock.mockReturnValue({
+      data: {
+        data: [{ ...incident(1), source: null }, incident(2), { ...incident(3), source: null }],
+        meta: { page: 1, per_page: 25, total: 3 },
+      },
+      isLoading: false,
+      isFetching: false,
+    })
+    bulkMock.mockResolvedValue({ updated: 2, skipped: 1, not_found: 0 })
+    renderAt('/incidents')
+
+    fireEvent.click(screen.getByLabelText('Select all incidents on this page'))
+    expect(screen.getByRole('region', { name: 'Bulk actions' })).toHaveTextContent('3 selected')
+
+    fireEvent.click(screen.getByRole('button', { name: /Set source/ }))
+    fireEvent.change(document.getElementById('bulk-source')!, { target: { value: 'siem_alert' } })
+    expect(screen.getByRole('status')).toHaveTextContent('2 incidents will be set to SIEM Alert.')
+    expect(screen.getByRole('status')).toHaveTextContent('1 already have a source')
+
+    const dialogButtons = screen.getAllByRole('button', { name: 'Set source' })
+    fireEvent.click(dialogButtons[dialogButtons.length - 1])
+    await waitFor(() => expect(bulkMock).toHaveBeenCalledWith({
+      ids: ['id-1', 'id-2', 'id-3'], source: 'siem_alert', overwrite: false,
+    }))
+  })
+
+  it('clicking a row checkbox selects it without opening the incident (#153)', () => {
+    renderAt('/incidents')
+    fireEvent.click(screen.getByLabelText('Select INC-2026-0026'))
+    expect(screen.getByRole('region', { name: 'Bulk actions' })).toHaveTextContent('1 selected')
+    expect(location).toBe('')
   })
 
   it('severity sorts most severe first on the first click', async () => {

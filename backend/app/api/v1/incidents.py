@@ -11,6 +11,8 @@ from app.schemas.common import Meta
 from app.schemas.incident import (
     ExternalRefCreate,
     ExternalRefOut,
+    IncidentBulkResult,
+    IncidentBulkSource,
     IncidentCreate,
     IncidentOut,
     IncidentSort,
@@ -81,6 +83,45 @@ async def create_incident(
         request=request,
     )
     return {"data": IncidentOut.model_validate(incident), "error": None}
+
+
+@router.post("/bulk/source")
+async def bulk_set_source(
+    request: Request,
+    data: IncidentBulkSource,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("incidents.update")),
+):
+    """Set Source on many incidents (#153). Only incidents with no source are
+    changed unless `overwrite` is true. Each change is audited on its own."""
+    org_id = str(current_user.org_id)
+    changed, skipped, not_found = await incident_service.bulk_set_source(
+        db, org_id, data.ids, data.source, data.overwrite,
+    )
+    for incident, old_source in changed:
+        await audit_service.log(
+            db=db,
+            org_id=org_id,
+            action="incident.source_changed",
+            entity_type="incident",
+            entity_id=str(incident.id),
+            actor_label=current_user.email,
+            entity_label=f"{incident.incident_ref} - {incident.title}",
+            user_id=str(current_user.id),
+            request=request,
+            diff={"from": old_source, "to": data.source, "bulk": True},
+        )
+    await db.commit()
+
+    # Source shows on report covers; regenerate like a single edit does.
+    from app.services import report_regen_service
+    for incident, _ in changed:
+        await publish_ws(str(incident.id), "incident:updated",
+                         IncidentOut.model_validate(incident).model_dump(mode="json"))
+        await report_regen_service.maybe_trigger_report_regen(db, str(incident.id), org_id)
+
+    result = IncidentBulkResult(updated=len(changed), skipped=skipped, not_found=not_found)
+    return {"data": result, "error": None}
 
 
 @router.get("/{incident_id}")

@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from urllib.parse import urlsplit
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, StringConstraints
+from pydantic import AfterValidator, BaseModel, Field, StringConstraints
 
 from app.core.disposition import Disposition
 from app.core.incident_source import IncidentSource
@@ -129,3 +129,17 @@ class IncidentStats(BaseModel):
     task_done: int
     attachment_count: int
     duration_hours: float | None
+
+
+class IncidentBulkSource(BaseModel):
+    """Set Source on many incidents at once (#153)."""
+    ids: list[UUID] = Field(min_length=1, max_length=500)
+    source: IncidentSource
+    # By default only incidents with no source are changed.
+    overwrite: bool = False
+
+
+class IncidentBulkResult(BaseModel):
+    updated: int
+    skipped: int       # already had a source and overwrite was false
+    not_found: int     # not in the caller's org, or no such incident

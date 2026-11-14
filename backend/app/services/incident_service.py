@@ -397,3 +397,30 @@ async def add_external_ref(
     db.add(ref)
     await db.flush()
     return ref
+
+
+async def bulk_set_source(
+    db: AsyncSession, org_id: str, ids: list, source: str, overwrite: bool
+) -> tuple[list[tuple[Incident, str | None]], int, int]:
+    """Set Source on the org's incidents among `ids` (#153).
+
+    Returns (changed, skipped, not_found), where changed holds each updated
+    incident with its previous source, for the audit log.
+    """
+    wanted = {str(i) for i in ids}
+    result = await db.execute(
+        select(Incident).where(Incident.org_id == org_id, Incident.id.in_(list(wanted)))
+    )
+    incidents = list(result.scalars().all())
+    changed: list[tuple[Incident, str | None]] = []
+    skipped = 0
+    for incident in incidents:
+        if incident.source == source or (incident.source is not None and not overwrite):
+            skipped += 1
+            continue
+        changed.append((incident, incident.source))
+        incident.source = source
+    await db.flush()
+    for incident, _ in changed:
+        await db.refresh(incident)  # updated_at is set by the database
+    return changed, skipped, len(wanted) - len(incidents)
