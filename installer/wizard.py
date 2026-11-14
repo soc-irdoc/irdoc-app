@@ -29,7 +29,7 @@ from pydantic import BaseModel
 
 from installer.core import ssl as ssl_core
 from installer.core.config import assemble_env, generate_secrets, read_existing_env, write_env
-from installer.core.docker import detect_mode, run_compose, COMPOSE_FILE
+from installer.core.docker import compose_base_cmd, detect_mode, local_docker_edits, run_compose
 from installer.core.health import wait_for_health
 from installer.core import nginx as nginx_core
 from installer.core.snapshot import take_snapshot, list_snapshots, restore_snapshot
@@ -540,7 +540,7 @@ async def upgrade_welcome(request: Request):
     container_statuses = []
     try:
         r = subprocess.run(
-            ["docker", "compose", "-f", COMPOSE_FILE, "ps", "--format", "json"],
+            compose_base_cmd() + ["ps", "--format", "json"],
             capture_output=True, text=True, timeout=10,
         )
         if r.returncode == 0 and r.stdout.strip():
@@ -568,6 +568,7 @@ async def upgrade_welcome(request: Request):
         containers=container_statuses,
         disk_free_gb=round(disk_free_gb, 1),
         storage_size=storage_size,
+        local_edits=local_docker_edits(),
     ))
 
 

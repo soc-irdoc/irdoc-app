@@ -5,6 +5,11 @@
 set -e
 
 COMPOSE_FILE="$(dirname "$0")/docker-compose.prod.yml"
+COMPOSE=(docker compose -f "${COMPOSE_FILE}")
+# Local compose changes (#162), as in upgrade.sh.
+if [ -f "$(dirname "$0")/docker-compose.local.yml" ]; then
+  COMPOSE+=(-f "$(dirname "$0")/docker-compose.local.yml")
+fi
 BACKUP_DIR="$(dirname "$0")/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 
@@ -14,7 +19,7 @@ echo "=== IRDoc Backup — ${DATE} ==="
 
 # ── Database ──────────────────────────────────────────────────────────────────
 echo "[1/3] Backing up database..."
-docker compose -f "${COMPOSE_FILE}" exec -T db \
+"${COMPOSE[@]}" exec -T db \
   pg_dump -U irp irp | gzip > "${BACKUP_DIR}/db_${DATE}.sql.gz"
 echo "      Saved: db_${DATE}.sql.gz"
 

@@ -47,6 +47,18 @@
 </div>
 {% endif %}
 
+{% if local_edits %}
+<!-- #162: same warning as upgrade.sh -->
+<div class="card warning mt-4">
+  <strong>Local changes under docker/:</strong>
+  <pre style="margin:0.5rem 0;font-size:0.8rem">{% for line in local_edits %}{{ line }}
+{% endfor %}</pre>
+  <span class="text-sm">Upgrades may replace these files. Keep compose changes in
+  <code>docker/docker-compose.local.yml</code>, nginx changes in <code>docker/nginx/local/nginx.conf</code>
+  and settings in <code>docker/.env</code>; those are never overwritten.</span>
+</div>
+{% endif %}
+
 <form method="post" action="/upgrade/start" class="mt-6">
   <button type="submit" class="btn btn-primary"
     {% if unhealthy %}id="upgrade-btn" disabled onclick="return false;"{% endif %}>

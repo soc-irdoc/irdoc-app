@@ -27,6 +27,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
   The final page lists the pool port, the health-check URL and the firewall rule (ports 80/443 only from the load balancer). Load balancer installs now get an `https://` `BASE_URL` and Secure cookies; the old option wrote an `http://` one. (#161)
 
+- **Keep your own compose changes across upgrades.** Put extra ports, mounts or resource limits in `docker/docker-compose.local.yml`. It is ignored by git, so `git pull` never conflicts with it. `upgrade.sh`, `backup.sh` and the installer's upgrade use it on top of `docker-compose.prod.yml` whenever it exists. Before changing anything, `upgrade.sh` and the installer's upgrade page list tracked files under `docker/` that you edited, since `git pull` can fail on them and upgrades may replace them. The top of `upgrade.sh` lists what an upgrade changes. (#162)
+
 ### Fixed
 
 - **SSO role mappings now take effect.** Previously a mapping was only used the first time someone signed in, so anyone whose account already existed stayed an Analyst whatever the mapping said. Now:

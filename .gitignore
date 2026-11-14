@@ -67,5 +67,7 @@ superpowers/
 docker/nginx/nginx.conf.bak-*
 # The install's own nginx config (HTTPS, custom certs): never tracked, so
 # `git pull` can't conflict with it (#114)
+# An install's own compose changes (#162)
+docker/docker-compose.local.yml
 docker/nginx/local/*
 !docker/nginx/local/.gitkeep
