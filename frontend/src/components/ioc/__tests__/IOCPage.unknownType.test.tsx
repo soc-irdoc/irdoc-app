@@ -18,7 +18,10 @@ vi.mock('@/hooks/useIOCs', () => ({
   useUpdateIOC: () => mutation,
   useDeleteIOC: () => mutation,
   useBulkImportIOCs: () => mutation,
+  useIOCLinks: () => ({ data: [] }),
+  useSetIOCLink: () => mutation,
 }))
+vi.mock('@/hooks/useTimeline', () => ({ useTimeline: () => ({ data: [] }) }))
 vi.mock('@/lib/websocket', () => ({ getSocket: () => ({ on: vi.fn(), off: vi.fn() }) }))
 
 describe('IOCPage', () => {

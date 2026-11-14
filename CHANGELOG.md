@@ -13,6 +13,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ### Added
 
+- **Link IOCs to the timeline entries they were seen in.** When adding or editing a timeline entry, pick the incident's IOCs under **Link IOCs**, the same way assets are linked. On the IOCs page, expand an IOC to tick the entries it was seen in; IOCs with links show a "SEEN IN n" chip. The Evidence tab now uses these links: the IOC view lists each IOC's entries, with a link to each and a count of their files, and file rows show chips for the IOCs linked to their entry (hidden from roles that can't read IOCs). Links are recorded in the audit log as `ioc.linked` / `ioc.unlinked`. API: `POST` / `DELETE /api/v1/incidents/{id}/iocs/{ioc_id}/links/{entry_id}`, and `GET /api/v1/incidents/{id}/ioc-links`. (#152)
+
 - **Set the source of many incidents at once.** In the incidents list, tick incidents (or the whole page), then choose **Set source…**. By default only incidents with no source recorded are changed, and the dialog says how many will change before you confirm. Tick "Also replace sources that are already set" to overwrite. Each change is recorded in the audit log as `incident.source_changed`, like a single edit. This is the quick way to work through the "Not recorded" filter after upgrading. API: `POST /api/v1/incidents/bulk/source` with `ids` (up to 500), `source` and `overwrite`. (#153)
 
 - **nginx templates for running behind a load balancer.** `docker/nginx/examples/` now has:

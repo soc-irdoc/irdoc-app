@@ -310,6 +310,23 @@ export function EvidencePage({ incidentId }: EvidencePageProps) {
                                   ))}
                                 </div>
                               )}
+                              {/* IOCs seen in this entry (#152); null without IOC access */}
+                              {f.linked_iocs && f.linked_iocs.length > 0 && (
+                                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                                  {f.linked_iocs.map((i) => (
+                                    <button
+                                      key={i.id}
+                                      type="button"
+                                      className="chip chip-red"
+                                      style={{ fontSize: 9, cursor: 'pointer', border: 'none', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                      title={`IOC (${i.ioc_type}): ${i.value}`}
+                                      onClick={() => navigate(`/incidents/${incidentId}/iocs?ioc=${i.id}`)}
+                                    >
+                                      {i.value}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </>
                           ) : (
                             <span style={{ color: 'var(--text-secondary)' }}>Incident</span>

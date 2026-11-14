@@ -37,6 +37,8 @@ export interface EvidenceFile {
   assets: EvidenceAssetChip[] | null
   /** null when the user may not read IOCs */
   ioc_matches: EvidenceIOCMatch[] | null
+  // IOCs linked to the file's timeline entry (#152); null without IOC access
+  linked_iocs?: EvidenceIOCMatch[] | null
 }
 
 export interface EvidenceIOC {

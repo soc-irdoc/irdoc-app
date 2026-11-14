@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCreateTimelineEntry } from '@/hooks/useTimeline'
 import { useAssets, useLinkAssetsToEntry } from '@/hooks/useAssets'
+import { useIOCs, useSetIOCLink } from '@/hooks/useIOCs'
+import { IOCPicker } from './IOCPicker'
 import { AttachmentZone } from './AttachmentZone'
 import { Button } from '@/components/common/Button'
 import { useUIStore } from '@/stores/uiStore'
 import { formatNowDate, formatNowTime, uploadErrorMessage } from '@/lib/utils'
 import type { EntryType } from '@/types/timeline'
 import { ASSET_TYPE_ICONS, ASSET_TYPE_LABELS, type AssetType } from '@/types/asset'
-import { FaBox, FaChevronDown, FaChevronUp, FaDesktop } from 'react-icons/fa6'
+import { FaBox, FaChevronDown, FaChevronUp, FaDesktop, FaFingerprint } from 'react-icons/fa6'
 import { Icon } from '@/components/common/Icon'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
@@ -31,6 +33,8 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
   const createEntry = useCreateTimelineEntry(incidentId)
   const { data: allAssets = [] } = useAssets(incidentId)
   const linkAssets = useLinkAssetsToEntry(incidentId)
+  const { data: allIocs = [] } = useIOCs(incidentId)
+  const setIocLink = useSetIOCLink(incidentId)
 
   const [entryType, setEntryType] = useState<EntryType>('note')
   const [date, setDate] = useState(formatNowDate())
@@ -44,6 +48,8 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
   const [live, setLive] = useState(true)
   const [assetPickerOpen, setAssetPickerOpen] = useState(false)
   const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set())
+  const [iocPickerOpen, setIocPickerOpen] = useState(false)
+  const [selectedIocIds, setSelectedIocIds] = useState<Set<string>>(new Set())
 
   // Keep date/time on "now" while live and the form is focused
   useEffect(() => {
@@ -131,6 +137,16 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         }
       }
 
+      // Link selected IOCs to the entry (#152)
+      if (selectedIocIds.size > 0 && entry?.id) {
+        const results = await Promise.allSettled(
+          Array.from(selectedIocIds).map((iocId) => setIocLink.mutateAsync({ iocId, entryId: entry.id, linked: true })),
+        )
+        if (results.some((r) => r.status === 'rejected')) {
+          addToast('Entry added but failed to link some IOCs', 'error')
+        }
+      }
+
       // Reset form
       setDescription('')
       setSource('')
@@ -138,6 +154,8 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
       resumeLive()
       setSelectedAssetIds(new Set())
       setAssetPickerOpen(false)
+      setSelectedIocIds(new Set())
+      setIocPickerOpen(false)
 
       // Consolidated result toast - include attachment outcome when files were queued
       if (files.length === 0) {
@@ -379,6 +397,46 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
         </div>
       )}
 
+      {/* IOC picker (#152) */}
+      {allIocs.length > 0 && (
+        <div style={{ marginTop: 6 }}>
+          <button
+            type="button"
+            onClick={() => setIocPickerOpen((o) => !o)}
+            aria-expanded={iocPickerOpen}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: 12,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 0',
+            }}
+          >
+            <FaFingerprint size={16} aria-hidden="true" /> Link IOCs{selectedIocIds.size > 0 ? ` (${selectedIocIds.size} selected)` : ''}
+            {' '}
+            {iocPickerOpen ? <FaChevronUp size={10} aria-hidden="true" /> : <FaChevronDown size={10} aria-hidden="true" />}
+          </button>
+          {iocPickerOpen && (
+            <div style={{ marginTop: 6 }}>
+              <IOCPicker
+                iocs={allIocs}
+                selectedIds={selectedIocIds}
+                onToggle={(id) => setSelectedIocIds((prev) => {
+                  const next = new Set(prev)
+                  if (next.has(id)) next.delete(id)
+                  else next.add(id)
+                  return next
+                })}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Actions */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14 }}>
         <Button
@@ -390,6 +448,7 @@ export function AddEntryForm({ incidentId, inputRef }: AddEntryFormProps) {
             setSource('')
             setFiles([])
             setSelectedAssetIds(new Set())
+            setSelectedIocIds(new Set())
           }}
         >
           Clear

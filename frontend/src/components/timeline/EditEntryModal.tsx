@@ -5,12 +5,16 @@ import { Button } from '@/components/common/Button'
 import { AttachmentZone } from './AttachmentZone'
 import { useUpdateTimelineEntry } from '@/hooks/useTimeline'
 import { useAssets, useLinkAssetsToEntry, useUnlinkAssetFromEntry, useEntryAssets } from '@/hooks/useAssets'
+import { useIOCs, useIOCLinks, useSetIOCLink } from '@/hooks/useIOCs'
+import { IOCPicker } from './IOCPicker'
 import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
 import { uploadErrorMessage } from '@/lib/utils'
 import { ASSET_TYPE_ICONS, type Asset, type AssetType } from '@/types/asset'
 import type { TimelineEntry, EntryType, UpdateTimelineEntryPayload, Attachment } from '@/types/timeline'
-import { FaBox, FaDesktop, FaXmark } from 'react-icons/fa6'
+import type { IOC } from '@/types/ioc'
+import type { IOCTimelineLink } from '@/hooks/useIOCs'
+import { FaBox, FaDesktop, FaFingerprint, FaXmark } from 'react-icons/fa6'
 import { Icon } from '@/components/common/Icon'
 
 const ENTRY_TYPES: { value: EntryType; label: string }[] = [
@@ -36,6 +40,8 @@ const LABEL_STYLE: React.CSSProperties = {
 // re-trigger the linked-assets sync effect below in a loop while the modal is
 // closed and its query is disabled (#101).
 const NO_ASSETS: Asset[] = []
+const NO_IOCS: IOC[] = []
+const NO_LINKS: IOCTimelineLink[] = []
 
 interface EditEntryModalProps {
   entry: TimelineEntry | null
@@ -51,6 +57,9 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
   const { data: linkedAssets = NO_ASSETS } = useEntryAssets(incidentId, entry?.id ?? '')
   const linkAssets = useLinkAssetsToEntry(incidentId)
   const unlinkAsset = useUnlinkAssetFromEntry(incidentId)
+  const { data: allIocs = NO_IOCS } = useIOCs(incidentId)
+  const { data: iocLinks = NO_LINKS } = useIOCLinks(incidentId)
+  const setIocLink = useSetIOCLink(incidentId)
 
   const [entryType, setEntryType] = useState<EntryType>('note')
   const [date, setDate] = useState('')
@@ -60,6 +69,7 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<Set<string>>(new Set())
   const [localLinkedAssetIds, setLocalLinkedAssetIds] = useState<Set<string>>(new Set())
+  const [localLinkedIocIds, setLocalLinkedIocIds] = useState<Set<string>>(new Set())
 
   // Initialise form from entry when modal opens
   useEffect(() => {
@@ -83,6 +93,30 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
   useEffect(() => {
     setLocalLinkedAssetIds(new Set(linkedAssets.map((a) => a.id)))
   }, [linkedAssets])
+
+  // Same for the IOCs linked to this entry (#152)
+  useEffect(() => {
+    if (!entry) return
+    setLocalLinkedIocIds(new Set(iocLinks.filter((l) => l.timeline_entry_id === entry.id).map((l) => l.ioc_id)))
+  }, [iocLinks, entry])
+
+  async function handleToggleIoc(iocId: string) {
+    if (!entry) return
+    const isLinked = localLinkedIocIds.has(iocId)
+    const flip = (prev: Set<string>) => {
+      const next = new Set(prev)
+      if (next.has(iocId)) next.delete(iocId)
+      else next.add(iocId)
+      return next
+    }
+    setLocalLinkedIocIds(flip) // optimistic
+    try {
+      await setIocLink.mutateAsync({ iocId, entryId: entry.id, linked: !isLinked })
+    } catch {
+      setLocalLinkedIocIds(flip) // roll back
+      addToast('Failed to update IOC link', 'error')
+    }
+  }
 
   const visibleAttachments = (entry?.attachments ?? []).filter(
     (att: Attachment) => !removedAttachmentIds.has(att.id)
@@ -311,6 +345,16 @@ export function EditEntryModal({ entry, incidentId, onClose }: EditEntryModalPro
                   </button>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* IOC picker (#152) */}
+        {allIocs.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <label style={LABEL_STYLE}><FaFingerprint size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }} /> IOCs seen in this entry</label>
+            <div style={{ marginTop: 4 }}>
+              <IOCPicker iocs={allIocs} selectedIds={localLinkedIocIds} onToggle={handleToggleIoc} />
             </div>
           </div>
         )}

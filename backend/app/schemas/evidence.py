@@ -46,6 +46,8 @@ class EvidenceFileOut(BaseModel):
     # None (rather than []) when the user may not read assets / IOCs.
     assets: list[EvidenceAssetChip] | None = None
     ioc_matches: list[EvidenceIOCMatch] | None = None
+    # IOCs linked to the file's timeline entry (#152)
+    linked_iocs: list[EvidenceIOCMatch] | None = None
 
 
 class EvidenceIOCOut(BaseModel):

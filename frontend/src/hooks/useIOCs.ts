@@ -88,3 +88,37 @@ export function useDetectIOCs(incidentId: string) {
     },
   })
 }
+
+// ── IOC <-> timeline entry links (#152) ──────────────────────────────────────
+
+export interface IOCTimelineLink {
+  ioc_id: string
+  timeline_entry_id: string
+}
+
+export function useIOCLinks(incidentId: string) {
+  return useQuery({
+    queryKey: ['ioc-links', incidentId],
+    queryFn: async () => {
+      const res = await apiClient.get<ApiResponse<IOCTimelineLink[]>>(`/incidents/${incidentId}/ioc-links`)
+      return res.data.data
+    },
+    enabled: !!incidentId,
+  })
+}
+
+export function useSetIOCLink(incidentId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ iocId, entryId, linked }: { iocId: string; entryId: string; linked: boolean }) => {
+      const url = `/incidents/${incidentId}/iocs/${iocId}/links/${entryId}`
+      if (linked) await apiClient.post(url)
+      else await apiClient.delete(url)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ioc-links', incidentId] })
+      qc.invalidateQueries({ queryKey: ['evidence', incidentId] })
+      qc.invalidateQueries({ queryKey: ['graph', incidentId] })
+    },
+  })
+}

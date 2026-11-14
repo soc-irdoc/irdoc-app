@@ -24,6 +24,10 @@ vi.mock('@/hooks/useAssets', () => ({
   useAssets: () => ({ data: [] }),
   useLinkAssetsToEntry: () => ({ mutateAsync: vi.fn() }),
 }))
+vi.mock('@/hooks/useIOCs', () => ({
+  useIOCs: () => ({ data: [] }),
+  useSetIOCLink: () => ({ mutateAsync: vi.fn() }),
+}))
 vi.mock('@/stores/uiStore', () => ({
   useUIStore: (selector: (s: { addToast: () => void }) => unknown) =>
     selector({ addToast: vi.fn() }),

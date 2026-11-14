@@ -136,6 +136,22 @@ async def _ioc_matches_by_hash(db: AsyncSession, incident_id: str) -> dict[str, 
     return by_hash
 
 
+async def _linked_iocs(db: AsyncSession, entry_ids: set) -> dict[uuid.UUID, list[EvidenceIOCMatch]]:
+    """IOCs linked to each timeline entry (#152)."""
+    if not entry_ids:
+        return {}
+    result = await db.execute(
+        select(IOCTimelineLink.timeline_entry_id, IOC)
+        .join(IOC, IOC.id == IOCTimelineLink.ioc_id)
+        .where(IOCTimelineLink.timeline_entry_id.in_(entry_ids))
+        .order_by(IOC.ioc_type, IOC.value)
+    )
+    by_entry: dict[uuid.UUID, list[EvidenceIOCMatch]] = defaultdict(list)
+    for entry_id, ioc in result.all():
+        by_entry[entry_id].append(EvidenceIOCMatch(id=ioc.id, ioc_type=ioc.ioc_type, value=ioc.value))
+    return by_entry
+
+
 def _source(entry: TimelineEntry | None) -> EvidenceSource | None:
     if entry is None:
         return None
@@ -161,6 +177,10 @@ async def _build_rows(
         if include_assets else {}
     )
     matches = await _ioc_matches_by_hash(db, incident_id) if include_iocs else {}
+    linked = (
+        await _linked_iocs(db, {a.timeline_entry_id for a in attachments if a.timeline_entry_id})
+        if include_iocs else {}
+    )
 
     return [
         EvidenceFileOut(
@@ -177,6 +197,7 @@ async def _build_rows(
             source=_source(entry),
             assets=chips.get(att.timeline_entry_id, []) if include_assets else None,
             ioc_matches=matches.get(att.sha256.lower(), []) if include_iocs else None,
+            linked_iocs=linked.get(att.timeline_entry_id, []) if include_iocs else None,
         )
         for att, entry in rows
     ]

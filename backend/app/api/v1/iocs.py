@@ -1,10 +1,17 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.permissions import require_permission
-from app.schemas.ioc import IOCBulkImport, IOCCreate, IOCDetected, IOCOut, IOCUpdate
-from app.services import incident_service, ioc_service
+from app.schemas.ioc import (
+    IOCBulkImport,
+    IOCCreate,
+    IOCDetected,
+    IOCOut,
+    IOCTimelineLinkOut,
+    IOCUpdate,
+)
+from app.services import audit_service, incident_service, ioc_service
 
 router = APIRouter(tags=["iocs"])
 
@@ -133,3 +140,69 @@ async def ioc_ai_narrative(
     from app.workers.tasks import generate_ai_ioc_narrative
     generate_ai_ioc_narrative.delay(ioc_id)
     return {"data": {"ioc_id": ioc_id, "status": "narrative_queued"}, "meta": {}, "error": None}
+
+
+# ── IOC <-> timeline entry links (#152) ───────────────────────────────────────
+
+@router.get("/incidents/{incident_id}/ioc-links")
+async def list_ioc_links(
+    incident_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("iocs.read")),
+):
+    await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+    links = await ioc_service.list_timeline_links(db, incident_id)
+    return {"data": [IOCTimelineLinkOut.model_validate(link) for link in links], "error": None}
+
+
+async def _audit_link(db, request, current_user, action: str, ioc, entry) -> None:
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        user_id=str(current_user.id),
+        actor_label=current_user.email,
+        action=action,
+        entity_type="ioc",
+        entity_id=str(ioc.id),
+        entity_label=f"{ioc.ioc_type}: {ioc.value}",
+        diff={"incident_id": str(ioc.incident_id), "timeline_entry_id": str(entry.id)},
+        request=request,
+    )
+
+
+@router.post("/incidents/{incident_id}/iocs/{ioc_id}/links/{entry_id}", status_code=201)
+async def link_ioc_to_entry(
+    request: Request,
+    incident_id: str,
+    ioc_id: str,
+    entry_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("iocs.update")),
+):
+    await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+    ioc, entry, created = await ioc_service.link_to_timeline(db, incident_id, ioc_id, entry_id)
+    if created:
+        await _audit_link(db, request, current_user, "ioc.linked", ioc, entry)
+        from app.services import report_regen_service
+        await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
+    await db.commit()
+    return {"data": {"ioc_id": str(ioc.id), "timeline_entry_id": str(entry.id), "created": created},
+            "error": None}
+
+
+@router.delete("/incidents/{incident_id}/iocs/{ioc_id}/links/{entry_id}", status_code=204)
+async def unlink_ioc_from_entry(
+    request: Request,
+    incident_id: str,
+    ioc_id: str,
+    entry_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("iocs.update")),
+):
+    await incident_service.get_incident(db, incident_id, str(current_user.org_id))
+    ioc, entry, removed = await ioc_service.unlink_from_timeline(db, incident_id, ioc_id, entry_id)
+    if removed:
+        await _audit_link(db, request, current_user, "ioc.unlinked", ioc, entry)
+        from app.services import report_regen_service
+        await report_regen_service.maybe_trigger_report_regen(db, incident_id, str(current_user.org_id))
+    await db.commit()
