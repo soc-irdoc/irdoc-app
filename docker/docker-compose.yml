@@ -41,8 +41,8 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://irp:${DB_PASSWORD}@irdoc-db/irp}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD}@irdoc-redis:6379/0}
       SECRET_KEY: ${SECRET_KEY}
       BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
       BACKUP_LEGACY_SECRET_KEYS: ${BACKUP_LEGACY_SECRET_KEYS:-}
@@ -91,8 +91,8 @@ services:
     command: celery -A app.workers.celery_app worker --loglevel=info -Q default,reports,enrichment,ai
     env_file: .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://irp:${DB_PASSWORD}@irdoc-db/irp}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD}@irdoc-redis:6379/0}
       SECRET_KEY: ${SECRET_KEY}
       BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
       BACKUP_LEGACY_SECRET_KEYS: ${BACKUP_LEGACY_SECRET_KEYS:-}
@@ -124,8 +124,8 @@ services:
     command: celery -A app.workers.celery_app beat --loglevel=info --schedule /app/backups/celerybeat-schedule
     env_file: .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://irp:${DB_PASSWORD}@irdoc-db/irp}
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD}@irdoc-redis:6379/0}
       SECRET_KEY: ${SECRET_KEY}
       BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
       BACKUP_LEGACY_SECRET_KEYS: ${BACKUP_LEGACY_SECRET_KEYS:-}

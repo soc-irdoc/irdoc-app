@@ -83,3 +83,10 @@ def test_prod_compose_defaults_give_secure_cookies_on_https(monkeypatch):
         monkeypatch.setenv(key, value)
     monkeypatch.delenv("CORS_ORIGINS", raising=False)
     assert Settings(_env_file=None).COOKIE_SECURE is True  # BASE_URL is https here
+
+
+def test_database_and_redis_urls_are_built_from_the_passwords():
+    """#158: changing DB_PASSWORD alone must not leave a stale copy in DATABASE_URL."""
+    raw = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["x-backend-env"]
+    assert raw["DATABASE_URL"] == "${DATABASE_URL:-postgresql+asyncpg://irp:${DB_PASSWORD}@irdoc-db/irp}"
+    assert raw["REDIS_URL"] == "${REDIS_URL:-redis://:${REDIS_PASSWORD}@irdoc-redis:6379/0}"

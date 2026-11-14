@@ -44,8 +44,8 @@ def test_assemble_env_contains_required_keys():
     assert "REDIS_PASSWORD=redispass" in content
     assert "SECRET_KEY=secretkey" in content
     assert "BASE_URL=https://irdoc.example.com" in content
-    assert "DATABASE_URL=postgresql+asyncpg://irp:dbpass@irdoc-db/irp" in content
-    assert "REDIS_URL=redis://:redispass@irdoc-redis:6379/0" in content
+    # #158: each password lives in one place; compose builds the URLs from it
+    assert not any(line.startswith(("DATABASE_URL=", "REDIS_URL=")) for line in content.splitlines())
     assert "ALLOW_REGISTRATION=false" in content
     assert "VERSION=1.2.0" in content
 
