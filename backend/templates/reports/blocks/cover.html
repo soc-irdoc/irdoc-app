@@ -46,7 +46,7 @@
     {% if 'analyst.full_name' in show_fields %}
     <div class="meta-item">
       <div class="meta-label">Lead Analyst</div>
-      <div class="meta-value">{{ p.analyst.full_name }}</div>
+      <div class="meta-value">{{ (p.lead_analyst or p.analyst).full_name }}</div>
     </div>
     {% endif %}
     {% if 'generated_at' in show_fields %}

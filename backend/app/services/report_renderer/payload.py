@@ -94,6 +94,10 @@ class ReportPayload:
     # Graph diagram - SVG generated server-side from incident graph data
     graph_svg: str | None = None
 
+    # "Lead Analyst" on the cover: the incident's assignee, or the generating
+    # user when unassigned (#173). `analyst` stays the generator (footer).
+    lead_analyst: "User | None" = None
+
 
 def _group_by(items, key_fn) -> dict:
     result: dict = {}
@@ -161,6 +165,13 @@ async def build_report_payload(
             str(u.id): u.full_name or u.email for u in result.scalars().all()
         }
 
+    # Lead analyst = assignee; fall back to whoever generated the report (#173)
+    lead_analyst = analyst
+    if incident.assigned_to:
+        assignee = await db.get(User, incident.assigned_to)
+        if assignee is not None:
+            lead_analyst = assignee
+
     # Compute derived fields
     completed_tasks = [t for t in tasks if t.status == "done"]
     task_completion_pct = (
@@ -202,4 +213,5 @@ async def build_report_payload(
         closed_at_str=_fmt_dt(incident.closed_at),
         ai_recommendations=incident.ai_recommendations,
         uploader_names=uploader_names,
+        lead_analyst=lead_analyst,
     )
