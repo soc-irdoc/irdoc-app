@@ -69,15 +69,42 @@ class InviteAccept(BaseModel):
 # ── Org settings ──────────────────────────────────────────────────────────────
 
 class OrgSettingsUpdate(BaseModel):
-    name: str | None = None
+    name: str | None = Field(None, max_length=200)
     allow_registration: bool | None = None
     invite_only: bool | None = None
     mfa_required: bool | None = None
-    logo_url: AnyHttpUrl | None = None
-    accent_color: str | None = None
+    # "" clears the logo; otherwise an http(s) URL, stored as a plain string (#167)
+    logo_url: str | None = Field(None, max_length=2048)
+    accent_color: str | None = Field(None, pattern=r"^#[0-9a-fA-F]{6}$")
     # Session timeouts (#123); 0 goes back to the server default.
     session_idle_minutes: int | None = Field(None, ge=0, le=1440)
     session_max_hours: int | None = Field(None, ge=0, le=720)
+
+    @field_validator("name")
+    @classmethod
+    def name_not_blank(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v:
+            raise ValueError("Organization name can't be empty")
+        return v
+
+    @field_validator("logo_url")
+    @classmethod
+    def logo_url_http_or_empty(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if v == "":
+            return ""
+        try:
+            parsed = AnyHttpUrl(v)
+        except ValueError:
+            raise ValueError("Logo URL must be an http(s) URL") from None
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError("Logo URL must be an http(s) URL")
+        return v
 
     @field_validator("session_idle_minutes")
     @classmethod

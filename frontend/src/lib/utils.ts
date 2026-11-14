@@ -6,6 +6,17 @@ export function getErrorMessage(err: unknown, fallback: string): string {
   if (isAxiosError(err)) {
     const detail = err.response?.data?.detail
     if (typeof detail === 'string') return detail
+    // FastAPI validation errors (422): [{loc: ['body', field], msg}, ...]
+    if (Array.isArray(detail)) {
+      const parts = detail
+        .filter((d): d is { loc?: unknown[]; msg: string } => typeof d?.msg === 'string')
+        .map((d) => {
+          const field = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : undefined
+          const msg = d.msg.replace(/^Value error, /, '')
+          return typeof field === 'string' && field !== 'body' ? `${field}: ${msg}` : msg
+        })
+      if (parts.length) return parts.join('; ')
+    }
   }
   return fallback
 }

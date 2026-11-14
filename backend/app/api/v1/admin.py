@@ -97,7 +97,11 @@ async def update_org(
         settings_patch["mfa_required"] = data.mfa_required
         changes["mfa_required"] = data.mfa_required
     if data.logo_url is not None:
-        settings_patch["logo_url"] = data.logo_url
+        # "" clears the logo (#167)
+        if data.logo_url:
+            settings_patch["logo_url"] = data.logo_url
+        else:
+            settings_patch.pop("logo_url", None)
         changes["logo_url"] = data.logo_url
     if data.accent_color is not None:
         settings_patch["accent_color"] = data.accent_color

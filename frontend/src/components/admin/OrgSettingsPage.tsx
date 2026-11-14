@@ -13,6 +13,7 @@ import {
 } from '@/hooks/useAdmin'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
+import { getErrorMessage } from '@/lib/utils'
 import { Modal } from '@/components/common/Modal'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/admin'
@@ -220,8 +221,8 @@ export function OrgSettingsPage() {
         session_max_hours: maxHours ? Number(maxHours) : 0,
       })
       addToast('Organisation settings saved', 'success')
-    } catch {
-      addToast('Failed to save settings', 'error')
+    } catch (err) {
+      addToast(`Failed to save settings: ${getErrorMessage(err, 'unexpected server error')}`, 'error')
     }
   }
 
