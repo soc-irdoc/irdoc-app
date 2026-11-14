@@ -1,18 +1,31 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# The slug is how API callers (the inbound webhook) pick a template, so it is
+# lowercase words joined by single hyphens (#168).
+TemplateSlug = Annotated[
+    str, Field(min_length=1, max_length=100, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+]
 
 
 class IncidentTemplateCreate(BaseModel):
+    # Unknown fields are a 422, not silently dropped (#169)
+    model_config = {"extra": "forbid"}
+
     name: str
-    slug: str
+    slug: TemplateSlug
     description: str | None = None
     tasks_json: list = []
 
 
 class IncidentTemplateUpdate(BaseModel):
+    model_config = {"extra": "forbid"}
+
     name: str | None = None
+    slug: TemplateSlug | None = None
     description: str | None = None
     tasks_json: list | None = None
     is_hidden: bool | None = None

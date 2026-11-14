@@ -3,10 +3,10 @@ Template service: incident templates + report templates.
 System templates (org_id=null) are read-only - orgs must clone.
 """
 import copy
-import uuid
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.template import IncidentTemplate, ReportTemplate
@@ -41,9 +41,41 @@ async def get_incident_template(db: AsyncSession, template_id: str, org_id: str)
     return template
 
 
+async def _ensure_slug_available(
+    db: AsyncSession, org_id: str, slug: str, exclude_id=None
+) -> None:
+    """409 unless `slug` is free among the org's own templates and the system
+    templates, so every slug an org can see points to exactly one template (#168)."""
+    query = select(IncidentTemplate).where(
+        IncidentTemplate.slug == slug,
+        (IncidentTemplate.org_id == org_id) | (IncidentTemplate.org_id == None),  # noqa: E711
+    )
+    if exclude_id is not None:
+        query = query.where(IncidentTemplate.id != exclude_id)
+    clash = (await db.execute(query.limit(1))).scalar_one_or_none()
+    if clash is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Slug '{slug}' is already used by template '{clash.name}'",
+        )
+
+
+async def _flush_or_409(db: AsyncSession, slug: str) -> None:
+    """Flush, turning a lost race on uq_incident_templates_org_slug into 409."""
+    try:
+        async with db.begin_nested():
+            await db.flush()
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Slug '{slug}' is already used by another template",
+        ) from None
+
+
 async def create_incident_template(
     db: AsyncSession, org_id: str, data: IncidentTemplateCreate
 ) -> IncidentTemplate:
+    await _ensure_slug_available(db, org_id, data.slug)
     template = IncidentTemplate(
         org_id=org_id,
         name=data.name,
@@ -53,7 +85,7 @@ async def create_incident_template(
         is_system=False,
     )
     db.add(template)
-    await db.flush()
+    await _flush_or_409(db, data.slug)
     await db.refresh(template)
     return template
 
@@ -62,14 +94,19 @@ async def update_incident_template(
     db: AsyncSession, template: IncidentTemplate, data: IncidentTemplateUpdate
 ) -> IncidentTemplate:
     updates = data.model_dump(exclude_none=True)
+    # Re-sending the current slug (the edit form always does) is not a change.
+    if updates.get("slug") == template.slug:
+        updates.pop("slug")
     if template.is_system and set(updates.keys()) - {"is_hidden"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="System templates are read-only. Clone to customize.",
         )
+    if "slug" in updates:
+        await _ensure_slug_available(db, str(template.org_id), updates["slug"], exclude_id=template.id)
     for key, value in updates.items():
         setattr(template, key, value)
-    await db.flush()
+    await _flush_or_409(db, template.slug)
     await db.refresh(template)
     return template
 
@@ -84,23 +121,39 @@ async def delete_incident_template(db: AsyncSession, template: IncidentTemplate)
     await db.flush()
 
 
+async def _free_copy_slug(db: AsyncSession, org_id: str, base: str) -> str:
+    """`<base>-copy`, then `-copy-2`, `-copy-3`, ...: the first one free."""
+    stem = f"{base[:90]}-copy"
+    taken = set((await db.execute(
+        select(IncidentTemplate.slug).where(
+            IncidentTemplate.slug.like(f"{stem}%"),
+            (IncidentTemplate.org_id == org_id) | (IncidentTemplate.org_id == None),  # noqa: E711
+        )
+    )).scalars())
+    if stem not in taken:
+        return stem
+    n = 2
+    while f"{stem}-{n}" in taken:
+        n += 1
+    return f"{stem}-{n}"
+
+
 async def clone_incident_template(
     db: AsyncSession, source: IncidentTemplate, org_id: str
 ) -> IncidentTemplate:
     """Clone a template (usually a system one) into the org's own editable copy."""
-    # Slugs aren't unique in the schema, but give each copy its own so the
-    # copy is distinguishable from the original (and from earlier copies).
+    slug = await _free_copy_slug(db, org_id, source.slug)
     cloned = IncidentTemplate(
         org_id=org_id,
         name=f"{source.name} (Copy)",
-        slug=f"{source.slug[:85]}-copy-{uuid.uuid4().hex[:8]}",
+        slug=slug,
         description=source.description,
         tasks_json=copy.deepcopy(source.tasks_json or []),
         is_system=False,
         is_hidden=False,
     )
     db.add(cloned)
-    await db.flush()
+    await _flush_or_409(db, slug)
     await db.refresh(cloned)
     return cloned
 

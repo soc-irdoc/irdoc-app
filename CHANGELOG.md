@@ -24,6 +24,18 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 - **Saving organization settings works again.** Changing the organization name, or anything else on Admin → Organization settings, failed with "Failed to save settings" because of how an empty logo URL was validated, and a logo URL could never be saved at all. An empty logo URL now clears the logo. The name can't be blank (surrounding spaces are trimmed), the accent colour must be a `#rrggbb` value, and the logo must be an http(s) URL. When saving fails, the message now says why. (#167, #170)
 
+- **Incident template slugs are unique and can be edited.** The slug is how the inbound webhook picks a template (`"template": "<slug>"`).
+  - Two templates in the same organization could share a slug, and the webhook then failed with a server error. Upgrading renames the extra copies: the oldest template keeps the slug and the others get a short suffix (for example `phish-2f9c1a7b`).
+  - A new or edited slug must not already be used by another template of the organization or by a built-in template (`409`). It must be lowercase letters and digits separated by single hyphens (`422`). The error shows next to the Slug field.
+  - Changing a template's slug used to be ignored without any error; now it is saved. The editor warns that API callers using the old slug will stop matching.
+  - Copies of a template are named `<slug>-copy`, `<slug>-copy-2`, … instead of a random suffix. (#168, #169)
+- **Security: the webhook only uses templates of the caller's own organization.** Given a slug that existed only in another organization, the inbound webhook used that organization's template and copied its tasks into the new incident. It now considers only the caller's organization's templates and the built-in ones, and skips hidden templates. (#168)
+
+### Changed
+
+- **Webhook: an unknown template slug is rejected.** `POST /api/v1/external/incidents` with a `template` that doesn't match any visible template now returns `422 Unknown template '<slug>'`. It used to create a blank incident without saying so. Send `"template": "blank"`, or leave `template` out, for a blank incident. (#168)
+- **Template API: unknown fields are rejected.** `POST`/`PUT /api/v1/templates/incident` return `422` for fields they don't know, instead of ignoring them. (#169)
+
 ## [0.1.11-alpha] - 2026-11-09
 
 ### Added

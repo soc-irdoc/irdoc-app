@@ -17,6 +17,13 @@ class IncidentTemplate(Base):
             postgresql_where=text("is_system AND org_id IS NULL"),
             sqlite_where=text("is_system AND org_id IS NULL"),
         ),
+        # One slug per org - see migration 031 (#168). Collisions with system
+        # slugs are checked in template_service._ensure_slug_available.
+        Index(
+            "uq_incident_templates_org_slug", "org_id", "slug", unique=True,
+            postgresql_where=text("org_id IS NOT NULL"),
+            sqlite_where=text("org_id IS NOT NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
