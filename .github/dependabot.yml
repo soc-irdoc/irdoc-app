@@ -1,8 +1,14 @@
-# Version-update PRs are switched off (open-pull-requests-limit: 0): they were
-# mostly noise, and dependency bumps are done by hand in release branches,
-# with pip-audit / npm audit / Trivy in CI and code scanning flagging what
-# needs it. The file stays so Scorecard's Dependency-Update-Tool check still
-# finds it; raise a limit to turn an ecosystem back on.
+# Alerts on, PRs off.
+# - Dependabot *alerts* are enabled in the repo settings, so new CVEs in the
+#   lockfiles show under Security → Vulnerabilities.
+# - Dependabot *security updates* (auto-fix PRs) stay disabled in the repo
+#   settings, and version-update PRs are switched off here
+#   (open-pull-requests-limit: 0): they were mostly noise. Dependency bumps
+#   are done by hand in release branches.
+# - .github/workflows/security-rescan.yml re-scans the shipped images and
+#   lockfiles with Trivy every week, into Code scanning.
+# The file stays so Scorecard's Dependency-Update-Tool check still finds it;
+# raise a limit to turn an ecosystem's PRs back on.
 version: 2
 updates:
   - package-ecosystem: "pip"

@@ -1,0 +1,93 @@
+name: Security rescan
+
+# Weekly re-scan so newly published CVEs show up in Security → Code scanning
+# between releases. CI's own Trivy scan only runs when images are built
+# (push to main), so on its own it can't see a CVE published after the last
+# merge. Report-only: nothing here opens PRs or fails a build.
+#
+# The image scans upload under the same categories as ci.yml's build job
+# (trivy-backend / trivy-frontend), so each run refreshes those alerts for
+# the images that were last shipped instead of creating duplicates.
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  rescan:
+    name: Trivy rescan
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.repository.private }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    env:
+      # Lets Trivy pull the GHCR images even if the packages are made private.
+      TRIVY_USERNAME: ${{ github.actor }}
+      TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Same filters as ci.yml (see the baseline note there): CRITICAL/HIGH
+      # with a fix available.
+      - name: Scan backend image (Trivy)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/soc-irdoc/irdoc-backend:latest
+          format: sarif
+          output: trivy-backend.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Scan frontend image (Trivy)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/soc-irdoc/irdoc-frontend:latest
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      # Dependency lockfiles in the repo (backend, frontend, installer, CI
+      # tools). This overlaps with Dependabot alerts on purpose: it keeps
+      # dependency findings next to everything else in Code scanning.
+      - name: Scan dependency lockfiles (Trivy)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          skip-dirs: '--temp,frontend/node_modules'
+          format: sarif
+          output: trivy-deps.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Upload backend image results
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+        with:
+          sarif_file: trivy-backend.sarif
+          category: trivy-backend
+
+      - name: Upload frontend image results
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+        with:
+          sarif_file: trivy-frontend.sarif
+          category: trivy-frontend
+
+      - name: Upload dependency results
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+        with:
+          sarif_file: trivy-deps.sarif
+          category: trivy-deps
