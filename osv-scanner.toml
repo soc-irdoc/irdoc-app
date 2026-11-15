@@ -1,0 +1,17 @@
+# Advisories OSV-based scanners (OpenSSF Scorecard's Vulnerabilities check)
+# should not report. Mirrors the python-jose / ecdsa --ignore-vuln entries of
+# the pip-audit step in .github/workflows/ci.yml and the Dependabot alerts
+# dismissed for the same reasons. Aliases (CVE / PYSEC ids) are matched automatically. Each entry
+# expires so it gets looked at again.
+#
+# Both go away with the planned python-jose -> PyJWT migration.
+
+[[IgnoredVulns]]
+id = "GHSA-3qf3-8w2g-rqmx"  # CVE-2024-33663 / CVE-2026-85394 / PYSEC-2026-4298
+ignoreUntil = 2027-02-15
+reason = "python-jose <=3.5.0 algorithm confusion, no fixed release. Not reachable: every decode pins its algorithm (HS256 with SECRET_KEY; Entra ID tokens RS256 against the tenant JWKS)."
+
+[[IgnoredVulns]]
+id = "GHSA-wj6h-64fc-37mp"  # CVE-2024-23342 / PYSEC-2026-1325
+ignoreUntil = 2027-02-15
+reason = "ecdsa Minerva timing attack, no fix upstream. Only pulled in by python-jose; python-jose[cryptography] signs through cryptography, and IRDoc signs nothing with P-256."

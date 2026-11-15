@@ -13,6 +13,7 @@ Architecture:
 import asyncio
 import json
 import logging
+from urllib.parse import urlsplit
 
 import socketio
 
@@ -20,9 +21,57 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+_CONFIGURED_ORIGINS = frozenset(o.rstrip("/") for o in settings.get_cors_origins())
+_reported_origins: set[str] = set()
+
+
+def _host_name(netloc: str | None) -> str | None:
+    """Host name of a Host header or origin netloc, lower-cased, without port."""
+    if not netloc:
+        return None
+    try:
+        return urlsplit(f"//{netloc}").hostname
+    except ValueError:
+        return None
+
+
+def origin_allowed(origin: str | None, environ: dict) -> bool:
+    """Socket.IO Origin check (#137).
+
+    Accepts BASE_URL / CORS_ORIGINS, and any page served from the host the
+    request was sent to (python-engineio's own default). A page on another
+    site can't set its Origin to IRDoc's host, so this keeps cross-site pages
+    out while an install reached under a name other than BASE_URL (a reverse
+    proxy, a DNS alias) still gets real-time updates. Before, those users saw
+    400s on polling and a 403 on the WebSocket and nothing in the UI updated.
+    """
+    if not origin:
+        return True
+    origin = origin.rstrip("/")
+    if origin in _CONFIGURED_ORIGINS:
+        return True
+    try:
+        origin_host = urlsplit(origin).hostname
+    except ValueError:
+        origin_host = None
+    request_host = _host_name(environ.get("HTTP_HOST"))
+    if origin_host and origin_host == request_host:
+        return True
+    if origin not in _reported_origins and len(_reported_origins) < 100:
+        _reported_origins.add(origin)
+        logger.warning(
+            "Real-time updates refused for a page at %s (request Host: %s). Set BASE_URL "
+            "to the address users open IRDoc at, or add it to CORS_ORIGINS. A reverse "
+            "proxy in front of IRDoc must pass the original Host header "
+            "(proxy_set_header Host $host).",
+            origin, environ.get("HTTP_HOST") or "none",
+        )
+    return False
+
+
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins=settings.get_cors_origins(),
+    cors_allowed_origins=origin_allowed,
     logger=False,
     engineio_logger=False,
 )
