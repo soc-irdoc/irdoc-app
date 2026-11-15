@@ -43,6 +43,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ### Fixed
 
+- **Organisation settings no longer suggest that on-premises AD / LDAP sign-in works.** The "On-Premises AD" option said it synced with Active Directory and linked to the SSO setup, but there is no LDAP support yet. It is now marked as planned, and points to Entra ID single sign-on or local accounts with MFA. (#166)
+
 - **SSO role mappings now take effect.** Previously a mapping was only used the first time someone signed in, so anyone whose account already existed stayed an Analyst whatever the mapping said. Now:
   - Mappings are applied on every sign-in, and each role change is recorded in the audit log as `user.role_changed` (via SSO).
   - A mapping can match an Entra group Object ID, an app role, or a user's own Object ID.
