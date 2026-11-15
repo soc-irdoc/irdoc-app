@@ -42,13 +42,20 @@ _REDIS_AUTH_HINT = "The password in REDIS_URL must match REDIS_PASSWORD."
 def mask_url(url: str) -> str:
     """Hide the password in scheme://user:password@host URLs.
 
-    Anything else with an @ in it (no scheme, a typo in the scheme) loses
-    everything before the last @, so a password is never printed.
+    Fails closed: when the strict pattern doesn't apply, a URL with an @ is
+    printed as-is only if it is a clean scheme://user@host (no colon in the
+    user part, so no password). Anything else loses everything before the
+    last @.
     """
-    masked = re.sub(r"^([a-zA-Z][\w+.-]*://[^:/@]*):.*@", r"\1:***@", url)
-    if "@" in masked and "://" not in masked:
-        masked = "***@" + masked.rsplit("@", 1)[1]
-    return masked
+    url = url.strip()
+    masked, replaced = re.subn(r"^([a-zA-Z][\w+.-]*://[^:/@]*):.*@", r"\1:***@", url)
+    if replaced or "@" not in url:
+        return masked
+    head, _, host = url.rpartition("@")
+    scheme, sep, userinfo = head.partition("://")
+    if sep and re.fullmatch(r"[a-zA-Z][\w+.-]*", scheme) and ":" not in userinfo:
+        return url  # user name only, nothing secret
+    return "***@" + host
 
 
 def _sentence(exc: BaseException) -> str:

@@ -19,6 +19,11 @@ from app.cli import wait_for_services as w
     # No scheme: still never print what's before the @
     ("irp:s3cr3t@db/irp", "***@db/irp"),
     ("postgresql+asyncpg//irp:s3cr3t@db/irp", "***@db/irp"),
+    # Fail closed whenever the strict pattern doesn't apply
+    (" postgresql://irp:s3cr3t@db/irp", "postgresql://irp:***@db/irp"),
+    ("postgres ql://irp:s3cr3t@db/irp", "***@db/irp"),
+    ("postgresql://irp:s3cr3t@", "postgresql://irp:***@"),
+    ("://irp:s3cr3t@db", "***@db"),
 ])
 def test_mask_url_hides_the_password(url, expected):
     assert w.mask_url(url) == expected
