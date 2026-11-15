@@ -58,10 +58,11 @@ def test_a_refusal_is_logged_once_with_what_to_fix(caplog):
     with caplog.at_level(logging.WARNING, logger="app.sio"):
         for _ in range(3):
             origin_allowed("https://irdoc.corp.example", env("10.0.0.5:8080"))
-    msgs = [r.getMessage() for r in caplog.records if r.name == "app.sio"]
-    assert len(msgs) == 1
-    assert "https://irdoc.corp.example" in msgs[0]
-    assert "BASE_URL" in msgs[0] and "proxy_set_header Host $host" in msgs[0]
+    records = [r for r in caplog.records if r.name == "app.sio"]
+    assert len(records) == 1
+    assert records[0].args == ("https://irdoc.corp.example", "10.0.0.5:8080")
+    msg = records[0].getMessage()
+    assert "BASE_URL" in msg and "proxy_set_header Host $host" in msg
 
 
 async def _poll(origin: str, host: str) -> httpx.Response:
