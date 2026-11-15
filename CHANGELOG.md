@@ -75,6 +75,8 @@ Read these before upgrading; most installs need no manual step.
   - A new or edited slug must not already be used by another template of the organization or by a built-in template (`409`). It must be lowercase letters and digits separated by single hyphens (`422`). The error shows next to the Slug field.
   - Changing a template's slug used to be ignored without any error; now it is saved. The editor warns that API callers using the old slug will stop matching.
   - Copies of a template are named `<slug>-copy`, `<slug>-copy-2`, … instead of a random suffix. (#168, #169)
+- **Real-time updates work when IRDoc is opened under an address other than `BASE_URL`.** Through a reverse proxy, a DNS alias or a different scheme, the browser's `Origin` didn't match `BASE_URL`, so Socket.IO refused the connection: `400 Bad Request` on polling and a `403` WebSocket handshake in the console, and nothing updated live. Pages served from the host the request was sent to are now accepted as well, which is python-engineio's own default; other sites are still refused. When a page is refused, the backend log says which address it came from and what to set. A reverse proxy in front of IRDoc must pass the original `Host` header (`proxy_set_header Host $host`). (#137)
+- **The PDF preview says why a file can't be shown.** When the browser refused to show a PDF inside IRDoc, Chrome only showed "This content is blocked. Contact the site owner". The preview now checks the file's response headers. If one would block it, typically `X-Frame-Options: DENY` or a second `Content-Security-Policy` added by a reverse proxy, the preview names it and says what to change. "Open in new tab" still works. (#137)
 
 ### Security
 
