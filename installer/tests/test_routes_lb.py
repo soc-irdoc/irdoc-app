@@ -1,4 +1,6 @@
 """Wizard: 'Behind a load balancer?' in the HTTPS step (Refs #161)."""
+import re
+
 import pytest
 
 from installer.wizard import state
@@ -76,7 +78,9 @@ async def test_reencrypt_goes_to_a_prefilled_self_signed_form(client):
     }, follow_redirects=False)
     assert resp.headers["location"] == "/https-mode/selfsigned"
     page = (await client.get("/https-mode/selfsigned")).text
-    assert "irdoc.example.com" in page  # public FQDN offered as a SAN
+    # The public FQDN is pre-filled as the first SAN
+    sans = re.search(r'name="san" value="([^"]*)"', page).group(1).split(", ")
+    assert sans[0] == "irdoc.example.com"
 
 
 @pytest.mark.asyncio

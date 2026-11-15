@@ -31,17 +31,24 @@ EXIT_TIMEOUT = 2
 REPORT_EVERY = 10.0
 RETRY_INTERVAL = 2.0
 
-_PG_PASSWORD_HINT = (
+_PG_AUTH_HINT = (
     "The password in DATABASE_URL must match DB_PASSWORD. PostgreSQL applies "
     "DB_PASSWORD only when its data volume is first created; to change it "
     "later, run ALTER USER in the database too."
 )
-_REDIS_PASSWORD_HINT = "The password in REDIS_URL must match REDIS_PASSWORD."
+_REDIS_AUTH_HINT = "The password in REDIS_URL must match REDIS_PASSWORD."
 
 
 def mask_url(url: str) -> str:
-    """Hide the password in scheme://user:password@host URLs."""
-    return re.sub(r"^([a-zA-Z][\w+.-]*://[^:/@]*):.*@", r"\1:***@", url)
+    """Hide the password in scheme://user:password@host URLs.
+
+    Anything else with an @ in it (no scheme, a typo in the scheme) loses
+    everything before the last @, so a password is never printed.
+    """
+    masked = re.sub(r"^([a-zA-Z][\w+.-]*://[^:/@]*):.*@", r"\1:***@", url)
+    if "@" in masked and "://" not in masked:
+        masked = "***@" + masked.rsplit("@", 1)[1]
+    return masked
 
 
 def _sentence(exc: BaseException) -> str:
@@ -59,7 +66,7 @@ def classify_postgres_error(exc: BaseException) -> tuple[bool, str]:
     import asyncpg
 
     if isinstance(exc, asyncpg.InvalidPasswordError):
-        return True, f"{_sentence(exc)}. {_PG_PASSWORD_HINT}"
+        return True, f"{_sentence(exc)}. {_PG_AUTH_HINT}"
     if isinstance(exc, asyncpg.InvalidCatalogNameError):
         return True, f"{_sentence(exc)}. Check the database name at the end of DATABASE_URL."
     if isinstance(exc, asyncpg.InvalidAuthorizationSpecificationError):
@@ -77,11 +84,11 @@ def classify_redis_error(exc: BaseException) -> tuple[bool, str]:
     import redis
 
     if isinstance(exc, redis.AuthenticationError):
-        return True, f"{_sentence(exc)}. {_REDIS_PASSWORD_HINT}"
+        return True, f"{_sentence(exc)}. {_REDIS_AUTH_HINT}"
     if isinstance(exc, redis.ResponseError):
         text = str(exc)
         if text.startswith(("WRONGPASS", "NOAUTH")):
-            return True, f"{text.rstrip('.')}. {_REDIS_PASSWORD_HINT}"
+            return True, f"{text.rstrip('.')}. {_REDIS_AUTH_HINT}"
     if isinstance(exc, ValueError):
         return True, f"REDIS_URL is not a valid Redis URL ({exc})."
     return False, _describe(exc)

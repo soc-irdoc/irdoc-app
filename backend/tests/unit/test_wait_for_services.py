@@ -16,6 +16,9 @@ from app.cli import wait_for_services as w
     ("redis://:pa:ss@word@irdoc-redis:6379/0", "redis://:***@irdoc-redis:6379/0"),
     ("postgresql://irp@db/irp", "postgresql://irp@db/irp"),
     ("not a url", "not a url"),
+    # No scheme: still never print what's before the @
+    ("irp:s3cr3t@db/irp", "***@db/irp"),
+    ("postgresql+asyncpg//irp:s3cr3t@db/irp", "***@db/irp"),
 ])
 def test_mask_url_hides_the_password(url, expected):
     assert w.mask_url(url) == expected
