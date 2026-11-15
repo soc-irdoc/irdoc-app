@@ -10,6 +10,7 @@ if __name__ == "__main__":
 
 import asyncio
 import httpx
+import logging
 import os
 import shutil
 import signal
@@ -39,6 +40,19 @@ REPO_ROOT = Path(__file__).parent.parent
 _INSTALLER_DIR = Path(__file__).parent
 DOCKER_DIR = REPO_ROOT / "docker"
 BACKUPS_DIR = REPO_ROOT / "backups"
+
+log = logging.getLogger("irdoc.installer")
+
+
+def _unexpected_failure(stage: str, exc: BaseException) -> str:
+    """Log the full error to the wizard's terminal and return a short message
+    for the browser. The exception text and traceback stay server-side: they
+    can carry file paths and command output the page has no need to show."""
+    log.error("%s failed", stage, exc_info=exc)
+    return (
+        f"{stage} failed unexpectedly ({type(exc).__name__}). "
+        "The full error is in the terminal running the wizard."
+    )
 
 
 def repo_version() -> str:
@@ -512,7 +526,7 @@ async def deploy_stream():
             _deploy_success = True
 
         except Exception as e:
-            yield f"data: __FAIL__{e}\n\n"
+            yield f"data: __FAIL__{_unexpected_failure('Deployment', e)}\n\n"
         finally:
             _deploy_done = True
 
@@ -600,7 +614,7 @@ async def upgrade_snapshot_stream():
             yield "data: __TASK__Writing snapshot manifest\n\n"
             yield "data: __DONE__\n\n"
         except Exception as e:
-            yield f"data: __FAIL__{e}\n\n"
+            yield f"data: __FAIL__{_unexpected_failure('Snapshot', e)}\n\n"
 
     return StreamingResponse(generator(), media_type="text/event-stream")
 
@@ -713,7 +727,7 @@ async def upgrade_progress_stream():
             yield "data: __DONE__\n\n"
 
         except Exception as e:
-            yield f"data: __FAIL__{e}\n\n"
+            yield f"data: __FAIL__{_unexpected_failure('Upgrade', e)}\n\n"
 
     return StreamingResponse(generator(), media_type="text/event-stream")
 
@@ -786,7 +800,7 @@ async def rollback_stream():
             yield "data: __DONE__\n\n"
 
         except Exception as e:
-            yield f"data: __FAIL_ROLLBACK__{e}\n\n"
+            yield f"data: __FAIL_ROLLBACK__{_unexpected_failure('Rollback', e)}\n\n"
 
     return StreamingResponse(generator(), media_type="text/event-stream")
 
