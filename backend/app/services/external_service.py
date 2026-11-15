@@ -45,22 +45,37 @@ async def create_from_webhook(
         source=payload.source,
     )
 
-    # Match template by slug if provided
+    # Match template by slug if provided: only the caller's org's templates and
+    # the system ones, never hidden ones. An unknown slug is an error rather
+    # than a silently blank incident (#168).
     if payload.template and payload.template != "blank":
         from sqlalchemy import select
 
         from app.models.template import IncidentTemplate
         result = await db.execute(
-            select(IncidentTemplate).where(IncidentTemplate.slug == payload.template)
+            select(IncidentTemplate)
+            .where(
+                IncidentTemplate.slug == payload.template,
+                (IncidentTemplate.org_id == org_id) | (IncidentTemplate.org_id == None),  # noqa: E711
+                IncidentTemplate.is_hidden == False,  # noqa: E712
+            )
+            # The org's own template wins over a system one with the same slug
+            # (possible only for rows created before migration 031).
+            .order_by(IncidentTemplate.org_id.is_(None))
+            .limit(1)
         )
         template = result.scalar_one_or_none()
-        if template:
-            incident_data = IncidentCreate(
-                title=payload.title,
-                severity=payload.severity,
-                source=payload.source,
-                template_id=str(template.id),
+        if template is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unknown template '{payload.template}'",
             )
+        incident_data = IncidentCreate(
+            title=payload.title,
+            severity=payload.severity,
+            source=payload.source,
+            template_id=str(template.id),
+        )
 
     incident_ref = None
     if payload.incident_number:

@@ -11,6 +11,79 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.2.0-alpha] - 2026-11-15
+
+### Upgrade notes
+
+Read these before upgrading; most installs need no manual step.
+
+- **Two database migrations** run automatically: 031 makes incident template slugs unique per organization (renaming duplicates, see *Fixed*), and 032 adds the optional time spent to timeline entries.
+- **Load balancer installs** made with the installer's old "Behind Load Balancer" option still trust any client's `X-Forwarded-For`. Re-run the installer and choose one of the new load balancer options, or edit `docker/nginx/local/nginx.conf`: replace `set_real_ip_from 0.0.0.0/0;` with your load balancer's addresses, as in `docker/nginx/examples/lb-terminate.conf`. Also check that `BASE_URL` in `docker/.env` is the public `https://` address users type.
+- **HTTPS installs now send Secure session cookies (and HSTS from the backend)**, because `COOKIE_SECURE` follows an `https://` `BASE_URL` unless you set it. If `BASE_URL` says `https://` but users really reach IRDoc over plain HTTP, sign-in stops working: fix `BASE_URL`, or set `COOKIE_SECURE=false` deliberately.
+- **Wrong database or Redis passwords now stop the containers** with a message saying what to fix, instead of waiting forever. If the backend, worker or beat exit after upgrading, read their logs.
+- **API callers:** the inbound webhook returns `422` for a `template` slug it doesn't know (send `"blank"` or leave it out for a blank incident), and the template API returns `422` for unknown fields.
+- **Port 8000 reachable without IRDoc's nginx?** The backend now takes the client IP from nginx's `X-Real-IP`. Compose doesn't publish port 8000, so this only matters if you published it yourself; then set `TRUST_X_REAL_IP=false`.
+- **Your own compose changes** belong in `docker/docker-compose.local.yml` from now on. `upgrade.sh` lists tracked files under `docker/` that you edited before it changes anything.
+- `docker/nginx/examples/demo-https.conf` is now `https.conf`; the old name is removed after this release.
+- `docker/.env` files keep working as they are: `DATABASE_URL` and `REDIS_URL`, if set, still win over the new defaults built from the passwords.
+
+### Added
+
+- **Time spent.** Timeline entries have an optional **Time spent** field: type the minutes or click 5m / 15m / 30m / 1h. Left empty, the entry counts as "not tracked", not as 0. The time shows on the entry, and the Summary tab totals it. A new **Time Spent** report block (also in the standard report when there is data) shows:
+  - the effort: a table of entries with their time, a total, and a chart by entry type;
+  - an activity window chart: when each kind of work happened, from the first to the last entry of each type, with when the incident was opened, contained and closed.
+
+  The activity window comes from entry times. It shows when work happened, not how long it took, and is never added to the effort. Each part can be switched off in the report template editor. (#165)
+- **Link IOCs to the timeline entries they were seen in.** When adding or editing a timeline entry, pick the incident's IOCs under **Link IOCs**, the same way assets are linked. On the IOCs page, expand an IOC to tick the entries it was seen in; IOCs with links show a "SEEN IN n" chip. The Evidence tab now uses these links: the IOC view lists each IOC's entries, with a link to each and a count of their files, and file rows show chips for the IOCs linked to their entry (hidden from roles that can't read IOCs). Links are recorded in the audit log as `ioc.linked` / `ioc.unlinked`. API: `POST` / `DELETE /api/v1/incidents/{id}/iocs/{ioc_id}/links/{entry_id}`, and `GET /api/v1/incidents/{id}/ioc-links`. (#152)
+- **Set the source of many incidents at once.** In the incidents list, tick incidents (or the whole page), then choose **Set source…**. By default only incidents with no source recorded are changed, and the dialog says how many will change before you confirm. Tick "Also replace sources that are already set" to overwrite. Each change is recorded in the audit log as `incident.source_changed`, like a single edit. This is the quick way to work through the "Not recorded" filter after upgrading. API: `POST /api/v1/incidents/bulk/source` with `ids` (up to 500), `source` and `overwrite`. (#153)
+- **nginx templates for running behind a load balancer.** `docker/nginx/examples/` now has:
+  - `lb-terminate.conf`: the load balancer handles HTTPS and forwards plain HTTP to port 80.
+  - `lb-reencrypt.conf`: the load balancer re-encrypts to port 443, with a certificate in `docker/ssl/`.
+  - `https.conf`: nginx serves HTTPS itself.
+
+  The load-balancer templates trust `X-Forwarded-For` only from the addresses you list, so the audit log shows real client IPs. `lb-terminate.conf` passes on the load balancer's `X-Forwarded-Proto`. `demo-https.conf` has been renamed to `https.conf`; the old name stays for this release only. The installer generates the same configs. (#160)
+- **Installer: load balancer setup.** The HTTPS step asks whether IRDoc sits behind a load balancer that terminates TLS (forwards HTTP to port 80) or re-encrypts (HTTPS to port 443). It then asks for:
+  - the public `https://` URL users type, which becomes `BASE_URL`;
+  - the addresses the load balancer connects from, the only ones trusted to report client IPs;
+  - for re-encryption, a certificate for this server: self-signed, with the server name, public name and server IP pre-filled, or imported.
+
+  The final page lists the pool port, the health-check URL and the firewall rule (ports 80/443 only from the load balancer). Load balancer installs now get an `https://` `BASE_URL` and Secure cookies; the old option wrote an `http://` one. (#161)
+- **Keep your own compose changes across upgrades.** Put extra ports, mounts or resource limits in `docker/docker-compose.local.yml`. It is ignored by git, so `git pull` never conflicts with it. `upgrade.sh`, `backup.sh` and the installer's upgrade use it on top of `docker-compose.prod.yml` whenever it exists. Before changing anything, `upgrade.sh` and the installer's upgrade page list tracked files under `docker/` that you edited, since `git pull` can fail on them and upgrades may replace them. The top of `upgrade.sh` lists what an upgrade changes. (#162)
+- **Source column in the incidents list.** Each row shows what triggered the investigation, with the full name on hover, or "NO SOURCE" when it wasn't recorded. The column sorts alphabetically, with unrecorded incidents last either way. (#171)
+
+### Changed
+
+- **Startup says why it can't reach the database.** The backend, worker and beat containers used to print "Waiting for PostgreSQL..." forever, hiding the reason. They now print the reason while PostgreSQL or Redis are still starting. When retrying can't help, such as a wrong password in `DATABASE_URL` / `REDIS_URL` or a missing database, they stop at once with a message saying what to fix. They give up after 5 minutes (`WAIT_FOR_SERVICES_TIMEOUT`). Passwords are never printed. A password containing a quote no longer breaks the check. (#159)
+- **Each database and Redis password is set in one place.** `docker/.env` used to hold every password twice: in `DB_PASSWORD` and again inside `DATABASE_URL` (the same for Redis). Changing only one of them left the backend unable to sign in. Docker Compose now builds `DATABASE_URL` and `REDIS_URL` from `DB_PASSWORD` and `REDIS_PASSWORD`. The installer no longer writes the URLs, and `.env.example` recommends hex passwords (`openssl rand -hex 24`), which need no escaping. Existing `.env` files keep working: a `DATABASE_URL` or `REDIS_URL` that is set still wins, which is also how to point IRDoc at an external server. (#158)
+- **Webhook: an unknown template slug is rejected.** `POST /api/v1/external/incidents` with a `template` that doesn't match any visible template now returns `422 Unknown template '<slug>'`. It used to create a blank incident without saying so. Send `"template": "blank"`, or leave `template` out, for a blank incident. (#168)
+- **Template API: unknown fields are rejected.** `POST`/`PUT /api/v1/templates/incident` return `422` for fields they don't know, instead of ignoring them. (#169)
+
+### Fixed
+
+- **Organisation settings no longer suggest that on-premises AD / LDAP sign-in works.** The "On-Premises AD" option said it synced with Active Directory and linked to the SSO setup, but there is no LDAP support yet. It is now marked as planned, and points to Entra ID single sign-on or local accounts with MFA. (#166)
+- **SSO role mappings now take effect.** Previously a mapping was only used the first time someone signed in, so anyone whose account already existed stayed an Analyst whatever the mapping said. Now:
+  - Mappings are applied on every sign-in, and each role change is recorded in the audit log as `user.role_changed` (via SSO).
+  - A mapping can match an Entra group Object ID, an app role, or a user's own Object ID.
+  - If several match, the most privileged role wins.
+  - Users with no matching mapping keep their current role, including one set by hand.
+  - SSO never demotes the organization's last admin.
+  - If mappings are configured but the sign-in token carries no groups (Groups not enabled under App Registration → Token configuration, or the user is in too many groups for Entra to list them), the backend log says so. (#172)
+- **Lead Analyst on report covers is the incident's assignee.** It used to show whoever generated the first report, and regenerated versions, including the copies pushed to SharePoint, kept that name. Assigning an incident now updates the next regenerated report. Unassigned incidents still show the user who generated the report. The "Generated by" footer is unchanged. (#173)
+- **Saving organization settings works again.** Changing the organization name, or anything else on Admin → Organization settings, failed with "Failed to save settings" because of how an empty logo URL was validated, and a logo URL could never be saved at all. An empty logo URL now clears the logo. The name can't be blank (surrounding spaces are trimmed), the accent colour must be a `#rrggbb` value, and the logo must be an http(s) URL. When saving fails, the message now says why. (#167, #170)
+- **Incident template slugs are unique and can be edited.** The slug is how the inbound webhook picks a template (`"template": "<slug>"`).
+  - Two templates in the same organization could share a slug, and the webhook then failed with a server error. Upgrading renames the extra copies: the oldest template keeps the slug and the others get a short suffix (for example `phish-2f9c1a7b`).
+  - A new or edited slug must not already be used by another template of the organization or by a built-in template (`409`). It must be lowercase letters and digits separated by single hyphens (`422`). The error shows next to the Slug field.
+  - Changing a template's slug used to be ignored without any error; now it is saved. The editor warns that API callers using the old slug will stop matching.
+  - Copies of a template are named `<slug>-copy`, `<slug>-copy-2`, … instead of a random suffix. (#168, #169)
+
+### Security
+
+- **The webhook only uses templates of the caller's own organization.** Given a slug that existed only in another organization, the inbound webhook used that organization's template and copied its tasks into the new incident. It now considers only the caller's organization's templates and the built-in ones, and skips hidden templates. (#168)
+- **Session cookies are marked Secure on HTTPS installs.** `COOKIE_SECURE` was never passed to the containers, so setting it in `docker/.env` did nothing, and installs served over HTTPS sent session cookies without the `Secure` flag. It is now passed through. Left empty, it is on whenever `BASE_URL` starts with `https://`, which also covers installs behind a TLS-terminating load balancer. The installer writes `COOKIE_SECURE=true` for HTTPS installs. Set it to `false` only for a deliberately plain-HTTP setup. (#157)
+- **Audit log and login rate limit see the real client IP.** Every request reached the backend from the frontend container, so the audit log recorded a Docker-internal address (`172.x.x.x`) for every action. The login rate limit also counted all users as one client: one person retrying a password could lock everyone else out for a minute. The backend now takes the client address from the `X-Real-IP` header that IRDoc's nginx sets (nginx always overwrites it, so clients can't fake it). It ignores `X-Forwarded-For`, whose leftmost entries a client can set. This works with existing nginx configs. If port 8000 is ever reachable without going through IRDoc's nginx, set `TRUST_X_REAL_IP=false`. (#160, #174)
+- **"Behind Load Balancer" installs no longer let clients fake their IP.** The installer's load-balancer config trusted `X-Forwarded-For` from any address (`set_real_ip_from 0.0.0.0/0`), so anyone could put an arbitrary IP into the audit log. It now trusts only the load balancer addresses you list; see *Added* for the new templates. Existing installs should regenerate or edit `docker/nginx/local/nginx.conf`. (#160, #175)
+- **Dependencies updated for new advisories:** dnspython 2.9.2, tornado 6.6.1 and opentelemetry-api 1.45.2 in the backend.
+
 ## [0.1.11-alpha] - 2026-11-09
 
 ### Added
@@ -341,7 +414,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.11-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.2.0-alpha...main
+[0.2.0-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.11-alpha...v0.2.0-alpha
 [0.1.11-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.10-alpha...v0.1.11-alpha
 [0.1.10-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.9-alpha...v0.1.10-alpha
 [0.1.9-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.8-alpha...v0.1.9-alpha

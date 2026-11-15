@@ -1,0 +1,57 @@
+{# Time Spent (#165). Effort = minutes analysts entered on timeline entries.
+   Activity window = when each kind of work happened, from timestamps; it is
+   not effort and is never added up. Each part shows only when it has data. #}
+{% set label = block.get('label', 'Time Spent') %}
+{% set show_table = block.get('show_effort_table', true) %}
+{% set show_donut = block.get('show_effort_chart', true) %}
+{% set show_gantt = block.get('show_activity_chart', true) %}
+{% set effort = p.time_effort %}
+{% set has_effort = effort and effort.tracked_entries > 0 %}
+
+{% if (has_effort and (show_table or show_donut)) or (show_gantt and p.time_activity_svg) %}
+<div class="block">
+  <h2>{{ label }}</h2>
+
+  {% if has_effort %}
+  <p style="margin: 0 0 8px;">
+    <strong>Total effort recorded: {{ effort.total_minutes | minutes }}</strong>
+    across {{ effort.tracked_entries }} timeline entr{{ 'y' if effort.tracked_entries == 1 else 'ies' }}.
+    {% if effort.tracked_entries < p.entry_count %}
+    <span style="color:#64748b;">{{ p.entry_count - effort.tracked_entries }} entr{{ 'y has' if (p.entry_count - effort.tracked_entries) == 1 else 'ies have' }} no time recorded.</span>
+    {% endif %}
+  </p>
+
+  {% if show_donut and p.time_effort_svg %}
+  <h3 style="font-size: 10.5pt; margin: 10px 0 4px;">Effort by entry type</h3>
+  <div class="time-chart" style="max-width: 100%;">{{ p.time_effort_svg | safe }}</div>
+  {% endif %}
+
+  {% if show_table %}
+  <table>
+    <thead>
+      <tr><th style="width: 70px;">Time</th><th style="width: 90px;">Type</th><th style="width: 120px;">When</th><th>Activity</th></tr>
+    </thead>
+    <tbody>
+      {% for row in effort.rows %}
+      <tr>
+        <td>{{ row.minutes | minutes }}</td>
+        <td>{{ row.entry_type | entry_type_label }}</td>
+        <td>{{ row.occurred_at | format_dt }}</td>
+        <td>{{ row.description | striptags | truncate(160) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  {% endif %}
+
+  {% if show_gantt and p.time_activity_svg %}
+  <h3 style="font-size: 10.5pt; margin: 14px 0 4px;">Activity window by entry type</h3>
+  <div class="time-chart" style="max-width: 100%;">{{ p.time_activity_svg | safe }}</div>
+  <p style="font-size: 9pt; color: #64748b; margin: 4px 0 0;">
+    Each bar runs from the first to the last timeline entry of that type; dots are individual entries.
+    This shows when the work happened, not how long anyone spent on it.
+  </p>
+  {% endif %}
+</div>
+{% endif %}

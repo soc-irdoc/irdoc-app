@@ -5,8 +5,11 @@
 name: irdoc-app
 
 x-backend-env: &backend-env
-  DATABASE_URL: ${DATABASE_URL}
-  REDIS_URL: ${REDIS_URL}
+  # Built from DB_PASSWORD / REDIS_PASSWORD, so each password lives in one
+  # place (#158). Set DATABASE_URL / REDIS_URL in .env only to point at an
+  # external server; a set value wins.
+  DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://irp:${DB_PASSWORD}@irdoc-db/irp}
+  REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD}@irdoc-redis:6379/0}
   SECRET_KEY: ${SECRET_KEY}
   # Dedicated backup key (#149). Empty = fall back to the SECRET_KEY-derived
   # key; the installer and upgrade.sh generate it.
@@ -15,6 +18,8 @@ x-backend-env: &backend-env
   STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
   STORAGE_PATH: /app/storage
   BASE_URL: ${BASE_URL}
+  # Secure session cookies (#157). Empty = on when BASE_URL is https.
+  COOKIE_SECURE: ${COOKIE_SECURE:-}
   LICENSE_KEY: ${LICENSE_KEY:-}
   # Must name a real choice: the key is always injected, so `:-` would hand the
   # backend an empty string and Settings' Literal rejects it at import time.

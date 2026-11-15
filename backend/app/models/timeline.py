@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +23,15 @@ class TimelineEntry(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     source: Mapped[str] = mapped_column(String(50), default="manual")
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Effort in minutes (#165). NULL = not tracked, which is not the same as 0.
+    time_spent_minutes: Mapped[int | None] = mapped_column(
+        Integer,
+        CheckConstraint(
+            "time_spent_minutes IS NULL OR (time_spent_minutes >= 0 AND time_spent_minutes <= 1440)",
+            name="ck_timeline_entries_time_spent_range",
+        ),
+        nullable=True,
+    )
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

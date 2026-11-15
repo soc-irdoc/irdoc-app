@@ -343,3 +343,18 @@ async def test_disposition_change_writes_audit(client: AsyncClient, auth_headers
     entry = result.scalar_one_or_none()
     assert entry is not None
     assert entry.diff == {"from": None, "to": "fp_tuning_required"}
+
+
+@pytest.mark.asyncio
+async def test_login_is_audited_with_the_client_ip_from_nginx(client: AsyncClient, admin_user, db_session):
+    """#160: the IP nginx puts in X-Real-IP, not the nginx container's address."""
+    r = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@test.com", "password": "TestPass123!"},
+        headers={"X-Real-IP": "198.51.100.23", "X-Forwarded-For": "6.6.6.6"},
+    )
+    assert r.status_code == 200, r.text
+    row = (await db_session.execute(
+        select(AuditLog).where(AuditLog.action == "user.login").order_by(AuditLog.id.desc())
+    )).scalars().first()
+    assert str(row.ip_address) == "198.51.100.23"

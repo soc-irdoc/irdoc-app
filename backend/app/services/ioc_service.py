@@ -116,9 +116,50 @@ async def delete_ioc(db: AsyncSession, ioc: IOC) -> None:
     await db.flush()
 
 
-async def link_to_timeline(
-    db: AsyncSession, ioc_id: str, timeline_entry_id: str
-) -> None:
-    link = IOCTimelineLink(ioc_id=ioc_id, timeline_entry_id=timeline_entry_id)
-    db.add(link)
+async def _entry_in_incident(db: AsyncSession, entry_id: str, incident_id: str):
+    from app.models.timeline import TimelineEntry
+
+    entry = (await db.execute(
+        select(TimelineEntry).where(TimelineEntry.id == entry_id, TimelineEntry.incident_id == incident_id)
+    )).scalar_one_or_none()
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Timeline entry not found")
+    return entry
+
+
+async def link_to_timeline(db: AsyncSession, incident_id: str, ioc_id: str, entry_id: str):
+    """Record that an IOC was seen in a timeline entry of the same incident (#152).
+
+    Returns (ioc, entry, created); linking twice is a no-op (created=False).
+    Both must belong to `incident_id`, otherwise 404.
+    """
+    ioc = await get_ioc(db, ioc_id, incident_id)
+    entry = await _entry_in_incident(db, entry_id, incident_id)
+    existing = await db.get(IOCTimelineLink, (ioc.id, entry.id))
+    if existing is not None:
+        return ioc, entry, False
+    db.add(IOCTimelineLink(ioc_id=ioc.id, timeline_entry_id=entry.id))
     await db.flush()
+    return ioc, entry, True
+
+
+async def unlink_from_timeline(db: AsyncSession, incident_id: str, ioc_id: str, entry_id: str):
+    """Remove a link; returns (ioc, entry, removed)."""
+    ioc = await get_ioc(db, ioc_id, incident_id)
+    entry = await _entry_in_incident(db, entry_id, incident_id)
+    existing = await db.get(IOCTimelineLink, (ioc.id, entry.id))
+    if existing is None:
+        return ioc, entry, False
+    await db.delete(existing)
+    await db.flush()
+    return ioc, entry, True
+
+
+async def list_timeline_links(db: AsyncSession, incident_id: str) -> list[IOCTimelineLink]:
+    """All IOC-entry links of an incident."""
+    result = await db.execute(
+        select(IOCTimelineLink)
+        .join(IOC, IOC.id == IOCTimelineLink.ioc_id)
+        .where(IOC.incident_id == incident_id)
+    )
+    return list(result.scalars().all())

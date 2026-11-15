@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useIncident, useUpdateIncident } from '@/hooks/useIncident'
+import { useTimeline } from '@/hooks/useTimeline'
+import { formatMinutes } from '@/lib/timeSpent'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { RichTextEditor } from '@/components/common/RichTextEditor'
 import { AI_DISABLED_HINT, useAiStatus } from '@/hooks/useAiConfig'
@@ -332,6 +334,10 @@ function AISection({ incidentId, label, content, endpoint, wsEvent, disabled = f
 export function SummaryPage({ incidentId }: SummaryPageProps) {
   const { data: incident, isLoading } = useIncident(incidentId)
   const { disabled: aiDisabled } = useAiStatus()
+  // Effort recorded on timeline entries (#165); untracked entries count for nothing
+  const { data: entries = [] } = useTimeline(incidentId)
+  const tracked = entries.filter((e) => e.time_spent_minutes != null)
+  const effortMinutes = tracked.reduce((sum, e) => sum + (e.time_spent_minutes ?? 0), 0)
 
   if (isLoading) {
     return (
@@ -413,6 +419,9 @@ export function SummaryPage({ incidentId }: SummaryPageProps) {
               ['Last Updated', formatRelative(incident.updated_at)],
               ...(incident.contained_at ? [['Contained', formatDateTime(incident.contained_at)]] : []),
               ...(incident.closed_at ? [['Closed', formatDateTime(incident.closed_at)]] : []),
+              ...(tracked.length > 0
+                ? [['Time Recorded', `${formatMinutes(effortMinutes)} on ${tracked.length} of ${entries.length} timeline entries`]]
+                : []),
               ...(incident.attack_vector.length > 0
                 ? [['Attack Vector', incident.attack_vector.join(', ')]]
                 : []),

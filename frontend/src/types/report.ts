@@ -1,6 +1,6 @@
 import type { IconType } from 'react-icons'
 import {
-  FaAlignLeft, FaBullseye, FaChartColumn, FaCircleNodes, FaFileCirclePlus, FaFileLines, FaFilePen,
+  FaAlignLeft, FaBullseye, FaChartColumn, FaCircleNodes, FaClock, FaFileCirclePlus, FaFileLines, FaFilePen,
   FaHeading, FaMinus, FaPaperclip, FaRobot, FaSquareCheck, FaTag, FaTimeline,
 } from 'react-icons/fa6'
 
@@ -68,6 +68,7 @@ export type BlockType =
   | 'tag_list'
   | 'ai_strategy'
   | 'graph_snapshot'
+  | 'time_spent'
 
 export interface ReportBlock {
   id: string          // client-only; not persisted
@@ -86,6 +87,10 @@ export interface ReportBlock {
   content?: string        // text_block: template-authored rich text (HTML)
   show_sha256?: boolean
   show_uploader?: boolean
+  // time_spent (#165)
+  show_effort_table?: boolean
+  show_effort_chart?: boolean
+  show_activity_chart?: boolean
   premium?: boolean
 }
 
@@ -169,6 +174,13 @@ export const BLOCK_LIBRARY: {
     icon: FaPaperclip,
     description: 'Table of uploaded files with hashes',
     defaultConfig: { label: 'Evidence Register', show_sha256: true, show_uploader: false },
+  },
+  {
+    type: 'time_spent',
+    label: 'Time Spent',
+    icon: FaClock,
+    description: 'Effort recorded on timeline entries, and when each kind of work happened',
+    defaultConfig: { label: 'Time Spent', show_effort_table: true, show_effort_chart: true, show_activity_chart: true },
   },
   {
     type: 'text_block',

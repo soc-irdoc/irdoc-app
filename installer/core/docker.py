@@ -6,6 +6,32 @@ from typing import AsyncGenerator
 # Absolute path to the prod compose file, relative to this file's location
 _REPO_ROOT = Path(__file__).parent.parent.parent
 COMPOSE_FILE = str(_REPO_ROOT / "docker" / "docker-compose.prod.yml")
+# An install's own compose changes, git-ignored so `git pull` never conflicts
+# with them (#162). Added on top of the prod file whenever it exists.
+LOCAL_COMPOSE_FILE = str(_REPO_ROOT / "docker" / "docker-compose.local.yml")
+
+
+def compose_base_cmd() -> list[str]:
+    """`docker compose -f prod [-f local]`, the same files upgrade.sh uses."""
+    cmd = ["docker", "compose", "-f", COMPOSE_FILE]
+    if Path(LOCAL_COMPOSE_FILE).exists():
+        cmd += ["-f", LOCAL_COMPOSE_FILE]
+    return cmd
+
+
+def local_docker_edits() -> list[str]:
+    """Tracked files under docker/ with local changes (git status lines)."""
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(_REPO_ROOT / "docker"), "status", "--porcelain",
+             "--untracked-files=no", "--", "."],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if r.returncode != 0:
+        return []
+    return [line for line in r.stdout.splitlines() if line.strip()]
 
 
 async def run_compose(
@@ -21,7 +47,7 @@ async def run_compose(
     if env_override:
         env.update(env_override)
 
-    cmd = ["docker", "compose", "-f", COMPOSE_FILE] + args
+    cmd = compose_base_cmd() + args
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,

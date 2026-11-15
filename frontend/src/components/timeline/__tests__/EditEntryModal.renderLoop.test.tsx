@@ -28,6 +28,12 @@ vi.mock('@/hooks/useAssets', () => ({
   useLinkAssetsToEntry: () => ({ mutateAsync: vi.fn() }),
   useUnlinkAssetFromEntry: () => ({ mutateAsync: vi.fn() }),
 }))
+// Disabled queries again: undefined data must not loop the IOC-link sync (#152).
+vi.mock('@/hooks/useIOCs', () => ({
+  useIOCs: () => ({ data: undefined }),
+  useIOCLinks: () => ({ data: undefined }),
+  useSetIOCLink: () => ({ mutateAsync: vi.fn() }),
+}))
 vi.mock('@/stores/uiStore', () => ({
   useUIStore: (selector: (s: { addToast: () => void }) => unknown) =>
     selector({ addToast: vi.fn() }),

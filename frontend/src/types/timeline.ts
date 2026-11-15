@@ -22,6 +22,8 @@ export interface TimelineEntry {
   source: string | null
   is_pinned: boolean
   metadata: Record<string, unknown>
+  // Effort in minutes (#165); null = not tracked
+  time_spent_minutes?: number | null
   created_at: string
   attachments?: Attachment[]
 }
@@ -31,6 +33,7 @@ export interface CreateTimelineEntryPayload {
   occurred_at: string
   description: string
   source?: string
+  time_spent_minutes?: number | null
 }
 
 export interface UpdateTimelineEntryPayload {
@@ -38,6 +41,8 @@ export interface UpdateTimelineEntryPayload {
   occurred_at?: string
   description?: string
   source?: string
+  // null clears it
+  time_spent_minutes?: number | null
 }
 
 export const ENTRY_TYPE_CONFIG: Record<EntryType, {

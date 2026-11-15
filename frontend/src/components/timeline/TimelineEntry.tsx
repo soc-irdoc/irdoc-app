@@ -7,7 +7,8 @@ import { useUIStore } from '@/stores/uiStore'
 import apiClient from '@/lib/apiClient'
 import { ImageLightbox } from '@/components/common/ImageLightbox'
 import { PdfPreviewModal } from '@/components/common/PdfPreviewModal'
-import { FaImage, FaPaperclip, FaPen, FaThumbtack, FaTrashCan } from 'react-icons/fa6'
+import { FaClock, FaImage, FaPaperclip, FaPen, FaThumbtack, FaTrashCan } from 'react-icons/fa6'
+import { formatMinutes } from '@/lib/timeSpent'
 
 interface TimelineEntryProps {
   entry: TEntry
@@ -186,6 +187,16 @@ export function TimelineEntryCard({ entry, incidentId, onEditRequest }: Timeline
                 {entry.author_name && (
                   <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                     by {entry.author_name}
+                  </span>
+                )}
+
+                {/* Effort (#165) */}
+                {entry.time_spent_minutes != null && (
+                  <span
+                    title="Time spent on this activity"
+                    style={{ fontSize: 11, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                  >
+                    <FaClock size={10} aria-hidden="true" /> {formatMinutes(entry.time_spent_minutes)}
                   </span>
                 )}
 

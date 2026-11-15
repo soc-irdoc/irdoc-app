@@ -10,6 +10,7 @@ from sqlalchemy import case, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.incident_source import INCIDENT_SOURCE_LABELS
 from app.core.severity import SEVERITIES, normalize_severity
 from app.core.status import STATUSES
 from app.models.attachment import Attachment
@@ -231,6 +232,9 @@ async def list_incidents(
     return list(result.scalars().all()), total
 
 
+_SOURCES_BY_LABEL = tuple(sorted(INCIDENT_SOURCE_LABELS, key=lambda v: INCIDENT_SOURCE_LABELS[v].lower()))
+
+
 def _rank(column, ordered_values: tuple[str, ...]):
     """Position of the value in ordered_values (unknown values last)."""
     return case(
@@ -267,6 +271,13 @@ def _apply_sort(query, sort: str, order: str):
         keys = [
             case((Incident.assigned_to.is_(None), 1), else_=0),
             name.desc() if descending else name.asc(),
+        ]
+    elif sort == "source":
+        # By the label users see (#171); "Not recorded" last either way.
+        key = _rank(Incident.source, _SOURCES_BY_LABEL)
+        keys = [
+            case((Incident.source.is_(None), 1), else_=0),
+            key.desc() if descending else key.asc(),
         ]
     else:  # created
         keys = [Incident.created_at.desc() if descending else Incident.created_at.asc()]
@@ -386,3 +397,30 @@ async def add_external_ref(
     db.add(ref)
     await db.flush()
     return ref
+
+
+async def bulk_set_source(
+    db: AsyncSession, org_id: str, ids: list, source: str, overwrite: bool
+) -> tuple[list[tuple[Incident, str | None]], int, int]:
+    """Set Source on the org's incidents among `ids` (#153).
+
+    Returns (changed, skipped, not_found), where changed holds each updated
+    incident with its previous source, for the audit log.
+    """
+    wanted = {str(i) for i in ids}
+    result = await db.execute(
+        select(Incident).where(Incident.org_id == org_id, Incident.id.in_(list(wanted)))
+    )
+    incidents = list(result.scalars().all())
+    changed: list[tuple[Incident, str | None]] = []
+    skipped = 0
+    for incident in incidents:
+        if incident.source == source or (incident.source is not None and not overwrite):
+            skipped += 1
+            continue
+        changed.append((incident, incident.source))
+        incident.source = source
+    await db.flush()
+    for incident, _ in changed:
+        await db.refresh(incident)  # updated_at is set by the database
+    return changed, skipped, len(wanted) - len(incidents)

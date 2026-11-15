@@ -69,3 +69,24 @@ def test_ai_backend_default_is_a_valid_literal():
         f"docker-compose.prod.yml injects AI_BACKEND={value!r}, which Settings rejects. "
         "Compose defaults for Literal-typed settings must name a real choice."
     )
+
+
+def test_cookie_secure_reaches_the_containers():
+    """#157: COOKIE_SECURE set in docker/.env was never passed through."""
+    raw = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["x-backend-env"]
+    assert "COOKIE_SECURE" in raw
+    assert resolved_backend_env()["COOKIE_SECURE"] == ""  # empty = derive from BASE_URL
+
+
+def test_prod_compose_defaults_give_secure_cookies_on_https(monkeypatch):
+    for key, value in resolved_backend_env().items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.delenv("CORS_ORIGINS", raising=False)
+    assert Settings(_env_file=None).COOKIE_SECURE is True  # BASE_URL is https here
+
+
+def test_database_and_redis_urls_are_built_from_the_passwords():
+    """#158: changing DB_PASSWORD alone must not leave a stale copy in DATABASE_URL."""
+    raw = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["x-backend-env"]
+    assert raw["DATABASE_URL"] == "${DATABASE_URL:-postgresql+asyncpg://irp:${DB_PASSWORD}@irdoc-db/irp}"
+    assert raw["REDIS_URL"] == "${REDIS_URL:-redis://:${REDIS_PASSWORD}@irdoc-redis:6379/0}"

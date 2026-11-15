@@ -19,5 +19,24 @@
       <li>Invite your team from <strong>Admin &#8594; Users</strong></li>
     </ul>
   </div>
+
+  {% if state.https_mode in ("lb_terminate", "lb_reencrypt") %}
+  {% set lb_port = "443" if state.https_mode == "lb_reencrypt" else "80" %}
+  {% set lb_scheme = "https" if state.https_mode == "lb_reencrypt" else "http" %}
+  <!-- Load balancer checklist (#161) -->
+  <div class="card mt-4" style="text-align:left;max-width:480px;margin:1rem auto 0">
+    <strong>Load balancer</strong>
+    <ul style="margin-top:0.75rem;padding-left:1.25rem;font-size:0.875rem;line-height:1.8">
+      <li>Pool member: this server on port <code>{{ lb_port }}</code>{% if lb_port == "443" %} (HTTPS){% endif %}</li>
+      <li>Health check: <code>GET {{ lb_scheme }}://&lt;this server&gt;:{{ lb_port }}/</code>, expecting <code>200</code></li>
+      {% if state.https_mode == "lb_terminate" %}
+      <li>The load balancer must send <code>X-Forwarded-For</code> and <code>X-Forwarded-Proto: https</code></li>
+      {% endif %}
+      <li>Firewall: allow ports 80/443 on this server only from the load balancer
+        ({{ state.lb_subnets | join(", ") }})</li>
+      <li>Users open <a href="{{ state.base_url }}" target="_blank">{{ state.base_url }}</a></li>
+    </ul>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

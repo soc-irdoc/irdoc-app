@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { isAxiosError } from 'axios'
 import apiClient from '@/lib/apiClient'
+import { getErrorMessage } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
 import type { ApiResponse } from '@/types/api'
 import {
@@ -211,6 +213,7 @@ interface EditorProps {
 function TemplateEditorPanel({ template, onSave, onClose, saving }: EditorProps) {
   const [name, setName] = useState(template?.name ?? '')
   const [slug, setSlug] = useState(template?.slug ?? '')
+  const [slugError, setSlugError] = useState<string | null>(null)
   const [tasks, setTasks] = useState<TemplateTask[]>(template?.tasks_json ?? [])
 
   const sensors = useSensors(
@@ -221,8 +224,10 @@ function TemplateEditorPanel({ template, onSave, onClose, saving }: EditorProps)
   function generateSlug(n: string) {
     return n
       .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 100)
+      .replace(/-+$/, '')
   }
 
   function handleNameChange(n: string) {
@@ -284,7 +289,16 @@ function TemplateEditorPanel({ template, onSave, onClose, saving }: EditorProps)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    await onSave({ name, slug, tasks_json: tasks })
+    setSlugError(null)
+    try {
+      await onSave({ name, slug, tasks_json: tasks })
+    } catch (err) {
+      // 409: slug taken; 422 on the slug field: bad format (#168, #169)
+      const message = getErrorMessage(err, '')
+      if (isAxiosError(err) && (err.response?.status === 409 || message.startsWith('slug:'))) {
+        setSlugError(message.replace(/^slug: /, ''))
+      }
+    }
   }
 
   const phases = getPhases()
@@ -358,11 +372,25 @@ function TemplateEditorPanel({ template, onSave, onClose, saving }: EditorProps)
               type="text"
               className="form-input"
               value={slug}
-              onChange={(e) => setSlug(e.target.value)}
+              onChange={(e) => { setSlug(e.target.value); setSlugError(null) }}
               placeholder="ransomware-response"
-              pattern="[a-z0-9-]+"
+              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+              title="Lowercase letters and digits, separated by single hyphens"
+              maxLength={100}
+              aria-invalid={slugError ? true : undefined}
+              aria-describedby={slugError ? 'template-slug-error' : undefined}
               required
             />
+            {slugError && (
+              <p id="template-slug-error" role="alert" style={{ fontSize: 11, color: 'var(--red)', marginTop: 4 }}>
+                {slugError}
+              </p>
+            )}
+            {template?.id && slug !== template.slug && !slugError && (
+              <p style={{ fontSize: 11, color: 'var(--yellow, #facc15)', marginTop: 4 }}>
+                API integrations that send the old slug &ldquo;{template.slug}&rdquo; will stop matching this template.
+              </p>
+            )}
           </div>
         </div>
 
@@ -515,8 +543,9 @@ export function IncidentTemplatesPage() {
       }
       setShowEditor(false)
       setEditing(null)
-    } catch {
-      addToast('Failed to save template', 'error')
+    } catch (err) {
+      addToast(`Failed to save template: ${getErrorMessage(err, 'unexpected server error')}`, 'error')
+      throw err // the editor shows slug errors next to the field
     }
   }
 

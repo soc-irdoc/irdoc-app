@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { useIOCs, useCreateIOC, useUpdateIOC, useDeleteIOC, useBulkImportIOCs } from '@/hooks/useIOCs'
+import { useIOCs, useCreateIOC, useUpdateIOC, useDeleteIOC, useBulkImportIOCs, useIOCLinks, useSetIOCLink } from '@/hooks/useIOCs'
+import { useTimeline } from '@/hooks/useTimeline'
+import { usePermission } from '@/lib/permissions'
+import { formatDateTime } from '@/lib/utils'
+import { ENTRY_TYPE_CONFIG, type EntryType } from '@/types/timeline'
 import { detectIOCs } from '@/lib/iocDetector'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -219,12 +223,84 @@ function EnrichmentPanel({
 
 // ── IOC Row ───────────────────────────────────────────────────────────────────
 
+function plainText(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
+// The timeline entries this IOC was seen in; toggle to link / unlink (#152).
+function IOCEntryLinks({ incidentId, iocId, linkedEntryIds }: {
+  incidentId: string
+  iocId: string
+  linkedEntryIds: Set<string>
+}) {
+  const navigate = useNavigate()
+  const addToast = useUIStore((s) => s.addToast)
+  const canEdit = usePermission('analyst')
+  const { data: entries = [] } = useTimeline(incidentId)
+  const setLink = useSetIOCLink(incidentId)
+
+  async function toggle(entryId: string) {
+    try {
+      await setLink.mutateAsync({ iocId, entryId, linked: !linkedEntryIds.has(entryId) })
+    } catch {
+      addToast('Failed to update IOC link', 'error')
+    }
+  }
+
+  return (
+    <div style={{ padding: '12px 16px 4px' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: 6 }}>
+        Seen in timeline entries
+      </div>
+      {entries.length === 0 ? (
+        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>This incident has no timeline entries yet.</p>
+      ) : (
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 220, overflowY: 'auto' }}>
+          {entries.map((entry) => {
+            const linked = linkedEntryIds.has(entry.id)
+            const type = ENTRY_TYPE_CONFIG[entry.entry_type as EntryType]?.label ?? entry.entry_type
+            const text = plainText(entry.description)
+            return (
+              <li key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={linked}
+                  disabled={!canEdit || setLink.isPending}
+                  onChange={() => toggle(entry.id)}
+                  aria-label={`Seen in ${type} entry of ${formatDateTime(entry.occurred_at)}`}
+                  style={{ accentColor: 'var(--accent)' }}
+                />
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => navigate(`/incidents/${incidentId}/timeline?entry=${entry.id}`)}
+                  style={{ background: 'none', border: 'none', padding: 0, color: linked ? 'var(--accent)' : 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  {type} · {formatDateTime(entry.occurred_at)}
+                </button>
+                <span style={{ color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                  {text.length > 90 ? `${text.slice(0, 90)}…` : text}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function IOCRow({
   ioc,
+  incidentId,
+  linkedEntryIds,
   onStatusChange,
   onDelete,
 }: {
   ioc: IOC
+  incidentId: string
+  linkedEntryIds: Set<string>
   onStatusChange: (id: string, status: IOCStatus) => void
   onDelete: (id: string) => void
 }) {
@@ -267,6 +343,15 @@ function IOCRow({
           >
             {ioc.value.length > 55 ? ioc.value.slice(0, 55) + '…' : ioc.value}
           </span>
+          {linkedEntryIds.size > 0 && (
+            <span
+              className="chip chip-muted"
+              style={{ fontSize: 9, marginLeft: 8 }}
+              title="Timeline entries this IOC was seen in (expand the row to change)"
+            >
+              SEEN IN {linkedEntryIds.size}
+            </span>
+          )}
         </td>
 
         {/* Confidence + VT badge */}
@@ -351,6 +436,7 @@ function IOCRow({
             colSpan={6}
             style={{ borderBottom: '1px solid var(--border-subtle)', padding: 0 }}
           >
+            <IOCEntryLinks incidentId={incidentId} iocId={ioc.id} linkedEntryIds={linkedEntryIds} />
             <EnrichmentPanel
               iocId={ioc.id}
               iocType={ioc.ioc_type}
@@ -363,12 +449,20 @@ function IOCRow({
   )
 }
 
+const NO_ENTRIES = new Set<string>()
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export function IOCPage({ incidentId }: IOCPageProps) {
   const addToast = useUIStore((s) => s.addToast)
   const qc = useQueryClient()
   const { data: iocs = [], isLoading } = useIOCs(incidentId)
+  const { data: iocLinks = [] } = useIOCLinks(incidentId)
+  const linkedByIoc = new Map<string, Set<string>>()
+  for (const link of iocLinks) {
+    if (!linkedByIoc.has(link.ioc_id)) linkedByIoc.set(link.ioc_id, new Set())
+    linkedByIoc.get(link.ioc_id)!.add(link.timeline_entry_id)
+  }
   const createIOC = useCreateIOC(incidentId)
 
   // ?ioc=<id> (e.g. from the Evidence register, #150): show that IOC.
@@ -588,6 +682,8 @@ export function IOCPage({ incidentId }: IOCPageProps) {
                   <IOCRow
                     key={ioc.id}
                     ioc={ioc}
+                    incidentId={incidentId}
+                    linkedEntryIds={linkedByIoc.get(ioc.id) ?? NO_ENTRIES}
                     onStatusChange={handleStatusChange}
                     onDelete={handleDelete}
                   />

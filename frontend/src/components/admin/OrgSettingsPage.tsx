@@ -13,6 +13,7 @@ import {
 } from '@/hooks/useAdmin'
 import { useAuthStore } from '@/stores/authStore'
 import { useUIStore } from '@/stores/uiStore'
+import { getErrorMessage } from '@/lib/utils'
 import { Modal } from '@/components/common/Modal'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/admin'
@@ -220,8 +221,8 @@ export function OrgSettingsPage() {
         session_max_hours: maxHours ? Number(maxHours) : 0,
       })
       addToast('Organisation settings saved', 'success')
-    } catch {
-      addToast('Failed to save settings', 'error')
+    } catch (err) {
+      addToast(`Failed to save settings: ${getErrorMessage(err, 'unexpected server error')}`, 'error')
     }
   }
 
@@ -305,7 +306,7 @@ export function OrgSettingsPage() {
   const AUTH_OPTIONS: { id: AuthSource; icon: IconType; label: string; desc: string }[] = [
     { id: 'local',  icon: FaUserLock, label: 'Local Users',        desc: 'Managed manually in the Team section' },
     { id: 'azure',  icon: FaMicrosoft, label: 'Entra ID / Azure AD', desc: 'Import users from Azure Active Directory' },
-    { id: 'onprem', icon: FaBuildingUser, label: 'On-Premises AD',      desc: 'Sync with on-premises Active Directory' },
+    { id: 'onprem', icon: FaBuildingUser, label: 'On-Premises AD',      desc: 'Planned: not available yet' },
   ]
 
   return (
@@ -703,9 +704,10 @@ export function OrgSettingsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--yellow, #facc15)', flexShrink: 0 }} />
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>On-Premises AD / LDAP</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>On-Premises AD / LDAP: planned</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-                      Configure identity provider in Integrations
+                      Sign-in against on-premises Active Directory (LDAP / LDAPS) is not available yet; it is
+                      planned for a later release. Until then, use Entra ID single sign-on or local accounts with MFA.
                     </div>
                   </div>
                 </div>
@@ -715,7 +717,7 @@ export function OrgSettingsPage() {
                   style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                   onClick={() => navigate('/admin/integrations?section=identity')}
                 >
-                  Configure SSO →
+                  Set up Entra ID SSO →
                 </button>
               </div>
             )}

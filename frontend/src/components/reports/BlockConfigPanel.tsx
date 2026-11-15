@@ -381,6 +381,33 @@ export default function BlockConfigPanel({ block, onChange }: Props) {
     )
   }
 
+  if (type === 'time_spent') {
+    const toggles: Array<[keyof ReportBlock, string]> = [
+      ['show_effort_table', 'Effort table (time recorded per entry)'],
+      ['show_effort_chart', 'Effort by entry type (chart)'],
+      ['show_activity_chart', 'Activity window by entry type (timeline chart)'],
+    ]
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {renderLabelField()}
+        {toggles.map(([key, text]) => (
+          <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+            <input
+              type="checkbox"
+              checked={(block[key] as boolean | undefined) ?? true}
+              onChange={(e) => onChange({ [key]: e.target.checked })}
+            />
+            {text}
+          </label>
+        ))}
+        <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+          Effort comes from the optional time spent on each entry. The activity window comes from entry timestamps
+          and shows when work happened, not how long it took.
+        </p>
+      </div>
+    )
+  }
+
   if (type === 'tag_list') {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

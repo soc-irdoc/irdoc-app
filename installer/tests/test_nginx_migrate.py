@@ -185,6 +185,9 @@ def test_prod_compose_mounts_the_local_dir_not_a_tracked_file():
 @pytest.mark.parametrize("path", [
     "docker/nginx/nginx.conf",
     "docker/nginx/examples/demo-https.conf",
+    "docker/nginx/examples/https.conf",
+    "docker/nginx/examples/lb-reencrypt.conf",
+    "docker/nginx/examples/lb-terminate.conf",
     "frontend/nginx/default.conf",
 ])
 def test_tracked_configs_use_the_snippet(path):

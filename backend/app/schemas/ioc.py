@@ -50,3 +50,11 @@ class IOCDetected(BaseModel):
     """Auto-detected IOC suggestion - not yet saved."""
     ioc_type: str
     value: str
+
+
+class IOCTimelineLinkOut(BaseModel):
+    """An IOC seen in a timeline entry (#152)."""
+    model_config = {"from_attributes": True}
+
+    ioc_id: UUID
+    timeline_entry_id: UUID

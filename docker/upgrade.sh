@@ -10,11 +10,33 @@
 # it serves on port 3000 and keeps files in the repo-root storage/ directory.
 # Upgrading that with this script would silently move it to a different
 # stack (ports 80/443, docker/storage/) — so the script refuses (#82).
+#
+# What an upgrade changes (#162):
+#   docker/.env                     edited in place: VERSION is updated, and
+#                                   BACKUP_ENCRYPTION_KEY is added if missing.
+#                                   Nothing else.
+#   docker/nginx/local/nginx.conf   may be updated by irdoc-nginx-migrate, with
+#                                   a nginx.conf.bak-<timestamp> copy; restored
+#                                   if nginx rejects the new one.
+#   docker/nginx/nginx.conf         an edited copy is moved to nginx/local/.
+#   docker/ssl/                     never touched.
+#   docker/docker-compose.local.yml never touched; used on top of
+#                                   docker-compose.prod.yml when it exists.
+#   other tracked files             replaced by `git pull`; local edits are
+#                                   reported before anything changes.
 set -e
 
 VERSION=${1:-latest}
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.prod.yml"
+# Your own compose changes (extra ports, mounts, resource limits) go in this
+# git-ignored file, so `git pull` never conflicts with them (#162). It is
+# added on top of docker-compose.prod.yml whenever it exists.
+LOCAL_COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.local.yml"
+COMPOSE=(docker compose -f "${COMPOSE_FILE}")
+if [ -f "${LOCAL_COMPOSE_FILE}" ]; then
+  COMPOSE+=(-f "${LOCAL_COMPOSE_FILE}")
+fi
 NGINX_DIR="${SCRIPT_DIR}/nginx"
 LOCAL_NGINX_DIR="${NGINX_DIR}/local"
 ENV_FILE="${SCRIPT_DIR}/.env"
@@ -55,7 +77,28 @@ adopt_edited_nginx_conf() {
 
 echo "=== IRDoc Upgrade ==="
 echo "Target version: ${VERSION}"
+if [ -f "${LOCAL_COMPOSE_FILE}" ]; then
+  echo "Using your docker-compose.local.yml on top of docker-compose.prod.yml."
+fi
 echo ""
+
+# Local edits to tracked files under docker/ make `git pull` fail or conflict,
+# and upgrades may replace them (#162). Say so before anything changes.
+local_edits=$(git -C "${SCRIPT_DIR}" status --porcelain --untracked-files=no -- . 2>/dev/null || true)
+if [ -n "${local_edits}" ]; then
+  {
+    echo "WARNING: these files under docker/ have local changes:"
+    printf '%s\n' "${local_edits}" | sed 's/^/  /'
+    echo ""
+    echo "  'git pull' can fail or conflict on them, and upgrades may replace them."
+    echo "  Keep your changes where upgrades leave them alone instead:"
+    echo "    - compose changes:  docker/docker-compose.local.yml (git-ignored)"
+    echo "    - nginx config:     docker/nginx/local/nginx.conf"
+    echo "    - settings:         docker/.env"
+    echo "  Then restore the tracked file with: git checkout -- <file>"
+    echo ""
+  } >&2
+fi
 
 # ── Which compose file is the running install using? ─────────────────────────
 running_files=$(docker inspect irdoc-backend \
@@ -135,10 +178,10 @@ if [ -n "${repo_version}" ] && [ "${VERSION}" != "latest" ] && [ "${VERSION}" !=
 fi
 
 echo "[1/5] Pulling images..."
-VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" pull
+VERSION=${VERSION} "${COMPOSE[@]}" pull
 
 echo "[2/5] Running database migrations..."
-VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" run --rm backend alembic upgrade head
+VERSION=${VERSION} "${COMPOSE[@]}" run --rm backend alembic upgrade head
 
 # The install's own nginx config is nginx/local/nginx.conf (#114); without
 # one the frontend image serves its built-in default and there is nothing to
@@ -158,7 +201,11 @@ if [ -f "${LOCAL_NGINX_DIR}/nginx.conf" ]; then
   # path, so hand docker C:/... host paths ourselves. No-ops on Linux.
   host_dir=$(cd "${SCRIPT_DIR}" && pwd -W 2>/dev/null) || host_dir=${SCRIPT_DIR}
   set +e
-  MSYS_NO_PATHCONV=1 VERSION=${VERSION} docker compose -f "${host_dir}/docker-compose.prod.yml" \
+  host_compose=(docker compose -f "${host_dir}/docker-compose.prod.yml")
+  if [ -f "${LOCAL_COMPOSE_FILE}" ]; then
+    host_compose+=(-f "${host_dir}/docker-compose.local.yml")
+  fi
+  MSYS_NO_PATHCONV=1 VERSION=${VERSION} "${host_compose[@]}" \
     run --rm --no-deps -v "${host_dir}/nginx/local:/irdoc-nginx" --user "$(id -u):$(id -g)" \
     --entrypoint irdoc-nginx-migrate frontend /irdoc-nginx/nginx.conf
   rc=$?
@@ -173,16 +220,16 @@ else
 fi
 
 echo "[4/5] Restarting services..."
-VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans
+VERSION=${VERSION} "${COMPOSE[@]}" up -d --remove-orphans
 
 echo "[5/5] Verifying deployment..."
 if [ "${nginx_changed}" = true ]; then
   # The frontend copies its config at start-up, and `up -d` only recreates it
   # when the image changed, so restart it to pick up the local file.
-  VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" restart frontend
+  VERSION=${VERSION} "${COMPOSE[@]}" restart frontend
   nginx_ok=false
   for _ in $(seq 1 10); do
-    if VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" exec -T frontend nginx -t >/dev/null 2>&1; then
+    if VERSION=${VERSION} "${COMPOSE[@]}" exec -T frontend nginx -t >/dev/null 2>&1; then
       nginx_ok=true
       break
     fi
@@ -192,14 +239,14 @@ if [ "${nginx_changed}" = true ]; then
     backup=$(ls -1 "${LOCAL_NGINX_DIR}"/nginx.conf.bak-* | tail -n 1)
     cp "${backup}" "${LOCAL_NGINX_DIR}/nginx.conf"
     echo "Updated nginx/local/nginx.conf was rejected by nginx; restored $(basename "${backup}")." >&2
-    VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" restart frontend
+    VERSION=${VERSION} "${COMPOSE[@]}" restart frontend
   elif [ "${nginx_ok}" != true ]; then
     echo "WARNING: nginx rejects nginx/local/nginx.conf. Check: docker compose -f docker-compose.prod.yml logs frontend" >&2
   fi
 fi
 healthy=false
 for _ in $(seq 1 30); do
-  if VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" exec -T backend \
+  if VERSION=${VERSION} "${COMPOSE[@]}" exec -T backend \
       curl -sf http://localhost:8000/api/health >/dev/null 2>&1; then
     healthy=true
     break
@@ -210,7 +257,7 @@ if [ "${healthy}" != true ]; then
   echo "Backend did not become healthy within 60s. Check: docker compose -f docker-compose.prod.yml logs backend" >&2
   exit 1
 fi
-VERSION=${VERSION} docker compose -f "${COMPOSE_FILE}" exec -T backend \
+VERSION=${VERSION} "${COMPOSE[@]}" exec -T backend \
   python -c "from app import __version__; print(f'Running version: {__version__}')"
 
 echo ""

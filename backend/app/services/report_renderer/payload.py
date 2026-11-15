@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.models.task import Task
     from app.models.timeline import TimelineEntry
     from app.models.user import User
+    from app.services.report_renderer.time_charts import EffortSummary
 
 
 
@@ -94,6 +95,17 @@ class ReportPayload:
     # Graph diagram - SVG generated server-side from incident graph data
     graph_svg: str | None = None
 
+    # Time Spent block (#165): effort entered by analysts, and when each kind
+    # of work happened (activity windows), with their SVG charts.
+    time_effort: "EffortSummary | None" = None
+    time_activity_windows: list = field(default_factory=list)
+    time_effort_svg: str | None = None
+    time_activity_svg: str | None = None
+
+    # "Lead Analyst" on the cover: the incident's assignee, or the generating
+    # user when unassigned (#173). `analyst` stays the generator (footer).
+    lead_analyst: "User | None" = None
+
 
 def _group_by(items, key_fn) -> dict:
     result: dict = {}
@@ -161,6 +173,25 @@ async def build_report_payload(
             str(u.id): u.full_name or u.email for u in result.scalars().all()
         }
 
+    # Lead analyst = assignee; fall back to whoever generated the report (#173)
+    lead_analyst = analyst
+    if incident.assigned_to:
+        assignee = await db.get(User, incident.assigned_to)
+        if assignee is not None:
+            lead_analyst = assignee
+
+    # Time Spent (#165)
+    from app.services.report_renderer import time_charts
+
+    time_effort = time_charts.effort_summary(entries)
+    windows = time_charts.activity_windows(entries)
+    time_effort_svg = time_charts.render_effort_donut_svg(time_effort.by_type)
+    time_activity_svg = time_charts.render_activity_gantt_svg(windows, [
+        ("Opened", incident.opened_at),
+        ("Contained", incident.contained_at),
+        ("Closed", incident.closed_at),
+    ])
+
     # Compute derived fields
     completed_tasks = [t for t in tasks if t.status == "done"]
     task_completion_pct = (
@@ -202,4 +233,9 @@ async def build_report_payload(
         closed_at_str=_fmt_dt(incident.closed_at),
         ai_recommendations=incident.ai_recommendations,
         uploader_names=uploader_names,
+        lead_analyst=lead_analyst,
+        time_effort=time_effort,
+        time_activity_windows=windows,
+        time_effort_svg=time_effort_svg,
+        time_activity_svg=time_activity_svg,
     )
