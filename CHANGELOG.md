@@ -11,23 +11,39 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+## [0.2.1-alpha] - 2026-11-16
+
 ### Upgrade notes
 
-- **One database migration** runs automatically: 033 adds the optional Microsoft Graph group lookup to the SSO config (off by default).
-- **SSO admins:** every save of Integrations → Single Sign-On now asks for the client secret again, and SSO can only be switched on (or kept on while saving) when a connection test against Entra passes. `PUT /api/v1/admin/sso` requires `client_secret`, rejects unknown roles in `role_mappings` with `422`, and refuses to save an enabled config whose credentials fail the test.
+Read these before upgrading. Most installs need no manual step.
+
+- **One database migration** runs automatically: 033 adds the optional Microsoft Graph group lookup to the SSO config. It is off on existing installs.
+- **SSO admins: have the client secret ready.** Every save on Integrations → Single Sign-On now asks for the client secret again. While SSO is on, each save first checks the credentials with Entra and is refused if they fail. If you no longer have the secret, create a new one in the App Registration (Certificates & secrets) before changing SSO settings. Sign-in itself keeps working with the stored secret; only saving needs it.
+- **SSO role mappings keyed on a synced on-prem group** may have left users as Analyst on 0.2.0-alpha. After upgrading, check `docker logs irdoc-backend 2>&1 | grep "SSO sign-in"` after a sign-in: it says which mapping matched, or why none did. To fix a mismatch, either set the groups claim's **ID** format to **Group ID** under App Registration → Token configuration, or turn on **Look up group membership via Microsoft Graph** under Role Mappings (needs the Graph `User.Read` permission, present by default).
+- **`TRUST_X_REAL_IP`, `CORS_ORIGINS` and `WAIT_FOR_SERVICES_TIMEOUT` now work in `docker/.env`.** If you set one of them in `docker/docker-compose.local.yml` as the 0.2.0-alpha workaround, it keeps working; you can move it to `docker/.env` and drop it from the local file.
+- **API callers of `PUT /api/v1/admin/sso`** must send `client_secret` on every call. Unknown roles in `role_mappings` and tenant IDs that are neither a GUID nor a domain return `422`. Saving an enabled config whose credentials fail the check returns `400`.
 
 ### Added
 
-- **SSO: Test connection.** Checks the tenant, client ID and client secret against Entra and says in plain words what's wrong (tenant or app not found, invalid or expired secret). The SSO page now shows the redirect URI the backend really uses, built from `BASE_URL`. Refs #180.
-- **SSO: Microsoft Graph group lookup** (opt-in). At sign-in, checks the mapped group Object IDs against Entra, nested groups included, for tokens that don't carry them: groups synced from on-prem AD that the token names by sAMAccountName or SID, users in more than 200 groups, or a groups claim limited to assigned groups. Needs only the Graph `User.Read` delegated permission. If the lookup fails, sign-in continues with the token's claims. Refs #172.
+- **SSO: Test connection.** Checks the tenant, client ID and client secret against Entra and says in plain words what's wrong: tenant or app not found, invalid secret (use the secret's Value, not its Secret ID), or expired secret. The SSO page now shows the redirect URI the backend really uses, built from `BASE_URL`, instead of the address the page was opened on. (#180)
+- **SSO: Microsoft Graph group lookup** (opt-in). At sign-in, IRDoc asks Microsoft Graph which of the mapped group Object IDs the user belongs to, nested groups included. This covers tokens that don't carry those IDs: groups synced from on-prem AD that the token names by sAMAccountName or SID, users in more than 200 groups, or a groups claim limited to assigned groups. It needs only the Graph `User.Read` delegated permission. If the lookup fails, sign-in continues with the token's claims. (#172)
+
+### Changed
+
+- **Saving SSO settings needs the client secret, and SSO can only be on with verified credentials.** Any change on the SSO page (a mapping, the tenant, turning SSO on or off) asks for the client secret again before it can be saved. The enable toggle unlocks only after Test connection passes for the credentials in the form. Every save that leaves SSO on re-checks them with Entra. A mistyped or expired secret can no longer switch SSO on or go unnoticed on save. (#180)
+- **SSO role mappings reject unknown roles.** A mapping to a role name IRDoc doesn't know used to be ignored without a word; the API now refuses it. Mapping keys ignore surrounding braces and invisible characters copied from the Entra portal. (#172)
 
 ### Fixed
 
-- **SSO role mappings on synced on-prem groups** (#172). Mappings keyed on a group's Object ID never matched when Entra put the on-prem group name or SID in the token, and nothing said why. Every SSO sign-in now logs which mapping applied, and a warning names the cause when none did (no groups claim, group overage, or group names/SIDs instead of Object IDs). Mapping keys ignore surrounding braces and invisible characters copied from the portal.
-- **The backend's own INFO logs were dropped**, so messages such as role changes made by an SSO mapping never reached `docker logs`.
-- **`TRUST_X_REAL_IP`, `CORS_ORIGINS` and `WAIT_FOR_SERVICES_TIMEOUT` set in `docker/.env` were ignored** by `docker-compose.prod.yml`, and so was `APP_NAME`. They now reach the backend, worker and beat. A test now fails when `.env.example` documents a variable the prod compose doesn't pass on. Refs #178.
-- The Evidence page heading now uses the same font weight and icon as the other incident tabs. Refs #179.
-- The Time Spent report block says why the effort chart and table are missing when no timeline entry has time recorded, instead of leaving them out silently. Refs #181.
+- **SSO role mappings on synced on-prem groups.** Mappings keyed on a group's Object ID never matched when Entra put the on-prem group name or SID in the token, and nothing said why. Every SSO sign-in now logs which mapping applied. When none did, a warning names the likely cause: no groups claim, group overage, or group names/SIDs instead of Object IDs. (#172)
+- **The backend's own INFO logs were dropped.** Messages such as role changes made by an SSO mapping never reached `docker logs`; now they do.
+- **`TRUST_X_REAL_IP`, `CORS_ORIGINS` and `WAIT_FOR_SERVICES_TIMEOUT` set in `docker/.env` were ignored** by `docker-compose.prod.yml`, and so was `APP_NAME`. They now reach the backend, worker and beat. A test now fails when `.env.example` documents a variable the prod compose doesn't pass on. (#178)
+- **The Evidence page heading** uses the same font weight and icon as the other incident tabs. (#179)
+- **The Time Spent report block** says why the effort chart and table are missing when no timeline entry has time recorded, instead of leaving them out silently. (#181)
+
+### Security
+
+- **Tenant IDs are validated** before IRDoc puts them into Entra URLs: only a GUID or a domain such as `contoso.onmicrosoft.com` is accepted.
 
 ## [0.2.0-alpha] - 2026-11-15
 
@@ -435,7 +451,8 @@ Read these before upgrading; most installs need no manual step.
 
 ---
 
-[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.2.0-alpha...main
+[Unreleased]: https://github.com/soc-irdoc/irdoc-app/compare/v0.2.1-alpha...main
+[0.2.1-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.2.0-alpha...v0.2.1-alpha
 [0.2.0-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.11-alpha...v0.2.0-alpha
 [0.1.11-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.10-alpha...v0.1.11-alpha
 [0.1.10-alpha]: https://github.com/soc-irdoc/irdoc-app/compare/v0.1.9-alpha...v0.1.10-alpha
