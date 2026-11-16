@@ -17,6 +17,7 @@ from app.schemas.admin import (
     OrgSettingsUpdate,
     SSOConfigOut,
     SSOConfigUpdate,
+    SSOTestRequest,
     StorageConfigCreate,
     StorageConfigOut,
 )
@@ -320,23 +321,59 @@ async def switch_storage_backend(
 
 # ── SSO config ────────────────────────────────────────────────────────────────
 
-@router.get("/sso")
-async def get_sso(
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_permission("users.manage")),
-):
-    """Get SSO config (client_secret redacted). Enterprise only."""
+def _require_sso_feature() -> None:
     if not check_feature("sso_oidc"):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="SSO/OIDC requires an enterprise license",
         )
 
+
+def _sso_out(cfg) -> SSOConfigOut:
+    out = SSOConfigOut.model_validate(cfg)
+    out.redirect_uri = sso_service.redirect_uri()
+    return out
+
+
+@router.get("/sso")
+async def get_sso(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("users.manage")),
+):
+    """Get SSO config (client_secret redacted). Enterprise only."""
+    _require_sso_feature()
+
     cfg = await sso_service.get_sso_config(db, str(current_user.org_id))
     if not cfg:
         return {"data": None, "error": None}
 
-    return {"data": SSOConfigOut.model_validate(cfg), "error": None}
+    return {"data": _sso_out(cfg), "error": None}
+
+
+@router.post("/sso/test")
+async def test_sso_connection(
+    data: SSOTestRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission("users.manage")),
+):
+    """Check tenant, client ID and secret against Entra without saving anything.
+    A failed check is still a 200: the result says what failed."""
+    _require_sso_feature()
+
+    result = await sso_service.check_connection(data.tenant_id, data.client_id, data.client_secret)
+    result["redirect_uri"] = sso_service.redirect_uri()
+
+    await audit_service.log(
+        db,
+        org_id=str(current_user.org_id),
+        user_id=str(current_user.id),
+        action="sso.connection_tested",
+        entity_type="sso_config",
+        entity_id=str(current_user.org_id),
+        diff={"ok": result["ok"], "step": result["step"], "tenant_id": data.tenant_id.strip()},
+    )
+    await db.commit()
+    return {"data": result, "error": None}
 
 
 @router.put("/sso")
@@ -345,12 +382,30 @@ async def update_sso(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(require_permission("users.manage")),
 ):
-    """Create or update SSO config. Enterprise only."""
-    if not check_feature("sso_oidc"):
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="SSO/OIDC requires an enterprise license",
-        )
+    """Create or update SSO config. Enterprise only.
+
+    Every save carries the client secret. A save that leaves SSO enabled
+    re-checks the credentials against Entra first and is refused if they fail,
+    so SSO can never be on with credentials nobody has verified.
+    """
+    _require_sso_feature()
+
+    existing = await sso_service.get_sso_config(db, str(current_user.org_id))
+    will_be_enabled = data.is_enabled if data.is_enabled is not None else bool(existing and existing.is_enabled)
+    if will_be_enabled:
+        tenant_id = (data.tenant_id or (existing.tenant_id if existing else None) or "").strip()
+        client_id = (data.client_id or (existing.client_id if existing else None) or "").strip()
+        if not tenant_id or not client_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Tenant ID and Client ID are required to enable SSO",
+            )
+        check = await sso_service.check_connection(tenant_id, client_id, data.client_secret)
+        if not check["ok"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Connection test failed, SSO not saved: {check['message']}",
+            )
 
     patch = data.model_dump(exclude_none=True)
     cfg = await sso_service.upsert_sso_config(db, str(current_user.org_id), patch)
@@ -367,4 +422,4 @@ async def update_sso(
     )
     await db.commit()
 
-    return {"data": SSOConfigOut.model_validate(cfg), "error": None}
+    return {"data": _sso_out(cfg), "error": None}

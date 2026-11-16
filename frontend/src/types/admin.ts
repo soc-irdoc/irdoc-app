@@ -47,6 +47,27 @@ export interface SSOConfig {
   client_id: string | null
   // client_secret is never returned by the API
   role_mappings: Record<string, string>
+  /** Look up group membership via Microsoft Graph at sign-in (#172) */
+  graph_group_lookup: boolean
+  /** The callback URL the backend uses, built from BASE_URL */
+  redirect_uri: string | null
+}
+
+export interface SSOConfigUpdate {
+  tenant_id: string | null
+  client_id: string | null
+  /** Required on every save */
+  client_secret: string
+  role_mappings: Record<string, string>
+  is_enabled: boolean
+  graph_group_lookup: boolean
+}
+
+export interface SSOTestResult {
+  ok: boolean
+  step: 'tenant' | 'credentials' | 'network' | 'done'
+  message: string
+  redirect_uri: string
 }
 
 export interface AuditLogEntry {

@@ -8,9 +8,18 @@
 {% set effort = p.time_effort %}
 {% set has_effort = effort and effort.tracked_entries > 0 %}
 
-{% if (has_effort and (show_table or show_donut)) or (show_gantt and p.time_activity_svg) %}
+{% set wants_effort = show_table or show_donut %}
+{% if wants_effort or (show_gantt and p.time_activity_svg) %}
 <div class="block">
   <h2>{{ label }}</h2>
+
+  {% if wants_effort and not has_effort %}
+  {# Say why the ticked effort parts are missing instead of dropping them silently #}
+  <p style="margin: 0 0 8px; color:#64748b;">
+    No time recorded on timeline entries, so effort by entry type and the effort table are not shown.
+    Add <em>Time spent</em> to timeline entries to include them.
+  </p>
+  {% endif %}
 
   {% if has_effort %}
   <p style="margin: 0 0 8px;">

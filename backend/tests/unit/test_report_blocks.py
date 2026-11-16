@@ -193,3 +193,40 @@ def test_stat_row_disposition():
     p.disposition_label = None
     html = _render({"type": "stat_row", "stats": ["disposition"]}, p)
     assert "Disposition" in html
+
+
+# ─── Time Spent (#165) ───────────────────────────────────────────────────────
+
+def _time_payload(tracked: bool):
+    p = _payload()
+    p.entry_count = 2
+    p.time_activity_svg = "<svg id='gantt'></svg>"
+    p.time_effort_svg = "<svg id='donut'></svg>" if tracked else None
+    p.time_effort = SimpleNamespace(
+        tracked_entries=2 if tracked else 0,
+        total_minutes=90 if tracked else 0,
+        rows=[SimpleNamespace(
+            minutes=30, entry_type="analysis",
+            occurred_at=datetime(2026, 11, 1, tzinfo=timezone.utc), description="Triage",
+        )] if tracked else [],
+    )
+    return p
+
+
+def test_time_spent_shows_all_parts_when_time_is_recorded():
+    html = _render({"type": "time_spent"}, _time_payload(tracked=True))
+    assert "id='donut'" in html and "<table>" in html and "id='gantt'" in html
+    assert "No time recorded" not in html
+
+
+def test_time_spent_explains_missing_effort_parts():
+    html = _render({"type": "time_spent"}, _time_payload(tracked=False))
+    assert "No time recorded on timeline entries" in html
+    assert "id='gantt'" in html  # the activity window needs only timestamps
+
+
+def test_time_spent_note_only_when_effort_parts_are_ticked():
+    block = {"type": "time_spent", "show_effort_table": False, "show_effort_chart": False}
+    html = _render(block, _time_payload(tracked=False))
+    assert "No time recorded" not in html
+    assert "id='gantt'" in html

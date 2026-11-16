@@ -116,7 +116,7 @@ export function TimelinePage({ incidentId }: TimelinePageProps) {
               color: 'var(--text-primary)',
             }}
           >
-            <FaTimeline size={20} aria-hidden="true" />Timeline{' '}
+            <FaTimeline size={24} aria-hidden="true" />Timeline{' '}
             <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>
               {entries.length} entries
             </span>

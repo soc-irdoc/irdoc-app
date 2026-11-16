@@ -146,3 +146,32 @@ async def test_role_is_not_synced_onto_a_user_in_another_org(db_session: AsyncSe
         db_session, org=org, email="outsider@test.com", full_name="Doe, Jane", mapped_role="admin",
     )
     assert user.role == "viewer"
+
+
+# ─── key normalization, GUID detection (#172) ────────────────────────────────
+
+def test_mapping_keys_tolerate_braces_and_invisible_characters():
+    mappings = {"{" + GROUP_SOC + "}​": "senior_analyst"}
+    assert resolve_sso_role({"groups": [GROUP_SOC]}, mappings) == "senior_analyst"
+
+
+def test_match_reports_the_winning_key():
+    from app.services.sso_service import match_sso_role
+
+    mappings = {GROUP_SOC: "analyst", GROUP_ADMINS: "admin"}
+    assert match_sso_role({"groups": [GROUP_SOC, GROUP_ADMINS]}, mappings) == ("admin", GROUP_ADMINS)
+    assert match_sso_role({"groups": []}, mappings) == (None, None)
+
+
+def test_on_prem_group_name_can_be_mapped_directly():
+    # A synced group emitted as sAMAccountName matches a mapping keyed on that name
+    assert resolve_sso_role({"groups": ["SOC-Senior"]}, {"soc-senior": "senior_analyst"}) == "senior_analyst"
+
+
+def test_looks_like_guid():
+    from app.services.sso_service import looks_like_guid
+
+    assert looks_like_guid(GROUP_SOC)
+    assert looks_like_guid("{" + GROUP_SOC.upper() + "}")
+    assert not looks_like_guid("SOC-Senior")
+    assert not looks_like_guid("S-1-5-21-1004336348-1177238915-682003330-512")
