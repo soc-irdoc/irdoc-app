@@ -18,7 +18,7 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ### Added
 
-- **SSO: Test connection.** Checks the tenant, client ID and client secret against Entra and says in plain words what's wrong (tenant or app not found, invalid or expired secret). The SSO page now shows the redirect URI the backend really uses, built from `BASE_URL`.
+- **SSO: Test connection.** Checks the tenant, client ID and client secret against Entra and says in plain words what's wrong (tenant or app not found, invalid or expired secret). The SSO page now shows the redirect URI the backend really uses, built from `BASE_URL`. Refs #180.
 - **SSO: Microsoft Graph group lookup** (opt-in). At sign-in, checks the mapped group Object IDs against Entra, nested groups included, for tokens that don't carry them: groups synced from on-prem AD that the token names by sAMAccountName or SID, users in more than 200 groups, or a groups claim limited to assigned groups. Needs only the Graph `User.Read` delegated permission. If the lookup fails, sign-in continues with the token's claims. Refs #172.
 
 ### Fixed
@@ -26,8 +26,8 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 - **SSO role mappings on synced on-prem groups** (#172). Mappings keyed on a group's Object ID never matched when Entra put the on-prem group name or SID in the token, and nothing said why. Every SSO sign-in now logs which mapping applied, and a warning names the cause when none did (no groups claim, group overage, or group names/SIDs instead of Object IDs). Mapping keys ignore surrounding braces and invisible characters copied from the portal.
 - **The backend's own INFO logs were dropped**, so messages such as role changes made by an SSO mapping never reached `docker logs`.
 - **`TRUST_X_REAL_IP`, `CORS_ORIGINS` and `WAIT_FOR_SERVICES_TIMEOUT` set in `docker/.env` were ignored** by `docker-compose.prod.yml`, and so was `APP_NAME`. They now reach the backend, worker and beat. A test now fails when `.env.example` documents a variable the prod compose doesn't pass on. Refs #178.
-- The Evidence page heading now uses the same font weight and icon as the other incident tabs.
-- The Time Spent report block says why the effort chart and table are missing when no timeline entry has time recorded, instead of leaving them out silently.
+- The Evidence page heading now uses the same font weight and icon as the other incident tabs. Refs #179.
+- The Time Spent report block says why the effort chart and table are missing when no timeline entry has time recorded, instead of leaving them out silently. Refs #181.
 
 ## [0.2.0-alpha] - 2026-11-15
 
