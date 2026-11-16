@@ -20,6 +20,14 @@ x-backend-env: &backend-env
   BASE_URL: ${BASE_URL}
   # Secure session cookies (#157). Empty = on when BASE_URL is https.
   COOKIE_SECURE: ${COOKIE_SECURE:-}
+  # Client IP from nginx's X-Real-IP (#160). Set false only if port 8000 is
+  # reachable without going through IRDoc's nginx (#178).
+  TRUST_X_REAL_IP: ${TRUST_X_REAL_IP:-true}
+  # Extra allowed origins, comma-separated. Empty = BASE_URL (#178).
+  CORS_ORIGINS: ${CORS_ORIGINS:-}
+  # Seconds the entrypoint waits for Postgres/Redis before giving up (#159, #178).
+  WAIT_FOR_SERVICES_TIMEOUT: ${WAIT_FOR_SERVICES_TIMEOUT:-300}
+  APP_NAME: ${APP_NAME:-IRDoc}
   LICENSE_KEY: ${LICENSE_KEY:-}
   # Must name a real choice: the key is always injected, so `:-` would hand the
   # backend an empty string and Settings' Literal rejects it at import time.

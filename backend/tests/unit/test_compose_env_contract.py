@@ -16,7 +16,9 @@ import yaml
 
 from app.core.config import Settings
 
-COMPOSE = Path(__file__).resolve().parents[3] / "docker" / "docker-compose.prod.yml"
+REPO = Path(__file__).resolve().parents[3]
+COMPOSE = REPO / "docker" / "docker-compose.prod.yml"
+ENV_EXAMPLE = REPO / ".env.example"
 
 # Matches a whole-value compose interpolation: ${NAME} or ${NAME:-default}
 VAR_RE = re.compile(r"^\$\{([A-Z_][A-Z0-9_]*)(?::-(.*))?\}$", re.DOTALL)
@@ -49,7 +51,6 @@ def test_prod_compose_defaults_load_into_settings(monkeypatch):
     """A fresh install that overrides nothing optional must still boot."""
     for key, value in resolved_backend_env().items():
         monkeypatch.setenv(key, value)
-    monkeypatch.delenv("CORS_ORIGINS", raising=False)
 
     Settings(_env_file=None)  # must not raise
 
@@ -81,7 +82,6 @@ def test_cookie_secure_reaches_the_containers():
 def test_prod_compose_defaults_give_secure_cookies_on_https(monkeypatch):
     for key, value in resolved_backend_env().items():
         monkeypatch.setenv(key, value)
-    monkeypatch.delenv("CORS_ORIGINS", raising=False)
     assert Settings(_env_file=None).COOKIE_SECURE is True  # BASE_URL is https here
 
 
@@ -90,3 +90,33 @@ def test_database_and_redis_urls_are_built_from_the_passwords():
     raw = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["x-backend-env"]
     assert raw["DATABASE_URL"] == "${DATABASE_URL:-postgresql+asyncpg://irp:${DB_PASSWORD}@irdoc-db/irp}"
     assert raw["REDIS_URL"] == "${REDIS_URL:-redis://:${REDIS_PASSWORD}@irdoc-redis:6379/0}"
+
+
+# Read by docker compose itself to build other values, never by the backend.
+COMPOSE_ONLY = {"DB_PASSWORD", "REDIS_PASSWORD"}
+ENV_LINE_RE = re.compile(r"^#?\s*([A-Z][A-Z0-9_]*)=", re.MULTILINE)
+
+
+def test_every_documented_env_var_reaches_the_backend():
+    """#178: a var documented in .env.example but missing from x-backend-env is
+    silently ignored on a compose install (TRUST_X_REAL_IP, CORS_ORIGINS and
+    WAIT_FOR_SERVICES_TIMEOUT all were)."""
+    documented = set(ENV_LINE_RE.findall(ENV_EXAMPLE.read_text(encoding="utf-8"))) - COMPOSE_ONLY
+    raw = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["x-backend-env"]
+    missing = sorted(documented - set(raw))
+    assert not missing, f".env.example documents {missing}, but docker-compose.prod.yml never passes them on"
+
+
+def test_178_defaults_keep_the_backend_behaviour():
+    env = resolved_backend_env()
+    assert env["TRUST_X_REAL_IP"] == "true"
+    assert env["CORS_ORIGINS"] == ""  # empty = derive from BASE_URL
+    assert env["WAIT_FOR_SERVICES_TIMEOUT"] == "300"
+
+
+def test_empty_cors_origins_falls_back_to_base_url(monkeypatch):
+    for key, value in resolved_backend_env().items():
+        monkeypatch.setenv(key, value)
+    s = Settings(_env_file=None)
+    assert s.CORS_ORIGINS == []
+    assert "https://irdoc.example.com" in s.get_cors_origins()
