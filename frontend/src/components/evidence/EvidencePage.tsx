@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { FaArrowDown, FaArrowUp, FaCopy, FaDownload, FaEye, FaFileCsv } from 'react-icons/fa6'
+import { FaArrowDown, FaArrowUp, FaBoxArchive, FaCopy, FaDownload, FaEye, FaFileCsv } from 'react-icons/fa6'
 import { useEvidenceFiles, useEvidenceIOCs } from '@/hooks/useEvidence'
 import {
   EVIDENCE_PAGE_SIZES,
@@ -164,7 +164,10 @@ export function EvidencePage({ incidentId }: EvidencePageProps) {
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Evidence Register</h2>
+        {/* Same header as the other incident tabs (Summary, Timeline, IOCs, Reports) - #144 */}
+        <h2 style={{ fontSize: 18, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)', margin: 0 }}>
+          <FaBoxArchive size={24} aria-hidden="true" /> Evidence Register
+        </h2>
         <div style={{ display: 'flex', gap: 4 }} role="tablist" aria-label="Evidence view">
           {(['files', 'iocs'] as const).map((v) => (
             <button
