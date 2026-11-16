@@ -1,7 +1,9 @@
 """SSO/OIDC config management - reading and writing org SSO settings."""
 import base64
+import re
 import uuid as _uuid
 
+import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -71,7 +73,29 @@ async def upsert_sso_config(db: AsyncSession, org_id: str, data: dict) -> SSOCon
     return config
 
 
+def redirect_uri() -> str:
+    """The OIDC callback URL, which must match the App Registration's."""
+    from app.core.config import settings
+
+    return f"{str(settings.BASE_URL).rstrip('/')}/api/v1/auth/oidc/callback"
+
+
 # ─── Role mapping (Refs #172) ────────────────────────────────────────────────
+
+_GUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+# Zero-width characters ride along when a GUID is copied out of the Entra portal
+_INVISIBLE = dict.fromkeys(map(ord, "​‌‍⁠﻿"))
+
+
+def _norm(value) -> str:
+    """Comparable form of a mapping key or token value: no surrounding space,
+    braces or invisible characters, lower case."""
+    return str(value).translate(_INVISIBLE).strip().strip("{}").strip().lower()
+
+
+def looks_like_guid(value) -> bool:
+    return bool(_GUID_RE.match(_norm(value)))
+
 
 def _mapping_candidates(claims: dict) -> set[str]:
     """Every token value a role mapping may be keyed on: group object IDs
@@ -82,29 +106,135 @@ def _mapping_candidates(claims: dict) -> set[str]:
         values.extend(raw if isinstance(raw, list) else [raw])
     if claims.get("oid"):
         values.append(claims["oid"])
-    return {str(v).strip().lower() for v in values if v}
+    return {_norm(v) for v in values if v}
 
 
-def resolve_sso_role(claims: dict, role_mappings: dict | None) -> str | None:
-    """Role an SSO sign-in maps to, or None when no mapping matches.
+def match_sso_role(claims: dict, role_mappings: dict | None) -> tuple[str | None, str | None]:
+    """(role, mapping key) an SSO sign-in maps to, or (None, None).
 
-    When several mappings match, the most privileged role wins. Mapping keys
-    are compared case- and whitespace-insensitively (GUIDs are pasted by hand),
-    and mappings to unknown roles are ignored.
+    When several mappings match, the most privileged role wins. Keys are
+    compared after `_norm`, and mappings to unknown roles are ignored.
     """
     from app.core.permissions import ROLE_HIERARCHY
 
     if not role_mappings:
-        return None
+        return None, None
     candidates = _mapping_candidates(claims)
     matched = [
-        role
+        (role, key)
         for key, role in role_mappings.items()
-        if str(key).strip().lower() in candidates and role in ROLE_HIERARCHY
+        if _norm(key) in candidates and role in ROLE_HIERARCHY
     ]
     if not matched:
-        return None
-    return max(matched, key=ROLE_HIERARCHY.__getitem__)
+        return None, None
+    return max(matched, key=lambda m: ROLE_HIERARCHY[m[0]])
+
+
+def resolve_sso_role(claims: dict, role_mappings: dict | None) -> str | None:
+    """Role an SSO sign-in maps to, or None when no mapping matches."""
+    return match_sso_role(claims, role_mappings)[0]
+
+
+# ─── Microsoft Graph group lookup ────────────────────────────────────────────
+
+GRAPH_SCOPE = "https://graph.microsoft.com/User.Read"
+_GRAPH_CHECK_GROUPS = "https://graph.microsoft.com/v1.0/me/checkMemberGroups"
+_GRAPH_BATCH = 20  # API limit per request
+
+
+async def fetch_member_groups(access_token: str, group_ids: list[str]) -> set[str]:
+    """Which of `group_ids` the signed-in user belongs to, nested membership
+    included. Uses Graph's checkMemberGroups, which needs only User.Read for
+    /me and answers with Object IDs whatever format the token's groups claim
+    uses. Raises on any failure; the caller decides how to degrade."""
+    found: set[str] = set()
+    async with httpx.AsyncClient() as client:
+        for i in range(0, len(group_ids), _GRAPH_BATCH):
+            resp = await client.post(
+                _GRAPH_CHECK_GROUPS,
+                headers={"Authorization": f"Bearer {access_token}"},
+                json={"groupIds": group_ids[i:i + _GRAPH_BATCH]},
+                timeout=10.0,
+            )
+            resp.raise_for_status()
+            found.update(_norm(g) for g in resp.json().get("value", []))
+    return found
+
+
+# ─── Connection test ─────────────────────────────────────────────────────────
+
+_LOGIN = "https://login.microsoftonline.com"
+
+# AADSTS codes an admin can act on, in plain words
+_AADSTS_MESSAGES = {
+    "90002": "Tenant not found. Check the Directory (Tenant) ID.",
+    "900023": "The Directory (Tenant) ID is not a valid tenant.",
+    "700016": "Application not found in this tenant. Check the Application (Client) ID, "
+              "and that the app is registered in this tenant.",
+    "7000215": "Invalid client secret. Use the secret's Value, not its Secret ID.",
+    "7000222": "The client secret has expired. Create a new one in the App Registration.",
+    "7000216": "The client secret is missing.",
+}
+_AADSTS_RE = re.compile(r"AADSTS(\d+)")
+
+
+def _describe_token_error(body: dict) -> str:
+    desc = str(body.get("error_description") or body.get("error") or "Unknown error")
+    code = _AADSTS_RE.search(desc)
+    if code and code.group(1) in _AADSTS_MESSAGES:
+        return f"{_AADSTS_MESSAGES[code.group(1)]} (AADSTS{code.group(1)})"
+    # Drop the Trace ID / Correlation ID / Timestamp lines Entra appends
+    return desc.split("\r\n")[0].split(" Trace ID:")[0].strip()
+
+
+async def check_connection(tenant_id: str, client_id: str, client_secret: str) -> dict:
+    """Check that the tenant exists and that the client ID and secret are valid.
+
+    Returns {"ok", "step", "message"}. The token request uses the client
+    credentials grant against Graph's .default scope, which succeeds for any
+    valid app registration whatever API permissions it has. The redirect URI
+    can't be checked this way; the caller shows it for comparison.
+    """
+    tenant_id, client_id = tenant_id.strip(), client_id.strip()
+    try:
+        async with httpx.AsyncClient() as client:
+            disco = await client.get(
+                f"{_LOGIN}/{tenant_id}/v2.0/.well-known/openid-configuration", timeout=10.0,
+            )
+            if disco.status_code != 200:
+                return {"ok": False, "step": "tenant",
+                        "message": _describe_token_error(_safe_json(disco))}
+            keys = await client.get(f"{_LOGIN}/{tenant_id}/discovery/v2.0/keys", timeout=10.0)
+            if keys.status_code != 200 or not _safe_json(keys).get("keys"):
+                return {"ok": False, "step": "tenant",
+                        "message": "Could not fetch the tenant's signing keys."}
+
+            token = await client.post(
+                f"{_LOGIN}/{tenant_id}/oauth2/v2.0/token",
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "scope": "https://graph.microsoft.com/.default",
+                },
+                timeout=10.0,
+            )
+            if token.status_code != 200:
+                return {"ok": False, "step": "credentials",
+                        "message": _describe_token_error(_safe_json(token))}
+    except httpx.HTTPError as exc:
+        return {"ok": False, "step": "network",
+                "message": f"Could not reach login.microsoftonline.com ({type(exc).__name__})."}
+    return {"ok": True, "step": "done",
+            "message": "Tenant, Client ID and Client Secret are valid."}
+
+
+def _safe_json(resp) -> dict:
+    try:
+        body = resp.json()
+        return body if isinstance(body, dict) else {}
+    except ValueError:
+        return {}
 
 
 async def provision_oidc_user(

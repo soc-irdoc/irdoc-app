@@ -6,6 +6,8 @@ import type {
   OrgSettings,
   StorageConfigOut,
   SSOConfig,
+  SSOConfigUpdate,
+  SSOTestResult,
   AuditLogEntry,
 } from '@/types/admin'
 import type { ApiResponse } from '@/types/api'
@@ -197,12 +199,22 @@ export function useSSOConfig() {
 export function useUpdateSSOConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: Partial<SSOConfig>) => {
+    mutationFn: async (payload: SSOConfigUpdate) => {
       const res = await apiClient.put<ApiResponse<SSOConfig>>('/admin/sso', payload)
       return res.data.data
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sso-config'] })
+    },
+  })
+}
+
+/** Check tenant, client ID and secret against Entra without saving. */
+export function useTestSSOConnection() {
+  return useMutation({
+    mutationFn: async (payload: { tenant_id: string; client_id: string; client_secret: string }) => {
+      const res = await apiClient.post<ApiResponse<SSOTestResult>>('/admin/sso/test', payload)
+      return res.data.data
     },
   })
 }

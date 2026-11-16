@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useIntegrations, useSaveIntegrationConfig, useTestIntegration, useToggleIntegration } from '@/hooks/useIntegrations'
-import { useSSOConfig, useUpdateSSOConfig } from '@/hooks/useAdmin'
+import { useSSOConfig, useTestSSOConnection, useUpdateSSOConfig } from '@/hooks/useAdmin'
+import { getErrorMessage } from '@/lib/utils'
+import type { SSOTestResult } from '@/types/admin'
 import { SmtpSection } from '@/components/integrations/SmtpSection'
 import { AiSection } from '@/components/integrations/AiSection'
 import { useUIStore } from '@/stores/uiStore'
@@ -285,10 +287,22 @@ const ROLE_OPTIONS = ['viewer', 'analyst', 'senior_analyst', 'admin']
 
 interface RoleMapping { group: string; role: string }
 
-function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
+function mappingsToObject(rows: RoleMapping[]): Record<string, string> {
+  const obj: Record<string, string> = {}
+  rows.forEach(({ group, role }) => { if (group.trim()) obj[group.trim()] = role })
+  return obj
+}
+
+function sameMappings(a: Record<string, string>, b: Record<string, string>): boolean {
+  const ka = Object.keys(a)
+  return ka.length === Object.keys(b).length && ka.every((k) => b[k] === a[k])
+}
+
+export function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
   const addToast = useUIStore((s) => s.addToast)
   const { data: ssoConfig, isLoading } = useSSOConfig()
   const updateSSO = useUpdateSSOConfig()
+  const testSSO = useTestSSOConnection()
 
   const [expanded, setExpanded] = useState(autoExpand)
   const [isEnabled, setIsEnabled] = useState(false)
@@ -296,6 +310,25 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
   const [clientId, setClientId] = useState('')
   const [clientSecret, setClientSecret] = useState('')
   const [roleMappings, setRoleMappings] = useState<RoleMapping[]>([])
+  const [graphLookup, setGraphLookup] = useState(false)
+  const [testResult, setTestResult] = useState<SSOTestResult | null>(null)
+  // The tenant|client|secret a connection test last passed for. Editing any of
+  // them invalidates it, and SSO can only be switched on while it matches.
+  const [testedFor, setTestedFor] = useState<string | null>(null)
+
+  const credentials = `${tenantId.trim()}|${clientId.trim()}|${clientSecret.trim()}`
+  const testPassed = testedFor !== null && testedFor === credentials
+  const canTest = !!(tenantId.trim() && clientId.trim() && clientSecret.trim())
+
+  // Any difference from the saved config. Every save needs the secret again.
+  const dirty = ssoConfig
+    ? isEnabled !== ssoConfig.is_enabled
+      || tenantId.trim() !== (ssoConfig.tenant_id ?? '')
+      || clientId.trim() !== (ssoConfig.client_id ?? '')
+      || graphLookup !== (ssoConfig.graph_group_lookup ?? false)
+      || !sameMappings(mappingsToObject(roleMappings), ssoConfig.role_mappings ?? {})
+    : !!(isEnabled || tenantId.trim() || clientId.trim() || roleMappings.some((m) => m.group.trim()) || graphLookup)
+  const secretMissing = !clientSecret.trim()
 
   useEffect(() => {
     if (autoExpand) setExpanded(true)
@@ -306,16 +339,37 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
       setIsEnabled(ssoConfig.is_enabled)
       setTenantId(ssoConfig.tenant_id ?? '')
       setClientId(ssoConfig.client_id ?? '')
-      // client_secret is never returned - leave blank (user re-enters to rotate)
+      setGraphLookup(ssoConfig.graph_group_lookup ?? false)
+      // client_secret is never returned - the admin re-enters it for every save
       setRoleMappings(
         Object.entries(ssoConfig.role_mappings ?? {}).map(([group, role]) => ({ group, role }))
       )
     }
   }, [ssoConfig])
 
-  async function handleToggleEnable(enabled: boolean) {
-    setIsEnabled(enabled)
+  function handleToggleEnable(enabled: boolean) {
     if (!expanded) setExpanded(true)
+    if (enabled && !testPassed) {
+      addToast('Run Test connection with the current credentials before enabling SSO', 'error')
+      return
+    }
+    setIsEnabled(enabled)
+  }
+
+  async function handleTest() {
+    setTestResult(null)
+    try {
+      const result = await testSSO.mutateAsync({
+        tenant_id: tenantId.trim(),
+        client_id: clientId.trim(),
+        client_secret: clientSecret.trim(),
+      })
+      setTestResult(result)
+      setTestedFor(result.ok ? credentials : null)
+    } catch (err) {
+      setTestedFor(null)
+      addToast(getErrorMessage(err, 'Connection test failed'), 'error')
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -328,27 +382,28 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
       addToast('Application (Client) ID is required', 'error')
       return
     }
-    // Client secret required on first save - afterwards it stays encrypted in the DB
-    const hasExistingSecret = !!ssoConfig?.client_id  // if client_id is saved, secret was previously set
-    if (!hasExistingSecret && !clientSecret.trim()) {
-      addToast('Client Secret is required for the initial configuration', 'error')
+    if (secretMissing) {
+      addToast('Enter the client secret again to save changes', 'error')
       return
     }
-    const mappingsObj: Record<string, string> = {}
-    roleMappings.forEach(({ group, role }) => { if (group.trim()) mappingsObj[group.trim()] = role })
-    const payload: Record<string, unknown> = {
-      is_enabled: isEnabled,
-      tenant_id: tenantId || null,
-      client_id: clientId || null,
-      role_mappings: mappingsObj,
+    if (isEnabled && !ssoConfig?.is_enabled && !testPassed) {
+      addToast('Run Test connection before enabling SSO', 'error')
+      return
     }
-    if (clientSecret.trim()) payload.client_secret = clientSecret.trim()
     try {
-      await updateSSO.mutateAsync(payload)
-      setClientSecret('')  // clear after save - never persisted in UI
+      await updateSSO.mutateAsync({
+        is_enabled: isEnabled,
+        tenant_id: tenantId.trim() || null,
+        client_id: clientId.trim() || null,
+        client_secret: clientSecret.trim(),
+        role_mappings: mappingsToObject(roleMappings),
+        graph_group_lookup: graphLookup,
+      })
+      setClientSecret('')  // never kept in the UI after a save
+      setTestedFor(null)
       addToast('SSO configuration saved', 'success')
-    } catch {
-      addToast('Failed to save SSO configuration', 'error')
+    } catch (err) {
+      addToast(getErrorMessage(err, 'Failed to save SSO configuration'), 'error')
     }
   }
 
@@ -361,7 +416,9 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
     }
   }
 
-  const redirectUri = `${window.location.origin}/api/v1/auth/oidc/callback`
+  // The backend builds the callback from BASE_URL, which can differ from the
+  // address this page was opened on
+  const redirectUri = ssoConfig?.redirect_uri ?? testResult?.redirect_uri ?? `${window.location.origin}/api/v1/auth/oidc/callback`
 
   const statusColor = isEnabled ? 'var(--green)' : 'var(--text-muted)'
   const statusText = isLoading
@@ -463,18 +520,48 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                   </div>
 
                   <div>
-                    {subLabel('Client Secret')}
+                    {subLabel('Client Secret *')}
                     <input
                       type="password"
                       className="form-input"
-                      placeholder="Paste new secret to set or rotate - leave blank to keep existing"
+                      aria-label="Client Secret"
+                      placeholder="Required to test the connection and to save any change"
                       value={clientSecret}
                       onChange={(e) => setClientSecret(e.target.value)}
                       autoComplete="new-password"
+                      aria-invalid={dirty && secretMissing}
+                      style={dirty && secretMissing ? { borderColor: 'var(--accent)' } : undefined}
                     />
-                    <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
-                      App Registration → Certificates &amp; secrets → Client secrets → + New client secret. Stored encrypted.
+                    <p style={{ fontSize: 10, color: dirty && secretMissing ? 'var(--text-secondary)' : 'var(--text-muted)', marginTop: 3 }}>
+                      {dirty && secretMissing && <strong>Enter the client secret again to save changes. </strong>}
+                      App Registration → Certificates &amp; secrets → Client secrets → + New client secret (use the secret&apos;s Value). Stored encrypted.
                     </p>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={handleTest}
+                      disabled={!canTest || testSSO.isPending}
+                    >
+                      {testSSO.isPending ? 'Testing…' : 'Test connection'}
+                    </button>
+                    {testResult && (
+                      <span
+                        role="status"
+                        style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, color: !testResult.ok ? 'var(--red)' : testPassed ? 'var(--green)' : 'var(--text-muted)' }}
+                      >
+                        {!testResult.ok && <><FaXmark size={11} aria-hidden="true" /> {testResult.message}</>}
+                        {testResult.ok && testPassed && <><FaCheck size={11} aria-hidden="true" /> {testResult.message}</>}
+                        {testResult.ok && !testPassed && 'Credentials changed since the last test - test again.'}
+                      </span>
+                    )}
+                    {!testResult && !isEnabled && (
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        SSO can be enabled once the connection test passes.
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -502,7 +589,9 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                     Map Entra group Object IDs, app role values, or a user&apos;s Object ID to IRDoc roles. Mappings are
                     applied on every sign-in; if several match, the most privileged role wins. New users with no match
                     get the Analyst role, and existing users with no match keep their current role.
-                    To include group claims, enable <strong>Groups</strong> in your App Registration → Token configuration.
+                    To include group claims, enable <strong>Groups</strong> in your App Registration → Token configuration,
+                    with <strong>Group ID</strong> as the format for the ID token. Groups synced from on-prem AD may otherwise
+                    arrive as names or SIDs, which an Object ID mapping won&apos;t match.
                   </p>
                   {roleMappings.map((mapping, i) => (
                     <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -541,6 +630,23 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
                   >
                     + Add Mapping
                   </button>
+                  <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 8, fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={graphLookup}
+                      onChange={(e) => setGraphLookup(e.target.checked)}
+                      style={{ marginTop: 2 }}
+                    />
+                    <span>
+                      <strong>Look up group membership via Microsoft Graph</strong>
+                      <span style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.5 }}>
+                        Checks the mapped group Object IDs against Entra at sign-in, nested groups included. Use it when
+                        the token doesn&apos;t carry them: groups synced from on-prem AD (emitted as names or SIDs),
+                        users in more than 200 groups, or a groups claim limited to assigned groups. Needs the
+                        Microsoft Graph <strong>User.Read</strong> delegated permission (present by default) with consent.
+                      </span>
+                    </span>
+                  </label>
                 </div>
               )}
 
@@ -548,7 +654,7 @@ function IdentitySection({ autoExpand }: { autoExpand: boolean }) {
 
             <div style={{ padding: '14px 20px 20px', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpanded(false)}>Collapse</button>
-              <button type="submit" className="btn btn-accent btn-sm" disabled={updateSSO.isPending}>
+              <button type="submit" className="btn btn-accent btn-sm" disabled={updateSSO.isPending || !dirty || secretMissing}>
                 {updateSSO.isPending ? 'Saving…' : 'Save SSO Configuration'}
               </button>
             </div>

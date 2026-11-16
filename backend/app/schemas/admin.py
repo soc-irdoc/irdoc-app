@@ -143,14 +143,61 @@ class SSOConfigOut(BaseModel):
     client_id: str | None = None
     # client_secret is intentionally omitted - never returned to client
     role_mappings: dict[str, Any] = {}
+    graph_group_lookup: bool = False
+    # The callback URL the backend uses (from BASE_URL), to compare with the
+    # App Registration's redirect URI
+    redirect_uri: str | None = None
+
+
+SSORole = Literal["viewer", "analyst", "senior_analyst", "admin"]
+
+# A tenant GUID or a verified domain (contoso.onmicrosoft.com). Both end up in
+# login.microsoftonline.com URL paths, so nothing else is let through.
+_TENANT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$")
+
+
+def _check_tenant(v: str | None) -> str | None:
+    if v is None:
+        return v
+    v = v.strip()
+    if v and not _TENANT_RE.match(v):
+        raise ValueError("Tenant ID must be a GUID or a domain such as contoso.onmicrosoft.com")
+    return v
 
 
 class SSOConfigUpdate(BaseModel):
     tenant_id: str | None = None
     client_id: str | None = None
-    client_secret: str | None = None  # plaintext - encrypted at the service layer
-    role_mappings: dict[str, Any] | None = None
+    # Required on every save, so no change to SSO can be made without proving
+    # knowledge of the secret. Plaintext here; encrypted at the service layer.
+    client_secret: str = Field(min_length=1)
+    role_mappings: dict[str, SSORole] | None = None
     is_enabled: bool | None = None
+    graph_group_lookup: bool | None = None
+
+    @field_validator("client_secret")
+    @classmethod
+    def _secret_not_blank(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Re-enter the client secret to save changes")
+        return v
+
+    @field_validator("tenant_id")
+    @classmethod
+    def _tenant_format(cls, v: str | None) -> str | None:
+        return _check_tenant(v)
+
+
+class SSOTestRequest(BaseModel):
+    tenant_id: str = Field(min_length=1)
+    client_id: str = Field(min_length=1)
+    client_secret: str = Field(min_length=1)
+
+    @field_validator("tenant_id")
+    @classmethod
+    def _tenant_format(cls, v: str) -> str:
+        return _check_tenant(v)
 
 
 # ── Audit log ─────────────────────────────────────────────────────────────────

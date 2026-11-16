@@ -25,6 +25,10 @@ class SSOConfig(Base):
     client_secret: Mapped[str | None] = mapped_column(Text, nullable=True)  # Fernet-encrypted
     role_mappings: Mapped[dict] = mapped_column(JSONB, default=dict)
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Look up group membership via Microsoft Graph at sign-in (#172)
+    graph_group_lookup: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

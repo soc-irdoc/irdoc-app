@@ -14,6 +14,28 @@ from app.core.config import settings
 from app.core.limiter import limiter
 
 
+def _configure_app_logging() -> None:
+    """Send the app's own INFO logs to stderr. uvicorn configures only its own
+    loggers, so without this `app.*` and `irp` messages below WARNING were lost
+    (e.g. which SSO role mapping a sign-in matched, #172)."""
+    import logging
+
+    for name in ("app", "irp"):
+        log = logging.getLogger(name)
+        if log.handlers:
+            continue
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s - %(message)s"))
+        log.addHandler(handler)
+        log.setLevel(logging.INFO)
+        # Keep propagating: nothing sits on the root logger under uvicorn, and
+        # pytest's caplog listens there.
+        log.propagate = True
+
+
+_configure_app_logging()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: verify DB connectivity

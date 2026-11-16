@@ -9,6 +9,7 @@ Enterprise feature - check_feature("sso_oidc") before any OIDC operation.
 import logging
 import secrets
 import time
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -92,7 +93,7 @@ async def _get_enabled_config(db: AsyncSession):
 
 
 def _redirect_uri() -> str:
-    return f"{str(settings.BASE_URL).rstrip('/')}/api/v1/auth/oidc/callback"
+    return sso_service.redirect_uri()
 
 
 @router.get("/login")
@@ -104,13 +105,17 @@ async def oidc_login(db: AsyncSession = Depends(get_db)):
     state = secrets.token_urlsafe(24)
     nonce = secrets.token_urlsafe(24)
 
+    # Graph lookup needs an access token for Graph's User.Read (#172)
+    scope = "openid profile email"
+    if cfg.graph_group_lookup:
+        scope += f" {sso_service.GRAPH_SCOPE}"
     auth_url = (
         f"https://login.microsoftonline.com/{cfg.tenant_id}/oauth2/v2.0/authorize"
         f"?client_id={cfg.client_id}"
         f"&response_type=code"
         f"&redirect_uri={_redirect_uri()}"
         f"&response_mode=query"
-        f"&scope=openid+profile+email"
+        f"&scope={quote(scope)}"
         f"&state={state}"
         f"&nonce={nonce}"
     )
@@ -225,23 +230,9 @@ async def oidc_callback(
         )
 
     # Role from the mapped group / app-role / user object IDs (#172)
-    mapped_role = sso_service.resolve_sso_role(claims, cfg.role_mappings)
-    if cfg.role_mappings and mapped_role is None:
-        if "_claim_names" in claims and "groups" in claims.get("_claim_names", {}):
-            logger.warning(
-                "SSO sign-in for %s: the user is in too many groups for Entra to put them in the "
-                "token (group overage), so group role mappings cannot match. Map an app role or "
-                "the user's object ID instead, or limit the groups claim to assigned groups.",
-                email,
-            )
-        elif "groups" not in claims:
-            logger.warning(
-                "SSO sign-in for %s: role mappings are configured but the ID token has no "
-                "'groups' claim. Enable Groups under App Registration → Token configuration.",
-                email,
-            )
-        else:
-            logger.info("SSO sign-in for %s: no role mapping matched the token's groups/roles/oid", email)
+    claims = await _add_graph_groups(claims, cfg, tokens.get("access_token"), email)
+    mapped_role, matched_key = sso_service.match_sso_role(claims, cfg.role_mappings)
+    _log_role_mapping(claims, cfg, email, mapped_role, matched_key)
 
     # Provision user
     try:
@@ -264,3 +255,80 @@ async def oidc_callback(
     await session_service.open_session(db, redirect_response, user)
     redirect_response.delete_cookie(STATE_COOKIE_NAME)
     return redirect_response
+
+
+async def _add_graph_groups(claims: dict, cfg, access_token: str | None, email: str) -> dict:
+    """With Graph lookup on, add the mapped groups the user belongs to (nested
+    included) to the token's `groups`. Covers groups the token leaves out or
+    names differently: on-prem synced groups emitted as sAMAccountName or SID,
+    group overage, and "groups assigned to the application" claims. Never
+    blocks sign-in: on failure the token's own claims are used."""
+    if not cfg.graph_group_lookup or not cfg.role_mappings:
+        return claims
+    mapped_ids = [k.strip().strip("{}") for k in cfg.role_mappings if sso_service.looks_like_guid(k)]
+    if not mapped_ids:
+        return claims
+    if not access_token:
+        logger.warning("SSO sign-in for %s: Graph group lookup is on but Entra returned no access token", email)
+        return claims
+    try:
+        member_of = await sso_service.fetch_member_groups(access_token, mapped_ids)
+    except Exception as exc:
+        logger.warning(
+            "SSO sign-in for %s: Graph group lookup failed (%s). Check that the App Registration "
+            "has the Microsoft Graph User.Read delegated permission with consent. Using the "
+            "token's claims only.",
+            email, exc,
+        )
+        return claims
+    groups = claims.get("groups") or []
+    groups = groups if isinstance(groups, list) else [groups]
+    return {**claims, "groups": [*groups, *member_of]}
+
+
+def _log_role_mapping(claims: dict, cfg, email: str, mapped_role: str | None, matched_key: str | None) -> None:
+    """One line per SSO sign-in saying which mapping applied, plus a warning
+    that names the likely cause when mappings exist but none matched."""
+    groups = claims.get("groups") or []
+    groups = groups if isinstance(groups, list) else [groups]
+    roles = claims.get("roles") or []
+    roles = roles if isinstance(roles, list) else [roles]
+    logger.info(
+        "SSO sign-in for %s: %d group(s), %d app role(s), oid %s; mapping %s",
+        email, len(groups), len(roles), "present" if claims.get("oid") else "missing",
+        f"{matched_key} -> {mapped_role}" if mapped_role else "none matched",
+    )
+    logger.debug("SSO sign-in for %s: groups=%s roles=%s oid=%s", email, groups, roles, claims.get("oid"))
+
+    if not cfg.role_mappings or mapped_role is not None:
+        return
+    if "_claim_names" in claims and "groups" in claims.get("_claim_names", {}):
+        logger.warning(
+            "SSO sign-in for %s: the user is in too many groups for Entra to put them in the "
+            "token (group overage), so group role mappings cannot match. Turn on Graph group "
+            "lookup, map an app role or the user's object ID instead, or limit the groups "
+            "claim to assigned groups.",
+            email,
+        )
+    elif not groups:
+        logger.warning(
+            "SSO sign-in for %s: role mappings are configured but the ID token has no "
+            "'groups' claim. Enable Groups under App Registration → Token configuration "
+            "(for the ID token), or turn on Graph group lookup.",
+            email,
+        )
+    elif not any(sso_service.looks_like_guid(g) for g in groups):
+        logger.warning(
+            "SSO sign-in for %s: the token's groups claim carries names or SIDs, not Object IDs "
+            "(on-prem synced groups are emitted as sAMAccountName or SID when configured so). "
+            "Set Token configuration → groups → ID → Group ID, map the value the token carries, "
+            "or turn on Graph group lookup.",
+            email,
+        )
+    else:
+        logger.warning(
+            "SSO sign-in for %s: no role mapping matched the token's %d group(s), app roles or "
+            "oid. If the mapped group is synced from on-prem or not assigned to the app, turn on "
+            "Graph group lookup.",
+            email, len(groups),
+        )
