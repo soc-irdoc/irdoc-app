@@ -119,4 +119,8 @@ def test_empty_cors_origins_falls_back_to_base_url(monkeypatch):
         monkeypatch.setenv(key, value)
     s = Settings(_env_file=None)
     assert s.CORS_ORIGINS == []
-    assert "https://irdoc.example.com" in s.get_cors_origins()
+    assert s.get_cors_origins() == [
+        "https://irdoc.example.com",
+        "https://localhost",
+        "https://127.0.0.1",
+    ]
