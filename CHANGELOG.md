@@ -11,6 +11,10 @@ The current pre-release version is tracked in [`VERSION`](VERSION).
 
 ## [Unreleased]
 
+### Added
+
+- **Import closed cases from DFIR IRIS.** A new command copies closed cases from DFIR IRIS v2.4 into IRDoc as closed incidents: `docker compose exec -e IRIS_API_KEY=<key> backend python -m app.cli.iris_import --iris-url <IRIS URL> --import-user <your IRDoc email> --dry-run`. Each case keeps its open and close dates, and its reference becomes `INC-<open year>-<SOC ticket ID>`. The summary and every note are converted from Markdown into the incident's executive summary and notes. Timeline events keep their original timestamps, and assets and IOCs come across with their links to timeline events. IRIS severity, outcome, classification, asset and IOC types are translated with built-in defaults, which a YAML file can override (example in `app/cli/iris_import/mapping.example.yaml`). Run with `--dry-run` first: it saves nothing and lists any IRIS values the mapping doesn't cover. Re-running is safe: cases already imported are skipped, as are cases with no numeric SOC ticket ID and cases whose reference is already used by another incident. IRIS is only read, never changed. Imported incidents are attributed to the `--import-user` account, with the original IRIS authors kept in the notes. Each import is recorded in the audit log. (#184)
+
 ## [0.2.1-alpha] - 2026-11-16
 
 ### Upgrade notes

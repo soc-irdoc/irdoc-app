@@ -1,0 +1,1148 @@
+{
+ "/api/versions": {
+  "data": {
+   "api_current": "2.0.5",
+   "api_min": "2.0.4",
+   "iris_current": "v2.4.27"
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/assets/list?cid=2": {
+  "data": {
+   "assets": [
+    {
+     "analysis_status": "Done",
+     "analysis_status_id": 6,
+     "asset_compromise_status_id": 1,
+     "asset_description": "Finance workstation",
+     "asset_domain": "corp.local",
+     "asset_icon_compromised": "ioc_windows_desktop.png",
+     "asset_icon_not_compromised": "windows_desktop.png",
+     "asset_id": 1,
+     "asset_ip": "10.1.4.42",
+     "asset_name": "FIN-WS-042",
+     "asset_tags": "seed,test",
+     "asset_type": "Windows - Computer",
+     "asset_type_id": 9,
+     "asset_uuid": "992a0866-8507-4ccf-ba3a-0f508e8e7fcd",
+     "ioc_links": null,
+     "link": []
+    },
+    {
+     "analysis_status": "Done",
+     "analysis_status_id": 6,
+     "asset_compromise_status_id": 1,
+     "asset_description": "",
+     "asset_domain": "corp.local",
+     "asset_icon_compromised": "ioc_user.png",
+     "asset_icon_not_compromised": "user.png",
+     "asset_id": 2,
+     "asset_ip": "",
+     "asset_name": "j.doe",
+     "asset_tags": "seed,test",
+     "asset_type": "Windows Account - AD",
+     "asset_type_id": 18,
+     "asset_uuid": "7a07915e-3bc4-49ad-a43f-8e5a841ffd23",
+     "ioc_links": null,
+     "link": []
+    },
+    {
+     "analysis_status": "Done",
+     "analysis_status_id": 6,
+     "asset_compromise_status_id": 2,
+     "asset_description": "",
+     "asset_domain": "",
+     "asset_icon_compromised": "ioc_firewall.png",
+     "asset_icon_not_compromised": "firewall.png",
+     "asset_id": 3,
+     "asset_ip": "",
+     "asset_name": "EDGE-FW-01",
+     "asset_tags": "seed,test",
+     "asset_type": "Firewall",
+     "asset_type_id": 2,
+     "asset_uuid": "e7f4af74-3614-4098-9347-f5a42002d1d3",
+     "ioc_links": null,
+     "link": []
+    }
+   ],
+   "state": {
+    "object_last_update": "2026-11-17T17:38:11.327043",
+    "object_state": 3
+   }
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/assets/list?cid=3": {
+  "data": {
+   "assets": [
+    {
+     "analysis_status": "Done",
+     "analysis_status_id": 6,
+     "asset_compromise_status_id": 0,
+     "asset_description": "",
+     "asset_domain": "",
+     "asset_icon_compromised": "ioc_desktop.png",
+     "asset_icon_not_compromised": "desktop.png",
+     "asset_id": 4,
+     "asset_ip": "",
+     "asset_name": "LT-0099",
+     "asset_tags": "seed,test",
+     "asset_type": "Mac - Computer",
+     "asset_type_id": 6,
+     "asset_uuid": "1df0adc6-5170-4946-a6c3-7063abfdfa9f",
+     "ioc_links": null,
+     "link": []
+    }
+   ],
+   "state": {
+    "object_last_update": "2026-11-17T17:38:28.460025",
+    "object_state": 1
+   }
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/assets/list?cid=4": {
+  "data": {
+   "assets": [],
+   "state": {
+    "object_last_update": "2026-11-17T17:38:28.726512",
+    "object_state": 0
+   }
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/ioc/list?cid=2": {
+  "data": {
+   "ioc": [
+    {
+     "ioc_description": "Phishing domain",
+     "ioc_id": 1,
+     "ioc_misp": null,
+     "ioc_tags": "seed",
+     "ioc_tlp_id": 2,
+     "ioc_type": "domain",
+     "ioc_type_id": 20,
+     "ioc_uuid": "eccf4dd0-ed9d-4caa-a0c3-42c6c8631cb0",
+     "ioc_value": "login-micros0ft.example",
+     "link": [],
+     "misp_link": null,
+     "tlp_bscolor": "warning",
+     "tlp_name": "amber"
+    },
+    {
+     "ioc_description": "",
+     "ioc_id": 5,
+     "ioc_misp": null,
+     "ioc_tags": "seed",
+     "ioc_tlp_id": 1,
+     "ioc_type": "email-src",
+     "ioc_type_id": 31,
+     "ioc_uuid": "f9a35cb6-b427-4ca8-813c-4ebe590e0612",
+     "ioc_value": "evil@phish.example",
+     "link": [],
+     "misp_link": null,
+     "tlp_bscolor": "danger",
+     "tlp_name": "red"
+    },
+    {
+     "ioc_description": "",
+     "ioc_id": 4,
+     "ioc_misp": null,
+     "ioc_tags": "seed",
+     "ioc_tlp_id": 3,
+     "ioc_type": "filename",
+     "ioc_type_id": 37,
+     "ioc_uuid": "240fe6cd-5408-499e-99ab-f615fc53e478",
+     "ioc_value": "invoice_7731.html",
+     "link": [],
+     "misp_link": null,
+     "tlp_bscolor": "success",
+     "tlp_name": "green"
+    },
+    {
+     "ioc_description": "Phishing host",
+     "ioc_id": 2,
+     "ioc_misp": null,
+     "ioc_tags": "seed",
+     "ioc_tlp_id": 5,
+     "ioc_type": "ip-dst",
+     "ioc_type_id": 77,
+     "ioc_uuid": "84d55961-885b-450c-971e-812e6b57ecd2",
+     "ioc_value": "203.0.113.77",
+     "link": [],
+     "misp_link": null,
+     "tlp_bscolor": "warning",
+     "tlp_name": "amber+strict"
+    },
+    {
+     "ioc_description": "Attachment hash",
+     "ioc_id": 3,
+     "ioc_misp": null,
+     "ioc_tags": "seed",
+     "ioc_tlp_id": 4,
+     "ioc_type": "md5",
+     "ioc_type_id": 90,
+     "ioc_uuid": "7a170f20-24a5-4a9d-9324-2b3bec8af13d",
+     "ioc_value": "44d88612fea8a8f36de82e1278abb02f",
+     "link": [],
+     "misp_link": null,
+     "tlp_bscolor": "black",
+     "tlp_name": "clear"
+    },
+    {
+     "ioc_description": "unmapped type",
+     "ioc_id": 6,
+     "ioc_misp": null,
+     "ioc_tags": "seed",
+     "ioc_tlp_id": 1,
+     "ioc_type": "mutex",
+     "ioc_type_id": 94,
+     "ioc_uuid": "46e83848-f403-464a-8427-96bb08c93834",
+     "ioc_value": "SuspiciousMutex42",
+     "link": [],
+     "misp_link": null,
+     "tlp_bscolor": "danger",
+     "tlp_name": "red"
+    }
+   ],
+   "state": {
+    "object_last_update": "2026-11-17T17:38:11.707659",
+    "object_state": 6
+   }
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/ioc/list?cid=3": {
+  "data": {
+   "ioc": [
+    {
+     "ioc_description": "",
+     "ioc_id": 7,
+     "ioc_misp": null,
+     "ioc_tags": "seed",
+     "ioc_tlp_id": 2,
+     "ioc_type": "sha256",
+     "ioc_type_id": 113,
+     "ioc_uuid": "5bfd7698-8944-49e4-920f-f49badee251e",
+     "ioc_value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "link": [],
+     "misp_link": null,
+     "tlp_bscolor": "warning",
+     "tlp_name": "amber"
+    }
+   ],
+   "state": {
+    "object_last_update": "2026-11-17T17:38:28.507104",
+    "object_state": 1
+   }
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/ioc/list?cid=4": {
+  "data": {
+   "ioc": [],
+   "state": {
+    "object_last_update": "2026-11-17T17:38:28.724224",
+    "object_state": 0
+   }
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/notes/1?cid=2": {
+  "data": {
+   "comments": [],
+   "custom_attributes": null,
+   "directory": {
+    "case_id": 2,
+    "id": 1,
+    "name": "Investigation",
+    "parent_id": null
+   },
+   "directory_id": 1,
+   "modification_history": {
+    "1794937092.377538": {
+     "action": "created note",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "note_case_id": 2,
+   "note_content": "## Triage\n\nInitial triage done by **SOC L1**.\n\n- checked headers\n- checked URL",
+   "note_creationdate": "2026-11-17T17:38:12.371931",
+   "note_id": 1,
+   "note_lastupdate": "2026-11-17T17:38:12.371940",
+   "note_title": "Triage",
+   "note_user": 1,
+   "note_uuid": "2122ee6f-9ee3-4b96-b8c9-2d3baa2d57d1"
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/notes/2?cid=2": {
+  "data": {
+   "comments": [],
+   "custom_attributes": null,
+   "directory": {
+    "case_id": 2,
+    "id": 2,
+    "name": "Mail analysis",
+    "parent_id": 1
+   },
+   "directory_id": 2,
+   "modification_history": {
+    "1794937092.426647": {
+     "action": "created note",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "note_case_id": 2,
+   "note_content": "Received: from mx.phish.example\n\nSPF *fail*.",
+   "note_creationdate": "2026-11-17T17:38:12.424550",
+   "note_id": 2,
+   "note_lastupdate": "2026-11-17T17:38:12.424556",
+   "note_title": "Headers",
+   "note_user": 1,
+   "note_uuid": "069352b3-470e-47d6-b32d-e133d8adb816"
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/notes/3?cid=2": {
+  "data": {
+   "comments": [],
+   "custom_attributes": null,
+   "directory": {
+    "case_id": 2,
+    "id": 3,
+    "name": "Containment",
+    "parent_id": null
+   },
+   "directory_id": 3,
+   "modification_history": {
+    "1794937092.468471": {
+     "action": "created note",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "note_case_id": 2,
+   "note_content": "1. Reset\n2. Revoke\n3. Block",
+   "note_creationdate": "2026-11-17T17:38:12.466193",
+   "note_id": 3,
+   "note_lastupdate": "2026-11-17T17:38:12.466200",
+   "note_title": "Actions",
+   "note_user": 1,
+   "note_uuid": "a72a1d91-3a10-449b-a5cb-777debf52bcd"
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/notes/directories/filter?cid=2": {
+  "data": [
+   {
+    "id": 3,
+    "name": "Containment",
+    "note_count": 1,
+    "notes": [
+     {
+      "id": 3,
+      "title": "Actions"
+     }
+    ],
+    "subdirectories": []
+   },
+   {
+    "id": 1,
+    "name": "Investigation",
+    "note_count": 1,
+    "notes": [
+     {
+      "id": 1,
+      "title": "Triage"
+     }
+    ],
+    "subdirectories": [
+     {
+      "id": 2,
+      "name": "Mail analysis",
+      "note_count": 1,
+      "subdirectories": []
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "name": "Mail analysis",
+    "note_count": 1,
+    "notes": [
+     {
+      "id": 2,
+      "title": "Headers"
+     }
+    ],
+    "subdirectories": []
+   }
+  ],
+  "message": "",
+  "status": "success"
+ },
+ "/case/notes/directories/filter?cid=3": {
+  "data": [],
+  "message": "",
+  "status": "success"
+ },
+ "/case/notes/directories/filter?cid=4": {
+  "data": [],
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/1?cid=2": {
+  "data": {
+   "case_id": 2,
+   "children": [],
+   "custom_attributes": null,
+   "event_added": "2026-11-17T17:38:11.801040",
+   "event_assets": [
+    1,
+    2
+   ],
+   "event_category_id": 4,
+   "event_color": "",
+   "event_comments_map": [],
+   "event_content": "User j.doe received invoice email.\nAttachment opened.",
+   "event_date": "2025-03-03T07:12:45.000000",
+   "event_date_wtz": "2025-03-03T08:12:45.000000",
+   "event_id": 1,
+   "event_in_graph": true,
+   "event_in_summary": false,
+   "event_iocs": [
+    1,
+    3
+   ],
+   "event_is_flagged": false,
+   "event_raw": "",
+   "event_source": "Mail gateway",
+   "event_tags": "seed",
+   "event_title": "Phishing email received",
+   "event_tz": "+01:00",
+   "event_uuid": "a8a8df56-6404-4067-9465-c12b32f5ebfb",
+   "modification_history": {
+    "1794937091.801111": {
+     "action": "created",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "parent_event_id": null,
+   "user_id": 1
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/2?cid=2": {
+  "data": {
+   "case_id": 2,
+   "children": [],
+   "custom_attributes": null,
+   "event_added": "2026-11-17T17:38:11.925373",
+   "event_assets": [
+    1
+   ],
+   "event_category_id": 9,
+   "event_color": "",
+   "event_comments_map": [],
+   "event_content": "Proxy logs show POST to phishing domain.",
+   "event_date": "2025-03-03T07:15:02.120000",
+   "event_date_wtz": "2025-03-03T08:15:02.120000",
+   "event_id": 2,
+   "event_in_graph": true,
+   "event_in_summary": false,
+   "event_iocs": [
+    1,
+    2
+   ],
+   "event_is_flagged": false,
+   "event_raw": "",
+   "event_source": "EDR",
+   "event_tags": "seed",
+   "event_title": "Credential entry on phishing page",
+   "event_tz": "+01:00",
+   "event_uuid": "8c617774-7c94-4651-8064-11ac42359374",
+   "modification_history": {
+    "1794937091.925431": {
+     "action": "created",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "parent_event_id": null,
+   "user_id": 1
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/3?cid=2": {
+  "data": {
+   "case_id": 2,
+   "children": [],
+   "custom_attributes": null,
+   "event_added": "2026-11-17T17:38:12.010904",
+   "event_assets": [
+    2
+   ],
+   "event_category_id": 3,
+   "event_color": "",
+   "event_comments_map": [],
+   "event_content": "All sessions revoked, password reset.",
+   "event_date": "2025-03-03T10:40:00.000000",
+   "event_date_wtz": "2025-03-03T10:40:00.000000",
+   "event_id": 3,
+   "event_in_graph": true,
+   "event_in_summary": false,
+   "event_iocs": [],
+   "event_is_flagged": false,
+   "event_raw": "",
+   "event_source": "EDR",
+   "event_tags": "seed",
+   "event_title": "Sessions revoked",
+   "event_tz": "+00:00",
+   "event_uuid": "d36e9adc-9692-4f3b-99d6-c97a790a2dc8",
+   "modification_history": {
+    "1794937092.010955": {
+     "action": "created",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "parent_event_id": null,
+   "user_id": 1
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/4?cid=2": {
+  "data": {
+   "case_id": 2,
+   "children": [],
+   "custom_attributes": null,
+   "event_added": "2026-11-17T17:38:12.090204",
+   "event_assets": [
+    3
+   ],
+   "event_category_id": 1,
+   "event_color": "",
+   "event_comments_map": [],
+   "event_content": "Blocked 203.0.113.77 at edge.",
+   "event_date": "2025-03-04T14:00:00.000000",
+   "event_date_wtz": "2025-03-04T09:00:00.000000",
+   "event_id": 4,
+   "event_in_graph": true,
+   "event_in_summary": false,
+   "event_iocs": [
+    2
+   ],
+   "event_is_flagged": false,
+   "event_raw": "",
+   "event_source": "Firewall",
+   "event_tags": "seed",
+   "event_title": "Firewall block added",
+   "event_tz": "-05:00",
+   "event_uuid": "c12a6f83-2085-4e08-9e3c-d52427004333",
+   "modification_history": {
+    "1794937092.090253": {
+     "action": "created",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "parent_event_id": null,
+   "user_id": 1
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/5?cid=3": {
+  "data": {
+   "case_id": 3,
+   "children": [],
+   "custom_attributes": null,
+   "event_added": "2026-11-17T17:38:28.557604",
+   "event_assets": [
+    4
+   ],
+   "event_category_id": 5,
+   "event_color": "",
+   "event_comments_map": [],
+   "event_content": "EDR flagged process.",
+   "event_date": "2025-06-10T19:01:00.000000",
+   "event_date_wtz": "2025-06-10T22:01:00.000000",
+   "event_id": 5,
+   "event_in_graph": true,
+   "event_in_summary": false,
+   "event_iocs": [
+    7
+   ],
+   "event_is_flagged": false,
+   "event_raw": "",
+   "event_source": "EDR",
+   "event_tags": "seed",
+   "event_title": "EDR detection",
+   "event_tz": "+03:00",
+   "event_uuid": "500b55a6-5ab5-476b-9c00-f4014996a59f",
+   "modification_history": {
+    "1794937108.557653": {
+     "action": "created",
+     "user": "administrator",
+     "user_id": 1
+    }
+   },
+   "parent_event_id": null,
+   "user_id": 1
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/list?cid=2": {
+  "data": {
+   "state": {
+    "object_last_update": "2026-11-17T17:38:12.093745",
+    "object_state": 4
+   },
+   "timeline": [
+    {
+     "category_name": "Initial Access",
+     "event_category_id": 4,
+     "event_color": "",
+     "event_content": "User j.doe received invoice email.\nAttachment opened.",
+     "event_date": "2025-03-03T07:12:45.000000",
+     "event_date_wtz": "2025-03-03T08:12:45.000000",
+     "event_id": 1,
+     "event_in_graph": true,
+     "event_in_summary": false,
+     "event_tags": "seed",
+     "event_title": "Phishing email received",
+     "event_tz": "+01:00",
+     "event_uuid": "a8a8df56-6404-4067-9465-c12b32f5ebfb",
+     "iocs": [
+      {
+       "event_id": 1,
+       "ioc_id": 1,
+       "ioc_value": "login-micros0ft.example"
+      },
+      {
+       "event_id": 1,
+       "ioc_id": 3,
+       "ioc_value": "44d88612fea8a8f36de82e1278abb02f"
+      }
+     ]
+    },
+    {
+     "category_name": "Credential Access",
+     "event_category_id": 9,
+     "event_color": "",
+     "event_content": "Proxy logs show POST to phishing domain.",
+     "event_date": "2025-03-03T07:15:02.120000",
+     "event_date_wtz": "2025-03-03T08:15:02.120000",
+     "event_id": 2,
+     "event_in_graph": true,
+     "event_in_summary": false,
+     "event_tags": "seed",
+     "event_title": "Credential entry on phishing page",
+     "event_tz": "+01:00",
+     "event_uuid": "8c617774-7c94-4651-8064-11ac42359374",
+     "iocs": [
+      {
+       "event_id": 2,
+       "ioc_id": 1,
+       "ioc_value": "login-micros0ft.example"
+      },
+      {
+       "event_id": 2,
+       "ioc_id": 2,
+       "ioc_value": "203.0.113.77"
+      }
+     ]
+    },
+    {
+     "category_name": "Remediation",
+     "event_category_id": 3,
+     "event_color": "",
+     "event_content": "All sessions revoked, password reset.",
+     "event_date": "2025-03-03T10:40:00.000000",
+     "event_date_wtz": "2025-03-03T10:40:00.000000",
+     "event_id": 3,
+     "event_in_graph": true,
+     "event_in_summary": false,
+     "event_tags": "seed",
+     "event_title": "Sessions revoked",
+     "event_tz": "+00:00",
+     "event_uuid": "d36e9adc-9692-4f3b-99d6-c97a790a2dc8",
+     "iocs": []
+    },
+    {
+     "category_name": "Unspecified",
+     "event_category_id": 1,
+     "event_color": "",
+     "event_content": "Blocked 203.0.113.77 at edge.",
+     "event_date": "2025-03-04T14:00:00.000000",
+     "event_date_wtz": "2025-03-04T09:00:00.000000",
+     "event_id": 4,
+     "event_in_graph": true,
+     "event_in_summary": false,
+     "event_tags": "seed",
+     "event_title": "Firewall block added",
+     "event_tz": "-05:00",
+     "event_uuid": "c12a6f83-2085-4e08-9e3c-d52427004333",
+     "iocs": [
+      {
+       "event_id": 4,
+       "ioc_id": 2,
+       "ioc_value": "203.0.113.77"
+      }
+     ]
+    }
+   ]
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/list?cid=3": {
+  "data": {
+   "state": {
+    "object_last_update": "2026-11-17T17:38:28.561094",
+    "object_state": 1
+   },
+   "timeline": [
+    {
+     "category_name": "Execution",
+     "event_category_id": 5,
+     "event_color": "",
+     "event_content": "EDR flagged process.",
+     "event_date": "2025-06-10T19:01:00.000000",
+     "event_date_wtz": "2025-06-10T22:01:00.000000",
+     "event_id": 5,
+     "event_in_graph": true,
+     "event_in_summary": false,
+     "event_tags": "seed",
+     "event_title": "EDR detection",
+     "event_tz": "+03:00",
+     "event_uuid": "500b55a6-5ab5-476b-9c00-f4014996a59f",
+     "iocs": [
+      {
+       "event_id": 5,
+       "ioc_id": 7,
+       "ioc_value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+     ]
+    }
+   ]
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/case/timeline/events/list?cid=4": {
+  "data": {
+   "state": {
+    "object_last_update": "2026-11-17T17:38:28.712939",
+    "object_state": 0
+   },
+   "timeline": []
+  },
+  "message": "",
+  "status": "success"
+ },
+ "/manage/cases/filter?page=1": {
+  "data": {
+   "cases": [
+    {
+     "alerts": [],
+     "case_id": 1,
+     "case_uuid": "6acf9e22-0446-446f-b0bd-a287ec5b4f3d",
+     "classification": null,
+     "classification_id": null,
+     "client": {
+      "client_uuid": "96c97b43-22a9-466b-afbf-96e43262ab48",
+      "creation_date": "2026-11-17T17:36:27.007310",
+      "custom_attributes": null,
+      "customer_description": null,
+      "customer_id": 1,
+      "customer_name": "IrisInitialClient",
+      "customer_sla": null,
+      "last_update_date": "2026-11-17T17:36:27.007310"
+     },
+     "client_id": 1,
+     "close_date": null,
+     "closing_note": null,
+     "custom_attributes": null,
+     "description": "This is a demonstration.",
+     "initial_date": "2026-11-17T17:36:27.044648",
+     "modification_history": null,
+     "name": "#1 - Initial Demo",
+     "note_directories": [],
+     "open_date": "2026-11-17",
+     "owner": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "owner_id": 1,
+     "protagonists": [],
+     "review_status": null,
+     "review_status_id": null,
+     "reviewer": null,
+     "reviewer_id": null,
+     "severity": null,
+     "severity_id": null,
+     "soc_id": "soc_id_demo",
+     "state": null,
+     "state_id": null,
+     "status_id": 0,
+     "status_name": "unknown",
+     "tags": [],
+     "user": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "user_id": 1
+    },
+    {
+     "alerts": [],
+     "case_id": 2,
+     "case_uuid": "f40252e5-1a91-465c-9830-680bccd9f453",
+     "classification": {
+      "creation_date": "2026-11-17T17:36:13.228252",
+      "description": "Masquerading as another entity in order to persuade the user to reveal a private credential.",
+      "id": 30,
+      "name": "fraud:phishing",
+      "name_expanded": "Fraud: Phishing"
+     },
+     "classification_id": 30,
+     "client": {
+      "client_uuid": "96c97b43-22a9-466b-afbf-96e43262ab48",
+      "creation_date": "2026-11-17T17:36:27.007310",
+      "custom_attributes": null,
+      "customer_description": null,
+      "customer_id": 1,
+      "customer_name": "IrisInitialClient",
+      "customer_sla": null,
+      "last_update_date": "2026-11-17T17:36:27.007310"
+     },
+     "client_id": 1,
+     "close_date": "2025-03-07",
+     "closing_note": "Closed after password reset and block.",
+     "custom_attributes": null,
+     "description": "# Executive summary\n\nA **finance** user entered credentials on a *fake* O365 page.\n\n## Impact\n\n- 1 mailbox accessed\n- No data exfiltrated\n\n1. Reset password\n2. Revoke sessions\n\n> Lessons: enforce MFA\n\nDetails in `tenant-logs` and [the ticket](https://servicedesk.local/482913).\n\n#### Deep heading\n\n```\nGet-MessageTrace -SenderAddress evil@phish.example\n```\n\n| a | b |\n|---|---|\n| 1 | 2 |\n",
+     "initial_date": "2026-11-17T17:38:10.876171",
+     "modification_history": {
+      "1794937090.962498": {
+       "action": "created",
+       "user": "administrator",
+       "user_id": 1
+      },
+      "1794937092.520051": {
+       "action": "case closed",
+       "user": "administrator",
+       "user_id": 1
+      }
+     },
+     "name": "#2 - Phishing - finance mailbox compromise",
+     "note_directories": [
+      1,
+      2,
+      3
+     ],
+     "open_date": "2025-03-03",
+     "owner": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "owner_id": 1,
+     "protagonists": [],
+     "review_status": null,
+     "review_status_id": null,
+     "reviewer": null,
+     "reviewer_id": null,
+     "severity": {
+      "severity_description": "High",
+      "severity_id": 5,
+      "severity_name": "High"
+     },
+     "severity_id": 5,
+     "soc_id": "482913",
+     "state": {
+      "protected": true,
+      "state_description": "Case is closed",
+      "state_id": 9,
+      "state_name": "Closed"
+     },
+     "state_id": 9,
+     "status_id": 2,
+     "status_name": "true_positive_with_impact",
+     "tags": [],
+     "user": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "user_id": 1
+    },
+    {
+     "alerts": [],
+     "case_id": 3,
+     "case_uuid": "74374329-57e2-4239-8c38-b55e27016bde",
+     "classification": {
+      "creation_date": "2026-11-17T17:36:12.895955",
+      "description": "This category regroups many common malware types (Banking, POS, Mining malware).",
+      "id": 7,
+      "name": "malicious-code:trojan-malware",
+      "name_expanded": "Malicious-Code: Trojan/Malware"
+     },
+     "classification_id": 7,
+     "client": {
+      "client_uuid": "96c97b43-22a9-466b-afbf-96e43262ab48",
+      "creation_date": "2026-11-17T17:36:27.007310",
+      "custom_attributes": null,
+      "customer_description": null,
+      "customer_id": 1,
+      "customer_name": "IrisInitialClient",
+      "customer_sla": null,
+      "last_update_date": "2026-11-17T17:36:27.007310"
+     },
+     "client_id": 1,
+     "close_date": "2025-06-12",
+     "closing_note": null,
+     "custom_attributes": null,
+     "description": "Infostealer detected and removed. Reimaged.",
+     "initial_date": "2026-11-17T17:38:28.278210",
+     "modification_history": {
+      "1794937108.358015": {
+       "action": "created",
+       "user": "administrator",
+       "user_id": 1
+      },
+      "1794937108.63132": {
+       "action": "case closed",
+       "user": "administrator",
+       "user_id": 1
+      }
+     },
+     "name": "#3 - Malware - commodity infostealer",
+     "note_directories": [],
+     "open_date": "2025-06-10",
+     "owner": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "owner_id": 1,
+     "protagonists": [],
+     "review_status": null,
+     "review_status_id": null,
+     "reviewer": null,
+     "reviewer_id": null,
+     "severity": {
+      "severity_description": "Critical",
+      "severity_id": 6,
+      "severity_name": "Critical"
+     },
+     "severity_id": 6,
+     "soc_id": "482950",
+     "state": {
+      "protected": true,
+      "state_description": "Case is closed",
+      "state_id": 9,
+      "state_name": "Closed"
+     },
+     "state_id": 9,
+     "status_id": 4,
+     "status_name": "true_positive_without_impact",
+     "tags": [],
+     "user": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "user_id": 1
+    },
+    {
+     "alerts": [],
+     "case_id": 4,
+     "case_uuid": "954ed4c6-517f-4e44-96bf-30796df45bf7",
+     "classification": {
+      "creation_date": "2026-11-17T17:36:13.342681",
+      "description": "All incidents that do not fit in one of the given categories should be put into this class. If the number of incidents in this category increases, it is an indicator that the classification scheme must be revised.",
+      "id": 36,
+      "name": "other:other",
+      "name_expanded": "Other: other"
+     },
+     "classification_id": 36,
+     "client": {
+      "client_uuid": "96c97b43-22a9-466b-afbf-96e43262ab48",
+      "creation_date": "2026-11-17T17:36:27.007310",
+      "custom_attributes": null,
+      "customer_description": null,
+      "customer_id": 1,
+      "customer_name": "IrisInitialClient",
+      "customer_sla": null,
+      "last_update_date": "2026-11-17T17:36:27.007310"
+     },
+     "client_id": 1,
+     "close_date": "2025-07-02",
+     "closing_note": null,
+     "custom_attributes": null,
+     "description": "Closed but missing SOC ID",
+     "initial_date": "2026-11-17T17:38:28.701491",
+     "modification_history": {
+      "1794937108.776567": {
+       "action": "created",
+       "user": "administrator",
+       "user_id": 1
+      },
+      "1794937108.812388": {
+       "action": "case closed",
+       "user": "administrator",
+       "user_id": 1
+      }
+     },
+     "name": "#4 - No ticket id case",
+     "note_directories": [],
+     "open_date": "2025-07-01",
+     "owner": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "owner_id": 1,
+     "protagonists": [],
+     "review_status": null,
+     "review_status_id": null,
+     "reviewer": null,
+     "reviewer_id": null,
+     "severity": {
+      "severity_description": "Low",
+      "severity_id": 4,
+      "severity_name": "Low"
+     },
+     "severity_id": 4,
+     "soc_id": "",
+     "state": {
+      "protected": true,
+      "state_description": "Case is closed",
+      "state_id": 9,
+      "state_name": "Closed"
+     },
+     "state_id": 9,
+     "status_id": 0,
+     "status_name": "unknown",
+     "tags": [],
+     "user": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "user_id": 1
+    },
+    {
+     "alerts": [],
+     "case_id": 5,
+     "case_uuid": "91072458-c131-48f2-9b5b-edf40830b5db",
+     "classification": {
+      "creation_date": "2026-11-17T17:36:13.342681",
+      "description": "All incidents that do not fit in one of the given categories should be put into this class. If the number of incidents in this category increases, it is an indicator that the classification scheme must be revised.",
+      "id": 36,
+      "name": "other:other",
+      "name_expanded": "Other: other"
+     },
+     "classification_id": 36,
+     "client": {
+      "client_uuid": "96c97b43-22a9-466b-afbf-96e43262ab48",
+      "creation_date": "2026-11-17T17:36:27.007310",
+      "custom_attributes": null,
+      "customer_description": null,
+      "customer_id": 1,
+      "customer_name": "IrisInitialClient",
+      "customer_sla": null,
+      "last_update_date": "2026-11-17T17:36:27.007310"
+     },
+     "client_id": 1,
+     "close_date": null,
+     "closing_note": null,
+     "custom_attributes": null,
+     "description": "Open",
+     "initial_date": "2026-11-17T17:38:28.879631",
+     "modification_history": {
+      "1794937108.945425": {
+       "action": "created",
+       "user": "administrator",
+       "user_id": 1
+      }
+     },
+     "name": "#5 - Still open case",
+     "note_directories": [],
+     "open_date": "2026-11-17",
+     "owner": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "owner_id": 1,
+     "protagonists": [],
+     "review_status": null,
+     "review_status_id": null,
+     "reviewer": null,
+     "reviewer_id": null,
+     "severity": {
+      "severity_description": "Medium",
+      "severity_id": 1,
+      "severity_name": "Medium"
+     },
+     "severity_id": 1,
+     "soc_id": "482999",
+     "state": {
+      "protected": true,
+      "state_description": "Case is open",
+      "state_id": 3,
+      "state_name": "Open"
+     },
+     "state_id": 3,
+     "status_id": 0,
+     "status_name": "unknown",
+     "tags": [],
+     "user": {
+      "id": 1,
+      "user_email": "admin@localhost",
+      "user_login": "administrator",
+      "user_name": "administrator"
+     },
+     "user_id": 1
+    }
+   ],
+   "current_page": 1,
+   "draw": 1,
+   "last_page": 1,
+   "next_page": null,
+   "total": 5
+  },
+  "message": "",
+  "status": "success"
+ }
+}
