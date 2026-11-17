@@ -1,0 +1,42 @@
+# Example mapping file for: python -m app.cli.iris_import --mapping <file>
+#
+# Only list what you want to change: every section here is merged over the
+# built-in defaults (app/cli/iris_import/mapping.py). Keys are IRIS values,
+# matched case-insensitively ("_" counts as a space). "_default" applies to
+# IRIS values a section doesn't list. Run with --dry-run first: the summary
+# lists every IRIS value that fell back to a default.
+#
+# Allowed IRDoc values:
+#   severity:            critical, high, medium, low
+#   disposition:         tp_remediated, tp_accepted_risk, tp_third_party,
+#                        fp_benign, fp_tuning_required, inconclusive
+#   source:              user_reported, siem_alert, edr_xdr_alert, threat_hunting,
+#                        threat_intel, network_alert, email_security, cloud_alert,
+#                        external_notification, other
+#   timeline_entry_type: detection, analysis, containment, evidence, comms, note
+#   asset_type:          host, server, workstation, laptop, mobile, network_device,
+#                        account, service_account, file, directory, url,
+#                        email_address, database, application, cloud_resource, other
+#   asset_status:        suspected, confirmed, remediated, cleared
+#   ioc_type:            email, domain, ip, url, hash, file, username
+#                        (or null: keep IOCs of that IRIS type in the notes instead)
+#   tlp:                 red, amber, green, white
+
+# IRIS case classification -> what triggered the investigation in IRDoc.
+source:
+  fraud:phishing: email_security
+  malicious-code:trojan-malware: edr_xdr_alert
+  intrusion-attempts:login-attempts: siem_alert
+  _default: other
+
+# IRIS outcome -> IRDoc disposition.
+disposition:
+  true positive without impact: tp_accepted_risk
+
+# Custom IRIS asset types.
+asset_type:
+  Windows - Laptop: laptop
+
+# Custom IRIS IOC types.
+ioc_type:
+  mutex: null
